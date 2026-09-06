@@ -29,4 +29,10 @@ Thumbs.db
 appsettings.Development.json
 
 # Ignore Word documents in docs
-docs/*.docx
+# Local capstone documents
+docs/ClinicManagementSystem.docx
+docs/CLINIC_CAPSTONE_PLAN_FORMATTED.docx
+
+# Microsoft Word temporary files
+docs/~$*
+docs/~WRL*.tmp
