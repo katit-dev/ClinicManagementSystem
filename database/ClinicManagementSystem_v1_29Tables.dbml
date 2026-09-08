@@ -1,0 +1,665 @@
+// ClinicManagementSystem — DBML v1 (29 bảng)
+// Gộp cấu trúc cuối từ 002_CreateTables.sql + 003_UpdateDatabaseV1_29Tables.sql.
+// Chỉ dùng để trực quan hóa trên dbdiagram.io; KHÔNG chạy trong SSMS.
+// CHECK và filtered indexes của SQL Server được ghi chú, không thay thế migration SQL.
+// Không có permissions, role_permissions, clinic_settings.
+// notifications được tạo trước; chức năng gửi SMS/Email làm sau.
+
+Project ClinicManagementSystem {
+  database_type: 'SQL Server'
+  Note: '29 bảng dự kiến theo script v1. Không phải bản dump đọc trực tiếp từ SQL Server.'
+}
+
+Table auth.users {
+  id int [pk, increment]
+  username varchar(100) [not null, unique]
+  password_hash varchar(255) [not null]
+  email varchar(255)
+  full_name nvarchar(255)
+  phone varchar(20)
+  is_active bit [not null, default: 1, note: 'Trạng thái hoạt động; khác is_deleted.']
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  last_login_at datetime
+  failed_login_count int [not null, default: 0]
+  lockout_end datetime
+  email_confirmed bit [not null, default: 0]
+  avatar_url varchar(500)
+  is_deleted bit [not null, default: 0]
+  deleted_at datetime
+
+  Indexes {
+    email [unique, name: 'UX_auth_users_email', note: 'SQL Server filter: WHERE [email] IS NOT NULL']
+  }
+
+  // CK_auth_users_failed_login_count: CHECK (failed_login_count >= 0)
+}
+
+Table auth.roles {
+  id int [pk, increment]
+  name varchar(50) [not null, unique, note: 'Admin, Receptionist, Doctor, Patient; chưa seed dữ liệu role.']
+  description nvarchar(255)
+  is_system bit [not null, default: 0]
+}
+
+Table auth.user_roles {
+  id int [pk, increment]
+  user_id int [not null]
+  role_id int [not null]
+  assigned_at datetime [not null, default: `SYSUTCDATETIME()`]
+  assigned_by int
+
+  Indexes {
+    (user_id, role_id) [unique, name: 'UQ_user_roles']
+  }
+}
+
+Table auth.refresh_tokens {
+  id int [pk, increment]
+  user_id int [not null]
+  token_hash char(64) [not null, unique, note: 'SHA-256 hex; không lưu refresh token thô.']
+  expires_at datetime [not null]
+  revoked_at datetime
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  device_info nvarchar(500)
+  ip_address varchar(45)
+  replaced_by_token_hash char(64)
+}
+
+Table scheduling.specialties {
+  id int [pk, increment]
+  name nvarchar(255) [not null]
+  description nvarchar(500)
+  is_active bit [not null, default: 1]
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  code varchar(20)
+
+  Indexes {
+    code [unique, name: 'UX_scheduling_specialties_code', note: 'SQL Server filter: WHERE code IS NOT NULL']
+  }
+}
+
+Table scheduling.doctors {
+  id int [pk, increment]
+  user_id int [not null, unique]
+  specialty_id int [not null]
+  full_name nvarchar(255) [not null]
+  title nvarchar(50)
+  license_number varchar(50)
+  phone varchar(20)
+  email varchar(255)
+  room varchar(50)
+  is_active bit [not null, default: 1]
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  consultation_fee decimal(12,2) [not null, default: 0]
+  bio nvarchar(2000)
+  avatar_url varchar(500)
+  experience_years int
+  max_patients_per_day int
+
+  Indexes {
+    license_number [unique, name: 'UX_scheduling_doctors_license_number', note: 'SQL Server filter: WHERE [license_number] IS NOT NULL']
+  }
+
+  // CK_scheduling_doctors_consultation_fee: CHECK (consultation_fee >= 0)
+  // CK_scheduling_doctors_experience: CHECK (experience_years IS NULL OR experience_years >= 0)
+  // CK_scheduling_doctors_max_patients: CHECK (max_patients_per_day IS NULL OR max_patients_per_day > 0)
+}
+
+Table scheduling.patients {
+  id int [pk, increment]
+  user_id int
+  full_name nvarchar(255) [not null]
+  gender tinyint [note: '0=Male, 1=Female, 2=Other.']
+  date_of_birth date
+  phone varchar(20)
+  email varchar(255)
+  address nvarchar(500)
+  is_active bit [not null, default: 1]
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  patient_code varchar(20) [not null]
+  national_id varchar(30)
+  insurance_number varchar(50)
+  blood_type varchar(10)
+  emergency_contact_name nvarchar(255)
+  emergency_contact_phone varchar(20)
+
+  Indexes {
+    user_id [unique, name: 'UX_scheduling_patients_user_id', note: 'SQL Server filter: WHERE [user_id] IS NOT NULL']
+    full_name [name: 'IX_patients_full_name']
+    phone [name: 'IX_patients_phone']
+    patient_code [unique, name: 'UX_scheduling_patients_code']
+  }
+
+  // CK_scheduling_patients_gender: CHECK (gender IS NULL OR gender BETWEEN 0 AND 2)
+}
+
+Table scheduling.doctor_schedules {
+  id int [pk, increment]
+  doctor_id int [not null]
+  day_of_week tinyint [not null, note: '0=Sunday ... 6=Saturday.']
+  start_time time [not null]
+  end_time time [not null]
+  slot_minutes int [not null, default: 30]
+  is_active bit [not null, default: 1]
+  effective_from date [not null, note: 'Ngày bắt đầu hiệu lực lịch.']
+  effective_to date [note: 'NULL = chưa có ngày kết thúc.']
+  break_start time
+  break_end time
+
+  Indexes {
+    (doctor_id, day_of_week, start_time, effective_from) [unique, name: 'UX_scheduling_schedules_version']
+  }
+
+  // CK_scheduling_schedules_day: CHECK (day_of_week BETWEEN 0 AND 6)
+  // CK_scheduling_schedules_time: CHECK (start_time < end_time)
+  // CK_scheduling_schedules_slot: CHECK (slot_minutes > 0)
+  // CK_scheduling_schedules_effective: CHECK (effective_to IS NULL OR effective_to >= effective_from)
+  // CK_scheduling_schedules_break: CHECK ((break_start IS NULL AND break_end IS NULL) OR (break_start IS NOT NULL AND break_end IS NOT NULL AND start_time <= break_start AND break_start < break_end AND break_end <= end_time))
+}
+
+Table scheduling.doctor_time_off {
+  id int [pk, increment]
+  doctor_id int [note: 'NULL = cả phòng khám nghỉ.']
+  start_at datetime [not null]
+  end_at datetime [not null]
+  reason nvarchar(255)
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  type tinyint [note: 'Loại nghỉ; enum chưa chốt.']
+  is_full_day bit [not null, default: 0]
+  approved_by int
+
+  // CK_scheduling_time_off_time: CHECK (start_at < end_at)
+}
+
+Table scheduling.appointments {
+  id int [pk, increment]
+  patient_id int [not null]
+  doctor_id int [not null]
+  start_time datetime [not null]
+  end_time datetime [not null]
+  status tinyint [not null, default: 0, note: '0=Pending, 1=Confirmed, 2=CheckedIn, 3=Completed, 4=Cancelled, 5=NoShow.']
+  reason nvarchar(500)
+  note nvarchar(500)
+  created_by int
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  appointment_code varchar(20) [not null]
+  queue_number int
+  checked_in_at datetime
+  completed_at datetime
+  cancel_reason nvarchar(500)
+  source tinyint [not null, default: 0, note: '0=Online, 1=Walk-in, 2=Phone.']
+  fee_snapshot decimal(12,2) [not null, default: 0, note: 'Phí khám tại thời điểm đặt lịch.']
+
+  Indexes {
+    (doctor_id, start_time) [name: 'IX_appointments_doctor_start']
+    (doctor_id, start_time) [unique, name: 'UX_appointments_doctor_slot', note: 'SQL Server filter: WHERE [status] < 4']
+    patient_id [name: 'IX_appointments_patient_id']
+    start_time [name: 'IX_appointments_start_time']
+    appointment_code [unique, name: 'UX_scheduling_appointments_code']
+  }
+
+  // CK_scheduling_appointments_time: CHECK (start_time < end_time)
+  // CK_scheduling_appointments_status: CHECK (status BETWEEN 0 AND 5)
+  // CK_scheduling_appointments_source: CHECK (source BETWEEN 0 AND 2)
+  // CK_scheduling_appointments_queue: CHECK (queue_number IS NULL OR queue_number > 0)
+  // CK_scheduling_appointments_fee: CHECK (fee_snapshot >= 0)
+}
+
+Table scheduling.appointment_status_history {
+  id int [pk, increment]
+  appointment_id int [not null]
+  from_status tinyint [note: 'NULL khi tạo lịch lần đầu.']
+  to_status tinyint [not null]
+  changed_by int
+  reason nvarchar(500)
+  changed_at datetime [not null, default: `SYSUTCDATETIME()`]
+
+  // CK_scheduling_history_from: CHECK (from_status IS NULL OR from_status BETWEEN 0 AND 5)
+  // CK_scheduling_history_to: CHECK (to_status BETWEEN 0 AND 5)
+}
+
+Table clinical.medical_records {
+  Note: 'Trigger hiện tại chặn UPDATE/DELETE header khi đã Finalized; việc bảo vệ bảng con vẫn phải được triển khai.'
+
+  id int [pk, increment]
+  appointment_id int [not null, unique]
+  patient_id int [not null]
+  doctor_id int [not null]
+  symptoms nvarchar(4000)
+  diagnosis nvarchar(4000)
+  note nvarchar(4000)
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  icd10_code varchar(10)
+  treatment_plan nvarchar(4000)
+  follow_up_date date
+  status tinyint [not null, default: 0, note: '0=Draft, 1=Finalized.']
+  finalized_at datetime
+
+  // CK_clinical_records_status: CHECK (status BETWEEN 0 AND 1)
+  // CK_clinical_records_finalized: CHECK ((status = 0 AND finalized_at IS NULL) OR (status = 1 AND finalized_at IS NOT NULL))
+}
+
+Table clinical.medicines {
+  id int [pk, increment]
+  name nvarchar(255) [not null]
+  unit nvarchar(50)
+  price decimal(12,2) [not null, default: 0]
+  stock_quantity int [not null, default: 0, note: 'Tổng hợp tồn theo lô; không phải nguồn sự thật.']
+  description nvarchar(500)
+  is_active bit [not null, default: 1]
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  code varchar(30)
+  active_ingredient nvarchar(255)
+  concentration nvarchar(100)
+  cost_price decimal(12,2)
+  min_stock int [not null, default: 0]
+
+  Indexes {
+    code [unique, name: 'UX_clinical_medicines_code', note: 'SQL Server filter: WHERE code IS NOT NULL']
+  }
+
+  // CK_clinical_medicines_price: CHECK (price >= 0)
+  // CK_clinical_medicines_cost: CHECK (cost_price IS NULL OR cost_price >= 0)
+  // CK_clinical_medicines_stock: CHECK (stock_quantity >= 0 AND min_stock >= 0)
+}
+
+Table clinical.prescriptions {
+  id int [pk, increment]
+  medical_record_id int [not null, unique]
+  note nvarchar(500)
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  doctor_id int [not null]
+  status tinyint [not null, default: 0, note: '0=Draft, 1=Finalized, 2=Dispensed, 3=Cancelled.']
+  dispensed_at datetime
+  dispensed_by int
+
+  // CK_clinical_prescriptions_status: CHECK (status BETWEEN 0 AND 3)
+  // CK_clinical_prescriptions_dispensed: CHECK (status <> 2 OR (dispensed_at IS NOT NULL AND dispensed_by IS NOT NULL))
+}
+
+Table clinical.prescription_items {
+  id int [pk, increment]
+  prescription_id int [not null]
+  medicine_id int [not null]
+  quantity int [not null, default: 1]
+  dosage nvarchar(255)
+  instruction nvarchar(255)
+  medicine_name_snapshot nvarchar(255) [not null, note: 'Tên thuốc tại thời điểm kê đơn.']
+  unit_price_snapshot decimal(12,2) [not null, note: 'Giá thuốc tại thời điểm kê đơn.']
+  duration_days int
+  frequency nvarchar(50)
+
+  // CK_clinical_prescription_items_quantity: CHECK (quantity > 0)
+  // CK_clinical_prescription_items_price: CHECK (unit_price_snapshot >= 0)
+  // CK_clinical_prescription_items_duration: CHECK (duration_days IS NULL OR duration_days > 0)
+}
+
+Table billing.services {
+  id int [pk, increment]
+  name nvarchar(255) [not null]
+  description nvarchar(500)
+  price decimal(12,2) [not null, default: 0, note: 'Giá danh mục hiện tại.']
+  is_active bit [not null, default: 1]
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  code varchar(30)
+  specialty_id int
+  duration_minutes int
+
+  Indexes {
+    code [unique, name: 'UX_billing_services_code', note: 'SQL Server filter: WHERE code IS NOT NULL']
+  }
+
+  // CK_billing_services_price: CHECK (price >= 0)
+  // CK_billing_services_duration: CHECK (duration_minutes IS NULL OR duration_minutes > 0)
+}
+
+Table billing.invoices {
+  Note: 'Công thức v1: phải thu = total_amount + tax_amount - discount_amount - insurance_amount.'
+
+  id int [pk, increment]
+  patient_id int [not null]
+  appointment_id int
+  medical_record_id int
+  patient_name nvarchar(255)
+  total_amount decimal(12,2) [not null, default: 0]
+  status tinyint [not null, default: 0, note: '0=Unpaid, 1=PartiallyPaid, 2=Paid, 3=Cancelled.']
+  created_by int
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+  invoice_no varchar(30) [not null]
+  discount_amount decimal(12,2) [not null, default: 0]
+  tax_amount decimal(12,2) [not null, default: 0]
+  paid_amount decimal(12,2) [not null, default: 0, note: 'Tổng đã thu thuần sau hoàn tiền.']
+  insurance_amount decimal(12,2) [not null, default: 0]
+  cancelled_at datetime
+  cancel_reason nvarchar(500)
+
+  Indexes {
+    patient_id [name: 'IX_invoices_patient_id']
+    appointment_id [name: 'IX_invoices_appointment_id']
+    (status, created_at) [name: 'IX_invoices_status_created_at']
+    invoice_no [unique, name: 'UX_billing_invoices_no']
+  }
+
+  // CK_billing_invoices_amounts: CHECK (total_amount >= 0 AND discount_amount >= 0 AND tax_amount >= 0 AND paid_amount >= 0 AND insurance_amount >= 0 AND discount_amount + insurance_amount <= total_amount + tax_amount AND paid_amount <= total_amount + tax_amount - discount_amount - insurance_amount)
+  // CK_billing_invoices_status: CHECK (status BETWEEN 0 AND 3)
+  // CK_billing_invoices_cancelled: CHECK ((status = 3 AND cancelled_at IS NOT NULL) OR (status <> 3 AND cancelled_at IS NULL))
+}
+
+Table billing.invoice_items {
+  Note: 'CHECK nguồn: đúng một trong medical_record_service_id hoặc medicine_id.'
+
+  id int [pk, increment]
+  invoice_id int [not null]
+  medicine_id int
+  description nvarchar(255) [note: 'Snapshot tên dịch vụ hoặc thuốc.']
+  quantity int [not null, default: 1]
+  unit_price decimal(12,2) [not null, default: 0]
+  amount decimal(12,2) [not null, default: 0]
+  medical_record_service_id int [note: 'Tham chiếu lần chỉ định thực tế, không phải danh mục services.']
+  discount_amount decimal(12,2) [not null, default: 0]
+
+  // CK_billing_invoice_items_one_source: CHECK ((medical_record_service_id IS NOT NULL AND medicine_id IS NULL) OR (medical_record_service_id IS NULL AND medicine_id IS NOT NULL))
+  // CK_billing_invoice_items_amounts: CHECK (quantity > 0 AND unit_price >= 0 AND discount_amount >= 0 AND amount >= 0 AND discount_amount <= quantity * unit_price AND amount = quantity * unit_price - discount_amount)
+}
+
+Table billing.payments {
+  id int [pk, increment]
+  invoice_id int [not null]
+  amount decimal(12,2) [not null]
+  method tinyint [not null, default: 0, note: '0=Cash, 1=Card, 2=BankTransfer, 3=EWallet.']
+  paid_at datetime [not null, default: `SYSUTCDATETIME()`]
+  note nvarchar(255)
+  reference_code varchar(100)
+  received_by int
+  is_refund bit [not null, default: 0, note: '1=Hoàn tiền; amount là số âm.']
+
+  // CK_billing_payments_method: CHECK (method BETWEEN 0 AND 3)
+  // CK_billing_payments_amount: CHECK ((is_refund = 0 AND amount > 0) OR (is_refund = 1 AND amount < 0))
+}
+
+Table auth.audit_logs {
+  Note: 'Bảng bổ sung: ghi nhận thao tác nhạy cảm. Bộ cột là đề xuất tối thiểu, chưa có DDL chi tiết từ thầy.'
+
+  id int [pk, increment]
+  user_id int
+  action varchar(100) [not null]
+  entity_name varchar(128) [not null]
+  entity_id int
+  details nvarchar(max)
+  ip_address varchar(45)
+  succeeded bit [not null, default: 1]
+  occurred_at datetime [not null, default: `SYSUTCDATETIME()`]
+
+  Indexes {
+    (entity_name, entity_id, occurred_at) [name: 'IX_auth_audit_logs_entity']
+    (user_id, occurred_at) [name: 'IX_auth_audit_logs_user_time']
+  }
+}
+
+Table auth.notifications {
+  Note: 'Bảng bổ sung: nhắc lịch và lịch sử gửi. Bộ cột là đề xuất tối thiểu; chưa triển khai gửi SMS/Email.'
+
+  id int [pk, increment]
+  appointment_id int [not null]
+  user_id int
+  channel varchar(20) [not null, note: 'Email, SMS, Zalo hoặc InApp.']
+  recipient nvarchar(255)
+  title nvarchar(255) [not null]
+  content nvarchar(2000) [not null]
+  status tinyint [not null, default: 0, note: '0..3; tên trạng thái sẽ chốt khi triển khai gửi thông báo.']
+  scheduled_at datetime
+  sent_at datetime
+  error_message nvarchar(1000)
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+
+  Indexes {
+    appointment_id [name: 'IX_auth_notifications_appointment']
+    (status, scheduled_at) [name: 'IX_auth_notifications_status_scheduled']
+  }
+
+  // CK_auth_notifications_channel: CHECK (channel IN ('Email','SMS','Zalo','InApp'))
+  // CK_auth_notifications_status: CHECK (status BETWEEN 0 AND 3)
+}
+
+Table clinical.medical_record_services {
+  id int [pk, increment]
+  medical_record_id int [not null]
+  service_id int [not null]
+  quantity int [not null, default: 1]
+  unit_price_snapshot decimal(12,2) [not null, note: 'Giá dịch vụ tại thời điểm chỉ định.']
+  status tinyint [not null, default: 0, note: '0=Ordered, 1=InProgress, 2=Completed, 3=Cancelled.']
+  performed_by int
+  ordered_at datetime [not null, default: `SYSUTCDATETIME()`]
+  completed_at datetime
+
+  Indexes {
+    (medical_record_id, status) [name: 'IX_clinical_mrs_record_status']
+  }
+
+  // CK_clinical_mrs_quantity: CHECK (quantity > 0)
+  // CK_clinical_mrs_price: CHECK (unit_price_snapshot >= 0)
+  // CK_clinical_mrs_status: CHECK (status BETWEEN 0 AND 3)
+}
+
+Table clinical.lab_results {
+  Note: 'Thiết kế hiện tại tối đa một dòng kết quả cho mỗi chỉ định.'
+
+  id int [pk, increment]
+  medical_record_service_id int [not null, unique]
+  result_value nvarchar(4000)
+  reference_range nvarchar(500)
+  conclusion nvarchar(4000)
+  resulted_at datetime
+  recorded_by int [note: 'Người nhập kết quả; FK tới auth.users.']
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+}
+
+Table clinical.attachments {
+  id int [pk, increment]
+  medical_record_id int [not null]
+  file_url nvarchar(1000) [not null]
+  file_type varchar(100)
+  uploaded_at datetime [not null, default: `SYSUTCDATETIME()`]
+  uploaded_by int
+
+  Indexes {
+    medical_record_id [name: 'IX_clinical_attachments_record']
+  }
+}
+
+Table clinical.patient_vitals {
+  id int [pk, increment]
+  medical_record_id int [not null, unique]
+  temperature decimal(4,1)
+  pulse int
+  blood_pressure varchar(20)
+  weight decimal(6,2)
+  height decimal(6,2)
+
+  // CK_clinical_patient_vitals_values: CHECK ((temperature IS NULL OR temperature >= 0) AND (pulse IS NULL OR pulse > 0) AND (weight IS NULL OR weight > 0) AND (height IS NULL OR height > 0))
+}
+
+Table clinical.patient_allergies {
+  id int [pk, increment]
+  patient_id int [not null]
+  allergen nvarchar(255) [not null]
+  severity tinyint
+  note nvarchar(500)
+
+  Indexes {
+    patient_id [name: 'IX_clinical_patient_allergies_patient']
+  }
+}
+
+Table clinical.medicine_batches {
+  id int [pk, increment]
+  medicine_id int [not null]
+  batch_no varchar(50) [not null]
+  expiry_date date [not null]
+  quantity int [not null, default: 0, note: 'Tồn thực tế của lô.']
+  import_price decimal(12,2)
+
+  Indexes {
+    (medicine_id, batch_no) [unique, name: 'UQ_clinical_batches_medicine_no']
+    (id, medicine_id) [unique, name: 'UQ_clinical_batches_id_medicine']
+    expiry_date [name: 'IX_clinical_batches_expiry']
+  }
+
+  // CK_clinical_batches_quantity: CHECK (quantity >= 0)
+  // CK_clinical_batches_price: CHECK (import_price IS NULL OR import_price >= 0)
+}
+
+Table clinical.medicine_stock_transactions {
+  Note: 'Bổ sung before/after và bút toán đảo theo checklist. Mỗi thay đổi tồn phải được xử lý trong transaction.'
+
+  id int [pk, increment]
+  medicine_id int [not null]
+  batch_id int [not null]
+  type tinyint [not null, note: '0=IN, 1=OUT, 2=ADJUST.']
+  quantity int [not null, note: 'Số lượng tuyệt đối; hướng thay đổi xác định bởi type và before/after.']
+  quantity_before int [not null]
+  quantity_after int [not null]
+  prescription_id int
+  reversal_of_transaction_id int [note: 'Bút toán đảo của giao dịch trước, nếu có.']
+  created_by int [not null]
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  note nvarchar(500)
+
+  Indexes {
+    (batch_id, created_at) [name: 'IX_clinical_stock_tx_batch_time']
+    prescription_id [name: 'IX_clinical_stock_tx_prescription']
+  }
+
+  // CK_clinical_stock_tx_quantity: CHECK (quantity > 0)
+  // CK_clinical_stock_tx_balances: CHECK (quantity_before >= 0 AND quantity_after >= 0)
+  // CK_clinical_stock_tx_type: CHECK ((type = 0 AND quantity_after = quantity_before + quantity) OR (type = 1 AND quantity_before = quantity_after + quantity) OR (type = 2 AND ( quantity_after = quantity_before + quantity OR quantity_before = quantity_after + quantity )))
+}
+
+Table billing.insurance_policies {
+  Note: 'Bộ cột tối thiểu do assistant đề xuất; thầy chưa đưa DDL chi tiết. Chưa có quy tắc BHYT thực tế.'
+
+  id int [pk, increment]
+  patient_id int [not null]
+  policy_number varchar(50) [not null]
+  provider_name nvarchar(255)
+  coverage_percent decimal(5,2) [note: 'Mức hưởng minh họa; chưa có quy tắc BHYT thực tế.']
+  route_type tinyint [note: 'Loại tuyến; enum chưa chốt.']
+  valid_from date
+  valid_to date
+  is_active bit [not null, default: 1]
+  created_at datetime [not null, default: `SYSUTCDATETIME()`]
+  updated_at datetime
+
+  Indexes {
+    patient_id [name: 'IX_billing_insurance_patient']
+  }
+
+  // CK_billing_insurance_coverage: CHECK (coverage_percent IS NULL OR coverage_percent BETWEEN 0 AND 100)
+  // CK_billing_insurance_dates: CHECK (valid_from IS NULL OR valid_to IS NULL OR valid_to >= valid_from)
+}
+
+TableGroup auth {
+  auth.users
+  auth.roles
+  auth.user_roles
+  auth.refresh_tokens
+  auth.audit_logs
+  auth.notifications
+}
+
+TableGroup scheduling {
+  scheduling.specialties
+  scheduling.doctors
+  scheduling.patients
+  scheduling.doctor_schedules
+  scheduling.doctor_time_off
+  scheduling.appointments
+  scheduling.appointment_status_history
+}
+
+TableGroup clinical {
+  clinical.medical_records
+  clinical.medicines
+  clinical.prescriptions
+  clinical.prescription_items
+  clinical.medical_record_services
+  clinical.lab_results
+  clinical.attachments
+  clinical.patient_vitals
+  clinical.patient_allergies
+  clinical.medicine_batches
+  clinical.medicine_stock_transactions
+}
+
+TableGroup billing {
+  billing.services
+  billing.invoices
+  billing.invoice_items
+  billing.payments
+  billing.insurance_policies
+}
+
+// Quan hệ: > = nhiều-đến-một; - = một-đến-một.
+// Nullable FK vẫn có thể không có bản ghi liên quan.
+
+Ref: auth.user_roles.user_id > auth.users.id
+Ref: auth.user_roles.role_id > auth.roles.id
+Ref: auth.user_roles.assigned_by > auth.users.id
+Ref: auth.refresh_tokens.user_id > auth.users.id
+Ref: scheduling.doctors.user_id - auth.users.id
+Ref: scheduling.doctors.specialty_id > scheduling.specialties.id
+Ref: scheduling.patients.user_id - auth.users.id
+Ref: scheduling.doctor_schedules.doctor_id > scheduling.doctors.id
+Ref: scheduling.doctor_time_off.doctor_id > scheduling.doctors.id
+Ref: scheduling.doctor_time_off.approved_by > auth.users.id
+Ref: scheduling.appointments.patient_id > scheduling.patients.id
+Ref: scheduling.appointments.doctor_id > scheduling.doctors.id
+Ref: scheduling.appointments.created_by > auth.users.id
+Ref: scheduling.appointment_status_history.appointment_id > scheduling.appointments.id
+Ref: scheduling.appointment_status_history.changed_by > auth.users.id
+Ref: clinical.medical_records.appointment_id - scheduling.appointments.id
+Ref: clinical.medical_records.patient_id > scheduling.patients.id
+Ref: clinical.medical_records.doctor_id > scheduling.doctors.id
+Ref: clinical.prescriptions.medical_record_id - clinical.medical_records.id
+Ref: clinical.prescriptions.doctor_id > scheduling.doctors.id
+Ref: clinical.prescriptions.dispensed_by > auth.users.id
+Ref: clinical.prescription_items.prescription_id > clinical.prescriptions.id
+Ref: clinical.prescription_items.medicine_id > clinical.medicines.id
+Ref: billing.services.specialty_id > scheduling.specialties.id
+Ref: billing.invoices.patient_id > scheduling.patients.id
+Ref: billing.invoices.appointment_id > scheduling.appointments.id
+Ref: billing.invoices.medical_record_id > clinical.medical_records.id
+Ref: billing.invoices.created_by > auth.users.id
+Ref: billing.invoice_items.invoice_id > billing.invoices.id
+Ref: billing.invoice_items.medicine_id > clinical.medicines.id
+Ref: billing.invoice_items.medical_record_service_id > clinical.medical_record_services.id
+Ref: billing.payments.invoice_id > billing.invoices.id
+Ref: billing.payments.received_by > auth.users.id
+Ref: auth.audit_logs.user_id > auth.users.id
+Ref: auth.notifications.appointment_id > scheduling.appointments.id
+Ref: auth.notifications.user_id > auth.users.id
+Ref: clinical.medical_record_services.medical_record_id > clinical.medical_records.id
+Ref: clinical.medical_record_services.service_id > billing.services.id
+Ref: clinical.medical_record_services.performed_by > auth.users.id
+Ref: clinical.lab_results.medical_record_service_id - clinical.medical_record_services.id
+Ref: clinical.lab_results.recorded_by > auth.users.id
+Ref: clinical.attachments.medical_record_id > clinical.medical_records.id
+Ref: clinical.attachments.uploaded_by > auth.users.id
+Ref: clinical.patient_vitals.medical_record_id - clinical.medical_records.id
+Ref: clinical.patient_allergies.patient_id > scheduling.patients.id
+Ref: clinical.medicine_batches.medicine_id > clinical.medicines.id
+Ref: clinical.medicine_stock_transactions.medicine_id > clinical.medicines.id
+Ref: clinical.medicine_stock_transactions.(batch_id, medicine_id) > clinical.medicine_batches.(id, medicine_id)
+Ref: clinical.medicine_stock_transactions.prescription_id > clinical.prescriptions.id
+Ref: clinical.medicine_stock_transactions.reversal_of_transaction_id > clinical.medicine_stock_transactions.id
+Ref: clinical.medicine_stock_transactions.created_by > auth.users.id
+Ref: billing.insurance_policies.patient_id > scheduling.patients.id

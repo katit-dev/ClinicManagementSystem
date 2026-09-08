@@ -27,6 +27,9 @@
 -- Script dung tren database da co 19 bang cua 002. Neu co ton kho cu
 -- hoac invoice_items dich vu cu, script DUNG LAI de tranh mat du lieu.
 -- Cac thay doi nam trong mot transaction; loi -> ROLLBACK.
+-- Ban sua V2: moi ALTER TABLE / CREATE TABLE / CREATE INDEX duoc bien dich rieng.
+-- Khong thay doi danh sach bang, cot, FK, CHECK hay du lieu chuyen doi.
+-- Khong chay dong thoi ban cu va ban sua; khong chay lai neu da nang cap.
 -- Database-level extended property ghi phien ban, KHONG tao bang thu 29.
 
 USE [ClinicManagementSystem];
@@ -35,7 +38,9 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 IF DB_NAME() <> N'ClinicManagementSystem'
-    THROW 50000, N'Sai database. Chi duoc chay tren ClinicManagementSystem.', 1;
+    BEGIN
+        ;THROW 50000, N'Sai database. Chi duoc chay tren ClinicManagementSystem.', 1;
+    END;
 
 DECLARE @Expected TABLE (
     schema_name SYSNAME NOT NULL,
@@ -82,6 +87,10 @@ IF EXISTS (
       AND CONVERT(NVARCHAR(100), value) = N'003'
 )
 BEGIN
+    IF OBJECT_ID(N'auth.notifications', N'U') IS NULL
+    BEGIN
+        ;THROW 50009, N'Da co ban 28 bang. Hay chay 004_AddNotifications.sql, khong chay lai 003.', 1;
+    END;
     PRINT N'Migration 003 da duoc ap dung. Khong tao lai bang.';
 END
 ELSE
@@ -98,7 +107,9 @@ BEGIN
                   WHERE s.name = e.schema_name AND t.name = e.table_name
               )
         )
-            THROW 50001, N'Thieu bang goc. Hay chay 002_CreateTables.sql truoc.', 1;
+            BEGIN
+                ;THROW 50001, N'Thieu bang goc. Hay chay 002_CreateTables.sql truoc.', 1;
+            END;
 
         IF EXISTS (
             SELECT 1 FROM @Expected AS e
@@ -106,7 +117,9 @@ BEGIN
             JOIN sys.tables AS t ON t.schema_id = s.schema_id AND t.name = e.table_name
             WHERE e.is_original = 0
         )
-            THROW 50002, N'Da co mot phan bang moi. Khong chay de tranh migration dang do.', 1;
+            BEGIN
+                ;THROW 50002, N'Da co mot phan bang moi. Khong chay de tranh migration dang do.', 1;
+            END;
 
         IF EXISTS (
             SELECT 1 FROM sys.tables AS t
@@ -117,64 +130,76 @@ BEGIN
                   WHERE e.schema_name = s.name AND e.table_name = t.name
               )
         )
-            THROW 50003, N'Co bang ngoai danh sach 28. Hay kiem tra truoc khi migration.', 1;
+            BEGIN
+                ;THROW 50003, N'Co bang ngoai danh sach 29. Hay kiem tra truoc khi migration.', 1;
+            END;
 
         IF COL_LENGTH(N'clinical.medicines',N'expiry_date') IS NULL
            OR COL_LENGTH(N'billing.invoice_items',N'service_id') IS NULL
            OR COL_LENGTH(N'scheduling.patients',N'user_id') IS NULL
-            THROW 50004, N'Cau truc bang goc khong khop 002. Dung lai de kiem tra.', 1;
+            BEGIN
+                ;THROW 50004, N'Cau truc bang goc khong khop 002. Dung lai de kiem tra.', 1;
+            END;
 
         IF EXISTS (
             SELECT 1 FROM clinical.medicines
             WHERE stock_quantity <> 0 OR expiry_date IS NOT NULL
         )
-            THROW 50005, N'Co ton kho/han dung cu. Can chuyen sang lo truoc khi bo expiry_date.', 1;
+            BEGIN
+                ;THROW 50005, N'Co ton kho/han dung cu. Can chuyen sang lo truoc khi bo expiry_date.', 1;
+            END;
 
         IF EXISTS (SELECT 1 FROM billing.invoice_items WHERE service_id IS NOT NULL)
-            THROW 50006, N'Co dong dich vu cu. Can map sang medical_record_services truoc khi doi FK.', 1;
+            BEGIN
+                ;THROW 50006, N'Co dong dich vu cu. Can map sang medical_record_services truoc khi doi FK.', 1;
+            END;
 
         IF EXISTS (
             SELECT 1 FROM scheduling.doctor_schedules
             GROUP BY doctor_id, day_of_week, start_time HAVING COUNT(*) > 1
         )
-            THROW 50007, N'Lich bac si co trung bo khoa goc. Can kiem tra truoc khi them unique.', 1;
+            BEGIN
+                ;THROW 50007, N'Lich bac si co trung bo khoa goc. Can kiem tra truoc khi them unique.', 1;
+            END;
 
         IF EXISTS (SELECT 1 FROM billing.payments WHERE amount <= 0)
-            THROW 50008, N'Payments cu co so tien khong duong. Can doi soat truoc migration.', 1;
+            BEGIN
+                ;THROW 50008, N'Payments cu co so tien khong duong. Can doi soat truoc migration.', 1;
+            END;
 
         -- ========================================================
         -- 1. AUTH: bo sung field vao 4 bang goc
         -- ========================================================
-        ALTER TABLE auth.users ADD
+        EXEC sys.sp_executesql N'ALTER TABLE auth.users ADD
             last_login_at DATETIME2 NULL,
             failed_login_count INT NOT NULL CONSTRAINT DF_auth_users_failed_login_count DEFAULT (0),
             lockout_end DATETIME2 NULL,
             email_confirmed BIT NOT NULL CONSTRAINT DF_auth_users_email_confirmed DEFAULT (0),
             avatar_url VARCHAR(500) NULL,
             is_deleted BIT NOT NULL CONSTRAINT DF_auth_users_is_deleted DEFAULT (0),
-            deleted_at DATETIME2 NULL;
+            deleted_at DATETIME2 NULL;';
 
-        ALTER TABLE auth.users ADD CONSTRAINT CK_auth_users_failed_login_count
-            CHECK (failed_login_count >= 0);
+        EXEC sys.sp_executesql N'ALTER TABLE auth.users ADD CONSTRAINT CK_auth_users_failed_login_count
+            CHECK (failed_login_count >= 0);';
 
-        ALTER TABLE auth.roles ADD
+        EXEC sys.sp_executesql N'ALTER TABLE auth.roles ADD
             description NVARCHAR(255) NULL,
-            is_system BIT NOT NULL CONSTRAINT DF_auth_roles_is_system DEFAULT (0);
+            is_system BIT NOT NULL CONSTRAINT DF_auth_roles_is_system DEFAULT (0);';
 
-        ALTER TABLE auth.user_roles ADD
+        EXEC sys.sp_executesql N'ALTER TABLE auth.user_roles ADD
             assigned_at DATETIME2 NOT NULL CONSTRAINT DF_auth_user_roles_assigned_at DEFAULT (SYSUTCDATETIME()),
-            assigned_by INT NULL;
+            assigned_by INT NULL;';
 
-        ALTER TABLE auth.user_roles ADD CONSTRAINT FK_auth_user_roles_assigned_by
-            FOREIGN KEY (assigned_by) REFERENCES auth.users(id);
+        EXEC sys.sp_executesql N'ALTER TABLE auth.user_roles ADD CONSTRAINT FK_auth_user_roles_assigned_by
+            FOREIGN KEY (assigned_by) REFERENCES auth.users(id);';
 
-        ALTER TABLE auth.refresh_tokens ADD
+        EXEC sys.sp_executesql N'ALTER TABLE auth.refresh_tokens ADD
             device_info NVARCHAR(500) NULL,
             ip_address VARCHAR(45) NULL,
-            replaced_by_token_hash CHAR(64) NULL;
+            replaced_by_token_hash CHAR(64) NULL;';
 
         -- Audit: schema toi thieu de truy vet ai, hanh dong gi, tren ho so nao.
-        CREATE TABLE auth.audit_logs (
+        EXEC sys.sp_executesql N'CREATE TABLE auth.audit_logs (
             id INT IDENTITY(1,1) NOT NULL,
             user_id INT NULL,
             action VARCHAR(100) NOT NULL,
@@ -187,18 +212,18 @@ BEGIN
             CONSTRAINT PK_auth_audit_logs PRIMARY KEY (id),
             CONSTRAINT FK_auth_audit_logs_users FOREIGN KEY (user_id)
                 REFERENCES auth.users(id)
-        );
+        );';
 
-        CREATE INDEX IX_auth_audit_logs_entity
-            ON auth.audit_logs(entity_name,entity_id,occurred_at);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_auth_audit_logs_entity
+            ON auth.audit_logs(entity_name,entity_id,occurred_at);';
 
-        CREATE INDEX IX_auth_audit_logs_user_time
-            ON auth.audit_logs(user_id,occurred_at);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_auth_audit_logs_user_time
+            ON auth.audit_logs(user_id,occurred_at);';
 
         -- Notifications: de xuat cot toi thieu cho nhac lich/lich su gui.
         -- Tai lieu thay chua cung cap DDL chi tiet cho bang nay.
         -- Khong gui SMS/Email trong migration; chi tao noi luu du lieu.
-        CREATE TABLE auth.notifications (
+        EXEC sys.sp_executesql N'CREATE TABLE auth.notifications (
             id INT IDENTITY(1,1) NOT NULL,
             appointment_id INT NOT NULL,
             user_id INT NULL,
@@ -216,71 +241,71 @@ BEGIN
                 REFERENCES scheduling.appointments(id),
             CONSTRAINT FK_auth_notifications_users FOREIGN KEY (user_id)
                 REFERENCES auth.users(id),
-            CONSTRAINT CK_auth_notifications_channel CHECK (channel IN ('Email','SMS','Zalo','InApp')),
+            CONSTRAINT CK_auth_notifications_channel CHECK (channel IN (''Email'',''SMS'',''Zalo'',''InApp'')),
             CONSTRAINT CK_auth_notifications_status CHECK (status BETWEEN 0 AND 3)
-        );
+        );';
 
-        CREATE INDEX IX_auth_notifications_appointment
-            ON auth.notifications(appointment_id);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_auth_notifications_appointment
+            ON auth.notifications(appointment_id);';
 
-        CREATE INDEX IX_auth_notifications_status_scheduled
-            ON auth.notifications(status,scheduled_at);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_auth_notifications_status_scheduled
+            ON auth.notifications(status,scheduled_at);';
 
         -- ========================================================
         -- 2. SCHEDULING
         -- ========================================================
-        ALTER TABLE scheduling.specialties ADD code VARCHAR(20) NULL;
-        CREATE UNIQUE INDEX UX_scheduling_specialties_code
-            ON scheduling.specialties(code) WHERE code IS NOT NULL;
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.specialties ADD code VARCHAR(20) NULL;';
+        EXEC sys.sp_executesql N'CREATE UNIQUE INDEX UX_scheduling_specialties_code
+            ON scheduling.specialties(code) WHERE code IS NOT NULL;';
 
-        ALTER TABLE scheduling.doctors ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.doctors ADD
             consultation_fee DECIMAL(12,2) NOT NULL CONSTRAINT DF_scheduling_doctors_consultation_fee DEFAULT (0),
             bio NVARCHAR(2000) NULL,
             avatar_url VARCHAR(500) NULL,
             experience_years INT NULL,
-            max_patients_per_day INT NULL;
+            max_patients_per_day INT NULL;';
 
-        ALTER TABLE scheduling.doctors ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.doctors ADD
             CONSTRAINT CK_scheduling_doctors_consultation_fee CHECK (consultation_fee >= 0),
             CONSTRAINT CK_scheduling_doctors_experience CHECK (experience_years IS NULL OR experience_years >= 0),
-            CONSTRAINT CK_scheduling_doctors_max_patients CHECK (max_patients_per_day IS NULL OR max_patients_per_day > 0);
+            CONSTRAINT CK_scheduling_doctors_max_patients CHECK (max_patients_per_day IS NULL OR max_patients_per_day > 0);';
 
         -- Ma nghiep vu: backfill theo ID de giu du lieu cu va dam bao unique.
         -- Khi tao ban ghi moi, Application phai sinh code.
-        ALTER TABLE scheduling.patients ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.patients ADD
             patient_code VARCHAR(20) NULL,
             national_id VARCHAR(30) NULL,
             insurance_number VARCHAR(50) NULL,
             blood_type VARCHAR(10) NULL,
             emergency_contact_name NVARCHAR(255) NULL,
-            emergency_contact_phone VARCHAR(20) NULL;
+            emergency_contact_phone VARCHAR(20) NULL;';
 
-        UPDATE scheduling.patients
-        SET patient_code = 'BN' + RIGHT(REPLICATE('0',10) + CONVERT(VARCHAR(20),id),10)
-        WHERE patient_code IS NULL;
+        EXEC sys.sp_executesql N'UPDATE scheduling.patients
+        SET patient_code = ''BN'' + RIGHT(REPLICATE(''0'',10) + CONVERT(VARCHAR(20),id),10)
+        WHERE patient_code IS NULL;';
 
-        ALTER TABLE scheduling.patients ALTER COLUMN patient_code VARCHAR(20) NOT NULL;
-        CREATE UNIQUE INDEX UX_scheduling_patients_code
-            ON scheduling.patients(patient_code);
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.patients ALTER COLUMN patient_code VARCHAR(20) NOT NULL;';
+        EXEC sys.sp_executesql N'CREATE UNIQUE INDEX UX_scheduling_patients_code
+            ON scheduling.patients(patient_code);';
 
-        ALTER TABLE scheduling.patients ADD CONSTRAINT CK_scheduling_patients_gender
-            CHECK (gender IS NULL OR gender BETWEEN 0 AND 2);
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.patients ADD CONSTRAINT CK_scheduling_patients_gender
+            CHECK (gender IS NULL OR gender BETWEEN 0 AND 2);';
 
         -- Lich cu duoc coi la co hieu luc tu 1900-01-01.
         -- Khong de default nay cho cac lich moi: Application phai chon ngay.
-        ALTER TABLE scheduling.doctor_schedules ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.doctor_schedules ADD
             effective_from DATE NULL,
             effective_to DATE NULL,
             break_start TIME NULL,
-            break_end TIME NULL;
+            break_end TIME NULL;';
 
-        UPDATE scheduling.doctor_schedules
-        SET effective_from = CONVERT(DATE,'19000101',112)
-        WHERE effective_from IS NULL;
+        EXEC sys.sp_executesql N'UPDATE scheduling.doctor_schedules
+        SET effective_from = CONVERT(DATE,''19000101'',112)
+        WHERE effective_from IS NULL;';
 
-        ALTER TABLE scheduling.doctor_schedules ALTER COLUMN effective_from DATE NOT NULL;
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.doctor_schedules ALTER COLUMN effective_from DATE NOT NULL;';
 
-        ALTER TABLE scheduling.doctor_schedules ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.doctor_schedules ADD
             CONSTRAINT CK_scheduling_schedules_day CHECK (day_of_week BETWEEN 0 AND 6),
             CONSTRAINT CK_scheduling_schedules_time CHECK (start_time < end_time),
             CONSTRAINT CK_scheduling_schedules_slot CHECK (slot_minutes > 0),
@@ -290,127 +315,127 @@ BEGIN
                 OR (break_start IS NOT NULL AND break_end IS NOT NULL
                     AND start_time <= break_start AND break_start < break_end
                     AND break_end <= end_time)
-            );
+            );';
 
         -- Dieu chinh co chu dich: them effective_from vao unique cua thay
         -- de luu duoc hai phien ban lich co cung gio bat dau.
-        CREATE UNIQUE INDEX UX_scheduling_schedules_version
-            ON scheduling.doctor_schedules(doctor_id,day_of_week,start_time,effective_from);
+        EXEC sys.sp_executesql N'CREATE UNIQUE INDEX UX_scheduling_schedules_version
+            ON scheduling.doctor_schedules(doctor_id,day_of_week,start_time,effective_from);';
 
-        ALTER TABLE scheduling.doctor_time_off ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.doctor_time_off ADD
             type TINYINT NULL,
             is_full_day BIT NOT NULL CONSTRAINT DF_scheduling_time_off_full_day DEFAULT (0),
-            approved_by INT NULL;
+            approved_by INT NULL;';
 
-        ALTER TABLE scheduling.doctor_time_off ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.doctor_time_off ADD
             CONSTRAINT FK_scheduling_time_off_approved_by FOREIGN KEY (approved_by) REFERENCES auth.users(id),
-            CONSTRAINT CK_scheduling_time_off_time CHECK (start_at < end_at);
+            CONSTRAINT CK_scheduling_time_off_time CHECK (start_at < end_at);';
 
-        ALTER TABLE scheduling.appointments ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.appointments ADD
             appointment_code VARCHAR(20) NULL,
             queue_number INT NULL,
             checked_in_at DATETIME2 NULL,
             completed_at DATETIME2 NULL,
             cancel_reason NVARCHAR(500) NULL,
             source TINYINT NOT NULL CONSTRAINT DF_scheduling_appointments_source DEFAULT (0),
-            fee_snapshot DECIMAL(12,2) NOT NULL CONSTRAINT DF_scheduling_appointments_fee_snapshot DEFAULT (0);
+            fee_snapshot DECIMAL(12,2) NOT NULL CONSTRAINT DF_scheduling_appointments_fee_snapshot DEFAULT (0);';
 
-        UPDATE scheduling.appointments
-        SET appointment_code = 'AP' + RIGHT(REPLICATE('0',10) + CONVERT(VARCHAR(20),id),10)
-        WHERE appointment_code IS NULL;
+        EXEC sys.sp_executesql N'UPDATE scheduling.appointments
+        SET appointment_code = ''AP'' + RIGHT(REPLICATE(''0'',10) + CONVERT(VARCHAR(20),id),10)
+        WHERE appointment_code IS NULL;';
 
-        ALTER TABLE scheduling.appointments ALTER COLUMN appointment_code VARCHAR(20) NOT NULL;
-        CREATE UNIQUE INDEX UX_scheduling_appointments_code
-            ON scheduling.appointments(appointment_code);
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.appointments ALTER COLUMN appointment_code VARCHAR(20) NOT NULL;';
+        EXEC sys.sp_executesql N'CREATE UNIQUE INDEX UX_scheduling_appointments_code
+            ON scheduling.appointments(appointment_code);';
 
-        ALTER TABLE scheduling.appointments ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.appointments ADD
             CONSTRAINT CK_scheduling_appointments_time CHECK (start_time < end_time),
             CONSTRAINT CK_scheduling_appointments_status CHECK (status BETWEEN 0 AND 5),
             CONSTRAINT CK_scheduling_appointments_source CHECK (source BETWEEN 0 AND 2),
             CONSTRAINT CK_scheduling_appointments_queue CHECK (queue_number IS NULL OR queue_number > 0),
-            CONSTRAINT CK_scheduling_appointments_fee CHECK (fee_snapshot >= 0);
+            CONSTRAINT CK_scheduling_appointments_fee CHECK (fee_snapshot >= 0);';
 
-        ALTER TABLE scheduling.appointment_status_history ADD
+        EXEC sys.sp_executesql N'ALTER TABLE scheduling.appointment_status_history ADD
             CONSTRAINT CK_scheduling_history_from CHECK (from_status IS NULL OR from_status BETWEEN 0 AND 5),
-            CONSTRAINT CK_scheduling_history_to CHECK (to_status BETWEEN 0 AND 5);
+            CONSTRAINT CK_scheduling_history_to CHECK (to_status BETWEEN 0 AND 5);';
 
         -- ========================================================
         -- 3. CLINICAL: benh an, don thuoc, chi dinh, ket qua, kho
         -- ========================================================
-        ALTER TABLE clinical.medical_records ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.medical_records ADD
             icd10_code VARCHAR(10) NULL,
             treatment_plan NVARCHAR(4000) NULL,
             follow_up_date DATE NULL,
             status TINYINT NOT NULL CONSTRAINT DF_clinical_records_status DEFAULT (0),
-            finalized_at DATETIME2 NULL;
+            finalized_at DATETIME2 NULL;';
 
-        ALTER TABLE clinical.medical_records ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.medical_records ADD
             CONSTRAINT CK_clinical_records_status CHECK (status BETWEEN 0 AND 1),
             CONSTRAINT CK_clinical_records_finalized CHECK (
                 (status = 0 AND finalized_at IS NULL)
                 OR (status = 1 AND finalized_at IS NOT NULL)
-            );
+            );';
 
-        ALTER TABLE clinical.medicines ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.medicines ADD
             code VARCHAR(30) NULL,
             active_ingredient NVARCHAR(255) NULL,
             concentration NVARCHAR(100) NULL,
             cost_price DECIMAL(12,2) NULL,
-            min_stock INT NOT NULL CONSTRAINT DF_clinical_medicines_min_stock DEFAULT (0);
+            min_stock INT NOT NULL CONSTRAINT DF_clinical_medicines_min_stock DEFAULT (0);';
 
-        CREATE UNIQUE INDEX UX_clinical_medicines_code
-            ON clinical.medicines(code) WHERE code IS NOT NULL;
+        EXEC sys.sp_executesql N'CREATE UNIQUE INDEX UX_clinical_medicines_code
+            ON clinical.medicines(code) WHERE code IS NOT NULL;';
 
-        ALTER TABLE clinical.medicines ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.medicines ADD
             CONSTRAINT CK_clinical_medicines_price CHECK (price >= 0),
             CONSTRAINT CK_clinical_medicines_cost CHECK (cost_price IS NULL OR cost_price >= 0),
-            CONSTRAINT CK_clinical_medicines_stock CHECK (stock_quantity >= 0 AND min_stock >= 0);
+            CONSTRAINT CK_clinical_medicines_stock CHECK (stock_quantity >= 0 AND min_stock >= 0);';
 
         -- Han dung chuyen sang medicine_batches.
-        ALTER TABLE clinical.medicines DROP COLUMN expiry_date;
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.medicines DROP COLUMN expiry_date;';
 
-        ALTER TABLE clinical.prescriptions ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.prescriptions ADD
             doctor_id INT NULL,
             status TINYINT NOT NULL CONSTRAINT DF_clinical_prescriptions_status DEFAULT (0),
             dispensed_at DATETIME2 NULL,
-            dispensed_by INT NULL;
+            dispensed_by INT NULL;';
 
-        UPDATE p SET doctor_id = mr.doctor_id
+        EXEC sys.sp_executesql N'UPDATE p SET doctor_id = mr.doctor_id
         FROM clinical.prescriptions AS p
-        JOIN clinical.medical_records AS mr ON mr.id = p.medical_record_id;
+        JOIN clinical.medical_records AS mr ON mr.id = p.medical_record_id;';
 
-        ALTER TABLE clinical.prescriptions ALTER COLUMN doctor_id INT NOT NULL;
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.prescriptions ALTER COLUMN doctor_id INT NOT NULL;';
 
-        ALTER TABLE clinical.prescriptions ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.prescriptions ADD
             CONSTRAINT FK_clinical_prescriptions_doctors FOREIGN KEY (doctor_id) REFERENCES scheduling.doctors(id),
             CONSTRAINT FK_clinical_prescriptions_dispensed_by FOREIGN KEY (dispensed_by) REFERENCES auth.users(id),
             CONSTRAINT CK_clinical_prescriptions_status CHECK (status BETWEEN 0 AND 3),
             CONSTRAINT CK_clinical_prescriptions_dispensed CHECK (
                 status <> 2 OR (dispensed_at IS NOT NULL AND dispensed_by IS NOT NULL)
-            );
+            );';
 
-        ALTER TABLE clinical.prescription_items ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.prescription_items ADD
             medicine_name_snapshot NVARCHAR(255) NULL,
             unit_price_snapshot DECIMAL(12,2) NULL,
             duration_days INT NULL,
-            frequency NVARCHAR(50) NULL;
+            frequency NVARCHAR(50) NULL;';
 
-        UPDATE pi
+        EXEC sys.sp_executesql N'UPDATE pi
         SET medicine_name_snapshot = m.name,
             unit_price_snapshot = m.price
         FROM clinical.prescription_items AS pi
-        JOIN clinical.medicines AS m ON m.id = pi.medicine_id;
+        JOIN clinical.medicines AS m ON m.id = pi.medicine_id;';
 
-        ALTER TABLE clinical.prescription_items ALTER COLUMN medicine_name_snapshot NVARCHAR(255) NOT NULL;
-        ALTER TABLE clinical.prescription_items ALTER COLUMN unit_price_snapshot DECIMAL(12,2) NOT NULL;
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.prescription_items ALTER COLUMN medicine_name_snapshot NVARCHAR(255) NOT NULL;';
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.prescription_items ALTER COLUMN unit_price_snapshot DECIMAL(12,2) NOT NULL;';
 
-        ALTER TABLE clinical.prescription_items ADD
+        EXEC sys.sp_executesql N'ALTER TABLE clinical.prescription_items ADD
             CONSTRAINT CK_clinical_prescription_items_quantity CHECK (quantity > 0),
             CONSTRAINT CK_clinical_prescription_items_price CHECK (unit_price_snapshot >= 0),
-            CONSTRAINT CK_clinical_prescription_items_duration CHECK (duration_days IS NULL OR duration_days > 0);
+            CONSTRAINT CK_clinical_prescription_items_duration CHECK (duration_days IS NULL OR duration_days > 0);';
 
         -- Chi dinh dich vu: source of truth cho dich vu thuc te.
-        CREATE TABLE clinical.medical_record_services (
+        EXEC sys.sp_executesql N'CREATE TABLE clinical.medical_record_services (
             id INT IDENTITY(1,1) NOT NULL,
             medical_record_id INT NOT NULL,
             service_id INT NOT NULL,
@@ -427,12 +452,12 @@ BEGIN
             CONSTRAINT CK_clinical_mrs_quantity CHECK (quantity > 0),
             CONSTRAINT CK_clinical_mrs_price CHECK (unit_price_snapshot >= 0),
             CONSTRAINT CK_clinical_mrs_status CHECK (status BETWEEN 0 AND 3)
-        );
+        );';
 
-        CREATE INDEX IX_clinical_mrs_record_status
-            ON clinical.medical_record_services(medical_record_id,status);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_clinical_mrs_record_status
+            ON clinical.medical_record_services(medical_record_id,status);';
 
-        CREATE TABLE clinical.lab_results (
+        EXEC sys.sp_executesql N'CREATE TABLE clinical.lab_results (
             id INT IDENTITY(1,1) NOT NULL,
             medical_record_service_id INT NOT NULL,
             result_value NVARCHAR(4000) NULL,
@@ -446,9 +471,9 @@ BEGIN
             CONSTRAINT FK_clinical_lab_results_order FOREIGN KEY (medical_record_service_id)
                 REFERENCES clinical.medical_record_services(id),
             CONSTRAINT FK_clinical_lab_results_users FOREIGN KEY (recorded_by) REFERENCES auth.users(id)
-        );
+        );';
 
-        CREATE TABLE clinical.attachments (
+        EXEC sys.sp_executesql N'CREATE TABLE clinical.attachments (
             id INT IDENTITY(1,1) NOT NULL,
             medical_record_id INT NOT NULL,
             file_url NVARCHAR(1000) NOT NULL,
@@ -460,12 +485,12 @@ BEGIN
                 REFERENCES clinical.medical_records(id),
             CONSTRAINT FK_clinical_attachments_users FOREIGN KEY (uploaded_by)
                 REFERENCES auth.users(id)
-        );
+        );';
 
-        CREATE INDEX IX_clinical_attachments_record
-            ON clinical.attachments(medical_record_id);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_clinical_attachments_record
+            ON clinical.attachments(medical_record_id);';
 
-        CREATE TABLE clinical.patient_vitals (
+        EXEC sys.sp_executesql N'CREATE TABLE clinical.patient_vitals (
             id INT IDENTITY(1,1) NOT NULL,
             medical_record_id INT NOT NULL,
             temperature DECIMAL(4,1) NULL,
@@ -483,9 +508,9 @@ BEGIN
                 AND (weight IS NULL OR weight > 0)
                 AND (height IS NULL OR height > 0)
             )
-        );
+        );';
 
-        CREATE TABLE clinical.patient_allergies (
+        EXEC sys.sp_executesql N'CREATE TABLE clinical.patient_allergies (
             id INT IDENTITY(1,1) NOT NULL,
             patient_id INT NOT NULL,
             allergen NVARCHAR(255) NOT NULL,
@@ -494,12 +519,12 @@ BEGIN
             CONSTRAINT PK_clinical_patient_allergies PRIMARY KEY (id),
             CONSTRAINT FK_clinical_patient_allergies_patients FOREIGN KEY (patient_id)
                 REFERENCES scheduling.patients(id)
-        );
+        );';
 
-        CREATE INDEX IX_clinical_patient_allergies_patient
-            ON clinical.patient_allergies(patient_id);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_clinical_patient_allergies_patient
+            ON clinical.patient_allergies(patient_id);';
 
-        CREATE TABLE clinical.medicine_batches (
+        EXEC sys.sp_executesql N'CREATE TABLE clinical.medicine_batches (
             id INT IDENTITY(1,1) NOT NULL,
             medicine_id INT NOT NULL,
             batch_no VARCHAR(50) NOT NULL,
@@ -512,14 +537,14 @@ BEGIN
             CONSTRAINT FK_clinical_batches_medicines FOREIGN KEY (medicine_id) REFERENCES clinical.medicines(id),
             CONSTRAINT CK_clinical_batches_quantity CHECK (quantity >= 0),
             CONSTRAINT CK_clinical_batches_price CHECK (import_price IS NULL OR import_price >= 0)
-        );
+        );';
 
-        CREATE INDEX IX_clinical_batches_expiry ON clinical.medicine_batches(expiry_date);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_clinical_batches_expiry ON clinical.medicine_batches(expiry_date);';
 
         -- before/after + reversal_of_transaction_id bo sung de dap ung
         -- checklist F2/F3. type: 0 IN, 1 OUT, 2 ADJUST.
         -- ADJUST co the tang hoac giam; quantity luon la tri tuyet doi.
-        CREATE TABLE clinical.medicine_stock_transactions (
+        EXEC sys.sp_executesql N'CREATE TABLE clinical.medicine_stock_transactions (
             id INT IDENTITY(1,1) NOT NULL,
             medicine_id INT NOT NULL,
             batch_id INT NOT NULL,
@@ -550,64 +575,64 @@ BEGIN
                     OR quantity_before = quantity_after + quantity
                 ))
             )
-        );
+        );';
 
-        CREATE INDEX IX_clinical_stock_tx_batch_time
-            ON clinical.medicine_stock_transactions(batch_id,created_at);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_clinical_stock_tx_batch_time
+            ON clinical.medicine_stock_transactions(batch_id,created_at);';
 
-        CREATE INDEX IX_clinical_stock_tx_prescription
-            ON clinical.medicine_stock_transactions(prescription_id);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_clinical_stock_tx_prescription
+            ON clinical.medicine_stock_transactions(prescription_id);';
 
         -- ========================================================
         -- 4. BILLING
         -- ========================================================
-        ALTER TABLE billing.services ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.services ADD
             code VARCHAR(30) NULL,
             specialty_id INT NULL,
-            duration_minutes INT NULL;
+            duration_minutes INT NULL;';
 
-        CREATE UNIQUE INDEX UX_billing_services_code
-            ON billing.services(code) WHERE code IS NOT NULL;
+        EXEC sys.sp_executesql N'CREATE UNIQUE INDEX UX_billing_services_code
+            ON billing.services(code) WHERE code IS NOT NULL;';
 
-        ALTER TABLE billing.services ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.services ADD
             CONSTRAINT FK_billing_services_specialties FOREIGN KEY (specialty_id) REFERENCES scheduling.specialties(id),
             CONSTRAINT CK_billing_services_price CHECK (price >= 0),
-            CONSTRAINT CK_billing_services_duration CHECK (duration_minutes IS NULL OR duration_minutes > 0);
+            CONSTRAINT CK_billing_services_duration CHECK (duration_minutes IS NULL OR duration_minutes > 0);';
 
-        ALTER TABLE billing.invoices ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoices ADD
             invoice_no VARCHAR(30) NULL,
             discount_amount DECIMAL(12,2) NOT NULL CONSTRAINT DF_billing_invoices_discount DEFAULT (0),
             tax_amount DECIMAL(12,2) NOT NULL CONSTRAINT DF_billing_invoices_tax DEFAULT (0),
             paid_amount DECIMAL(12,2) NOT NULL CONSTRAINT DF_billing_invoices_paid DEFAULT (0),
             insurance_amount DECIMAL(12,2) NOT NULL CONSTRAINT DF_billing_invoices_insurance DEFAULT (0),
             cancelled_at DATETIME2 NULL,
-            cancel_reason NVARCHAR(500) NULL;
+            cancel_reason NVARCHAR(500) NULL;';
 
-        UPDATE billing.invoices
-        SET invoice_no = 'INV' + RIGHT(REPLICATE('0',10) + CONVERT(VARCHAR(20),id),10)
-        WHERE invoice_no IS NULL;
+        EXEC sys.sp_executesql N'UPDATE billing.invoices
+        SET invoice_no = ''INV'' + RIGHT(REPLICATE(''0'',10) + CONVERT(VARCHAR(20),id),10)
+        WHERE invoice_no IS NULL;';
 
-        ALTER TABLE billing.invoices ALTER COLUMN invoice_no VARCHAR(30) NOT NULL;
-        CREATE UNIQUE INDEX UX_billing_invoices_no ON billing.invoices(invoice_no);
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoices ALTER COLUMN invoice_no VARCHAR(30) NOT NULL;';
+        EXEC sys.sp_executesql N'CREATE UNIQUE INDEX UX_billing_invoices_no ON billing.invoices(invoice_no);';
 
         -- Backfill so da thu tu cac payments cu (truoc migration chua co refund).
-        UPDATE i SET paid_amount = COALESCE(p.paid,0)
+        EXEC sys.sp_executesql N'UPDATE i SET paid_amount = COALESCE(p.paid,0)
         FROM billing.invoices AS i
         OUTER APPLY (
             SELECT SUM(amount) AS paid
             FROM billing.payments AS p
             WHERE p.invoice_id = i.id
-        ) AS p;
+        ) AS p;';
 
         -- Ban goc chua co Cancelled; v1 them 3=Cancelled cho API huy hoa don.
-        UPDATE billing.invoices
+        EXEC sys.sp_executesql N'UPDATE billing.invoices
         SET status = CASE
             WHEN total_amount > 0 AND paid_amount >= total_amount THEN 2
             WHEN paid_amount > 0 THEN 1
             ELSE 0
-        END;
+        END;';
 
-        ALTER TABLE billing.invoices ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoices ADD
             CONSTRAINT CK_billing_invoices_amounts CHECK (
                 total_amount >= 0 AND discount_amount >= 0
                 AND tax_amount >= 0 AND paid_amount >= 0
@@ -619,23 +644,23 @@ BEGIN
             CONSTRAINT CK_billing_invoices_cancelled CHECK (
                 (status = 3 AND cancelled_at IS NOT NULL)
                 OR (status <> 3 AND cancelled_at IS NULL)
-            );
+            );';
 
         -- Doi FK dich vu: danh muc -> lan chi dinh thuc te.
         -- Preflight da chan moi dong service_id cu de khong mat mapping.
-        ALTER TABLE billing.invoice_items
-            DROP CONSTRAINT FK_billing_invoice_items_services;
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoice_items
+            DROP CONSTRAINT FK_billing_invoice_items_services;';
 
-        ALTER TABLE billing.invoice_items
-            DROP COLUMN service_id;
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoice_items
+            DROP COLUMN service_id;';
 
-        ALTER TABLE billing.invoice_items ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoice_items ADD
             medical_record_service_id INT NULL,
-            discount_amount DECIMAL(12,2) NOT NULL CONSTRAINT DF_billing_invoice_items_discount DEFAULT (0);
+            discount_amount DECIMAL(12,2) NOT NULL CONSTRAINT DF_billing_invoice_items_discount DEFAULT (0);';
 
-        ALTER TABLE billing.invoice_items ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoice_items ADD
             CONSTRAINT FK_billing_invoice_items_order FOREIGN KEY (medical_record_service_id)
-                REFERENCES clinical.medical_record_services(id);
+                REFERENCES clinical.medical_record_services(id);';
 
         -- Backfill snapshot ten neu dong thuoc cu chua co description.
         UPDATE ii SET description = m.name
@@ -643,7 +668,7 @@ BEGIN
         JOIN clinical.medicines AS m ON m.id = ii.medicine_id
         WHERE ii.description IS NULL;
 
-        ALTER TABLE billing.invoice_items ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.invoice_items ADD
             CONSTRAINT CK_billing_invoice_items_one_source CHECK (
                 (medical_record_service_id IS NOT NULL AND medicine_id IS NULL)
                 OR (medical_record_service_id IS NULL AND medicine_id IS NOT NULL)
@@ -653,24 +678,24 @@ BEGIN
                 AND amount >= 0
                 AND discount_amount <= quantity * unit_price
                 AND amount = quantity * unit_price - discount_amount
-            );
+            );';
 
-        ALTER TABLE billing.payments ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.payments ADD
             reference_code VARCHAR(100) NULL,
             received_by INT NULL,
-            is_refund BIT NOT NULL CONSTRAINT DF_billing_payments_is_refund DEFAULT (0);
+            is_refund BIT NOT NULL CONSTRAINT DF_billing_payments_is_refund DEFAULT (0);';
 
-        ALTER TABLE billing.payments ADD
+        EXEC sys.sp_executesql N'ALTER TABLE billing.payments ADD
             CONSTRAINT FK_billing_payments_received_by FOREIGN KEY (received_by) REFERENCES auth.users(id),
             CONSTRAINT CK_billing_payments_method CHECK (method BETWEEN 0 AND 3),
             CONSTRAINT CK_billing_payments_amount CHECK (
                 (is_refund = 0 AND amount > 0)
                 OR (is_refund = 1 AND amount < 0)
-            );
+            );';
 
         -- Insurance policy: de xuat toi thieu theo quan he Patient 1-N Policy.
         -- Chua seed muc huong hay quy tac BHYT thuc te.
-        CREATE TABLE billing.insurance_policies (
+        EXEC sys.sp_executesql N'CREATE TABLE billing.insurance_policies (
             id INT IDENTITY(1,1) NOT NULL,
             patient_id INT NOT NULL,
             policy_number VARCHAR(50) NOT NULL,
@@ -690,10 +715,10 @@ BEGIN
             CONSTRAINT CK_billing_insurance_dates CHECK (
                 valid_from IS NULL OR valid_to IS NULL OR valid_to >= valid_from
             )
-        );
+        );';
 
-        CREATE INDEX IX_billing_insurance_patient
-            ON billing.insurance_policies(patient_id);
+        EXEC sys.sp_executesql N'CREATE INDEX IX_billing_insurance_patient
+            ON billing.insurance_policies(patient_id);';
 
         -- ========================================================
         -- 5. KHOA SUA BENH AN DA CHOT
@@ -706,7 +731,9 @@ AS
 BEGIN
     SET NOCOUNT ON;
     IF EXISTS (SELECT 1 FROM deleted WHERE status = 1)
-        THROW 50020, N''Benh an da Finalized: khong duoc sua/xoa truc tiep.'', 1;
+        BEGIN
+            ;THROW 50020, N''Benh an da Finalized: khong duoc sua/xoa truc tiep.'', 1;
+        END;
 END
 ');
 
