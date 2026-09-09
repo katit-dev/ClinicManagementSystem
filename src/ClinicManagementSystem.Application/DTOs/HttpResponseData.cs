@@ -22,4 +22,8 @@ public static class UserResponseMessageDTO
 
     public const string PatientRoleNotFound = "Không tìm thấy vai trò bệnh nhân";
     public const string PatientProfileAlreadyLinked = "Hồ sơ bệnh nhân đã được liên kết với tài khoản khác";
+    public const string InvalidRegisterData = "Thông tin đăng ký không hợp lệ";
+    public const string RegisterConflict = "Thông tin đăng ký đã được sử dụng";
+    public const string ExistingPatientNeedsVerification = "Hồ sơ bệnh nhân đã tồn tại. Vui lòng xác minh hồ sơ trước khi liên kết tài khoản.";
+
 }
