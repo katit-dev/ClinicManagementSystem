@@ -2,6 +2,7 @@
 
 using ClinicManagementSystem.Infrastructure.Data;
 using ClinicManagementSystem.Infrastructure.Repositories;
+using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,8 @@ builder.Services.AddDbContext<ClinicManagementDbContext>(options =>
 // DI Repository
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+// DI UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();
 
