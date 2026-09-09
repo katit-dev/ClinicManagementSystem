@@ -5,6 +5,7 @@ using ClinicManagementSystem.Infrastructure.Data;
 using ClinicManagementSystem.Infrastructure.Repositories;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,8 +51,15 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // DI Service
 builder.Services.AddScoped<IUserService, UserService>();
 
+// DI Serilog
+builder.Services.AddSerilog((services, loggerConfiguration) =>
+    loggerConfiguration
+        .ReadFrom.Configuration(builder.Configuration)
+        .ReadFrom.Services(services));
+
 var app = builder.Build();
 
-
+// Log khoi dong
+app.Logger.LogInformation("Clinic API started.");
 
 app.Run();
