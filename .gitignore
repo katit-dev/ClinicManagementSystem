@@ -37,3 +37,7 @@ docs/CLINIC_DATABASE_V1_29_TABLES_GUIDE.docx
 # Microsoft Word temporary files
 docs/~$*
 docs/~WRL*.tmp
+
+# Application logs
+logs/
+Logs/
