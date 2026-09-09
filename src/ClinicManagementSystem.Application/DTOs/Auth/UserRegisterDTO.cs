@@ -22,7 +22,7 @@ public class UserRegisterDTO
 
     [Required(ErrorMessage = "Mật khẩu không được để trống")]
     [MinLength(8, ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự")]
-    [MaxLength(128)]
+    [MaxLength(128, ErrorMessage = "Mật khẩu không được vượt quá 128 ký tự")]
     public string Password { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu")]
