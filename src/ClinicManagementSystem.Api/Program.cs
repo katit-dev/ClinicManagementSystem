@@ -1,5 +1,6 @@
 
 
+using ClinicManagementSystem.Application.Services;
 using ClinicManagementSystem.Infrastructure.Data;
 using ClinicManagementSystem.Infrastructure.Repositories;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
@@ -45,6 +46,9 @@ builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
 // DI UnitOfWork
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// DI Service
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
