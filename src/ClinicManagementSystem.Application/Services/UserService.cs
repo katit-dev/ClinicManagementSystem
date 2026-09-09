@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text;
 using ClinicManagementSystem.Application.Constants;
 using ClinicManagementSystem.Application.DTOs;
@@ -34,7 +33,7 @@ public class UserService : IUserService
     public async Task<HttpResponseData<object?>> RegisterUserAsync(
         UserRegisterDTO request)
     {
-        // 1. Kiểm tra dữ liệu đầu vào
+        // 1. Kiểm tra request
         if (request == null)
         {
             return Response(
@@ -42,33 +41,24 @@ public class UserService : IUserService
                 UserResponseMessageDTO.InvalidRegisterData);
         }
 
-        var validationResults = new List<ValidationResult>();
-
-        bool isValid = Validator.TryValidateObject(
-            request,
-            new ValidationContext(request),
-            validationResults,
-            validateAllProperties: true);
-
-        string fullName = request.FullName?.Trim() ?? string.Empty;
-        string phone = request.Phone?.Trim() ?? string.Empty;
+        // 2. Chuẩn hóa dữ liệu
+        string fullName = request.FullName.Trim();
+        string phone = request.Phone.Trim();
 
         string? email = string.IsNullOrWhiteSpace(request.Email)
             ? null
             : request.Email.Trim().ToLowerInvariant();
 
-        if (!isValid ||
-            string.IsNullOrWhiteSpace(fullName) ||
-            string.IsNullOrWhiteSpace(phone) ||
-            (request.DateOfBirth.HasValue &&
-             request.DateOfBirth.Value.Date > DateTime.UtcNow.Date))
+        // 3. Kiểm tra ngày sinh
+        if (request.DateOfBirth.HasValue &&
+            request.DateOfBirth.Value.Date > DateTime.UtcNow.Date)
         {
             return Response(
                 400,
-                UserResponseMessageDTO.InvalidRegisterData);
+                UserResponseMessageDTO.InvalidDateOfBirth);
         }
 
-        // BCrypt thông thường chỉ sử dụng tối đa 72 byte đầu vào.
+        // 4. Kiểm tra giới hạn byte của BCrypt
         if (Encoding.UTF8.GetByteCount(request.Password) > 72)
         {
             return Response(
@@ -80,7 +70,7 @@ public class UserService : IUserService
 
         try
         {
-            // 2. Kiểm tra tài khoản đã tồn tại
+            // 5. Kiểm tra tài khoản đã tồn tại
             // Quy ước: Username = số điện thoại.
             bool userExists = await _unitOfWork.UserRepository
                 .WhereSql(u =>
@@ -96,8 +86,8 @@ public class UserService : IUserService
                     UserResponseMessageDTO.RegisterConflict);
             }
 
-            // 3. Kiểm tra hồ sơ bệnh nhân cũ
-            // Chưa tự liên kết hồ sơ chỉ vì trùng số điện thoại.
+            // 6. Kiểm tra hồ sơ bệnh nhân cũ
+            // Chưa tự liên kết chỉ vì trùng số điện thoại.
             bool patientExists = await _unitOfWork.PatientRepository
                 .WhereSql(p => p.Phone == phone)
                 .AnyAsync();
@@ -109,7 +99,7 @@ public class UserService : IUserService
                     UserResponseMessageDTO.RegisterConflict);
             }
 
-            // 4. Lấy Role Patient từ database
+            // 7. Lấy Role Patient từ database
             var patientRole = await _unitOfWork.RoleRepository
                 .WhereSql(r => r.Name == UserRoleConstant.Patient)
                 .FirstOrDefaultAsync();
@@ -123,13 +113,14 @@ public class UserService : IUserService
                     UserResponseMessageDTO.PatientRoleNotFound);
             }
 
-            // 5. Tạo User
+            // 8. Tạo User
             var now = DateTime.UtcNow;
 
             var user = new User
             {
                 Username = phone,
-                PasswordHash = HelperFunction.HashPassword(request.Password),
+                PasswordHash =
+                    HelperFunction.HashPassword(request.Password),
                 FullName = fullName,
                 Phone = phone,
                 Email = email,
@@ -140,7 +131,7 @@ public class UserService : IUserService
                 CreatedAt = now
             };
 
-            // 6. Gán Role Patient
+            // 9. Gán Role Patient
             var userRole = new UserRole
             {
                 User = user,
@@ -148,7 +139,7 @@ public class UserService : IUserService
                 AssignedAt = now
             };
 
-            // 7. Tạo hồ sơ bệnh nhân mới
+            // 10. Tạo hồ sơ bệnh nhân mới
             var patient = new Patient
             {
                 User = user,
@@ -156,25 +147,31 @@ public class UserService : IUserService
                 Phone = phone,
                 Email = email,
                 DateOfBirth = request.DateOfBirth.HasValue
-                    ? DateOnly.FromDateTime(request.DateOfBirth.Value)
+                    ? DateOnly.FromDateTime(
+                        request.DateOfBirth.Value)
                     : null,
                 PatientCode = "BN" +
-                    Guid.NewGuid().ToString("N")[..18].ToUpperInvariant(),
+                    Guid.NewGuid()
+                        .ToString("N")[..18]
+                        .ToUpperInvariant(),
                 IsActive = true,
                 CreatedAt = now
             };
 
-            // 8. Bắt đầu transaction
+            // 11. Bắt đầu transaction
             await _unitOfWork.BeginTransactionAsync();
             transactionStarted = true;
 
-            // 9. Chuẩn bị thay đổi ở 3 Repository
+            // 12. Chuẩn bị thay đổi ở 3 Repository
             await _unitOfWork.UserRepository.AddAsync(user);
+
             await _unitOfWork.UserRoleRepository.AddAsync(userRole);
+
             await _unitOfWork.PatientRepository.AddAsync(patient);
 
-            // 10. Lưu và commit
+            // 13. Lưu và commit
             await _unitOfWork.SaveChangesAsync();
+
             await _unitOfWork.CommitTransactionAsync();
 
             transactionStarted = false;
@@ -182,7 +179,7 @@ public class UserService : IUserService
             _logger.LogInformation(
                 "Patient registration completed successfully.");
 
-            // Không trả PasswordHash
+            // 14. Trả dữ liệu an toàn
             return Response(
                 201,
                 UserResponseMessageDTO.RegisterSuccess,
@@ -195,7 +192,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            // Nếu lỗi xảy ra khi transaction còn mở thì rollback.
+            // Nếu transaction còn mở thì cố gắng rollback.
             if (transactionStarted)
             {
                 try
