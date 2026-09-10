@@ -64,9 +64,6 @@ public static class PatientResponseMessageDTO
     public const string InvalidPhone =
         "Số điện thoại không hợp lệ";
 
-    public const string MultiplePatientsFound =
-        "Có nhiều hồ sơ bệnh nhân sử dụng số điện thoại này. Vui lòng liên hệ phòng khám để được hỗ trợ.";
-
     public const string LookupFailed =
         "Không thể tra cứu hồ sơ bệnh nhân";
 }
