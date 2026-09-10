@@ -22,3 +22,6 @@ VALUES
 SELECT *
 FROM scheduling.patients
 WHERE phone = '0901234567';
+
+DELETE FROM scheduling.patients
+WHERE patient_code = 'BNTEST000000000001';
