@@ -1,5 +1,4 @@
-
-
+using Microsoft.OpenApi;
 using ClinicManagementSystem.Application.Services;
 using ClinicManagementSystem.Infrastructure.Data;
 using ClinicManagementSystem.Infrastructure.Repositories;
@@ -9,12 +8,28 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DI DbContext
-builder.Services.AddDbContext<ClinicManagementDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("ClinicDb")));
+// ============================================================
+// CONTROLLERS
+// ============================================================
 
+builder.Services.AddControllers();
+
+// ============================================================
+// DI DbContext
+// ============================================================
+
+string connectionString =
+    builder.Configuration.GetConnectionString("ClinicDb")
+    ?? throw new InvalidOperationException(
+        "Connection string 'ClinicDb' not found.");
+
+builder.Services.AddDbContext<ClinicManagementDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// ============================================================
 // DI Repository
+// ============================================================
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IAppointmentStatusHistoryRepository, AppointmentStatusHistoryRepository>();
@@ -45,22 +60,82 @@ builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ISpecialtyRepository, SpecialtyRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
+// ============================================================
 // DI UnitOfWork
+// ============================================================
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// ============================================================
 // DI Service
+// ============================================================
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 
+// ============================================================
 // DI Serilog
+// ============================================================
+
 builder.Services.AddSerilog((services, loggerConfiguration) =>
     loggerConfiguration
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services));
 
+// ============================================================
+// Authorization
+// ============================================================
+
+builder.Services.AddAuthorization();
+
+// ============================================================
+// Swagger
+// ============================================================
+
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Clinic Management System API",
+        Version = "v1",
+        Description = "API documentation for Clinic Management System"
+    });
+});
+
 var app = builder.Build();
 
-// Log khoi dong
+// ============================================================
+// Swagger Middleware
+// ============================================================
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint(
+            "/swagger/v1/swagger.json",
+            "Clinic Management System API V1"
+        );
+
+        options.RoutePrefix = string.Empty;
+    });
+}
+
+// ============================================================
+// Middleware
+// ============================================================
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+// Log khởi động
 app.Logger.LogInformation("Clinic API started.");
 
 app.Run();
