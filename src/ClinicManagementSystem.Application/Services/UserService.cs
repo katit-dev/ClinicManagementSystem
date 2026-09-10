@@ -33,15 +33,7 @@ public class UserService : IUserService
     public async Task<HttpResponseData<object?>> RegisterUserAsync(
         UserRegisterDTO request)
     {
-        // 1. Kiểm tra request
-        if (request == null)
-        {
-            return Response(
-                400,
-                UserResponseMessageDTO.InvalidRegisterData);
-        }
-
-        // 2. Chuẩn hóa dữ liệu
+        // Chuẩn hóa dữ liệu
         string fullName = request.FullName.Trim();
         string phone = request.Phone.Trim();
 
@@ -49,7 +41,7 @@ public class UserService : IUserService
             ? null
             : request.Email.Trim().ToLowerInvariant();
 
-        // 3. Kiểm tra ngày sinh
+        // Ngày sinh không được ở tương lai
         if (request.DateOfBirth.HasValue &&
             request.DateOfBirth.Value.Date > DateTime.UtcNow.Date)
         {
@@ -58,7 +50,7 @@ public class UserService : IUserService
                 UserResponseMessageDTO.InvalidDateOfBirth);
         }
 
-        // 4. Kiểm tra giới hạn byte của BCrypt
+        // Giới hạn đầu vào cho BCrypt
         if (Encoding.UTF8.GetByteCount(request.Password) > 72)
         {
             return Response(
@@ -70,8 +62,7 @@ public class UserService : IUserService
 
         try
         {
-            // 5. Kiểm tra tài khoản đã tồn tại
-            // Quy ước: Username = số điện thoại.
+            // 1. Kiểm tra đã có account chưa
             bool userExists = await _unitOfWork.UserRepository
                 .WhereSql(u =>
                     u.Username == phone ||
@@ -86,20 +77,21 @@ public class UserService : IUserService
                     UserResponseMessageDTO.RegisterConflict);
             }
 
-            // 6. Kiểm tra hồ sơ bệnh nhân cũ
-            // Chưa tự liên kết chỉ vì trùng số điện thoại.
-            bool patientExists = await _unitOfWork.PatientRepository
+            // 2. Tìm hồ sơ Patient theo số điện thoại
+            var existingPatient = await _unitOfWork.PatientRepository
                 .WhereSql(p => p.Phone == phone)
-                .AnyAsync();
+                .FirstOrDefaultAsync();
 
-            if (patientExists)
+            // 3. Nếu Patient đã liên kết account
+            if (existingPatient != null &&
+                existingPatient.UserId.HasValue)
             {
                 return Response(
                     409,
                     UserResponseMessageDTO.RegisterConflict);
             }
 
-            // 7. Lấy Role Patient từ database
+            // 4. Lấy role Patient
             var patientRole = await _unitOfWork.RoleRepository
                 .WhereSql(r => r.Name == UserRoleConstant.Patient)
                 .FirstOrDefaultAsync();
@@ -113,9 +105,10 @@ public class UserService : IUserService
                     UserResponseMessageDTO.PatientRoleNotFound);
             }
 
-            // 8. Tạo User
             var now = DateTime.UtcNow;
 
+            // 5. Tạo account
+            // Quy ước hiện tại: Username = Phone
             var user = new User
             {
                 Username = phone,
@@ -124,14 +117,16 @@ public class UserService : IUserService
                 FullName = fullName,
                 Phone = phone,
                 Email = email,
+
                 IsActive = true,
                 IsDeleted = false,
                 EmailConfirmed = false,
                 FailedLoginCount = 0,
+
                 CreatedAt = now
             };
 
-            // 9. Gán Role Patient
+            // 6. Gán role Patient
             var userRole = new UserRole
             {
                 User = user,
@@ -139,39 +134,64 @@ public class UserService : IUserService
                 AssignedAt = now
             };
 
-            // 10. Tạo hồ sơ bệnh nhân mới
-            var patient = new Patient
-            {
-                User = user,
-                FullName = fullName,
-                Phone = phone,
-                Email = email,
-                DateOfBirth = request.DateOfBirth.HasValue
-                    ? DateOnly.FromDateTime(
-                        request.DateOfBirth.Value)
-                    : null,
-                PatientCode = "BN" +
-                    Guid.NewGuid()
-                        .ToString("N")[..18]
-                        .ToUpperInvariant(),
-                IsActive = true,
-                CreatedAt = now
-            };
-
-            // 11. Bắt đầu transaction
             await _unitOfWork.BeginTransactionAsync();
             transactionStarted = true;
 
-            // 12. Chuẩn bị thay đổi ở 3 Repository
+            // 7. Thêm User
             await _unitOfWork.UserRepository.AddAsync(user);
 
+            // 8. Thêm UserRole
             await _unitOfWork.UserRoleRepository.AddAsync(userRole);
 
-            await _unitOfWork.PatientRepository.AddAsync(patient);
+            Patient patient;
 
-            // 13. Lưu và commit
+            // 9. Xử lý Patient
+            if (existingPatient == null)
+            {
+                // Trường hợp 1:
+                // Chưa có account + chưa có hồ sơ Patient
+                patient = new Patient
+                {
+                    User = user,
+                    FullName = fullName,
+                    Phone = phone,
+                    Email = email,
+
+                    DateOfBirth = request.DateOfBirth.HasValue
+                        ? DateOnly.FromDateTime(
+                            request.DateOfBirth.Value)
+                        : null,
+
+                    PatientCode = "BN" +
+                        Guid.NewGuid()
+                            .ToString("N")[..18]
+                            .ToUpperInvariant(),
+
+                    IsActive = true,
+                    CreatedAt = now
+                };
+
+                await _unitOfWork.PatientRepository
+                    .AddAsync(patient);
+            }
+            else
+            {
+                // Trường hợp 2:
+                // Đã có hồ sơ Patient nhưng chưa có account
+                patient = existingPatient;
+
+                // Liên kết hồ sơ cũ với User vừa tạo
+                patient.User = user;
+                patient.UpdatedAt = now;
+
+                await _unitOfWork.PatientRepository
+                    .UpdateAsync(patient);
+            }
+
+            // 10. Lưu tất cả thay đổi
             await _unitOfWork.SaveChangesAsync();
 
+            // 11. Commit transaction
             await _unitOfWork.CommitTransactionAsync();
 
             transactionStarted = false;
@@ -179,7 +199,6 @@ public class UserService : IUserService
             _logger.LogInformation(
                 "Patient registration completed successfully.");
 
-            // 14. Trả dữ liệu an toàn
             return Response(
                 201,
                 UserResponseMessageDTO.RegisterSuccess,
@@ -192,7 +211,6 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            // Nếu transaction còn mở thì cố gắng rollback.
             if (transactionStarted)
             {
                 try
@@ -207,28 +225,6 @@ public class UserService : IUserService
                 }
             }
 
-            // Lỗi trùng unique constraint
-            if (HasSqlError(ex, 2601, 2627))
-            {
-                _logger.LogWarning(
-                    "Patient registration rejected due to a uniqueness conflict.");
-
-                return Response(
-                    409,
-                    UserResponseMessageDTO.RegisterConflict);
-            }
-
-            // SQL Server deadlock
-            if (HasSqlError(ex, 1205))
-            {
-                _logger.LogWarning(
-                    "Patient registration transaction was selected as a deadlock victim.");
-
-                return Response(
-                    503,
-                    UserResponseMessageDTO.RegisterRetry);
-            }
-
             _logger.LogError(
                 ex,
                 "Patient registration failed.");
@@ -239,24 +235,7 @@ public class UserService : IUserService
         }
     }
 
-    private static bool HasSqlError(
-        Exception exception,
-        params int[] errorNumbers)
-    {
-        for (Exception? current = exception;
-             current != null;
-             current = current.InnerException)
-        {
-            if (current is SqlException sqlException &&
-                errorNumbers.Contains(sqlException.Number))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
+    // Helper function
     private static HttpResponseData<object?> Response(
         int statusCode,
         string message,
