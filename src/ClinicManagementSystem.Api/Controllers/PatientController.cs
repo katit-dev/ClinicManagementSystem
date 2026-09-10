@@ -1,3 +1,4 @@
+using ClinicManagementSystem.Application.DTOs.Patient;
 using ClinicManagementSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,9 +17,9 @@ public class PatientController : ControllerBase
 
     [HttpGet("lookup")]
     public async Task<IActionResult> LookupByPhone(
-        [FromQuery] string phone)
+    [FromQuery] PatientLookupRequestDTO request)
     {
-        var result = await _patientService.LookupByPhoneAsync(phone);
+        var result = await _patientService.LookupByPhoneAsync(request.Phone);
 
         return StatusCode(result.StatusCode, result);
     }
