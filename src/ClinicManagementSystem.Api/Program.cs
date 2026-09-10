@@ -50,6 +50,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // DI Service
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPatientService, PatientService>();
 
 // DI Serilog
 builder.Services.AddSerilog((services, loggerConfiguration) =>
