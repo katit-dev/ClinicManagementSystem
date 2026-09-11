@@ -7,6 +7,7 @@ using ClinicManagementSystem.Infrastructure.Models;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace ClinicManagementSystem.Application.Services;
@@ -21,13 +22,15 @@ public class UserService : IUserService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<UserService> _logger;
+    private readonly IJwtAuthService _jwtAuthService;
+    private readonly IConfiguration _configuration;
 
-    public UserService(
-        IUnitOfWork unitOfWork,
-        ILogger<UserService> logger)
+    public UserService(IUnitOfWork unitOfWork, ILogger<UserService> logger, IJwtAuthService jwtAuthService, IConfiguration configuration)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _jwtAuthService = jwtAuthService;
+        _configuration = configuration;
     }
 
     public async Task<HttpResponseData<object?>> RegisterUserAsync(
