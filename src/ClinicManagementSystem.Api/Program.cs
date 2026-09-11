@@ -5,6 +5,10 @@ using ClinicManagementSystem.Infrastructure.Repositories;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +108,51 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// ============================================================
+// JWT AUTHENTICATION
+// ============================================================
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException(
+        "JWT Key is not configured.");
+}
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtKey)
+                ),
+
+                ValidateIssuer = true,
+                ValidIssuer = jwtIssuer,
+
+                ValidateAudience = true,
+                ValidAudience = jwtAudience,
+
+                ValidateLifetime = true,
+
+                ClockSkew = TimeSpan.Zero,
+
+                RoleClaimType = ClaimTypes.Role,
+
+                NameClaimType = "UserName"
+            };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // ============================================================
@@ -130,9 +179,8 @@ if (app.Environment.IsDevelopment())
 // ============================================================
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 // Log khởi động
