@@ -59,8 +59,8 @@ public static class UserResponseMessageDTO
     public const string InvalidCredentials =
         "Tên đăng nhập hoặc mật khẩu không chính xác";
 
-    public const string AccountInactive =
-        "Tài khoản đã bị khóa hoặc ngừng hoạt động";
+    public const string AccountUnavailable =
+        "Không thể đăng nhập. Vui lòng liên hệ phòng khám để được hỗ trợ.";
 
     public const string LoginFailed =
         "Đăng nhập thất bại";
