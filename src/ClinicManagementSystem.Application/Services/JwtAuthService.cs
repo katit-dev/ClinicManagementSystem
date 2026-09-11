@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using ClinicManagementSystem.Infrastructure.Models;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,10 @@ public interface IJwtAuthService
     string GenerateAccessToken(
         User user,
         List<string> roles);
+
+    string GenerateRefreshToken();
+
+    string HashRefreshToken(string refreshToken);
 }
 
 public class JwtAuthService : IJwtAuthService
@@ -106,5 +111,23 @@ public class JwtAuthService : IJwtAuthService
         // 6. Chuyển JWT thành chuỗi
         return new JwtSecurityTokenHandler()
             .WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+
+        return Convert.ToBase64String(randomBytes);
+    }
+
+    public string HashRefreshToken(string refreshToken)
+    {
+        byte[] tokenBytes =
+            Encoding.UTF8.GetBytes(refreshToken);
+
+        byte[] hashBytes =
+            SHA256.HashData(tokenBytes);
+
+        return Convert.ToHexString(hashBytes);
     }
 }
