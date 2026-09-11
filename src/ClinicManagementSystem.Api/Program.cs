@@ -74,6 +74,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // DI Service
 // ============================================================
 
+builder.Services.AddScoped<IJwtAuthService, JwtAuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 
