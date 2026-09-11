@@ -13,8 +13,8 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IUserService
 {
-    Task<HttpResponseData<object?>> RegisterUserAsync(
-        UserRegisterDTO request);
+    Task<HttpResponseData<object?>> RegisterUserAsync(UserRegisterDTO request);
+    Task<HttpResponseData<AuthResponseDTO?>> LoginAsync(LoginRequestDTO request);
 }
 
 public class UserService : IUserService
