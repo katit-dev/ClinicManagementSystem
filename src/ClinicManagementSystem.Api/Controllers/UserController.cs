@@ -24,4 +24,14 @@ public class UserController : ControllerBase
 
         return StatusCode(result.StatusCode, result);
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(
+    [FromBody] LoginRequestDTO request)
+    {
+        var result =
+            await _userService.LoginAsync(request);
+
+        return StatusCode(result.StatusCode, result);
+    }
 }
