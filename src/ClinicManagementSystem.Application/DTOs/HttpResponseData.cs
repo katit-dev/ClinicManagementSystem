@@ -51,6 +51,19 @@ public static class UserResponseMessageDTO
 
     public const string PasswordTooLong =
         "Mật khẩu quá dài. Vui lòng sử dụng mật khẩu ngắn hơn.";
+
+    // Login
+    public const string LoginSuccess =
+    "Đăng nhập thành công";
+
+    public const string InvalidCredentials =
+        "Tên đăng nhập hoặc mật khẩu không chính xác";
+
+    public const string AccountInactive =
+        "Tài khoản đã bị khóa hoặc ngừng hoạt động";
+
+    public const string LoginFailed =
+        "Đăng nhập thất bại";
 }
 
 public static class PatientResponseMessageDTO
