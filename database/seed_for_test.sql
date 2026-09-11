@@ -66,3 +66,64 @@ SELECT id, user_id, full_name, phone, patient_code
 FROM scheduling.patients
 WHERE phone = '0902222222';
 
+-- insert role bác sĩ
+UPDATE ur
+SET ur.role_id = rDoctor.id
+FROM auth.user_roles ur
+CROSS JOIN auth.roles rDoctor
+WHERE ur.user_id = 5
+  AND rDoctor.name = 'Doctor';
+
+-- insert 1 specialty
+  INSERT INTO scheduling.specialties
+(
+    code,
+    name
+)
+VALUES
+(
+    'NOI',
+    N'Nội khoa'
+);
+
+-- tao doctor profile
+INSERT INTO scheduling.doctors
+(
+    user_id,
+    specialty_id,
+    full_name,
+    phone,
+    email,
+    license_number
+)
+VALUES
+(
+    3,
+    1,
+    N'Nguyễn Văn Bác Sĩ',
+    '0903333333',
+    'doctor.test@gmail.com',
+    'BS-TEST-001'
+);
+
+-- kiem tra
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    r.name AS role_name
+FROM auth.users u
+LEFT JOIN auth.user_roles ur
+    ON ur.user_id = u.id
+LEFT JOIN auth.roles r
+    ON r.id = ur.role_id
+WHERE u.phone = '0903333333';
+
+-- 
+UPDATE scheduling.patients
+SET user_id = NULL
+WHERE user_id = 3;
+
+DELETE FROM scheduling.patients
+WHERE id = 4
+  AND user_id IS NULL;
