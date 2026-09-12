@@ -134,4 +134,22 @@ public class JwtAuthService : IJwtAuthService
 
         return Convert.ToHexString(hashBytes);
     }
+
+    public string GenerateResetToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(32);
+
+        return Convert.ToBase64String(randomBytes);
+    }
+
+    public string HashResetToken(string resetToken)
+    {
+        byte[] tokenBytes =
+            Encoding.UTF8.GetBytes(resetToken);
+
+        byte[] hashBytes =
+            SHA256.HashData(tokenBytes);
+
+        return Convert.ToHexString(hashBytes);
+    }
 }
