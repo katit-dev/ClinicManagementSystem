@@ -17,6 +17,10 @@ public interface IJwtAuthService
     string GenerateRefreshToken();
 
     string HashRefreshToken(string refreshToken);
+
+    string GenerateResetToken();
+
+    string HashResetToken(string resetToken);
 }
 
 public class JwtAuthService : IJwtAuthService
