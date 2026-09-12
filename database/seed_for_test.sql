@@ -127,3 +127,15 @@ WHERE user_id = 3;
 DELETE FROM scheduling.patients
 WHERE id = 4
   AND user_id IS NULL;
+
+  -- TEST REFRESH TOKEN
+  SELECT
+    id,
+    user_id,
+    token_hash,
+    expires_at,
+    revoked_at,
+    created_at
+FROM auth.refresh_tokens
+WHERE user_id = 3
+ORDER BY id DESC;

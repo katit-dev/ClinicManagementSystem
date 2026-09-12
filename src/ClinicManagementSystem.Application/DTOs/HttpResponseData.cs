@@ -64,6 +64,16 @@ public static class UserResponseMessageDTO
 
     public const string LoginFailed =
         "Đăng nhập thất bại";
+
+    // Refresh Token
+    public const string RefreshTokenSuccess =
+    "Làm mới token thành công";
+
+    public const string InvalidRefreshToken =
+        "Refresh token không hợp lệ hoặc đã hết hạn";
+
+    public const string RefreshTokenFailed =
+        "Không thể làm mới token";
 }
 
 public static class PatientResponseMessageDTO
