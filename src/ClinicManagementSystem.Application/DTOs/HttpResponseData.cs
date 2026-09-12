@@ -74,6 +74,13 @@ public static class UserResponseMessageDTO
 
     public const string RefreshTokenFailed =
         "Không thể làm mới token";
+
+    // forgot password
+    public const string ForgotPasswordSuccess =
+    "Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi đến email.";
+
+    public const string ForgotPasswordFailed =
+        "Không thể xử lý yêu cầu quên mật khẩu";
 }
 
 public static class PatientResponseMessageDTO
