@@ -34,4 +34,12 @@ public class UserController : ControllerBase
 
         return StatusCode(result.StatusCode, result);
     }
+
+    [HttpPost("refresh-token")]
+public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO request)
+{
+    var result = await _userService.RefreshTokenAsync(request);
+
+    return StatusCode(result.StatusCode, result);
+}
 }
