@@ -17,6 +17,7 @@ public interface IUserService
     Task<HttpResponseData<object?>> RegisterUserAsync(UserRegisterDTO request);
     Task<HttpResponseData<AuthResponseDTO?>> LoginAsync(LoginRequestDTO request);
     Task<HttpResponseData<AuthResponseDTO?>> RefreshTokenAsync(RefreshTokenRequestDTO request);
+    Task<HttpResponseData<object?>> ForgotPasswordAsync(ForgotPasswordRequestDTO request);
 }
 
 public class UserService : IUserService
@@ -32,6 +33,108 @@ public class UserService : IUserService
         _logger = logger;
         _jwtAuthService = jwtAuthService;
         _configuration = configuration;
+    }
+
+    public async Task<HttpResponseData<object?>> ForgotPasswordAsync(
+    ForgotPasswordRequestDTO request)
+    {
+        try
+        {
+            string email =
+                request.Email.Trim().ToLowerInvariant();
+
+            // 1. Tìm User theo email
+            var user = await _unitOfWork.UserRepository
+                .SingleOrDefault(
+                    u => u.Email == email);
+
+            // Không tiết lộ email có tồn tại hay không
+            if (user == null)
+            {
+                return Response(
+                    200,
+                    UserResponseMessageDTO.ForgotPasswordSuccess);
+            }
+
+            var now = DateTime.UtcNow;
+
+            // 2. Lấy các reset token cũ còn hiệu lực
+            var activeTokens =
+                await _unitOfWork.PasswordResetTokenRepository
+                    .WhereSql(t =>
+                        t.UserId == user.Id &&
+                        t.UsedAt == null &&
+                        t.RevokedAt == null &&
+                        t.ExpiresAt > now)
+                    .ToListAsync();
+
+            // 3. Revoke các token cũ
+            foreach (var token in activeTokens)
+            {
+                token.RevokedAt = now;
+
+                await _unitOfWork.PasswordResetTokenRepository
+                    .UpdateAsync(token);
+            }
+
+            // 4. Tạo Reset Token mới
+            string resetToken =
+                _jwtAuthService.GenerateResetToken();
+
+            // 5. Hash trước khi lưu DB
+            string resetTokenHash =
+                _jwtAuthService.HashResetToken(
+                    resetToken);
+
+            int expirationMinutes =
+                _configuration.GetValue<int>(
+                    "Jwt:PasswordResetTokenExpirationMinutes");
+
+            // 6. Tạo record mới
+            var resetTokenModel =
+                new PasswordResetToken
+                {
+                    UserId = user.Id,
+
+                    TokenHash = resetTokenHash,
+
+                    ExpiresAt =
+                        now.AddMinutes(expirationMinutes),
+
+                    CreatedAt = now
+                };
+
+            await _unitOfWork.PasswordResetTokenRepository
+                .AddAsync(resetTokenModel);
+
+            // 7. Lưu DB
+            await _unitOfWork.SaveChangesAsync();
+
+            /*
+             * Bước tiếp theo:
+             * gửi resetToken thật cho User qua Email.
+             *
+             * Tuyệt đối không gửi resetTokenHash.
+             */
+
+            _logger.LogInformation(
+                "Password reset request created for User {UserId}.",
+                user.Id);
+
+            return Response(
+                200,
+                UserResponseMessageDTO.ForgotPasswordSuccess);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Forgot password request failed.");
+
+            return Response(
+                500,
+                UserResponseMessageDTO.ForgotPasswordFailed);
+        }
     }
 
     public async Task<HttpResponseData<AuthResponseDTO?>> RefreshTokenAsync(
