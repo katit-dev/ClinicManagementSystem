@@ -63,6 +63,7 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ISpecialtyRepository, SpecialtyRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
 // ============================================================
 // DI UnitOfWork
