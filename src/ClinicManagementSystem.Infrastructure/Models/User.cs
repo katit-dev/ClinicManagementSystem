@@ -59,6 +59,8 @@ public partial class User
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
+    public virtual ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
+
     public virtual Patient? Patient { get; set; }
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
