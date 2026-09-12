@@ -35,6 +35,7 @@ public interface IUnitOfWork : IAsyncDisposable
     IServiceRepository ServiceRepository { get; }
     ISpecialtyRepository SpecialtyRepository { get; }
     IUserRoleRepository UserRoleRepository { get; }
+    IPasswordResetTokenRepository PasswordResetTokenRepository { get; }
 
     Task BeginTransactionAsync();
 
@@ -79,6 +80,7 @@ public class UnitOfWork : IUnitOfWork
     public IServiceRepository ServiceRepository { get; private set; }
     public ISpecialtyRepository SpecialtyRepository { get; private set; }
     public IUserRoleRepository UserRoleRepository { get; private set; }
+    public IPasswordResetTokenRepository PasswordResetTokenRepository{ get; private set;}
 
     public UnitOfWork(ClinicManagementDbContext context)
     {
@@ -113,6 +115,7 @@ public class UnitOfWork : IUnitOfWork
         ServiceRepository = new ServiceRepository(_context);
         SpecialtyRepository = new SpecialtyRepository(_context);
         UserRoleRepository = new UserRoleRepository(_context);
+        PasswordResetTokenRepository = new PasswordResetTokenRepository(_context);
     }
 
     public async Task BeginTransactionAsync()
