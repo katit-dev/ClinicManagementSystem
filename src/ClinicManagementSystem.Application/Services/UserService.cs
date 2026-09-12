@@ -34,6 +34,184 @@ public class UserService : IUserService
         _configuration = configuration;
     }
 
+    public async Task<HttpResponseData<AuthResponseDTO?>> RefreshTokenAsync(
+    RefreshTokenRequestDTO request)
+    {
+        try
+        {
+            // 1. Hash Refresh Token client gửi lên
+            string refreshTokenHash =
+                _jwtAuthService.HashRefreshToken(
+                    request.RefreshToken);
+
+            // 2. Tìm hash trong database
+            var storedRefreshToken =
+                await _unitOfWork.RefreshTokenRepository
+                    .SingleOrDefault(
+                        rt => rt.TokenHash == refreshTokenHash);
+
+            // 3. Token không tồn tại
+            if (storedRefreshToken == null)
+            {
+                return LoginResponse(
+                    401,
+                    UserResponseMessageDTO.InvalidRefreshToken);
+            }
+
+            // 4. Token đã bị revoke
+            if (storedRefreshToken.RevokedAt.HasValue)
+            {
+                return LoginResponse(
+                    401,
+                    UserResponseMessageDTO.InvalidRefreshToken);
+            }
+
+            // 5. Token đã hết hạn
+            if (storedRefreshToken.ExpiresAt <= DateTime.UtcNow)
+            {
+                return LoginResponse(
+                    401,
+                    UserResponseMessageDTO.InvalidRefreshToken);
+            }
+
+            // 6. Lấy User sở hữu Refresh Token
+            var user =
+                await _unitOfWork.UserRepository
+                    .GetByIdAsync(
+                        storedRefreshToken.UserId);
+
+            if (user == null)
+            {
+                return LoginResponse(
+                    401,
+                    UserResponseMessageDTO.InvalidRefreshToken);
+            }
+
+            // 7. Kiểm tra trạng thái account
+            if (!user.IsActive || user.IsDeleted)
+            {
+                return LoginResponse(
+                    403,
+                    UserResponseMessageDTO.AccountUnavailable);
+            }
+
+            // 8. Lấy Roles
+            var roles =
+                await _unitOfWork.UserRoleRepository
+                    .WhereSql(ur => ur.UserId == user.Id)
+                    .Select(ur => ur.Role.Name)
+                    .ToListAsync();
+
+            // 9. Lấy profile ID theo Role
+            int? doctorId = null;
+            int? patientId = null;
+
+            if (roles.Contains(UserRoleConstant.Doctor))
+            {
+                doctorId =
+                    await _unitOfWork.DoctorRepository
+                        .WhereSql(d => d.UserId == user.Id)
+                        .Select(d => (int?)d.Id)
+                        .FirstOrDefaultAsync();
+            }
+
+            if (roles.Contains(UserRoleConstant.Patient))
+            {
+                patientId =
+                    await _unitOfWork.PatientRepository
+                        .WhereSql(p => p.UserId == user.Id)
+                        .Select(p => (int?)p.Id)
+                        .FirstOrDefaultAsync();
+            }
+
+            // 10. Tạo Access Token mới
+            string newAccessToken =
+                _jwtAuthService.GenerateAccessToken(
+                    user,
+                    roles);
+
+            // 11. Tạo Refresh Token mới
+            string newRefreshToken =
+                _jwtAuthService.GenerateRefreshToken();
+
+            string newRefreshTokenHash =
+                _jwtAuthService.HashRefreshToken(
+                    newRefreshToken);
+
+            var now = DateTime.UtcNow;
+
+            int refreshTokenExpirationDays =
+                _configuration.GetValue<int>(
+                    "Jwt:RefreshTokenExpirationDays");
+
+            // 12. Revoke Refresh Token cũ
+            storedRefreshToken.RevokedAt = now;
+
+            await _unitOfWork.RefreshTokenRepository
+                .UpdateAsync(storedRefreshToken);
+
+            // 13. Lưu Refresh Token mới
+            var refreshTokenModel = new RefreshToken
+            {
+                UserId = user.Id,
+                TokenHash = newRefreshTokenHash,
+                ExpiresAt = now.AddDays(
+                    refreshTokenExpirationDays),
+                CreatedAt = now
+            };
+
+            await _unitOfWork.RefreshTokenRepository
+                .AddAsync(refreshTokenModel);
+
+            // 14. Save DB
+            await _unitOfWork.SaveChangesAsync();
+
+            int accessTokenExpirationMinutes =
+                _configuration.GetValue<int>(
+                    "Jwt:AccessTokenExpirationMinutes");
+
+            // 15. Response
+            var authResponse = new AuthResponseDTO
+            {
+                AccessToken = newAccessToken,
+
+                // Token mới thật được trả về client
+                RefreshToken = newRefreshToken,
+
+                ExpiresIn =
+                    accessTokenExpirationMinutes * 60,
+
+                User = new AuthUserDTO
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Roles = roles,
+                    DoctorId = doctorId,
+                    PatientId = patientId
+                }
+            };
+
+            _logger.LogInformation(
+                "Refresh token successfully rotated for User {UserId}.",
+                user.Id);
+
+            return LoginResponse(
+                200,
+                UserResponseMessageDTO.RefreshTokenSuccess,
+                authResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Refresh token operation failed.");
+
+            return LoginResponse(
+                500,
+                UserResponseMessageDTO.RefreshTokenFailed);
+        }
+    }
+
     public async Task<HttpResponseData<object?>> RegisterUserAsync(
         UserRegisterDTO request)
     {
@@ -241,155 +419,155 @@ public class UserService : IUserService
 
     public async Task<HttpResponseData<AuthResponseDTO?>> LoginAsync(
     LoginRequestDTO request)
-{
-    try
     {
-        string username = request.Username.Trim();
-
-        // 1. Tìm User theo Username hoặc Email
-        var user = await _unitOfWork.UserRepository
-            .SingleOrDefault(
-                u => u.Username == username ||
-                     u.Email == username);
-
-        if (user == null)
+        try
         {
-            return LoginResponse(
-                401,
-                UserResponseMessageDTO.InvalidCredentials);
-        }
+            string username = request.Username.Trim();
 
-        // 2. Kiểm tra password
-        bool passwordValid =
-            HelperFunction.VerifyPassword(
-                request.Password,
-                user.PasswordHash);
+            // 1. Tìm User theo Username hoặc Email
+            var user = await _unitOfWork.UserRepository
+                .SingleOrDefault(
+                    u => u.Username == username ||
+                         u.Email == username);
 
-        if (!passwordValid)
-        {
-            return LoginResponse(
-                401,
-                UserResponseMessageDTO.InvalidCredentials);
-        }
-
-        // 3. Kiểm tra trạng thái account
-        if (!user.IsActive || user.IsDeleted)
-        {
-            return LoginResponse(
-                403,
-                UserResponseMessageDTO.AccountUnavailable);
-        }
-
-        // 4. Lấy danh sách Role
-        var roles = await _unitOfWork.UserRoleRepository
-            .WhereSql(ur => ur.UserId == user.Id)
-            .Select(ur => ur.Role.Name)
-            .ToListAsync();
-
-        // 5. Chỉ lấy DoctorId / PatientId theo Role
-        int? doctorId = null;
-        int? patientId = null;
-
-        if (roles.Contains(UserRoleConstant.Doctor))
-        {
-            doctorId = await _unitOfWork.DoctorRepository
-                .WhereSql(d => d.UserId == user.Id)
-                .Select(d => (int?)d.Id)
-                .FirstOrDefaultAsync();
-        }
-
-        if (roles.Contains(UserRoleConstant.Patient))
-        {
-            patientId = await _unitOfWork.PatientRepository
-                .WhereSql(p => p.UserId == user.Id)
-                .Select(p => (int?)p.Id)
-                .FirstOrDefaultAsync();
-        }
-
-        // 6. Tạo Access Token
-        string accessToken =
-            _jwtAuthService.GenerateAccessToken(
-                user,
-                roles);
-
-        // 7. Tạo Refresh Token
-        string refreshToken =
-            _jwtAuthService.GenerateRefreshToken();
-
-        // 8. Hash Refresh Token
-        string refreshTokenHash =
-            _jwtAuthService.HashRefreshToken(
-                refreshToken);
-
-        int refreshTokenExpirationDays =
-            _configuration.GetValue<int>(
-                "Jwt:RefreshTokenExpirationDays");
-
-        // 9. Lưu HASH của Refresh Token vào DB
-        var refreshTokenModel = new RefreshToken
-        {
-            UserId = user.Id,
-            TokenHash = refreshTokenHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(
-                refreshTokenExpirationDays),
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _unitOfWork.RefreshTokenRepository
-            .AddAsync(refreshTokenModel);
-
-        // 10. Cập nhật thời gian login
-        user.LastLoginAt = DateTime.UtcNow;
-
-        await _unitOfWork.UserRepository
-            .UpdateAsync(user);
-
-        // 11. Lưu DB
-        await _unitOfWork.SaveChangesAsync();
-
-        int accessTokenExpirationMinutes =
-            _configuration.GetValue<int>(
-                "Jwt:AccessTokenExpirationMinutes");
-
-        // 12. Tạo response
-        var authResponse = new AuthResponseDTO
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-
-            ExpiresIn =
-                accessTokenExpirationMinutes * 60,
-
-            User = new AuthUserDTO
+            if (user == null)
             {
-                Id = user.Id,
-                FullName = user.FullName,
-                Roles = roles,
-                DoctorId = doctorId,
-                PatientId = patientId
+                return LoginResponse(
+                    401,
+                    UserResponseMessageDTO.InvalidCredentials);
             }
-        };
 
-        _logger.LogInformation(
-            "User {UserId} logged in successfully.",
-            user.Id);
+            // 2. Kiểm tra password
+            bool passwordValid =
+                HelperFunction.VerifyPassword(
+                    request.Password,
+                    user.PasswordHash);
 
-        return LoginResponse(
-            200,
-            UserResponseMessageDTO.LoginSuccess,
-            authResponse);
+            if (!passwordValid)
+            {
+                return LoginResponse(
+                    401,
+                    UserResponseMessageDTO.InvalidCredentials);
+            }
+
+            // 3. Kiểm tra trạng thái account
+            if (!user.IsActive || user.IsDeleted)
+            {
+                return LoginResponse(
+                    403,
+                    UserResponseMessageDTO.AccountUnavailable);
+            }
+
+            // 4. Lấy danh sách Role
+            var roles = await _unitOfWork.UserRoleRepository
+                .WhereSql(ur => ur.UserId == user.Id)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+
+            // 5. Chỉ lấy DoctorId / PatientId theo Role
+            int? doctorId = null;
+            int? patientId = null;
+
+            if (roles.Contains(UserRoleConstant.Doctor))
+            {
+                doctorId = await _unitOfWork.DoctorRepository
+                    .WhereSql(d => d.UserId == user.Id)
+                    .Select(d => (int?)d.Id)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (roles.Contains(UserRoleConstant.Patient))
+            {
+                patientId = await _unitOfWork.PatientRepository
+                    .WhereSql(p => p.UserId == user.Id)
+                    .Select(p => (int?)p.Id)
+                    .FirstOrDefaultAsync();
+            }
+
+            // 6. Tạo Access Token
+            string accessToken =
+                _jwtAuthService.GenerateAccessToken(
+                    user,
+                    roles);
+
+            // 7. Tạo Refresh Token
+            string refreshToken =
+                _jwtAuthService.GenerateRefreshToken();
+
+            // 8. Hash Refresh Token
+            string refreshTokenHash =
+                _jwtAuthService.HashRefreshToken(
+                    refreshToken);
+
+            int refreshTokenExpirationDays =
+                _configuration.GetValue<int>(
+                    "Jwt:RefreshTokenExpirationDays");
+
+            // 9. Lưu HASH của Refresh Token vào DB
+            var refreshTokenModel = new RefreshToken
+            {
+                UserId = user.Id,
+                TokenHash = refreshTokenHash,
+                ExpiresAt = DateTime.UtcNow.AddDays(
+                    refreshTokenExpirationDays),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.RefreshTokenRepository
+                .AddAsync(refreshTokenModel);
+
+            // 10. Cập nhật thời gian login
+            user.LastLoginAt = DateTime.UtcNow;
+
+            await _unitOfWork.UserRepository
+                .UpdateAsync(user);
+
+            // 11. Lưu DB
+            await _unitOfWork.SaveChangesAsync();
+
+            int accessTokenExpirationMinutes =
+                _configuration.GetValue<int>(
+                    "Jwt:AccessTokenExpirationMinutes");
+
+            // 12. Tạo response
+            var authResponse = new AuthResponseDTO
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+
+                ExpiresIn =
+                    accessTokenExpirationMinutes * 60,
+
+                User = new AuthUserDTO
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Roles = roles,
+                    DoctorId = doctorId,
+                    PatientId = patientId
+                }
+            };
+
+            _logger.LogInformation(
+                "User {UserId} logged in successfully.",
+                user.Id);
+
+            return LoginResponse(
+                200,
+                UserResponseMessageDTO.LoginSuccess,
+                authResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "User login failed.");
+
+            return LoginResponse(
+                500,
+                UserResponseMessageDTO.LoginFailed);
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(
-            ex,
-            "User login failed.");
-
-        return LoginResponse(
-            500,
-            UserResponseMessageDTO.LoginFailed);
-    }
-}
 
     // Helper function
     private static HttpResponseData<object?> Response(
@@ -405,7 +583,7 @@ public class UserService : IUserService
         };
     }
 
-    private static HttpResponseData<AuthResponseDTO?> LoginResponse( int statusCode, string message, AuthResponseDTO? content = null)
+    private static HttpResponseData<AuthResponseDTO?> LoginResponse(int statusCode, string message, AuthResponseDTO? content = null)
     {
         return new HttpResponseData<AuthResponseDTO?>
         {
