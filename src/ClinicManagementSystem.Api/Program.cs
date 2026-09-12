@@ -107,6 +107,27 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "API documentation for Clinic Management System"
     });
+    options.AddSecurityDefinition(
+    "bearer",
+    new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Nhập JWT Access Token"
+    });
+
+    options.AddSecurityRequirement(document =>
+        new OpenApiSecurityRequirement
+        {
+            [
+                new OpenApiSecuritySchemeReference(
+                    "bearer",
+                    document)
+            ] = new List<string>()
+        });
 });
 
 // ============================================================
