@@ -51,4 +51,13 @@ public class UserController : ControllerBase
 
         return StatusCode(result.StatusCode, result);
     }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(
+    [FromBody] ResetPasswordRequestDTO request)
+    {
+        var result = await _userService.ResetPasswordAsync(request);
+
+        return StatusCode(result.StatusCode, result);
+    }
 }
