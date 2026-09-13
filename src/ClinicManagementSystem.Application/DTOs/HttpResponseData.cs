@@ -84,6 +84,16 @@ public static class UserResponseMessageDTO
 
     public const string EmailNotFound =
     "Email không tồn tại trong hệ thống.";
+
+    // reset password
+    public const string InvalidResetOtp =
+    "Mã OTP không hợp lệ hoặc đã hết hạn.";
+
+public const string ResetPasswordSuccess =
+    "Đặt lại mật khẩu thành công.";
+
+public const string ResetPasswordFailed =
+    "Không thể đặt lại mật khẩu.";
 }
 
 public static class PatientResponseMessageDTO
