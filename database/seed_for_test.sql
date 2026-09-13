@@ -139,3 +139,16 @@ WHERE id = 4
 FROM auth.refresh_tokens
 WHERE user_id = 3
 ORDER BY id DESC;
+
+
+-- test case: forgot password
+SELECT TOP 10
+    id,
+    user_id,
+    token_hash,
+    expires_at,
+    used_at,
+    revoked_at,
+    created_at
+FROM auth.password_reset_tokens
+ORDER BY id DESC;

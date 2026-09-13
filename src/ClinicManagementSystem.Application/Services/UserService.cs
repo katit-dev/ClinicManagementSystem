@@ -85,7 +85,7 @@ public class UserService : IUserService
             // 5. Hash trước khi lưu DB
             string otpHash = _jwtAuthService.HashResetOtp(otp);
 
-            int expirationMinutes = _configuration.GetValue<int>("Jwt:PasswordResetTokenExpirationMinutes");
+            int expirationMinutes = _configuration.GetValue<int>("Jwt:PasswordResetOtpExpirationMinutes");
 
             // 6. Tạo record mới
             var resetTokenModel = new PasswordResetToken
