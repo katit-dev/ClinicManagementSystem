@@ -36,10 +36,19 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO request)
-{
-    var result = await _userService.RefreshTokenAsync(request);
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO request)
+    {
+        var result = await _userService.RefreshTokenAsync(request);
 
-    return StatusCode(result.StatusCode, result);
-}
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(
+    [FromBody] ForgotPasswordRequestDTO request)
+    {
+        var result = await _userService.ForgotPasswordAsync(request);
+
+        return StatusCode(result.StatusCode, result);
+    }
 }
