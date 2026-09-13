@@ -18,9 +18,8 @@ public interface IJwtAuthService
 
     string HashRefreshToken(string refreshToken);
 
-    string GenerateResetToken();
-
-    string HashResetToken(string resetToken);
+    string GenerateResetOtp();
+    string HashResetOtp(string otp);
 }
 
 public class JwtAuthService : IJwtAuthService
@@ -135,20 +134,23 @@ public class JwtAuthService : IJwtAuthService
         return Convert.ToHexString(hashBytes);
     }
 
-    public string GenerateResetToken()
+    // xu ly cho forgot password
+    public string GenerateResetOtp()
     {
-        var randomBytes = RandomNumberGenerator.GetBytes(32);
+        int otp = RandomNumberGenerator.GetInt32(
+            0,
+            1_000_000);
 
-        return Convert.ToBase64String(randomBytes);
+        return otp.ToString("D6");
     }
 
-    public string HashResetToken(string resetToken)
+    public string HashResetOtp(string otp)
     {
-        byte[] tokenBytes =
-            Encoding.UTF8.GetBytes(resetToken);
+        byte[] otpBytes =
+            Encoding.UTF8.GetBytes(otp);
 
         byte[] hashBytes =
-            SHA256.HashData(tokenBytes);
+            SHA256.HashData(otpBytes);
 
         return Convert.ToHexString(hashBytes);
     }
