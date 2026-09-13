@@ -81,6 +81,9 @@ public static class UserResponseMessageDTO
 
     public const string ForgotPasswordFailed =
         "Không thể xử lý yêu cầu quên mật khẩu";
+
+    public const string EmailNotFound =
+    "Email không tồn tại trong hệ thống.";
 }
 
 public static class PatientResponseMessageDTO

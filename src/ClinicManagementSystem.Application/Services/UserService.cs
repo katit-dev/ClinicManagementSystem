@@ -48,7 +48,6 @@ public class UserService : IUserService
                 .SingleOrDefault(
                     u => u.Email == email);
 
-            // Không tiết lộ email có tồn tại hay không
             if (user == null)
             {
                 return Response(
@@ -111,10 +110,7 @@ public class UserService : IUserService
             await _unitOfWork.SaveChangesAsync();
 
             /*
-             * Bước tiếp theo:
-             * gửi resetToken thật cho User qua Email.
-             *
-             * Tuyệt đối không gửi resetTokenHash.
+            * gửi resetToken thật cho User qua Email.
              */
 
             _logger.LogInformation(
