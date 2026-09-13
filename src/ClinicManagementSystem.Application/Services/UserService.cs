@@ -40,6 +40,101 @@ public class UserService : IUserService
 
     }
 
+    public async Task<HttpResponseData<object?>> ResetPasswordAsync(
+    ResetPasswordRequestDTO request)
+    {
+        try
+        {
+            // 1. Chuẩn hóa dữ liệu
+            string email =
+                request.Email.Trim().ToLowerInvariant();
+
+            string otp = request.Otp.Trim();
+
+            // 2. BCrypt chỉ hỗ trợ tối đa 72 bytes
+            if (Encoding.UTF8.GetByteCount(request.NewPassword) > 72)
+            {
+                return Response(
+                    400,
+                    UserResponseMessageDTO.PasswordTooLong);
+            }
+
+            // 3. Tìm account theo email
+            var user = await _unitOfWork.UserRepository
+                .SingleOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                return Response(
+                    404,
+                    UserResponseMessageDTO.EmailNotFound);
+            }
+
+            // 4. Không cho reset account bị khóa/xóa
+            if (!user.IsActive || user.IsDeleted)
+            {
+                return Response(
+                    403,
+                    UserResponseMessageDTO.AccountUnavailable);
+            }
+
+            // 5. Hash OTP user nhập
+            string otpHash =
+                _jwtAuthService.HashResetOtp(otp);
+
+            var now = DateTime.UtcNow;
+
+            // 6. Tìm OTP hợp lệ của đúng User
+            var resetToken =
+                await _unitOfWork.PasswordResetTokenRepository
+                    .WhereSql(t =>
+                        t.UserId == user.Id &&
+                        t.TokenHash == otpHash &&
+                        t.UsedAt == null &&
+                        t.RevokedAt == null &&
+                        t.ExpiresAt > now)
+                    .OrderByDescending(t => t.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+            if (resetToken == null)
+            {
+                return Response(
+                    400,
+                    UserResponseMessageDTO.InvalidResetOtp);
+            }
+
+            // 7. Hash mật khẩu mới
+            user.PasswordHash =
+                HelperFunction.HashPassword(
+                    request.NewPassword);
+
+            user.UpdatedAt = now;
+
+            // 8. Đánh dấu OTP đã sử dụng
+            resetToken.UsedAt = now;
+
+            await _unitOfWork.UserRepository
+                .UpdateAsync(user);
+
+            await _unitOfWork.PasswordResetTokenRepository
+                .UpdateAsync(resetToken);
+
+            // 9. Lưu User + ResetToken cùng lúc
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Password reset completed successfully for User {UserId}.", user.Id);
+
+            return Response(200, UserResponseMessageDTO.ResetPasswordSuccess);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Reset password failed.");
+
+            return Response(500, UserResponseMessageDTO.ResetPasswordFailed);
+        }
+    }
+
     public async Task<HttpResponseData<object?>> ForgotPasswordAsync(
     ForgotPasswordRequestDTO request)
     {
