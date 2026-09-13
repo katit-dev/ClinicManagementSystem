@@ -14,9 +14,10 @@ public class UserRegisterDTO
         ErrorMessage = "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0")]
     public string Phone { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Email không được để trống")]
     [EmailAddress(ErrorMessage = "Email không hợp lệ")]
     [MaxLength(255)]
-    public string? Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 
     public DateTime? DateOfBirth { get; set; }
 
