@@ -18,6 +18,7 @@ public interface IUserService
     Task<HttpResponseData<AuthResponseDTO?>> LoginAsync(LoginRequestDTO request);
     Task<HttpResponseData<AuthResponseDTO?>> RefreshTokenAsync(RefreshTokenRequestDTO request);
     Task<HttpResponseData<object?>> ForgotPasswordAsync(ForgotPasswordRequestDTO request);
+    Task<HttpResponseData<object?>> ResetPasswordAsync(ResetPasswordRequestDTO request);
 }
 
 public class UserService : IUserService
