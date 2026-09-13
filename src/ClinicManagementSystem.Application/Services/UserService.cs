@@ -26,13 +26,17 @@ public class UserService : IUserService
     private readonly ILogger<UserService> _logger;
     private readonly IJwtAuthService _jwtAuthService;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
-    public UserService(IUnitOfWork unitOfWork, ILogger<UserService> logger, IJwtAuthService jwtAuthService, IConfiguration configuration)
+    public UserService(IUnitOfWork unitOfWork, ILogger<UserService> logger, IJwtAuthService jwtAuthService, IConfiguration configuration,
+    IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _jwtAuthService = jwtAuthService;
         _configuration = configuration;
+        _emailService = emailService;
+
     }
 
     public async Task<HttpResponseData<object?>> ForgotPasswordAsync(
@@ -45,8 +49,7 @@ public class UserService : IUserService
 
             // 1. Tìm User theo email
             var user = await _unitOfWork.UserRepository
-                .SingleOrDefault(
-                    u => u.Email == email);
+                .SingleOrDefault(u => u.Email == email);
 
             if (user == null)
             {
@@ -89,30 +92,20 @@ public class UserService : IUserService
             {
                 UserId = user.Id,
                 TokenHash = otpHash,
-                ExpiresAt =
-            now.AddMinutes(expirationMinutes),
+                ExpiresAt = now.AddMinutes(expirationMinutes),
                 CreatedAt = now
             };
 
-            await _unitOfWork.PasswordResetTokenRepository
-                .AddAsync(resetTokenModel);
+            await _unitOfWork.PasswordResetTokenRepository.AddAsync(resetTokenModel);
 
             await _unitOfWork.SaveChangesAsync();
 
-            // 7. Lưu DB
-            await _unitOfWork.SaveChangesAsync();
+            // Gửi OTP thật qua email
+            await _emailService.SendPasswordResetOtpAsync(user.Email!, otp);
 
-            /*
-            * gửi resetToken thật cho User qua Email.
-             */
+            _logger.LogInformation("Password reset OTP sent for User {UserId}.", user.Id);
 
-            _logger.LogInformation(
-                "Password reset request created for User {UserId}.",
-                user.Id);
-
-            return Response(
-                200,
-                UserResponseMessageDTO.ForgotPasswordSuccess);
+            return Response(200, UserResponseMessageDTO.ForgotPasswordSuccess);
         }
         catch (Exception ex)
         {
