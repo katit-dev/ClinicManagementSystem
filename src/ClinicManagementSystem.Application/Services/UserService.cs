@@ -298,15 +298,12 @@ public class UserService : IUserService
     }
 
     public async Task<HttpResponseData<object?>> RegisterUserAsync(
-        UserRegisterDTO request)
+    UserRegisterDTO request)
     {
         // Chuẩn hóa dữ liệu
         string fullName = request.FullName.Trim();
         string phone = request.Phone.Trim();
-
-        string? email = string.IsNullOrWhiteSpace(request.Email)
-            ? null
-            : request.Email.Trim().ToLowerInvariant();
+        string email = request.Email.Trim().ToLowerInvariant();
 
         // Ngày sinh không được ở tương lai
         if (request.DateOfBirth.HasValue &&
@@ -329,12 +326,11 @@ public class UserService : IUserService
 
         try
         {
-            // 1. Kiểm tra đã có account chưa
+            // 1. Kiểm tra số điện thoại đã có account chưa
             bool userExists = await _unitOfWork.UserRepository
                 .WhereSql(u =>
                     u.Username == phone ||
-                    u.Phone == phone ||
-                    (email != null && u.Email == email))
+                    u.Phone == phone)
                 .AnyAsync();
 
             if (userExists)
@@ -344,12 +340,24 @@ public class UserService : IUserService
                     UserResponseMessageDTO.RegisterConflict);
             }
 
-            // 2. Tìm hồ sơ Patient theo số điện thoại
+            // 2. Kiểm tra email đã được sử dụng chưa
+            var existingEmailUser =
+                await _unitOfWork.UserRepository
+                    .SingleOrDefault(u => u.Email == email);
+
+            if (existingEmailUser != null)
+            {
+                return Response(
+                    409,
+                    UserResponseMessageDTO.EmailAlreadyExists);
+            }
+
+            // 3. Tìm hồ sơ Patient theo số điện thoại
             var existingPatient = await _unitOfWork.PatientRepository
                 .WhereSql(p => p.Phone == phone)
                 .FirstOrDefaultAsync();
 
-            // 3. Nếu Patient đã liên kết account
+            // 4. Nếu Patient đã liên kết với account
             if (existingPatient != null &&
                 existingPatient.UserId.HasValue)
             {
@@ -358,14 +366,15 @@ public class UserService : IUserService
                     UserResponseMessageDTO.RegisterConflict);
             }
 
-            // 4. Lấy role Patient
+            // 5. Lấy role Patient
             var patientRole = await _unitOfWork.RoleRepository
                 .WhereSql(r => r.Name == UserRoleConstant.Patient)
                 .FirstOrDefaultAsync();
 
             if (patientRole == null)
             {
-                _logger.LogError("Patient role was not found.");
+                _logger.LogError(
+                    "Patient role was not found.");
 
                 return Response(
                     500,
@@ -374,13 +383,15 @@ public class UserService : IUserService
 
             var now = DateTime.UtcNow;
 
-            // 5. Tạo account
+            // 6. Tạo account
             // Quy ước hiện tại: Username = Phone
             var user = new User
             {
                 Username = phone,
+
                 PasswordHash =
                     HelperFunction.HashPassword(request.Password),
+
                 FullName = fullName,
                 Phone = phone,
                 Email = email,
@@ -388,12 +399,12 @@ public class UserService : IUserService
                 IsActive = true,
                 IsDeleted = false,
                 EmailConfirmed = false,
-                FailedLoginCount = 0,
 
+                FailedLoginCount = 0,
                 CreatedAt = now
             };
 
-            // 6. Gán role Patient
+            // 7. Gán role Patient
             var userRole = new UserRole
             {
                 User = user,
@@ -401,25 +412,31 @@ public class UserService : IUserService
                 AssignedAt = now
             };
 
+            // 8. Bắt đầu transaction
             await _unitOfWork.BeginTransactionAsync();
+
             transactionStarted = true;
 
-            // 7. Thêm User
-            await _unitOfWork.UserRepository.AddAsync(user);
+            // 9. Thêm User
+            await _unitOfWork.UserRepository
+                .AddAsync(user);
 
-            // 8. Thêm UserRole
-            await _unitOfWork.UserRoleRepository.AddAsync(userRole);
+            // 10. Thêm UserRole
+            await _unitOfWork.UserRoleRepository
+                .AddAsync(userRole);
 
             Patient patient;
 
-            // 9. Xử lý Patient
+            // 11. Xử lý Patient
             if (existingPatient == null)
             {
                 // Trường hợp 1:
                 // Chưa có account + chưa có hồ sơ Patient
+
                 patient = new Patient
                 {
                     User = user,
+
                     FullName = fullName,
                     Phone = phone,
                     Email = email,
@@ -429,7 +446,8 @@ public class UserService : IUserService
                             request.DateOfBirth.Value)
                         : null,
 
-                    PatientCode = "BN" +
+                    PatientCode =
+                        "BN" +
                         Guid.NewGuid()
                             .ToString("N")[..18]
                             .ToUpperInvariant(),
@@ -445,20 +463,25 @@ public class UserService : IUserService
             {
                 // Trường hợp 2:
                 // Đã có hồ sơ Patient nhưng chưa có account
+
                 patient = existingPatient;
 
-                // Liên kết hồ sơ cũ với User vừa tạo
+                // Liên kết hồ sơ Patient cũ với User vừa tạo
                 patient.User = user;
+
+                // Đồng bộ email đăng ký vào hồ sơ Patient
+                patient.Email = email;
+
                 patient.UpdatedAt = now;
 
                 await _unitOfWork.PatientRepository
                     .UpdateAsync(patient);
             }
 
-            // 10. Lưu tất cả thay đổi
+            // 12. Lưu tất cả thay đổi
             await _unitOfWork.SaveChangesAsync();
 
-            // 11. Commit transaction
+            // 13. Commit transaction
             await _unitOfWork.CommitTransactionAsync();
 
             transactionStarted = false;
