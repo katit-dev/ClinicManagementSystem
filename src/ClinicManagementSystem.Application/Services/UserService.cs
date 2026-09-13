@@ -52,7 +52,7 @@ public class UserService : IUserService
             {
                 return Response(
                     200,
-                    UserResponseMessageDTO.ForgotPasswordSuccess);
+                    UserResponseMessageDTO.EmailNotFound);
             }
 
             var now = DateTime.UtcNow;
@@ -67,7 +67,7 @@ public class UserService : IUserService
                         t.ExpiresAt > now)
                     .ToListAsync();
 
-            // 3. Revoke các token cũ
+            // 3. Revoke(vo hieu hoa) các token cũ
             foreach (var token in activeTokens)
             {
                 token.RevokedAt = now;
@@ -76,35 +76,28 @@ public class UserService : IUserService
                     .UpdateAsync(token);
             }
 
-            // 4. Tạo Reset Token mới
-            string resetToken =
-                _jwtAuthService.GenerateResetToken();
+            // 4. Tạo Reset otp mới
+            string otp = _jwtAuthService.GenerateResetOtp();
 
             // 5. Hash trước khi lưu DB
-            string resetTokenHash =
-                _jwtAuthService.HashResetToken(
-                    resetToken);
+            string otpHash = _jwtAuthService.HashResetOtp(otp);
 
-            int expirationMinutes =
-                _configuration.GetValue<int>(
-                    "Jwt:PasswordResetTokenExpirationMinutes");
+            int expirationMinutes = _configuration.GetValue<int>("Jwt:PasswordResetTokenExpirationMinutes");
 
             // 6. Tạo record mới
-            var resetTokenModel =
-                new PasswordResetToken
-                {
-                    UserId = user.Id,
-
-                    TokenHash = resetTokenHash,
-
-                    ExpiresAt =
-                        now.AddMinutes(expirationMinutes),
-
-                    CreatedAt = now
-                };
+            var resetTokenModel = new PasswordResetToken
+            {
+                UserId = user.Id,
+                TokenHash = otpHash,
+                ExpiresAt =
+            now.AddMinutes(expirationMinutes),
+                CreatedAt = now
+            };
 
             await _unitOfWork.PasswordResetTokenRepository
                 .AddAsync(resetTokenModel);
+
+            await _unitOfWork.SaveChangesAsync();
 
             // 7. Lưu DB
             await _unitOfWork.SaveChangesAsync();
