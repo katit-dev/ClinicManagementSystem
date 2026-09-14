@@ -1,41 +1,69 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+// =====================================================
+// RAZOR PAGE
+// Dùng cho _Host.cshtml
+// =====================================================
+
+builder.Services.AddRazorPages();
+
+
+// =====================================================
+// BLAZOR SERVER
+// Cho phép sử dụng component .razor
+// =====================================================
+
+builder.Services.AddServerSideBlazor();
+
+
+// =====================================================
+// OPEN API
+// Có thể giữ lại vì project được tạo từ webapi
+// =====================================================
+
 builder.Services.AddOpenApi();
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
 
-app.UseHttpsRedirection();
+// =====================================================
+// STATIC FILE
+// Cho phép đọc:
+// css
+// js
+// image
+// bootstrap...
+// =====================================================
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseStaticFiles();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+
+// =====================================================
+// ROUTING
+// =====================================================
+
+app.UseRouting();
+
+
+// =====================================================
+// BLAZOR HUB
+//
+// Browser
+//    ↕ SignalR
+// Blazor Server
+// =====================================================
+
+app.MapBlazorHub();
+
+
+// =====================================================
+// Nếu URL không match endpoint khác
+// thì đưa về _Host.cshtml
+// =====================================================
+
+app.MapFallbackToPage("/_Host");
+
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
