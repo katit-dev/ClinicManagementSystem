@@ -4,8 +4,12 @@
 
 @inject UserStateService _userStateService
 
-<PageTitle>Đăng nhập</PageTitle>
+@implements IDisposable
 
+
+@* =====================================================
+   LOGIN PAGE
+   ===================================================== *@
 
 <div class="row justify-content-center py-5">
 
@@ -15,40 +19,47 @@
 
             <div class="card-body p-4">
 
+                @* =================================================
+                   TITLE
+                   ================================================= *@
+
                 <div class="text-center mb-4">
 
-                    <i class="fas fa-clinic-medical
-                              fa-3x text-primary mb-3">
-                    </i>
+                    <i class="fas fa-clinic-medical fa-3x text-primary mb-3"></i>
 
                     <h4 class="fw-bold">
                         Đăng nhập
                     </h4>
 
-                    <p class="text-secondary small">
+                    <p class="text-secondary small mb-0">
                         Hệ thống quản lý phòng khám
                     </p>
 
                 </div>
 
 
+                @* =================================================
+                   LOGIN FORM
+                   ================================================= *@
+
                 <EditForm Model="@loginRequest"
                           OnValidSubmit="HandleLogin">
 
+                    @* Sử dụng Data Annotation từ LoginRequestDTO *@
                     <DataAnnotationsValidator />
 
-                    <ValidationSummary
-                        class="text-danger mb-3" />
 
-
-                    @* ===============================
+                    @* =================================================
                        USERNAME
-                       =============================== *@
+                       ================================================= *@
 
                     <div class="mb-3">
 
-                        <label class="form-label">
+                        <label for="username"
+                               class="form-label">
+
                             Tên đăng nhập hoặc Email
+
                         </label>
 
 
@@ -56,36 +67,36 @@
 
                             <span class="input-group-text bg-white">
 
-                                <i class="fas fa-user
-                                          text-secondary">
-                                </i>
+                                <i class="fas fa-user text-secondary"></i>
 
                             </span>
 
 
-                            <InputText
-                                class="form-control"
-                                @bind-Value="loginRequest.Username"
-                                placeholder="Nhập tên đăng nhập hoặc email" />
+                            <InputText id="username"
+                                       class="form-control"
+                                       @bind-Value="loginRequest.Username"
+                                       placeholder="Nhập tên đăng nhập hoặc email" />
 
                         </div>
 
 
-                        <ValidationMessage
-                            For="@(() => loginRequest.Username)"
-                            class="text-danger small" />
+                        <ValidationMessage For="@(() => loginRequest.Username)"
+                                           class="text-danger small" />
 
                     </div>
 
 
-                    @* ===============================
+                    @* =================================================
                        PASSWORD
-                       =============================== *@
+                       ================================================= *@
 
                     <div class="mb-3">
 
-                        <label class="form-label">
+                        <label for="password"
+                               class="form-label">
+
                             Mật khẩu
+
                         </label>
 
 
@@ -93,52 +104,51 @@
 
                             <span class="input-group-text bg-white">
 
-                                <i class="fas fa-lock
-                                          text-secondary">
-                                </i>
+                                <i class="fas fa-lock text-secondary"></i>
 
                             </span>
 
 
-                            <InputText
-                                type="password"
-                                class="form-control"
-                                @bind-Value="loginRequest.Password"
-                                placeholder="Nhập mật khẩu" />
+                            <InputText id="password"
+                                       type="password"
+                                       class="form-control"
+                                       @bind-Value="loginRequest.Password"
+                                       placeholder="Nhập mật khẩu" />
 
                         </div>
 
 
-                        <ValidationMessage
-                            For="@(() => loginRequest.Password)"
-                            class="text-danger small" />
+                        <ValidationMessage For="@(() => loginRequest.Password)"
+                                           class="text-danger small" />
 
                     </div>
 
 
-                    @* ===============================
-                       BACKEND ERROR
-                       =============================== *@
+                    @* =================================================
+                       REMEMBER + FORGOT PASSWORD
+                       ================================================= *@
 
-                    @if (!string.IsNullOrWhiteSpace(
-                        _userStateService.ErrorMessage))
-                    {
-                        <div class="alert alert-danger py-2">
+                    <div class="d-flex justify-content-between
+                                align-items-center mb-3 small">
 
-                            @_userStateService.ErrorMessage
+                        <div class="form-check">
+
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="remember" />
+
+                            <label class="form-check-label"
+                                   for="remember">
+
+                                Ghi nhớ đăng nhập
+
+                            </label>
 
                         </div>
-                    }
 
-
-                    @* ===============================
-                       FORGOT PASSWORD
-                       =============================== *@
-
-                    <div class="text-end mb-3">
 
                         <a href="/forgot-password"
-                           class="text-decoration-none">
+                           class="text-primary text-decoration-none">
 
                             Quên mật khẩu?
 
@@ -147,11 +157,27 @@
                     </div>
 
 
-                    @* ===============================
-                       LOGIN BUTTON
-                       =============================== *@
+                    @* =================================================
+                       ERROR MESSAGE TỪ BACKEND
+                       ================================================= *@
 
-                    <div class="d-grid">
+                    @if (!string.IsNullOrWhiteSpace(
+                        _userStateService.ErrorMessage))
+                    {
+                        <div class="alert alert-danger py-2"
+                             role="alert">
+
+                            @_userStateService.ErrorMessage
+
+                        </div>
+                    }
+
+
+                    @* =================================================
+                       LOGIN BUTTON
+                       ================================================= *@
+
+                    <div class="d-grid mb-3">
 
                         <button type="submit"
                                 class="btn btn-primary"
@@ -161,14 +187,19 @@
                             {
                                 <span class="spinner-border
                                              spinner-border-sm
-                                             me-2">
+                                             me-2"
+                                      role="status">
                                 </span>
 
-                                <span>Đang đăng nhập...</span>
+                                <span>
+                                    Đang đăng nhập...
+                                </span>
                             }
                             else
                             {
-                                <span>Đăng nhập</span>
+                                <span>
+                                    ĐĂNG NHẬP
+                                </span>
                             }
 
                         </button>
@@ -178,7 +209,11 @@
                 </EditForm>
 
 
-                <hr class="my-4" />
+                @* =================================================
+                   REGISTER
+                   ================================================= *@
+
+                <hr class="my-3" />
 
 
                 <p class="text-center small text-secondary mb-0">
@@ -186,7 +221,9 @@
                     Chưa có tài khoản?
 
                     <a href="/register"
-                       class="text-decoration-none fw-semibold">
+                       class="text-primary
+                              text-decoration-none
+                              fw-semibold">
 
                         Đăng ký
 
@@ -206,15 +243,25 @@
 @code {
 
     private LoginRequestDTO loginRequest = new();
-
     private bool isSubmitting;
 
+
+    protected override void OnInitialized()
+    {
+        _userStateService.OnChange += StateHasChanged;
+    }
+
+
+    // =====================================================
+    // HANDLE LOGIN
+    // =====================================================
 
     private async Task HandleLogin()
     {
         try
         {
             isSubmitting = true;
+
 
             await _userStateService.LoginAsync(
                 loginRequest
@@ -224,6 +271,12 @@
         {
             isSubmitting = false;
         }
+    }
+
+
+    public void Dispose()
+    {
+        _userStateService.OnChange -= StateHasChanged;
     }
 
 }
