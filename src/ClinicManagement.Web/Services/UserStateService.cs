@@ -65,29 +65,38 @@ public class UserStateService
     // LOGIN
     // =====================================================
 
+
     public async Task LoginAsync(LoginRequestDTO loginRequest)
     {
         ErrorMessage = string.Empty;
 
         try
         {
-            // Gọi Backend API
-            var response = await _httpClient.PostAsJsonAsync(
-                "/api/auth/login",
-                loginRequest
+            Console.WriteLine("1. Bat dau goi Login API");
+
+            var response =
+                await _httpClient.PostAsJsonAsync(
+                    "/api/auth/login",
+                    loginRequest
+                );
+
+            Console.WriteLine(
+                $"2. API Status: {response.StatusCode}"
             );
 
 
-            // Đọc response theo format chung của Backend
             var responseData =
                 await response.Content
-                    .ReadFromJsonAsync<HttpResponseData<AuthResponseDTO>>();
+                    .ReadFromJsonAsync<
+                        HttpResponseData<AuthResponseDTO>>();
+
+            Console.WriteLine("3. Doc response thanh cong");
 
 
-            // Nếu Backend không trả được dữ liệu
             if (responseData == null)
             {
-                ErrorMessage = "Không nhận được phản hồi từ hệ thống";
+                ErrorMessage =
+                    "Không nhận được phản hồi từ hệ thống";
 
                 StateHasChanged();
 
@@ -95,7 +104,6 @@ public class UserStateService
             }
 
 
-            // Nếu đăng nhập thất bại
             if (!response.IsSuccessStatusCode ||
                 responseData.StatusCode != 200 ||
                 responseData.Content == null)
@@ -108,22 +116,16 @@ public class UserStateService
             }
 
 
-            // =================================================
-            // LOGIN THÀNH CÔNG
-            // =================================================
+            Console.WriteLine("4. Login thanh cong");
 
             var authData = responseData.Content;
 
             AccessToken = authData.AccessToken;
-
             RefreshToken = authData.RefreshToken;
-
             CurrentUser = authData.User;
 
 
-            // =================================================
-            // LƯU TOKEN VÀ USER VÀO LOCAL STORAGE
-            // =================================================
+            Console.WriteLine("5. Bat dau luu LocalStorage");
 
             await _localStorageService.SetItemAsync(
                 "accessToken",
@@ -136,7 +138,6 @@ public class UserStateService
             );
 
 
-            // AuthUserDTO là object nên serialize thành JSON
             var currentUserJson =
                 JsonSerializer.Serialize(CurrentUser);
 
@@ -145,13 +146,14 @@ public class UserStateService
                 currentUserJson
             );
 
-            // Báo cho Blazor biết User đã Login
+            Console.WriteLine("6. Luu LocalStorage thanh cong");
+
+
             _authenticationStateProvider
                 .MarkUserAsAuthenticated(CurrentUser);
 
-            // =================================================
-            // GẮN JWT VÀO HTTP CLIENT
-            // =================================================
+            Console.WriteLine("7. Authentication state OK");
+
 
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue(
@@ -160,22 +162,25 @@ public class UserStateService
                 );
 
 
-            // Báo cho UI biết state đã thay đổi
             StateHasChanged();
 
+            Console.WriteLine("8. Redirect");
 
-            // Chuyển trang theo role
             RedirectByRole();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine("======================");
+            Console.WriteLine("LOGIN ERROR");
+            Console.WriteLine(ex.ToString());
+            Console.WriteLine("======================");
+
             ErrorMessage =
                 "Không thể kết nối đến hệ thống. Vui lòng thử lại.";
 
             StateHasChanged();
         }
     }
-
 
     // =====================================================
     // LOAD USER STATE
@@ -184,25 +189,22 @@ public class UserStateService
 
     public async Task LoadUserStateAsync()
     {
-        // Lấy dữ liệu đã lưu trong LocalStorage
         var accessToken =
-            await _localStorageService.GetItemAsync(
+            await _localStorageService.GetItemAsync<string>(
                 "accessToken"
             );
 
         var refreshToken =
-            await _localStorageService.GetItemAsync(
+            await _localStorageService.GetItemAsync<string>(
                 "refreshToken"
             );
 
         var currentUserJson =
-            await _localStorageService.GetItemAsync(
+            await _localStorageService.GetItemAsync<string>(
                 "currentUser"
             );
 
 
-        // Nếu không có access token
-        // => coi như chưa đăng nhập
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             ClearState();
@@ -213,12 +215,12 @@ public class UserStateService
             return;
         }
 
-        // Khôi phục token vào state
+
         AccessToken = accessToken;
 
         RefreshToken = refreshToken ?? string.Empty;
 
-        // KHÔI PHỤC CURRENT USER
+
         if (!string.IsNullOrWhiteSpace(currentUserJson))
         {
             try
@@ -234,21 +236,21 @@ public class UserStateService
             }
         }
 
-        // Báo cho Blazor biết user đã đăng nhập
+
         if (CurrentUser != null)
         {
             _authenticationStateProvider
                 .MarkUserAsAuthenticated(CurrentUser);
         }
 
-        // GẮN ACCESS TOKEN VÀO HTTP CLIENT
+
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
                 AccessToken
             );
 
-        // Báo UI render lại
+
         StateHasChanged();
     }
 

@@ -1,3 +1,7 @@
+using ClinicManagementSystem.Web.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -58,12 +62,6 @@ builder.Services.AddScoped<
 // =====================================================
 builder.Services.AddScoped<UserStateService>();
 
-
-// =====================================================
-// OPEN API
-// =====================================================
-
-builder.Services.AddOpenApi();
 
 var app = builder.Build();
 

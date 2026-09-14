@@ -29,15 +29,8 @@ public class CustomAuthenticationStateProvider
     public override async Task<AuthenticationState>
         GetAuthenticationStateAsync()
     {
-        var accessToken =
-            await _localStorageService.GetItemAsync(
-                "accessToken"
-            );
-
-        var currentUserJson =
-            await _localStorageService.GetItemAsync(
-                "currentUser"
-            );
+        var accessToken = await _localStorageService.GetItemAsync<string>("accessToken");
+        var currentUserJson = await _localStorageService.GetItemAsync<string>("currentUser");
 
 
         if (string.IsNullOrWhiteSpace(accessToken) ||

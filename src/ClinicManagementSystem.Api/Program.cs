@@ -175,8 +175,6 @@ builder.Services
             };
     });
 
-builder.Services.AddAuthorization();
-
 
 // =====================================================
 // CORS
@@ -188,7 +186,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("https://localhost:5050")
+            .WithOrigins("http://localhost:5050")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
