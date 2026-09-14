@@ -1,89 +1,347 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using ClinicManagementSystem.Application.DTOs;
+using ClinicManagementSystem.Application.DTOs.Auth;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using System.Net.Http.Headers;
 
-namespace ClinicManagement.Web.Services
+namespace ClinicManagementSystem.Web.Services;
+
+public class UserStateService
 {
-    public class UserStateService
+    private readonly ILocalStorageService _localStorageService;
+    private readonly HttpClient _httpClient;
+    private readonly NavigationManager _navigationManager;
+
+
+    // =====================================================
+    // STATE CỦA USER
+    // =====================================================
+
+    public string AccessToken { get; private set; } = string.Empty;
+
+    public string RefreshToken { get; private set; } = string.Empty;
+
+    public AuthUserDTO? CurrentUser { get; private set; }
+
+    public string ErrorMessage { get; private set; } = string.Empty;
+
+
+    // =====================================================
+    // EVENT THÔNG BÁO STATE THAY ĐỔI
+    // =====================================================
+
+    public Action? OnChange { get; set; }
+
+    public void StateHasChanged()
     {
-        private readonly ILocalStorageService _localStorageService;
-        private readonly HttpClient _httpClient;
-        private readonly NavigationManager _navigationManager;
-
-        public string AccessToken { get; private set; } = "";
-
-        public Action? OnChange { get; set; }
+        OnChange?.Invoke();
+    }
 
 
-        public UserStateService(
-            ILocalStorageService localStorageService,
-            IHttpClientFactory httpClientFactory,
-            NavigationManager navigationManager)
+    // =====================================================
+    // CONSTRUCTOR
+    // =====================================================
+
+    public UserStateService(
+        ILocalStorageService localStorageService,
+        IHttpClientFactory httpClientFactory,
+        NavigationManager navigationManager)
+    {
+        _localStorageService = localStorageService;
+
+        _httpClient =
+            httpClientFactory.CreateClient("ClinicApi");
+
+        _navigationManager = navigationManager;
+    }
+
+
+    // =====================================================
+    // LOGIN
+    // =====================================================
+
+    public async Task LoginAsync(LoginRequestDTO loginRequest)
+    {
+        ErrorMessage = string.Empty;
+
+        try
         {
-            _localStorageService = localStorageService;
-
-            _httpClient =
-                httpClientFactory.CreateClient("ClinicApi");
-
-            _navigationManager = navigationManager;
-        }
+            // Gọi Backend API
+            var response = await _httpClient.PostAsJsonAsync(
+                "/api/auth/login",
+                loginRequest
+            );
 
 
-        // =====================================================
-        // Thông báo cho component rằng state đã thay đổi
-        // =====================================================
-        public void StateHasChanged()
-        {
-            OnChange?.Invoke();
-        }
+            // Đọc response theo format chung của Backend
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<HttpResponseData<AuthResponseDTO>>();
 
 
-        // =====================================================
-        // Lấy token đã lưu trong LocalStorage
-        // Dùng khi F5 / mở lại trang
-        // =====================================================
-        public async Task LoadTokenAsync()
-        {
-            var token =
-                await _localStorageService.GetItemAsync(
-                    "accessToken"
+            // Nếu Backend không trả được dữ liệu
+            if (responseData == null)
+            {
+                ErrorMessage = "Không nhận được phản hồi từ hệ thống";
+
+                StateHasChanged();
+
+                return;
+            }
+
+
+            // Nếu đăng nhập thất bại
+            if (!response.IsSuccessStatusCode ||
+                responseData.StatusCode != 200 ||
+                responseData.Content == null)
+            {
+                ErrorMessage = responseData.Message;
+
+                StateHasChanged();
+
+                return;
+            }
+
+
+            // =================================================
+            // LOGIN THÀNH CÔNG
+            // =================================================
+
+            var authData = responseData.Content;
+
+            AccessToken = authData.AccessToken;
+
+            RefreshToken = authData.RefreshToken;
+
+            CurrentUser = authData.User;
+
+
+            // =================================================
+            // LƯU TOKEN VÀ USER VÀO LOCAL STORAGE
+            // =================================================
+
+            await _localStorageService.SetItemAsync(
+                "accessToken",
+                AccessToken
+            );
+
+            await _localStorageService.SetItemAsync(
+                "refreshToken",
+                RefreshToken
+            );
+
+
+            // AuthUserDTO là object nên serialize thành JSON
+            var currentUserJson =
+                JsonSerializer.Serialize(CurrentUser);
+
+            await _localStorageService.SetItemAsync(
+                "currentUser",
+                currentUserJson
+            );
+
+
+            // =================================================
+            // GẮN JWT VÀO HTTP CLIENT
+            // =================================================
+
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    AccessToken
                 );
 
-            if (!string.IsNullOrEmpty(token))
-            {
-                AccessToken = token;
 
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue(
-                        "Bearer",
-                        token
-                    );
-            }
-            else
-            {
-                AccessToken = "";
-            }
+            // Báo cho UI biết state đã thay đổi
+            StateHasChanged();
+
+
+            // Chuyển trang theo role
+            RedirectByRole();
+        }
+        catch (Exception)
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống. Vui lòng thử lại.";
 
             StateHasChanged();
         }
+    }
 
 
-        // =====================================================
-        // LOGOUT
-        // =====================================================
-        public async Task LogoutAsync()
-        {
-            AccessToken = "";
+    // =====================================================
+    // LOAD USER STATE
+    // Dùng khi F5 / mở lại website
+    // =====================================================
 
-            await _localStorageService.RemoveItemAsync(
+    public async Task LoadUserStateAsync()
+    {
+        var accessToken =
+            await _localStorageService.GetItemAsync(
                 "accessToken"
             );
 
-            _httpClient.DefaultRequestHeaders.Authorization = null;
+        var refreshToken =
+            await _localStorageService.GetItemAsync(
+                "refreshToken"
+            );
 
-            StateHasChanged();
+        var currentUserJson =
+            await _localStorageService.GetItemAsync(
+                "currentUser"
+            );
 
-            _navigationManager.NavigateTo("/login");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            ClearState();
+
+            return;
         }
+
+
+        AccessToken = accessToken;
+
+        RefreshToken = refreshToken ?? string.Empty;
+
+
+        // Khôi phục CurrentUser
+        if (!string.IsNullOrWhiteSpace(currentUserJson))
+        {
+            try
+            {
+                CurrentUser =
+                    JsonSerializer.Deserialize<AuthUserDTO>(
+                        currentUserJson
+                    );
+            }
+            catch
+            {
+                CurrentUser = null;
+            }
+        }
+
+
+        // Gắn JWT vào HttpClient
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                AccessToken
+            );
+
+
+        StateHasChanged();
+    }
+
+
+    // =====================================================
+    // LOGOUT
+    // =====================================================
+
+    public async Task LogoutAsync()
+    {
+        await _localStorageService.RemoveItemAsync(
+            "accessToken"
+        );
+
+        await _localStorageService.RemoveItemAsync(
+            "refreshToken"
+        );
+
+        await _localStorageService.RemoveItemAsync(
+            "currentUser"
+        );
+
+
+        ClearState();
+
+
+        _httpClient.DefaultRequestHeaders.Authorization = null;
+
+
+        StateHasChanged();
+
+
+        _navigationManager.NavigateTo("/login");
+    }
+
+
+    // =====================================================
+    // REDIRECT THEO ROLE
+    // =====================================================
+
+    private void RedirectByRole()
+    {
+        if (CurrentUser == null)
+        {
+            _navigationManager.NavigateTo("/");
+
+            return;
+        }
+
+
+        if (CurrentUser.Roles.Any(
+            role => role.Equals(
+                "Admin",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            _navigationManager.NavigateTo("/admin");
+
+            return;
+        }
+
+
+        if (CurrentUser.Roles.Any(
+            role => role.Equals(
+                "Doctor",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            _navigationManager.NavigateTo("/doctor");
+
+            return;
+        }
+
+
+        if (CurrentUser.Roles.Any(
+            role => role.Equals(
+                "Receptionist",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            _navigationManager.NavigateTo("/reception");
+
+            return;
+        }
+
+
+        if (CurrentUser.Roles.Any(
+            role => role.Equals(
+                "Patient",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            _navigationManager.NavigateTo("/patient");
+
+            return;
+        }
+
+
+        _navigationManager.NavigateTo("/");
+    }
+
+
+    // =====================================================
+    // CLEAR STATE TRONG RAM
+    // =====================================================
+
+    private void ClearState()
+    {
+        AccessToken = string.Empty;
+
+        RefreshToken = string.Empty;
+
+        CurrentUser = null;
+
+        ErrorMessage = string.Empty;
     }
 }
