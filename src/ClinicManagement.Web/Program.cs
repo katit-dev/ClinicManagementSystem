@@ -3,7 +3,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // =====================================================
 // RAZOR PAGE
-// Dùng cho _Host.cshtml
 // =====================================================
 
 builder.Services.AddRazorPages();
@@ -11,15 +10,26 @@ builder.Services.AddRazorPages();
 
 // =====================================================
 // BLAZOR SERVER
-// Cho phép sử dụng component .razor
 // =====================================================
 
 builder.Services.AddServerSideBlazor();
 
 
 // =====================================================
+// HTTP CLIENT
+// Frontend -> Backend API
+// =====================================================
+
+builder.Services.AddHttpClient("ClinicApi", client =>
+{
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"];
+
+    client.BaseAddress = new Uri(baseUrl!);
+});
+
+
+// =====================================================
 // OPEN API
-// Có thể giữ lại vì project được tạo từ webapi
 // =====================================================
 
 builder.Services.AddOpenApi();
@@ -28,42 +38,12 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 
-// =====================================================
-// STATIC FILE
-// Cho phép đọc:
-// css
-// js
-// image
-// bootstrap...
-// =====================================================
-
 app.UseStaticFiles();
-
-
-// =====================================================
-// ROUTING
-// =====================================================
 
 app.UseRouting();
 
-
-// =====================================================
-// BLAZOR HUB
-//
-// Browser
-//    ↕ SignalR
-// Blazor Server
-// =====================================================
-
 app.MapBlazorHub();
 
-
-// =====================================================
-// Nếu URL không match endpoint khác
-// thì đưa về _Host.cshtml
-// =====================================================
-
 app.MapFallbackToPage("/_Host");
-
 
 app.Run();

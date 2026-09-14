@@ -2,7 +2,10 @@
 
 @layout HomePageMaster
 
+@inject IHttpClientFactory HttpClientFactory
+
 <PageTitle>Trang chủ</PageTitle>
+
 
 <div>
 
@@ -12,4 +15,29 @@
         Clinic Management System
     </p>
 
+    <button class="btn btn-primary"
+            @onclick="TestHttpClient">
+
+        Test HttpClient
+
+    </button>
+
+    <p class="mt-3">@message</p>
+
 </div>
+
+
+@code {
+
+    private string message = "";
+
+    private void TestHttpClient()
+    {
+        var client =
+            HttpClientFactory.CreateClient("ClinicApi");
+
+        message =
+            $"Backend URL: {client.BaseAddress}";
+    }
+
+}
