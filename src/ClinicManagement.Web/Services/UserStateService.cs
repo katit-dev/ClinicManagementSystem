@@ -13,6 +13,7 @@ public class UserStateService
     private readonly ILocalStorageService _localStorageService;
     private readonly HttpClient _httpClient;
     private readonly NavigationManager _navigationManager;
+    private readonly CustomAuthenticationStateProvider _authenticationStateProvider;
 
 
     // =====================================================
@@ -45,16 +46,18 @@ public class UserStateService
     // =====================================================
 
     public UserStateService(
-        ILocalStorageService localStorageService,
-        IHttpClientFactory httpClientFactory,
-        NavigationManager navigationManager)
+    ILocalStorageService localStorageService,
+    IHttpClientFactory httpClientFactory,
+    NavigationManager navigationManager,
+    CustomAuthenticationStateProvider authenticationStateProvider)
     {
         _localStorageService = localStorageService;
 
-        _httpClient =
-            httpClientFactory.CreateClient("ClinicApi");
+        _httpClient = httpClientFactory.CreateClient("ClinicApi");
 
         _navigationManager = navigationManager;
+
+        _authenticationStateProvider = authenticationStateProvider;
     }
 
 
@@ -141,7 +144,10 @@ public class UserStateService
                 "currentUser",
                 currentUserJson
             );
-
+            
+            // Báo cho Blazor biết User đã Login
+            _authenticationStateProvider
+                .MarkUserAsAuthenticated(CurrentUser);
 
             // =================================================
             // GẮN JWT VÀO HTTP CLIENT
