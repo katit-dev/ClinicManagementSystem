@@ -184,6 +184,7 @@ public class UserStateService
 
     public async Task LoadUserStateAsync()
     {
+        // Lấy dữ liệu đã lưu trong LocalStorage
         var accessToken =
             await _localStorageService.GetItemAsync(
                 "accessToken"
@@ -200,20 +201,24 @@ public class UserStateService
             );
 
 
+        // Nếu không có access token
+        // => coi như chưa đăng nhập
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             ClearState();
 
+            _authenticationStateProvider
+                .MarkUserAsLoggedOut();
+
             return;
         }
 
-
+        // Khôi phục token vào state
         AccessToken = accessToken;
 
         RefreshToken = refreshToken ?? string.Empty;
 
-
-        // Khôi phục CurrentUser
+        // KHÔI PHỤC CURRENT USER
         if (!string.IsNullOrWhiteSpace(currentUserJson))
         {
             try
@@ -229,18 +234,23 @@ public class UserStateService
             }
         }
 
+        // Báo cho Blazor biết user đã đăng nhập
+        if (CurrentUser != null)
+        {
+            _authenticationStateProvider
+                .MarkUserAsAuthenticated(CurrentUser);
+        }
 
-        // Gắn JWT vào HttpClient
+        // GẮN ACCESS TOKEN VÀO HTTP CLIENT
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
                 AccessToken
             );
 
-
+        // Báo UI render lại
         StateHasChanged();
     }
-
 
     // =====================================================
     // LOGOUT
