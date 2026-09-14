@@ -1,0 +1,37 @@
+<CascadingAuthenticationState>
+
+    <Router AppAssembly="@typeof(App).Assembly">
+
+        <Found Context="routeData">
+
+            <AuthorizeRouteView RouteData="@routeData">
+
+                <NotAuthorized>
+                    <div class="container mt-4">
+                        <div class="alert alert-warning">
+                            Bạn chưa được phép truy cập vào trang này.
+                            Vui lòng đăng nhập.
+                        </div>
+                    </div>
+                </NotAuthorized>
+
+            </AuthorizeRouteView>
+
+            <FocusOnNavigate RouteData="@routeData"
+                             Selector="h1" />
+
+        </Found>
+
+        <NotFound>
+
+            <div class="container mt-4">
+                <div class="alert alert-danger">
+                    Không tìm thấy trang.
+                </div>
+            </div>
+
+        </NotFound>
+
+    </Router>
+
+</CascadingAuthenticationState>
