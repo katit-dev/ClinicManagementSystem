@@ -32,6 +32,26 @@ builder.Services.AddHttpClient("ClinicApi", client =>
     client.BaseAddress = new Uri(baseUrl!);
 });
 
+// =====================================================
+// AUTHORIZATION
+// =====================================================
+
+builder.Services.AddAuthorizationCore();
+
+
+// =====================================================
+// AUTHENTICATION STATE PROVIDER
+// =====================================================
+
+builder.Services.AddScoped<
+    CustomAuthenticationStateProvider>();
+
+builder.Services.AddScoped<
+    AuthenticationStateProvider>(
+        provider =>
+            provider.GetRequiredService<
+                CustomAuthenticationStateProvider>()
+    );
 
 // =====================================================
 // DI STATE SERVICE
