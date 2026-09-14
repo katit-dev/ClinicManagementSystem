@@ -13,7 +13,8 @@ public class UserStateService
     private readonly ILocalStorageService _localStorageService;
     private readonly HttpClient _httpClient;
     private readonly NavigationManager _navigationManager;
-    private readonly CustomAuthenticationStateProvider _authenticationStateProvider;
+    private readonly CustomAuthenticationStateProvider
+        _authenticationStateProvider;
 
 
     // =====================================================
@@ -35,6 +36,7 @@ public class UserStateService
 
     public Action? OnChange { get; set; }
 
+
     public void StateHasChanged()
     {
         OnChange?.Invoke();
@@ -46,18 +48,20 @@ public class UserStateService
     // =====================================================
 
     public UserStateService(
-    ILocalStorageService localStorageService,
-    IHttpClientFactory httpClientFactory,
-    NavigationManager navigationManager,
-    CustomAuthenticationStateProvider authenticationStateProvider)
+        ILocalStorageService localStorageService,
+        IHttpClientFactory httpClientFactory,
+        NavigationManager navigationManager,
+        CustomAuthenticationStateProvider authenticationStateProvider)
     {
         _localStorageService = localStorageService;
 
-        _httpClient = httpClientFactory.CreateClient("ClinicApi");
+        _httpClient =
+            httpClientFactory.CreateClient("ClinicApi");
 
         _navigationManager = navigationManager;
 
-        _authenticationStateProvider = authenticationStateProvider;
+        _authenticationStateProvider =
+            authenticationStateProvider;
     }
 
 
@@ -65,14 +69,16 @@ public class UserStateService
     // LOGIN
     // =====================================================
 
-
-    public async Task LoginAsync(LoginRequestDTO loginRequest)
+    public async Task LoginAsync(
+        LoginRequestDTO loginRequest)
     {
         ErrorMessage = string.Empty;
 
         try
         {
-            Console.WriteLine("1. Bat dau goi Login API");
+            // =================================================
+            // GỌI BACKEND API
+            // =================================================
 
             var response =
                 await _httpClient.PostAsJsonAsync(
@@ -80,18 +86,20 @@ public class UserStateService
                     loginRequest
                 );
 
-            Console.WriteLine(
-                $"2. API Status: {response.StatusCode}"
-            );
 
+            // =================================================
+            // ĐỌC RESPONSE
+            // =================================================
 
             var responseData =
                 await response.Content
                     .ReadFromJsonAsync<
                         HttpResponseData<AuthResponseDTO>>();
 
-            Console.WriteLine("3. Doc response thanh cong");
 
+            // =================================================
+            // KHÔNG NHẬN ĐƯỢC RESPONSE
+            // =================================================
 
             if (responseData == null)
             {
@@ -104,11 +112,16 @@ public class UserStateService
             }
 
 
+            // =================================================
+            // LOGIN THẤT BẠI
+            // =================================================
+
             if (!response.IsSuccessStatusCode ||
                 responseData.StatusCode != 200 ||
                 responseData.Content == null)
             {
-                ErrorMessage = responseData.Message;
+                ErrorMessage =
+                    responseData.Message;
 
                 StateHasChanged();
 
@@ -116,21 +129,33 @@ public class UserStateService
             }
 
 
-            Console.WriteLine("4. Login thanh cong");
+            // =================================================
+            // LOGIN THÀNH CÔNG
+            // =================================================
 
-            var authData = responseData.Content;
-
-            AccessToken = authData.AccessToken;
-            RefreshToken = authData.RefreshToken;
-            CurrentUser = authData.User;
+            var authData =
+                responseData.Content;
 
 
-            Console.WriteLine("5. Bat dau luu LocalStorage");
+            AccessToken =
+                authData.AccessToken;
+
+            RefreshToken =
+                authData.RefreshToken;
+
+            CurrentUser =
+                authData.User;
+
+
+            // =================================================
+            // LƯU LOCAL STORAGE
+            // =================================================
 
             await _localStorageService.SetItemAsync(
                 "accessToken",
                 AccessToken
             );
+
 
             await _localStorageService.SetItemAsync(
                 "refreshToken",
@@ -139,42 +164,55 @@ public class UserStateService
 
 
             var currentUserJson =
-                JsonSerializer.Serialize(CurrentUser);
+                JsonSerializer.Serialize(
+                    CurrentUser
+                );
+
 
             await _localStorageService.SetItemAsync(
                 "currentUser",
                 currentUserJson
             );
 
-            Console.WriteLine("6. Luu LocalStorage thanh cong");
 
+            // =================================================
+            // THÔNG BÁO CHO BLAZOR USER ĐÃ LOGIN
+            // =================================================
 
             _authenticationStateProvider
-                .MarkUserAsAuthenticated(CurrentUser);
-
-            Console.WriteLine("7. Authentication state OK");
-
-
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue(
-                    "Bearer",
-                    AccessToken
+                .MarkUserAsAuthenticated(
+                    CurrentUser
                 );
 
 
+            // =================================================
+            // GẮN JWT VÀO HTTP CLIENT
+            // =================================================
+
+            _httpClient
+                .DefaultRequestHeaders
+                .Authorization =
+                    new AuthenticationHeaderValue(
+                        "Bearer",
+                        AccessToken
+                    );
+
+
+            // =================================================
+            // THÔNG BÁO UI STATE ĐÃ THAY ĐỔI
+            // =================================================
+
             StateHasChanged();
 
-            Console.WriteLine("8. Redirect");
+
+            // =================================================
+            // CHUYỂN TRANG THEO ROLE
+            // =================================================
 
             RedirectByRole();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine("======================");
-            Console.WriteLine("LOGIN ERROR");
-            Console.WriteLine(ex.ToString());
-            Console.WriteLine("======================");
-
             ErrorMessage =
                 "Không thể kết nối đến hệ thống. Vui lòng thử lại.";
 
@@ -182,53 +220,84 @@ public class UserStateService
         }
     }
 
+
     // =====================================================
     // LOAD USER STATE
-    // Dùng khi F5 / mở lại website
+    //
+    // Dùng khi:
+    // - F5
+    // - Mở lại website
+    //
+    // Khôi phục trạng thái đăng nhập từ LocalStorage
     // =====================================================
 
     public async Task LoadUserStateAsync()
     {
         var accessToken =
-            await _localStorageService.GetItemAsync<string>(
-                "accessToken"
-            );
+            await _localStorageService
+                .GetItemAsync<string>(
+                    "accessToken"
+                );
+
 
         var refreshToken =
-            await _localStorageService.GetItemAsync<string>(
-                "refreshToken"
-            );
+            await _localStorageService
+                .GetItemAsync<string>(
+                    "refreshToken"
+                );
+
 
         var currentUserJson =
-            await _localStorageService.GetItemAsync<string>(
-                "currentUser"
-            );
+            await _localStorageService
+                .GetItemAsync<string>(
+                    "currentUser"
+                );
 
 
-        if (string.IsNullOrWhiteSpace(accessToken))
+        // =================================================
+        // KHÔNG CÓ ACCESS TOKEN
+        // => CHƯA ĐĂNG NHẬP
+        // =================================================
+
+        if (string.IsNullOrWhiteSpace(
+            accessToken))
         {
             ClearState();
 
+
             _authenticationStateProvider
                 .MarkUserAsLoggedOut();
+
 
             return;
         }
 
 
-        AccessToken = accessToken;
+        // =================================================
+        // KHÔI PHỤC TOKEN
+        // =================================================
 
-        RefreshToken = refreshToken ?? string.Empty;
+        AccessToken =
+            accessToken;
+
+        RefreshToken =
+            refreshToken ?? string.Empty;
 
 
-        if (!string.IsNullOrWhiteSpace(currentUserJson))
+        // =================================================
+        // KHÔI PHỤC CURRENT USER
+        // =================================================
+
+        if (!string.IsNullOrWhiteSpace(
+            currentUserJson))
         {
             try
             {
                 CurrentUser =
-                    JsonSerializer.Deserialize<AuthUserDTO>(
-                        currentUserJson
-                    );
+                    JsonSerializer
+                        .Deserialize<AuthUserDTO>(
+                            currentUserJson
+                        );
             }
             catch
             {
@@ -237,22 +306,35 @@ public class UserStateService
         }
 
 
+        // =================================================
+        // KHÔI PHỤC AUTHENTICATION STATE
+        // =================================================
+
         if (CurrentUser != null)
         {
             _authenticationStateProvider
-                .MarkUserAsAuthenticated(CurrentUser);
+                .MarkUserAsAuthenticated(
+                    CurrentUser
+                );
         }
 
 
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue(
-                "Bearer",
-                AccessToken
-            );
+        // =================================================
+        // GẮN ACCESS TOKEN VÀO HTTP CLIENT
+        // =================================================
+
+        _httpClient
+            .DefaultRequestHeaders
+            .Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    AccessToken
+                );
 
 
         StateHasChanged();
     }
+
 
     // =====================================================
     // LOGOUT
@@ -260,24 +342,44 @@ public class UserStateService
 
     public async Task LogoutAsync()
     {
+        // =================================================
+        // XÓA LOCAL STORAGE
+        // =================================================
+
         await _localStorageService.RemoveItemAsync(
             "accessToken"
         );
 
+
         await _localStorageService.RemoveItemAsync(
             "refreshToken"
         );
+
 
         await _localStorageService.RemoveItemAsync(
             "currentUser"
         );
 
 
+        // =================================================
+        // XÓA STATE TRONG RAM
+        // =================================================
+
         ClearState();
 
 
-        _httpClient.DefaultRequestHeaders.Authorization = null;
+        // =================================================
+        // XÓA BEARER TOKEN KHỎI HTTP CLIENT
+        // =================================================
 
+        _httpClient
+            .DefaultRequestHeaders
+            .Authorization = null;
+
+
+        // =================================================
+        // THÔNG BÁO CHO BLAZOR USER ĐÃ LOGOUT
+        // =================================================
 
         _authenticationStateProvider
             .MarkUserAsLoggedOut();
@@ -286,8 +388,15 @@ public class UserStateService
         StateHasChanged();
 
 
-        _navigationManager.NavigateTo("/login");
+        // =================================================
+        // CHUYỂN VỀ LOGIN
+        // =================================================
+
+        _navigationManager.NavigateTo(
+            "/login"
+        );
     }
+
 
     // =====================================================
     // REDIRECT THEO ROLE
@@ -303,49 +412,85 @@ public class UserStateService
         }
 
 
+        // =================================================
+        // ADMIN
+        // =================================================
+
         if (CurrentUser.Roles.Any(
-            role => role.Equals(
-                "Admin",
-                StringComparison.OrdinalIgnoreCase)))
+            role =>
+                role.Equals(
+                    "Admin",
+                    StringComparison.OrdinalIgnoreCase
+                )))
         {
-            _navigationManager.NavigateTo("/admin");
+            _navigationManager.NavigateTo(
+                "/admin"
+            );
 
             return;
         }
 
 
+        // =================================================
+        // DOCTOR
+        // =================================================
+
         if (CurrentUser.Roles.Any(
-            role => role.Equals(
-                "Doctor",
-                StringComparison.OrdinalIgnoreCase)))
+            role =>
+                role.Equals(
+                    "Doctor",
+                    StringComparison.OrdinalIgnoreCase
+                )))
         {
-            _navigationManager.NavigateTo("/doctor");
+            _navigationManager.NavigateTo(
+                "/doctor"
+            );
 
             return;
         }
 
 
+        // =================================================
+        // RECEPTIONIST
+        // =================================================
+
         if (CurrentUser.Roles.Any(
-            role => role.Equals(
-                "Receptionist",
-                StringComparison.OrdinalIgnoreCase)))
+            role =>
+                role.Equals(
+                    "Receptionist",
+                    StringComparison.OrdinalIgnoreCase
+                )))
         {
-            _navigationManager.NavigateTo("/reception");
+            _navigationManager.NavigateTo(
+                "/reception"
+            );
 
             return;
         }
 
 
+        // =================================================
+        // PATIENT
+        // =================================================
+
         if (CurrentUser.Roles.Any(
-            role => role.Equals(
-                "Patient",
-                StringComparison.OrdinalIgnoreCase)))
+            role =>
+                role.Equals(
+                    "Patient",
+                    StringComparison.OrdinalIgnoreCase
+                )))
         {
-            _navigationManager.NavigateTo("/patient");
+            _navigationManager.NavigateTo(
+                "/patient"
+            );
 
             return;
         }
 
+
+        // =================================================
+        // KHÔNG XÁC ĐỊNH ĐƯỢC ROLE
+        // =================================================
 
         _navigationManager.NavigateTo("/");
     }
@@ -357,12 +502,16 @@ public class UserStateService
 
     private void ClearState()
     {
-        AccessToken = string.Empty;
+        AccessToken =
+            string.Empty;
 
-        RefreshToken = string.Empty;
+        RefreshToken =
+            string.Empty;
 
-        CurrentUser = null;
+        CurrentUser =
+            null;
 
-        ErrorMessage = string.Empty;
+        ErrorMessage =
+            string.Empty;
     }
 }
