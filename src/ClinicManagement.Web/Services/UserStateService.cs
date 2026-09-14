@@ -144,7 +144,7 @@ public class UserStateService
                 "currentUser",
                 currentUserJson
             );
-            
+
             // Báo cho Blazor biết User đã Login
             _authenticationStateProvider
                 .MarkUserAsAuthenticated(CurrentUser);
@@ -267,12 +267,15 @@ public class UserStateService
         _httpClient.DefaultRequestHeaders.Authorization = null;
 
 
+        _authenticationStateProvider
+            .MarkUserAsLoggedOut();
+
+
         StateHasChanged();
 
 
         _navigationManager.NavigateTo("/login");
     }
-
 
     // =====================================================
     // REDIRECT THEO ROLE
