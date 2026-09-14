@@ -177,6 +177,24 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+
+// =====================================================
+// CORS
+// Cho phép Frontend gọi Backend API
+// =====================================================
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("https://localhost:5050")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+
 var app = builder.Build();
 
 // ============================================================
@@ -203,10 +221,14 @@ if (app.Environment.IsDevelopment())
 // ============================================================
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
 
+app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
+
+app.UseAuthorization();
+
+app.MapControllers();
 // Log khởi động
 app.Logger.LogInformation("Clinic API started.");
 

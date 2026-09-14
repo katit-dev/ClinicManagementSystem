@@ -34,7 +34,6 @@ builder.Services.AddHttpClient("ClinicApi", client =>
 
 builder.Services.AddOpenApi();
 
-
 var app = builder.Build();
 
 
