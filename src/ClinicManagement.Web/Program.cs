@@ -14,6 +14,11 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddServerSideBlazor();
 
+// =====================================================
+// LOCAL STORAGE
+// =====================================================
+builder.Services.AddLocalStorageServices();
+
 
 // =====================================================
 // HTTP CLIENT
