@@ -66,6 +66,95 @@ public class UserStateService
 
 
     // =====================================================
+    // REGISTER
+    // =====================================================
+
+    public async Task<bool> RegisterAsync(
+        UserRegisterDTO request)
+    {
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            // =================================================
+            // GỌI API REGISTER
+            // =================================================
+
+            var response =
+                await _httpClient.PostAsJsonAsync(
+                    "/api/auth/register",
+                    request
+                );
+
+
+            // =================================================
+            // ĐỌC RESPONSE
+            //
+            // Dùng JsonElement vì hiện tại Register chỉ cần
+            // StatusCode + Message, chưa cần dùng Content.
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<JsonElement>>();
+
+
+            // =================================================
+            // RESPONSE NULL
+            // =================================================
+
+            if (responseData == null)
+            {
+                ErrorMessage =
+                    "Không nhận được phản hồi từ hệ thống.";
+
+                StateHasChanged();
+
+                return false;
+            }
+
+
+            // =================================================
+            // REGISTER FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData.Message;
+
+                StateHasChanged();
+
+                return false;
+            }
+
+
+            // =================================================
+            // REGISTER SUCCESS
+            // =================================================
+
+            ErrorMessage = string.Empty;
+
+            StateHasChanged();
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống. " +
+                "Vui lòng thử lại.";
+
+            StateHasChanged();
+
+            return false;
+        }
+    }
+
+    // =====================================================
     // LOGIN
     // =====================================================
 
