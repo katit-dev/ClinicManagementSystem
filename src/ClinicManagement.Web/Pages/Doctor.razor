@@ -1,0 +1,162 @@
+@page "/doctor"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Doctor")]
+
+@inject UserStateService _userStateService
+
+
+<PageTitle>Doctor Dashboard</PageTitle>
+
+
+@* =====================================================
+   DOCTOR DASHBOARD HEADER
+   ===================================================== *@
+
+<div class="mb-4">
+
+    <h1 class="fw-bold">
+        Doctor Dashboard
+    </h1>
+
+    <p class="text-secondary mb-0">
+
+        Xin chào,
+
+        <strong>
+            @_userStateService.CurrentUser?.FullName
+        </strong>
+
+    </p>
+
+</div>
+
+
+@* =====================================================
+   DOCTOR FUNCTIONS
+   ===================================================== *@
+
+<div class="row g-4">
+
+
+    @* =================================================
+       PATIENT QUEUE
+       ================================================= *@
+
+    <div class="col-12 col-md-6 col-lg-3">
+
+        <div class="card h-100 shadow-sm border-0">
+
+            <div class="card-body text-center p-4">
+
+                <i class="fas fa-users fa-2x mb-3"></i>
+
+                <h5 class="card-title">
+                    Hàng chờ khám
+                </h5>
+
+                <p class="card-text text-secondary">
+
+                    Xem danh sách bệnh nhân
+                    đang chờ khám.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* =================================================
+       EXAMINATION
+       ================================================= *@
+
+    <div class="col-12 col-md-6 col-lg-3">
+
+        <div class="card h-100 shadow-sm border-0">
+
+            <div class="card-body text-center p-4">
+
+                <i class="fas fa-stethoscope fa-2x mb-3"></i>
+
+                <h5 class="card-title">
+                    Khám bệnh
+                </h5>
+
+                <p class="card-text text-secondary">
+
+                    Tiến hành khám
+                    và ghi nhận kết quả khám.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* =================================================
+       MEDICAL RECORD
+       ================================================= *@
+
+    <div class="col-12 col-md-6 col-lg-3">
+
+        <div class="card h-100 shadow-sm border-0">
+
+            <div class="card-body text-center p-4">
+
+                <i class="fas fa-file-medical fa-2x mb-3"></i>
+
+                <h5 class="card-title">
+                    Hồ sơ bệnh án
+                </h5>
+
+                <p class="card-text text-secondary">
+
+                    Tra cứu hồ sơ
+                    và lịch sử khám bệnh.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* =================================================
+       WORKING SCHEDULE
+       ================================================= *@
+
+    <div class="col-12 col-md-6 col-lg-3">
+
+        <div class="card h-100 shadow-sm border-0">
+
+            <div class="card-body text-center p-4">
+
+                <i class="fas fa-calendar-alt fa-2x mb-3"></i>
+
+                <h5 class="card-title">
+                    Lịch làm việc
+                </h5>
+
+                <p class="card-text text-secondary">
+
+                    Xem lịch làm việc
+                    và lịch khám của bác sĩ.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
