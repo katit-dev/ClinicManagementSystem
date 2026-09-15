@@ -1,29 +1,91 @@
 @inherits LayoutComponentBase
 
+@inject UserStateService _userStateService
+
+@implements IDisposable
+
+
+@* =====================================================
+   HEADER
+   ===================================================== *@
+
 <header class="bg-primary text-white">
 
     <div class="container py-3">
 
         <div class="d-flex justify-content-between align-items-center">
 
+            @* =================================================
+               LOGO / HOME
+               ================================================= *@
+
             <a href="/"
                class="text-white text-decoration-none">
 
                 <h4 class="mb-0">
+
                     <i class="fas fa-clinic-medical me-2"></i>
+
                     Clinic Management
+
                 </h4>
 
             </a>
 
-            <div>
 
-                <a href="/login"
-                   class="btn btn-light btn-sm">
+            @* =================================================
+               USER INFORMATION
+               ================================================= *@
 
-                    Đăng nhập
+            <div class="d-flex align-items-center gap-3">
 
-                </a>
+                @if (_userStateService.CurrentUser == null)
+                {
+                    @* =========================================
+                       CHƯA ĐĂNG NHẬP
+                       ========================================= *@
+
+                    <a href="/login"
+                       class="btn btn-light btn-sm">
+
+                        <i class="fas fa-sign-in-alt me-1"></i>
+
+                        Đăng nhập
+
+                    </a>
+                }
+                else
+                {
+                    @* =========================================
+                       ĐÃ ĐĂNG NHẬP
+                       ========================================= *@
+
+                    <div class="text-end">
+
+                        @* Tên người dùng *@
+
+                        <div class="fw-semibold">
+
+                            <i class="fas fa-user-circle me-1"></i>
+
+                            @_userStateService.CurrentUser.FullName
+
+                        </div>
+
+
+                        @* Role của người dùng *@
+
+                        <div class="small opacity-75">
+
+                            @string.Join(
+                                ", ",
+                                _userStateService.CurrentUser.Roles
+                            )
+
+                        </div>
+
+                    </div>
+                }
 
             </div>
 
@@ -33,6 +95,10 @@
 
 </header>
 
+
+@* =====================================================
+   MAIN CONTENT
+   ===================================================== *@
 
 <main class="py-4">
 
@@ -44,6 +110,10 @@
 
 </main>
 
+
+@* =====================================================
+   FOOTER
+   ===================================================== *@
 
 <footer class="bg-light border-top mt-5">
 
@@ -58,3 +128,37 @@
     </div>
 
 </footer>
+
+
+@code {
+
+    // =====================================================
+    // COMPONENT INITIALIZATION
+    //
+    // 1. Đăng ký lắng nghe UserStateService.OnChange
+    //
+    // 2. Load lại user từ LocalStorage
+    //    khi F5 hoặc mở lại website
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userStateService.OnChange += StateHasChanged;
+
+        await _userStateService.LoadUserStateAsync();
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    //
+    // Khi component bị hủy
+    // phải unsubscribe event
+    // =====================================================
+
+    public void Dispose()
+    {
+        _userStateService.OnChange -= StateHasChanged;
+    }
+
+}
