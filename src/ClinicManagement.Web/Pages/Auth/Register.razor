@@ -1,0 +1,290 @@
+@page "/register"
+
+@layout HomePageMaster
+
+@inject UserStateService _userStateService
+@inject NavigationManager _navigationManager
+
+
+<PageTitle>Đăng ký</PageTitle>
+
+
+@* =====================================================
+   REGISTER PAGE
+   ===================================================== *@
+
+<div class="row justify-content-center">
+
+    <div class="col-12 col-md-8 col-lg-6">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body p-4 p-md-5">
+
+
+                @* =================================================
+                   TITLE
+                   ================================================= *@
+
+                <div class="text-center mb-4">
+
+                    <h2 class="fw-bold">
+                        Đăng ký tài khoản
+                    </h2>
+
+                    <p class="text-secondary mb-0">
+                        Tạo tài khoản bệnh nhân
+                    </p>
+
+                </div>
+
+
+                @* =================================================
+                   REGISTER FORM
+                   ================================================= *@
+
+                <EditForm Model="@registerRequest"
+                          OnValidSubmit="HandleRegister">
+
+                    <DataAnnotationsValidator />
+
+
+                    @* =============================================
+                       FULL NAME
+                       ============================================= *@
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Họ và tên
+                        </label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="registerRequest.FullName"
+                                   placeholder="Nhập họ và tên" />
+
+                        <ValidationMessage For="@(() => registerRequest.FullName)" />
+
+                    </div>
+
+
+                    @* =============================================
+                       PHONE
+                       ============================================= *@
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Số điện thoại
+                        </label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="registerRequest.Phone"
+                                   placeholder="Ví dụ: 0901234567" />
+
+                        <ValidationMessage For="@(() => registerRequest.Phone)" />
+
+                    </div>
+
+
+                    @* =============================================
+                       EMAIL
+                       ============================================= *@
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Email
+                        </label>
+
+                        <InputText class="form-control"
+                                   type="email"
+                                   @bind-Value="registerRequest.Email"
+                                   placeholder="Nhập email" />
+
+                        <ValidationMessage For="@(() => registerRequest.Email)" />
+
+                    </div>
+
+
+                    @* =============================================
+                       DATE OF BIRTH
+                       ============================================= *@
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Ngày sinh
+                        </label>
+
+                        <InputDate TValue="DateTime?"
+                                   class="form-control"
+                                   @bind-Value="registerRequest.DateOfBirth" />
+
+                        <ValidationMessage For="@(() => registerRequest.DateOfBirth)" />
+
+                    </div>
+
+
+                    @* =============================================
+                       PASSWORD
+                       ============================================= *@
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Mật khẩu
+                        </label>
+
+                        <InputText class="form-control"
+                                   type="password"
+                                   @bind-Value="registerRequest.Password"
+                                   placeholder="Nhập mật khẩu" />
+
+                        <ValidationMessage For="@(() => registerRequest.Password)" />
+
+                    </div>
+
+
+                    @* =============================================
+                       CONFIRM PASSWORD
+                       ============================================= *@
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Xác nhận mật khẩu
+                        </label>
+
+                        <InputText class="form-control"
+                                   type="password"
+                                   @bind-Value="registerRequest.ConfirmPassword"
+                                   placeholder="Nhập lại mật khẩu" />
+
+                        <ValidationMessage For="@(() => registerRequest.ConfirmPassword)" />
+
+                    </div>
+
+
+                    @* =============================================
+                       BACKEND ERROR
+                       ============================================= *@
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        _userStateService.ErrorMessage))
+                    {
+                        <div class="alert alert-danger">
+
+                            @_userStateService.ErrorMessage
+
+                        </div>
+                    }
+
+
+                    @* =============================================
+                       SUBMIT
+                       ============================================= *@
+
+                    <div class="d-grid mt-4">
+
+                        <button type="submit"
+                                class="btn btn-primary"
+                                disabled="@isSubmitting">
+
+                            @if (isSubmitting)
+                            {
+                                <span>
+                                    Đang đăng ký...
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                    Đăng ký
+                                </span>
+                            }
+
+                        </button>
+
+                    </div>
+
+                </EditForm>
+
+
+                @* =================================================
+                   LOGIN LINK
+                   ================================================= *@
+
+                <div class="text-center mt-4">
+
+                    <span class="text-secondary">
+                        Đã có tài khoản?
+                    </span>
+
+                    <a href="/login"
+                       class="text-decoration-none ms-1">
+
+                        Đăng nhập
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // REGISTER MODEL
+    // =====================================================
+
+    private UserRegisterDTO registerRequest = new();
+
+
+    // =====================================================
+    // SUBMIT STATE
+    // =====================================================
+
+    private bool isSubmitting;
+
+
+    // =====================================================
+    // HANDLE REGISTER
+    // =====================================================
+
+    private async Task HandleRegister()
+    {
+        if (isSubmitting)
+        {
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            var success =
+                await _userStateService.RegisterAsync(
+                    registerRequest
+                );
+
+
+            if (success)
+            {
+                _navigationManager.NavigateTo("/login");
+            }
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+}
