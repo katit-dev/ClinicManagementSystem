@@ -19,8 +19,7 @@
                LOGO / HOME
                ================================================= *@
 
-            <a href="/"
-               class="text-white text-decoration-none">
+            <a href="/" class="text-white text-decoration-none">
 
                 <h4 class="mb-0">
 
@@ -45,8 +44,7 @@
                        CHƯA ĐĂNG NHẬP
                        ========================================= *@
 
-                    <a href="/login"
-                       class="btn btn-light btn-sm">
+                    <a href="/login" class="btn btn-light btn-sm">
 
                         <i class="fas fa-sign-in-alt me-1"></i>
 
@@ -85,6 +83,18 @@
                         </div>
 
                     </div>
+
+                    @* =================================================
+                        DASHBOARD BUTTON
+                    ================================================= *@
+
+                    <a href="@GetDashboardUrl()" class="btn btn-light btn-sm">
+
+                        <i class="fas fa-home me-1"></i>
+
+                        Trang làm việc
+
+                    </a>
                 }
 
             </div>
@@ -132,13 +142,58 @@
 
 @code {
 
+    private string GetDashboardUrl()
+    {
+        var user = _userStateService.CurrentUser;
+
+        if (user == null)
+        {
+            return "/";
+        }
+
+        if (user.Roles.Any(
+            role => role.Equals(
+                "Admin",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            return "/admin";
+        }
+
+        if (user.Roles.Any(
+            role => role.Equals(
+                "Doctor",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            return "/doctor";
+        }
+
+        if (user.Roles.Any(
+            role => role.Equals(
+                "Receptionist",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            return "/reception";
+        }
+
+        if (user.Roles.Any(
+            role => role.Equals(
+                "Patient",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            return "/patient";
+        }
+
+        return "/";
+    }
+
+
     // =====================================================
     // COMPONENT INITIALIZATION
     //
     // 1. Đăng ký lắng nghe UserStateService.OnChange
     //
     // 2. Load lại user từ LocalStorage
-    //    khi F5 hoặc mở lại website
+    // khi F5 hoặc mở lại website
     // =====================================================
 
     protected override async Task OnInitializedAsync()
