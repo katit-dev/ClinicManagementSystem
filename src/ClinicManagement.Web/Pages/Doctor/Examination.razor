@@ -1,0 +1,80 @@
+@page "/doctor/examination"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Doctor")]
+
+
+<PageTitle>Khám bệnh</PageTitle>
+
+
+@* =====================================================
+   PAGE HEADER
+   ===================================================== *@
+
+<div class="d-flex justify-content-between
+            align-items-center
+            mb-4">
+
+    <div>
+
+        <h1 class="fw-bold mb-1">
+            Khám bệnh
+        </h1>
+
+        <p class="text-secondary mb-0">
+            Thực hiện khám bệnh và ghi nhận kết quả khám.
+        </p>
+
+    </div>
+
+
+    <a href="/doctor"
+       class="btn btn-outline-secondary">
+
+        <i class="fas fa-arrow-left me-1"></i>
+
+        Quay lại
+
+    </a>
+
+</div>
+
+
+@* =====================================================
+   EXAMINATION CONTENT
+   ===================================================== *@
+
+<div class="card shadow-sm border-0">
+
+    <div class="card-body">
+
+        @* =============================================
+           TEMPORARY CONTENT
+           Chưa kết nối nghiệp vụ khám bệnh
+           ============================================= *@
+
+        <div class="text-center py-5">
+
+            <i class="fas fa-stethoscope
+                      fa-3x
+                      text-secondary
+                      mb-3">
+            </i>
+
+            <h5>
+                Chưa chọn bệnh nhân
+            </h5>
+
+            <p class="text-secondary mb-0">
+
+                Bệnh nhân cần được chọn từ hàng chờ khám
+                trước khi bắt đầu khám bệnh.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
