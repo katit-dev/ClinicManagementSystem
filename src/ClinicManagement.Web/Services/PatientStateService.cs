@@ -54,11 +54,19 @@ public class PatientStateService
                 Uri.EscapeDataString(phone.Trim());
 
 
+            // =================================================
+            // CALL API
+            // =================================================
+
             var response =
                 await _httpClient.GetAsync(
                     $"/api/patients/lookup?phone={encodedPhone}"
                 );
 
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
 
             var responseData =
                 await response.Content
@@ -82,7 +90,7 @@ public class PatientStateService
 
 
             // =================================================
-            // API ERROR
+            // API FAILED
             // =================================================
 
             if (!response.IsSuccessStatusCode ||
@@ -99,27 +107,22 @@ public class PatientStateService
 
 
             // =================================================
-            // PATIENT NOT FOUND
+            // LOOKUP SUCCESS
             //
-            // Backend vẫn trả 200 nhưng Content = null
-            // =================================================
-
-            if (responseData.Content == null)
-            {
-                LookupPatient = null;
-
-                StateHasChanged();
-
-                return false;
-            }
-
-
-            // =================================================
-            // PATIENT FOUND
+            // Content có thể:
+            //
+            // null
+            // → chưa có Patient
+            //
+            // PatientLookupDTO
+            // → đã có Patient
+            //
+            // Cả hai đều là lookup thành công.
             // =================================================
 
             LookupPatient =
                 responseData.Content;
+
 
             StateHasChanged();
 
