@@ -70,6 +70,204 @@ public class UserStateService
     }
 
     // =====================================================
+    // REFRESH TOKEN
+    // =====================================================
+
+    public async Task<bool> RefreshTokenAsync()
+    {
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            // =================================================
+            // GET REFRESH TOKEN
+            // =================================================
+
+            var refreshToken = RefreshToken;
+
+
+            // =================================================
+            // NẾU STATE KHÔNG CÓ TOKEN
+            //
+            // Ví dụ user vừa F5 thì lấy lại từ LocalStorage.
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                refreshToken =
+                    await _localStorageService
+                        .GetItemAsync<string>(
+                            "refreshToken"
+                        );
+            }
+
+
+            // =================================================
+            // REFRESH TOKEN KHÔNG TỒN TẠI
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                ErrorMessage =
+                    "Không tìm thấy refresh token.";
+
+                StateHasChanged();
+
+                return false;
+            }
+
+
+            // =================================================
+            // CREATE REQUEST
+            // =================================================
+
+            var request =
+                new RefreshTokenRequestDTO
+                {
+                    RefreshToken = refreshToken
+                };
+
+
+            // =================================================
+            // CALL REFRESH TOKEN API
+            // =================================================
+
+            var response =
+                await _httpClient.PostAsJsonAsync(
+                    "/api/auth/refresh-token",
+                    request
+                );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<AuthResponseDTO?>>();
+
+
+            // =================================================
+            // RESPONSE NULL
+            // =================================================
+
+            if (responseData == null)
+            {
+                ErrorMessage =
+                    "Không nhận được phản hồi từ hệ thống.";
+
+                StateHasChanged();
+
+                return false;
+            }
+
+
+            // =================================================
+            // REFRESH FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300 ||
+                responseData.Content == null)
+            {
+                ErrorMessage =
+                    responseData.Message;
+
+                StateHasChanged();
+
+                return false;
+            }
+
+
+            // =================================================
+            // GET NEW AUTH DATA
+            // =================================================
+
+            var authData =
+                responseData.Content;
+
+
+            // =================================================
+            // UPDATE USER STATE
+            // =================================================
+
+            AccessToken =
+                authData.AccessToken;
+
+            RefreshToken =
+                authData.RefreshToken;
+
+            CurrentUser =
+                authData.User;
+
+
+            // =================================================
+            // UPDATE LOCAL STORAGE
+            // =================================================
+
+            await _localStorageService.SetItemAsync(
+                "accessToken",
+                AccessToken
+            );
+
+            await _localStorageService.SetItemAsync(
+                "refreshToken",
+                RefreshToken
+            );
+
+            await _localStorageService.SetItemAsync(
+                "currentUser",
+                JsonSerializer.Serialize(
+                    CurrentUser
+                )
+            );
+
+
+            // =================================================
+            // UPDATE AUTHORIZATION HEADER
+            // =================================================
+
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    AccessToken
+                );
+
+
+            // =================================================
+            // UPDATE BLAZOR AUTHENTICATION STATE
+            // =================================================
+
+            _authenticationStateProvider
+                .MarkUserAsAuthenticated(
+                    CurrentUser
+                );
+
+
+            // =================================================
+            // NOTIFY UI
+            // =================================================
+
+            StateHasChanged();
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể làm mới phiên đăng nhập. " +
+                "Vui lòng thử lại.";
+
+            StateHasChanged();
+
+            return false;
+        }
+    }
+
+    // =====================================================
     // RESET PASSWORD
     // =====================================================
 
