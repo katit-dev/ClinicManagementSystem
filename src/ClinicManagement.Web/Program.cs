@@ -61,6 +61,7 @@ builder.Services.AddScoped<
 // DI STATE SERVICE
 // =====================================================
 builder.Services.AddScoped<UserStateService>();
+builder.Services.AddScoped<PatientStateService>();
 
 
 var app = builder.Build();
