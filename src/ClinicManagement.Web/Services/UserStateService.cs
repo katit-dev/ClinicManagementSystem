@@ -29,6 +29,15 @@ public class UserStateService
 
     public string ErrorMessage { get; private set; } = string.Empty;
 
+    // =====================================================
+    // MESSAGE
+    // =====================================================
+
+    public string ErrorMessage { get; private set; }
+        = string.Empty;
+
+    public string SuccessMessage { get; private set; }
+        = string.Empty;
 
     // =====================================================
     // EVENT THÔNG BÁO STATE THAY ĐỔI
@@ -64,6 +73,93 @@ public class UserStateService
             authenticationStateProvider;
     }
 
+    // =====================================================
+    // FORGOT PASSWORD
+    // =====================================================
+
+    public async Task<bool> ForgotPasswordAsync(
+        ForgotPasswordRequestDTO request)
+    {
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _httpClient.PostAsJsonAsync(
+                    "/api/auth/forgot-password",
+                    request
+                );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<JsonElement>>();
+
+
+            // =================================================
+            // RESPONSE NULL
+            // =================================================
+
+            if (responseData == null)
+            {
+                ErrorMessage =
+                    "Không nhận được phản hồi từ hệ thống.";
+
+                StateHasChanged();
+
+                return false;
+            }
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData.Message;
+
+                StateHasChanged();
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            SuccessMessage =
+                responseData.Message;
+
+            StateHasChanged();
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống. " +
+                "Vui lòng thử lại.";
+
+            StateHasChanged();
+
+            return false;
+        }
+    }
 
     // =====================================================
     // REGISTER
