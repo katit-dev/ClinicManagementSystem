@@ -27,17 +27,13 @@ public class UserStateService
 
     public AuthUserDTO? CurrentUser { get; private set; }
 
-    public string ErrorMessage { get; private set; } = string.Empty;
-
     // =====================================================
     // MESSAGE
     // =====================================================
 
-    public string ErrorMessage { get; private set; }
-        = string.Empty;
+    public string ErrorMessage { get; private set; } = string.Empty;
 
-    public string SuccessMessage { get; private set; }
-        = string.Empty;
+    public string SuccessMessage { get; private set; } = string.Empty;
 
     // =====================================================
     // EVENT THÔNG BÁO STATE THAY ĐỔI
