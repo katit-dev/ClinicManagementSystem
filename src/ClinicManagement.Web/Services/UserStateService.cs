@@ -74,6 +74,70 @@ public class UserStateService
     }
 
     // =====================================================
+    // RESET PASSWORD
+    // =====================================================
+
+    public async Task<bool> ResetPasswordAsync(
+        ResetPasswordRequestDTO request)
+    {
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+
+        try
+        {
+            var response =
+                await _httpClient.PostAsJsonAsync(
+                    "/api/auth/reset-password",
+                    request
+                );
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<JsonElement>>();
+
+            if (responseData == null)
+            {
+                ErrorMessage =
+                    "Không nhận được phản hồi từ hệ thống.";
+
+                StateHasChanged();
+
+                return false;
+            }
+
+            if (!response.IsSuccessStatusCode ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData.Message;
+
+                StateHasChanged();
+
+                return false;
+            }
+
+            SuccessMessage =
+                responseData.Message;
+
+            StateHasChanged();
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống. " +
+                "Vui lòng thử lại.";
+
+            StateHasChanged();
+
+            return false;
+        }
+    }
+
+    // =====================================================
     // FORGOT PASSWORD
     // =====================================================
 
