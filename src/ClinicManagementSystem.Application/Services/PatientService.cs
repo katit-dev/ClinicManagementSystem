@@ -46,7 +46,8 @@ public class PatientService : IPatientService
             var result = new PatientLookupDTO
             {
                 FullName = patient.FullName,
-                DateOfBirth = patient.DateOfBirth
+                DateOfBirth = patient.DateOfBirth,
+                HasAccount = patient.UserId.HasValue
             };
 
             return Response(
