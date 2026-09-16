@@ -50,8 +50,7 @@
                    REGISTER FORM
                    ================================================= *@
 
-                <EditForm Model="@registerRequest"
-                          OnValidSubmit="HandleRegister">
+                <EditForm Model="@registerRequest" OnValidSubmit="HandleRegister">
 
                     <DataAnnotationsValidator />
 
@@ -66,12 +65,10 @@
                             Họ và tên
                         </label>
 
-                        <InputText class="form-control"
-                                   @bind-Value="registerRequest.FullName"
+                        <InputText class="form-control" @bind-Value="registerRequest.FullName"
                                    placeholder="Nhập họ và tên" />
 
-                        <ValidationMessage
-                            For="@(() => registerRequest.FullName)" />
+                        <ValidationMessage For="@(() => registerRequest.FullName)" class="text-danger" />
 
                     </div>
 
@@ -86,13 +83,10 @@
                             Số điện thoại
                         </label>
 
-                        <InputText class="form-control"
-                                   @bind-Value="registerRequest.Phone"
-                                   @onblur="HandlePhoneBlur"
+                        <InputText class="form-control" @bind-Value="registerRequest.Phone" @onblur="HandlePhoneBlur"
                                    placeholder="Ví dụ: 0901234567" />
 
-                        <ValidationMessage
-                            For="@(() => registerRequest.Phone)" />
+                        <ValidationMessage For="@(() => registerRequest.Phone)" class="text-danger" />
 
 
                         @if (isCheckingPhone)
@@ -100,8 +94,8 @@
                             <div class="text-secondary small mt-2">
 
                                 <span class="spinner-border
-                                             spinner-border-sm
-                                             me-1">
+                                    spinner-border-sm
+                                    me-1">
                                 </span>
 
                                 Đang kiểm tra hồ sơ bệnh nhân...
@@ -140,7 +134,7 @@
 
                         @* =============================================
                            CASE 1:
-                           CHƯA CÓ HỒ SƠ PATIENT
+                           CHƯA CÓ HỒ SƠ PATIENT (no patient no account)
                            ============================================= *@
 
                         if (patient == null)
@@ -162,7 +156,7 @@
 
                         @* =============================================
                            CASE 2:
-                           PATIENT ĐÃ CÓ ACCOUNT
+                           PATIENT ĐÃ CÓ ACCOUNT (is patient has account)
                            ============================================= *@
 
                         else if (patient.HasAccount)
@@ -178,13 +172,11 @@
                                     chức năng quên mật khẩu.
                                 </div>
 
-                                <a href="/login"
-                                   class="alert-link me-3">
+                                <a href="/login" class="alert-link me-3">
                                     Đăng nhập
                                 </a>
 
-                                <a href="/forgot-password"
-                                   class="alert-link">
+                                <a href="/forgot-password" class="alert-link">
                                     Quên mật khẩu
                                 </a>
 
@@ -194,7 +186,7 @@
 
                         @* =============================================
                            CASE 3:
-                           PATIENT VÃNG LAI - CHƯA CÓ ACCOUNT
+                           PATIENT VÃNG LAI - CHƯA CÓ ACCOUNT (is patient no account)
                            ============================================= *@
 
                         else
@@ -257,13 +249,10 @@
                             Email
                         </label>
 
-                        <InputText class="form-control"
-                                   type="email"
-                                   @bind-Value="registerRequest.Email"
+                        <InputText class="form-control" type="email" @bind-Value="registerRequest.Email"
                                    placeholder="Nhập email" />
 
-                        <ValidationMessage
-                            For="@(() => registerRequest.Email)" />
+                        <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />
 
                     </div>
 
@@ -278,12 +267,9 @@
                             Ngày sinh
                         </label>
 
-                        <InputDate TValue="DateTime?"
-                                   class="form-control"
-                                   @bind-Value="registerRequest.DateOfBirth" />
+                        <InputDate TValue="DateTime?" class="form-control" @bind-Value="registerRequest.DateOfBirth" />
 
-                        <ValidationMessage
-                            For="@(() => registerRequest.DateOfBirth)" />
+                        <ValidationMessage For="@(() => registerRequest.DateOfBirth)" class="text-danger" />
 
                     </div>
 
@@ -298,13 +284,10 @@
                             Mật khẩu
                         </label>
 
-                        <InputText class="form-control"
-                                   type="password"
-                                   @bind-Value="registerRequest.Password"
+                        <InputText class="form-control" type="password" @bind-Value="registerRequest.Password"
                                    placeholder="Nhập mật khẩu" />
 
-                        <ValidationMessage
-                            For="@(() => registerRequest.Password)" />
+                        <ValidationMessage For="@(() => registerRequest.Password)" class="text-danger" />
 
                     </div>
 
@@ -319,13 +302,10 @@
                             Xác nhận mật khẩu
                         </label>
 
-                        <InputText class="form-control"
-                                   type="password"
-                                   @bind-Value="registerRequest.ConfirmPassword"
+                        <InputText class="form-control" type="password" @bind-Value="registerRequest.ConfirmPassword"
                                    placeholder="Nhập lại mật khẩu" />
 
-                        <ValidationMessage
-                            For="@(() => registerRequest.ConfirmPassword)" />
+                        <ValidationMessage For="@(() => registerRequest.ConfirmPassword)" class="text-danger" />
 
                     </div>
 
@@ -352,17 +332,15 @@
 
                     <div class="d-grid mt-4">
 
-                        <button type="submit"
-                                class="btn btn-primary"
-                                disabled="@IsRegisterDisabled">
+                        <button type="submit" class="btn btn-primary" disabled="@IsRegisterDisabled">
 
                             @if (isSubmitting)
                             {
                                 <span>
 
                                     <span class="spinner-border
-                                                 spinner-border-sm
-                                                 me-1">
+                                        spinner-border-sm
+                                        me-1">
                                     </span>
 
                                     Đang đăng ký...
@@ -393,8 +371,7 @@
                         Đã có tài khoản?
                     </span>
 
-                    <a href="/login"
-                       class="text-decoration-none ms-1">
+                    <a href="/login" class="text-decoration-none ms-1">
 
                         Đăng nhập
 
@@ -514,10 +491,10 @@
 
         if (!isValid)
         {
-            hasCheckedPhone = false;
-            hasLookupError = false;
+            hasCheckedPhone = false; // chua duoc look up thanh cong
+            hasLookupError = false; // sai validation
 
-            checkedPhone = string.Empty;
+            checkedPhone = string.Empty; // xoa phone da look up truoc do
 
             return;
         }
@@ -543,7 +520,7 @@
         isCheckingPhone = true;
 
         hasCheckedPhone = false;
-        hasLookupError = false;
+        hasLookupError = false; // xoa trang thai loi cua lan lookup cu
 
 
         try

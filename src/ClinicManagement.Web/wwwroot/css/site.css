@@ -58,3 +58,13 @@
     </div>
 
 </footer>
+
+.invalid {
+    border-color: #dc3545 !important;
+}
+
+.validation-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
