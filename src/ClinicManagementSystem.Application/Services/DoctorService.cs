@@ -38,12 +38,7 @@ public class DoctorService : IDoctorService
     // =====================================================
     // GET AVAILABLE SLOTS
     // =====================================================
-
-    public async Task<
-        HttpResponseData<List<SlotDTO>>>
-        GetAvailableSlotsAsync(
-            int doctorId,
-            DateOnly date)
+    public async Task<HttpResponseData<List<SlotDTO>>>GetAvailableSlotsAsync(int doctorId, DateOnly date)
     {
         try
         {
@@ -107,14 +102,6 @@ public class DoctorService : IDoctorService
 
             // =================================================
             // GET DAY OF WEEK
-            //
-            // .NET:
-            //
-            // Sunday    = 0
-            // Monday    = 1
-            // Tuesday   = 2
-            // ...
-            // Saturday  = 6
             // =================================================
 
             var dayOfWeek =
@@ -127,16 +114,6 @@ public class DoctorService : IDoctorService
 
             // =================================================
             // FIND ACTIVE DOCTOR SCHEDULE
-            //
-            // Điều kiện:
-            //
-            // đúng Doctor
-            // đúng thứ
-            // IsActive
-            // date >= EffectiveFrom
-            //
-            // EffectiveTo:
-            // null hoặc date <= EffectiveTo
             // =================================================
 
             var schedule =
@@ -188,13 +165,8 @@ public class DoctorService : IDoctorService
             var currentTime =
                 schedule.StartTime;
 
-
-            while (
-                currentTime
-                    .AddMinutes(
-                        schedule.SlotMinutes
-                    )
-                <= schedule.EndTime)
+            // dk:  currentTime + slotminute (8:30 <= 17:00) thi tao slot 
+            while (currentTime.AddMinutes(schedule.SlotMinutes)<= schedule.EndTime)
             {
                 // =============================================
                 // SLOT START / END
