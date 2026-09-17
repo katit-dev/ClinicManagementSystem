@@ -1,4 +1,5 @@
 using ClinicManagementSystem.Application.DTOs;
+using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.DTOs.Doctor;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,8 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IDoctorService
 {
-    Task<HttpResponseData<List<DoctorDTO>>>
-        GetDoctorsBySpecialtyAsync(
-            int specialtyId);
+    Task<HttpResponseData<List<DoctorDTO>>>GetDoctorsBySpecialtyAsync(int specialtyId);
+    Task<HttpResponseData<List<SlotDTO>>>GetAvailableSlotsAsync(int doctorId, DateOnly date);
 }
 
 
