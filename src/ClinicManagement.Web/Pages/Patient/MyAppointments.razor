@@ -1,0 +1,142 @@
+@page "/patient/appointments"
+
+@layout PatientLayout
+
+@attribute [Authorize(Roles = "Patient")]
+
+@inject NavigationManager _navigationManager
+
+
+<PageTitle>Lịch hẹn của tôi</PageTitle>
+
+
+@* =====================================================
+   MY APPOINTMENTS PAGE
+   ===================================================== *@
+
+<div>
+
+
+    @* =================================================
+       HEADER
+       ================================================= *@
+
+    <div class="d-flex
+                justify-content-between
+                align-items-center
+                flex-wrap
+                gap-3
+                mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-2">
+                Lịch hẹn của tôi
+            </h2>
+
+            <p class="text-secondary mb-0">
+                Theo dõi các lịch hẹn khám
+                và trạng thái hiện tại.
+            </p>
+
+        </div>
+
+
+        <button type="button"
+                class="btn btn-primary"
+                @onclick="GoToBooking">
+
+            Đặt lịch mới
+
+        </button>
+
+    </div>
+
+
+    @* =================================================
+       FILTER
+       ================================================= *@
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-12 col-md-6">
+
+                    <label class="form-label fw-semibold">
+                        Trạng thái
+                    </label>
+
+                    <select class="form-select"
+                            disabled>
+
+                        <option>
+                            Tất cả trạng thái
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-12 col-md-6">
+
+                    <label class="form-label fw-semibold">
+                        Ngày khám
+                    </label>
+
+                    <input type="date"
+                           class="form-control"
+                           disabled />
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* =================================================
+       APPOINTMENT LIST
+       ================================================= *@
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">
+                Danh sách lịch hẹn
+            </h5>
+
+            <div class="alert alert-info mb-0">
+
+                Dữ liệu lịch hẹn sẽ được tải
+                từ hệ thống sau khi kết nối API.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // GO TO BOOKING
+    // =====================================================
+
+    private void GoToBooking()
+    {
+        _navigationManager.NavigateTo(
+            "/patient/booking"
+        );
+    }
+
+}
