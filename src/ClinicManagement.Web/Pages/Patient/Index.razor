@@ -1,0 +1,250 @@
+@page "/patient"
+
+@layout PatientLayout
+
+@attribute [Authorize(Roles = "Patient")]
+
+@inject NavigationManager _navigationManager
+
+
+<PageTitle>Patient Dashboard</PageTitle>
+
+
+@* =====================================================
+   PATIENT DASHBOARD
+   ===================================================== *@
+
+<div>
+
+
+    @* =================================================
+       HEADER
+       ================================================= *@
+
+    <div class="mb-4">
+
+        <h2 class="fw-bold mb-2">
+            Tổng quan bệnh nhân
+        </h2>
+
+        <p class="text-secondary mb-0">
+            Quản lý lịch khám, lịch hẹn,
+            hồ sơ khám bệnh và hóa đơn của bạn.
+        </p>
+
+    </div>
+
+
+    @* =================================================
+       PATIENT FEATURES
+       ================================================= *@
+
+    <div class="row g-4">
+
+
+        @* =================================================
+           BOOKING
+           ================================================= *@
+
+        <div class="col-12 col-md-6">
+
+            <div class="card h-100 shadow-sm border-0">
+
+                <div class="card-body p-4">
+
+                    <div class="mb-3">
+
+                        <h4 class="fw-bold mb-2">
+                            Đặt lịch khám
+                        </h4>
+
+                        <p class="text-secondary mb-0">
+                            Chọn bác sĩ, ngày khám
+                            và khung giờ phù hợp.
+                        </p>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-primary"
+                            @onclick="GoToBooking">
+
+                        Đặt lịch khám
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           MY APPOINTMENTS
+           ================================================= *@
+
+        <div class="col-12 col-md-6">
+
+            <div class="card h-100 shadow-sm border-0">
+
+                <div class="card-body p-4">
+
+                    <div class="mb-3">
+
+                        <h4 class="fw-bold mb-2">
+                            Lịch hẹn của tôi
+                        </h4>
+
+                        <p class="text-secondary mb-0">
+                            Theo dõi các lịch hẹn khám
+                            đã đặt và trạng thái hiện tại.
+                        </p>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            @onclick="GoToAppointments">
+
+                        Xem lịch hẹn
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           MEDICAL RECORDS
+           ================================================= *@
+
+        <div class="col-12 col-md-6">
+
+            <div class="card h-100 shadow-sm border-0">
+
+                <div class="card-body p-4">
+
+                    <div class="mb-3">
+
+                        <h4 class="fw-bold mb-2">
+                            Lịch sử khám & đơn thuốc
+                        </h4>
+
+                        <p class="text-secondary mb-0">
+                            Xem lại lịch sử khám bệnh
+                            và các đơn thuốc đã được kê.
+                        </p>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            @onclick="GoToRecords">
+
+                        Xem lịch sử khám
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           INVOICES
+           ================================================= *@
+
+        <div class="col-12 col-md-6">
+
+            <div class="card h-100 shadow-sm border-0">
+
+                <div class="card-body p-4">
+
+                    <div class="mb-3">
+
+                        <h4 class="fw-bold mb-2">
+                            Hóa đơn của tôi
+                        </h4>
+
+                        <p class="text-secondary mb-0">
+                            Theo dõi các hóa đơn
+                            và thông tin thanh toán.
+                        </p>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            @onclick="GoToInvoices">
+
+                        Xem hóa đơn
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // BOOKING NAVIGATION
+    // =====================================================
+
+    private void GoToBooking()
+    {
+        _navigationManager.NavigateTo(
+            "/patient/booking"
+        );
+    }
+
+
+    // =====================================================
+    // APPOINTMENTS NAVIGATION
+    // =====================================================
+
+    private void GoToAppointments()
+    {
+        _navigationManager.NavigateTo(
+            "/patient/appointments"
+        );
+    }
+
+
+    // =====================================================
+    // MEDICAL RECORDS NAVIGATION
+    // =====================================================
+
+    private void GoToRecords()
+    {
+        _navigationManager.NavigateTo(
+            "/patient/records"
+        );
+    }
+
+
+    // =====================================================
+    // INVOICES NAVIGATION
+    // =====================================================
+
+    private void GoToInvoices()
+    {
+        _navigationManager.NavigateTo(
+            "/patient/invoices"
+        );
+    }
+
+}
