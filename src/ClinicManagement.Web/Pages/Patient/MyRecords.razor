@@ -1,0 +1,111 @@
+@page "/patient/records"
+
+@layout PatientLayout
+
+@attribute [Authorize(Roles = "Patient")]
+
+
+<PageTitle>Lịch sử khám</PageTitle>
+
+
+@* =====================================================
+   MEDICAL RECORDS PAGE
+   ===================================================== *@
+
+<div>
+
+
+    @* =================================================
+       HEADER
+       ================================================= *@
+
+    <div class="mb-4">
+
+        <h2 class="fw-bold mb-2">
+            Lịch sử khám & đơn thuốc
+        </h2>
+
+        <p class="text-secondary mb-0">
+            Xem lại thông tin các lần khám,
+            chẩn đoán và đơn thuốc đã được kê.
+        </p>
+
+    </div>
+
+
+    @* =================================================
+       SUMMARY
+       ================================================= *@
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-12 col-md-6">
+
+            <div class="card h-100 shadow-sm border-0">
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold">
+                        Lịch sử khám
+                    </h5>
+
+                    <p class="text-secondary mb-0">
+                        Thông tin các lần khám trước
+                        sẽ được hiển thị tại đây.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-6">
+
+            <div class="card h-100 shadow-sm border-0">
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold">
+                        Đơn thuốc
+                    </h5>
+
+                    <p class="text-secondary mb-0">
+                        Các đơn thuốc của bệnh nhân
+                        sẽ được hiển thị tại đây.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* =================================================
+       RECORD LIST
+       ================================================= *@
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">
+                Hồ sơ khám bệnh
+            </h5>
+
+            <div class="alert alert-info mb-0">
+
+                Dữ liệu hồ sơ khám bệnh sẽ được tải
+                từ hệ thống sau khi kết nối API.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
