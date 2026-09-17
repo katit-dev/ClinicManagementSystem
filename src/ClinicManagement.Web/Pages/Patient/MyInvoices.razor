@@ -1,0 +1,106 @@
+@page "/patient/invoices"
+
+@layout PatientLayout
+
+@attribute [Authorize(Roles = "Patient")]
+
+
+<PageTitle>Hóa đơn của tôi</PageTitle>
+
+
+@* =====================================================
+   MY INVOICES PAGE
+   ===================================================== *@
+
+<div>
+
+
+    @* =================================================
+       HEADER
+       ================================================= *@
+
+    <div class="mb-4">
+
+        <h2 class="fw-bold mb-2">
+            Hóa đơn của tôi
+        </h2>
+
+        <p class="text-secondary mb-0">
+            Theo dõi các hóa đơn khám bệnh
+            và trạng thái thanh toán.
+        </p>
+
+    </div>
+
+
+    @* =================================================
+       FILTER
+       ================================================= *@
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-12 col-md-6">
+
+                    <label class="form-label fw-semibold">
+                        Trạng thái thanh toán
+                    </label>
+
+                    <select class="form-select"
+                            disabled>
+
+                        <option>
+                            Tất cả trạng thái
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-12 col-md-6">
+
+                    <label class="form-label fw-semibold">
+                        Ngày lập hóa đơn
+                    </label>
+
+                    <input type="date"
+                           class="form-control"
+                           disabled />
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* =================================================
+       INVOICE LIST
+       ================================================= *@
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">
+                Danh sách hóa đơn
+            </h5>
+
+            <div class="alert alert-info mb-0">
+
+                Dữ liệu hóa đơn sẽ được tải
+                từ hệ thống sau khi kết nối API.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
