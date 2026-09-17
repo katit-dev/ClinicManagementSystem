@@ -3,7 +3,6 @@
 @layout HomePageMaster
 
 @inject IHttpClientFactory HttpClientFactory
-@inject UserStateService _userStateService
 
 <PageTitle>Trang chủ</PageTitle>
 
@@ -16,43 +15,12 @@
         Clinic Management System
     </p>
 
-    <button class="btn btn-primary" @onclick="TestHttpClient">
-
-        Test HttpClient
-
-    </button>
-
-    <p class="mt-3">@message</p>
-    <button class="btn btn-warning" @onclick="TestRefreshToken">
-
-        Test Refresh Token
-
-    </button>
+    
 </div>
 
 
 @code {
 
-    private string message = "";
 
-    private void TestHttpClient()
-    {
-        var client =
-            HttpClientFactory.CreateClient("ClinicApi");
-
-        message =
-            $"Backend URL: {client.BaseAddress}";
-    }
-
-    private async Task TestRefreshToken()
-    {
-        var result =
-            await _userStateService
-                .RefreshTokenAsync();
-
-        Console.WriteLine(
-            $"Refresh result: {result}"
-        );
-    }
 
 }
