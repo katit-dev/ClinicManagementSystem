@@ -37,6 +37,26 @@ builder.Services.AddHttpClient("ClinicApi", client =>
 });
 
 // =====================================================
+// AUTHORIZED API HTTP CLIENT
+// =====================================================
+// ClinicAuthorizedApi
+// =====================================================
+
+builder.Services.AddHttpClient(
+    "ClinicAuthorizedApi",
+    client =>
+    {
+        var baseUrl =
+            builder.Configuration[
+                "ApiSettings:BaseUrl"
+            ];
+
+        client.BaseAddress =
+            new Uri(baseUrl!);
+    }
+);
+
+// =====================================================
 // AUTHORIZATION
 // =====================================================
 
