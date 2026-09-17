@@ -1,0 +1,136 @@
+@layout HomePageMaster
+
+@inherits LayoutComponentBase
+
+
+@* =====================================================
+   PATIENT LAYOUT
+   ===================================================== *@
+
+<div class="container-fluid py-4">
+
+    <div class="row g-4">
+
+
+        @* =================================================
+           PATIENT SIDEBAR
+           ================================================= *@
+
+        <div class="col-12 col-lg-3">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body p-3">
+
+
+                    @* =============================================
+                       SIDEBAR TITLE
+                       ============================================= *@
+
+                    <div class="mb-3">
+
+                        <h5 class="fw-bold mb-1">
+                            Bệnh nhân
+                        </h5>
+
+                        <small class="text-secondary">
+                            Quản lý thông tin khám bệnh
+                        </small>
+
+                    </div>
+
+
+                    @* =============================================
+                       NAVIGATION
+                       ============================================= *@
+
+                    <div class="list-group list-group-flush">
+
+
+                        @* =========================================
+                           DASHBOARD
+                           ========================================= *@
+
+                        <NavLink href="/patient"
+                                 Match="NavLinkMatch.All"
+                                 class="list-group-item
+                                        list-group-item-action">
+
+                            Tổng quan
+
+                        </NavLink>
+
+
+                        @* =========================================
+                           BOOKING
+                           ========================================= *@
+
+                        <NavLink href="/patient/booking"
+                                 class="list-group-item
+                                        list-group-item-action">
+
+                            Đặt lịch khám
+
+                        </NavLink>
+
+
+                        @* =========================================
+                           MY APPOINTMENTS
+                           ========================================= *@
+
+                        <NavLink href="/patient/appointments"
+                                 class="list-group-item
+                                        list-group-item-action">
+
+                            Lịch hẹn của tôi
+
+                        </NavLink>
+
+
+                        @* =========================================
+                           MEDICAL RECORDS
+                           ========================================= *@
+
+                        <NavLink href="/patient/records"
+                                 class="list-group-item
+                                        list-group-item-action">
+
+                            Lịch sử khám & đơn thuốc
+
+                        </NavLink>
+
+
+                        @* =========================================
+                           INVOICES
+                           ========================================= *@
+
+                        <NavLink href="/patient/invoices"
+                                 class="list-group-item
+                                        list-group-item-action">
+
+                            Hóa đơn của tôi
+
+                        </NavLink>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           PAGE CONTENT
+           ================================================= *@
+
+        <div class="col-12 col-lg-9">
+
+            @Body
+
+        </div>
+
+    </div>
+
+</div>
