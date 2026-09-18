@@ -253,6 +253,27 @@ public class DoctorService : IDoctorService
                     )
                     .ToListAsync();
 
+            // =================================================
+            // GET EXISTING APPOINTMENTS
+            //
+            // Chỉ lấy:
+            // - đúng Doctor
+            // - Appointment còn giữ chỗ: Status < 4
+            // - có overlap với ngày đang chọn
+            // =================================================
+
+            var appointments =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.DoctorId == doctorId &&
+                            a.Status < 4 &&
+                            a.StartTime < dayEnd &&
+                            a.EndTime > dayStart
+                    )
+                    .ToListAsync();
+
 
             // =================================================
             // GENERATE SLOTS
@@ -405,6 +426,16 @@ public class DoctorService : IDoctorService
                             slotEnd > t.StartAt
                     );
 
+                // =============================================
+                // CHECK EXISTING APPOINTMENT
+                // =============================================
+
+                var isBooked =
+                    appointments.Any(
+                        a =>
+                            slotStart < a.EndTime &&
+                            slotEnd > a.StartTime
+                    );
 
                 // =============================================
                 // ADD AVAILABLE SLOT
