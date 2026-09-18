@@ -69,14 +69,16 @@ public class DoctorService : IDoctorService
 
 
             // =================================================
-            // CURRENT DATE
+            // CURRENT DATE TIME
             // =================================================
+
+            var now =
+                DateTime.Now;
 
             var today =
                 DateOnly.FromDateTime(
-                    DateTime.Now
+                    now
                 );
-
 
             // =================================================
             // VALIDATE APPOINTMENT DATE
@@ -438,6 +440,14 @@ public class DoctorService : IDoctorService
                     );
 
                 // =============================================
+                // CHECK PAST SLOT
+                // =============================================
+
+                var isPastSlot =
+                    date == today &&
+                    slotStart <= now;
+
+                // =============================================
                 // ADD AVAILABLE SLOT
                 //
                 // Chỉ add nếu:
@@ -446,11 +456,7 @@ public class DoctorService : IDoctorService
                 // - không nằm trong DoctorTimeOff
                 // =============================================
 
-                if (
-                    !isBreakTime &&
-                    !isTimeOff &&
-                    !isBooked
-                )
+                if (!isBreakTime && !isTimeOff && !isBooked && !isPastSlot)
                 {
                     slots.Add(
                         new SlotDTO
