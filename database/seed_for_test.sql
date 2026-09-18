@@ -207,3 +207,99 @@ BEGIN
     );
 
 END;
+
+-- ============================================================
+-- TEST DATA - BOOKED APPOINTMENT - test getAvailableSlot(khi lay thi se chua ra slot co appointment)
+-- ============================================================
+
+DECLARE @DoctorId INT = 5;
+DECLARE @PatientId INT = 1;
+
+DECLARE @StartTime DATETIME =
+    '2026-09-21T10:30:00';
+
+DECLARE @EndTime DATETIME =
+    '2026-09-21T11:00:00';
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM scheduling.appointments
+    WHERE
+        doctor_id = @DoctorId
+        AND start_time = @StartTime
+        AND end_time = @EndTime
+        AND status < 4
+)
+BEGIN
+
+    INSERT INTO scheduling.appointments
+    (
+        patient_id,
+        doctor_id,
+        start_time,
+        end_time,
+        status,
+        reason,
+        note,
+        created_by,
+        created_at,
+        appointment_code,
+        queue_number,
+        checked_in_at,
+        completed_at,
+        cancel_reason,
+        source,
+        fee_snapshot
+    )
+    VALUES
+    (
+        @PatientId,
+        @DoctorId,
+        @StartTime,
+        @EndTime,
+
+        0,                          -- Status test: < 4
+
+        N'Test booked slot',
+        NULL,
+        NULL,
+        GETDATE(),
+
+        CONCAT(
+            'TEST-',
+            FORMAT(GETDATE(), 'yyyyMMddHHmmss')
+        ),
+
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+
+        0,                          -- Source test placeholder
+
+        200000
+    );
+
+END;
+
+
+-- ============================================================
+-- VERIFY
+-- ============================================================
+
+SELECT
+    id,
+    appointment_code,
+    patient_id,
+    doctor_id,
+    start_time,
+    end_time,
+    status,
+    source,
+    fee_snapshot
+FROM scheduling.appointments
+WHERE
+    doctor_id = @DoctorId
+    AND start_time = @StartTime;
