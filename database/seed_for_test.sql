@@ -207,34 +207,3 @@ BEGIN
     );
 
 END;
-
-
--- ============================================================
--- VERIFY
--- ============================================================
-
-SELECT
-    id,
-    doctor_id,
-    start_at,
-    end_at,
-    reason,
-    is_full_day
-FROM scheduling.doctor_time_off
-WHERE doctor_id = @DoctorId
-ORDER BY start_at;
-
-SELECT
-    id,
-    doctor_id,
-    start_at,
-    end_at,
-    reason,
-    is_full_day
-FROM scheduling.doctor_time_off
-WHERE
-    doctor_id = 5
-    AND start_at < '2026-09-22T00:00:00'
-    AND end_at > '2026-09-21T00:00:00';
-
-    
