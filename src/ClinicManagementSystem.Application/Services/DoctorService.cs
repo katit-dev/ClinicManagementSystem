@@ -448,7 +448,8 @@ public class DoctorService : IDoctorService
 
                 if (
                     !isBreakTime &&
-                    !isTimeOff
+                    !isTimeOff &&
+                    !isBooked
                 )
                 {
                     slots.Add(
