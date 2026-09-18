@@ -10,8 +10,14 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IDoctorService
 {
-    Task<HttpResponseData<List<DoctorDTO>>> GetDoctorsBySpecialtyAsync(int specialtyId);
-    Task<HttpResponseData<List<SlotDTO>>> GetAvailableSlotsAsync(int doctorId, DateOnly date);
+    Task<HttpResponseData<List<DoctorDTO>>>
+        GetDoctorsBySpecialtyAsync(
+            int specialtyId);
+
+    Task<HttpResponseData<List<SlotDTO>>>
+        GetAvailableSlotsAsync(
+            int doctorId,
+            DateOnly date);
 }
 
 
@@ -35,10 +41,16 @@ public class DoctorService : IDoctorService
         _logger = logger;
     }
 
+
     // =====================================================
     // GET AVAILABLE SLOTS
     // =====================================================
-    public async Task<HttpResponseData<List<SlotDTO>>>GetAvailableSlotsAsync(int doctorId, DateOnly date)
+
+    public async Task<
+        HttpResponseData<List<SlotDTO>>>
+        GetAvailableSlotsAsync(
+            int doctorId,
+            DateOnly date)
     {
         try
         {
@@ -57,7 +69,7 @@ public class DoctorService : IDoctorService
 
 
             // =================================================
-            // VALIDATE DATE
+            // CURRENT DATE
             // =================================================
 
             var today =
@@ -65,6 +77,10 @@ public class DoctorService : IDoctorService
                     DateTime.Now
                 );
 
+
+            // =================================================
+            // VALIDATE APPOINTMENT DATE
+            // =================================================
 
             if (date < today)
             {
@@ -77,11 +93,39 @@ public class DoctorService : IDoctorService
 
 
             // =================================================
+            // SELECTED DAY RANGE
+            //
+            // Ví dụ:
+            //
+            // date = 2026-09-21
+            //
+            // dayStart = 2026-09-21 00:00
+            // dayEnd   = 2026-09-22 00:00
+            //
+            // Dùng để kiểm tra DoctorTimeOff
+            // có overlap với ngày đang chọn hay không.
+            // =================================================
+
+            var dayStart =
+                date.ToDateTime(
+                    TimeOnly.MinValue
+                );
+
+            var dayEnd =
+                date
+                    .AddDays(1)
+                    .ToDateTime(
+                        TimeOnly.MinValue
+                    );
+
+
+            // =================================================
             // CHECK DOCTOR
             // =================================================
 
             var doctor =
-                await _unitOfWork.DoctorRepository
+                await _unitOfWork
+                    .DoctorRepository
                     .WhereSql(
                         d =>
                             d.Id == doctorId &&
@@ -89,6 +133,10 @@ public class DoctorService : IDoctorService
                     )
                     .FirstOrDefaultAsync();
 
+
+            // =================================================
+            // DOCTOR NOT FOUND
+            // =================================================
 
             if (doctor == null)
             {
@@ -102,6 +150,16 @@ public class DoctorService : IDoctorService
 
             // =================================================
             // GET DAY OF WEEK
+            //
+            // .NET:
+            //
+            // Sunday    = 0
+            // Monday    = 1
+            // Tuesday   = 2
+            // Wednesday = 3
+            // Thursday  = 4
+            // Friday    = 5
+            // Saturday  = 6
             // =================================================
 
             var dayOfWeek =
@@ -114,6 +172,14 @@ public class DoctorService : IDoctorService
 
             // =================================================
             // FIND ACTIVE DOCTOR SCHEDULE
+            //
+            // Điều kiện:
+            //
+            // - đúng Doctor
+            // - đúng thứ
+            // - schedule active
+            // - đã tới EffectiveFrom
+            // - chưa quá EffectiveTo
             // =================================================
 
             var schedule =
@@ -140,7 +206,10 @@ public class DoctorService : IDoctorService
             // DOCTOR KHÔNG LÀM NGÀY NÀY
             //
             // Không phải lỗi.
-            // Trả 200 + []
+            //
+            // Trả:
+            //
+            // 200 + []
             // =================================================
 
             if (schedule == null)
@@ -155,6 +224,37 @@ public class DoctorService : IDoctorService
 
 
             // =================================================
+            // GET DOCTOR TIME OFF
+            //
+            // DoctorId == doctorId
+            //      → nghỉ riêng của Doctor
+            //
+            // DoctorId == null
+            //      → nghỉ chung
+            //
+            // Công thức overlap:
+            //
+            // TimeOff.Start < Day.End
+            // &&
+            // TimeOff.End > Day.Start
+            // =================================================
+
+            var timeOffs =
+                await _unitOfWork
+                    .DoctorTimeOffRepository
+                    .WhereSql(
+                        t =>
+                            (
+                                t.DoctorId == doctorId ||
+                                t.DoctorId == null
+                            ) &&
+                            t.StartAt < dayEnd &&
+                            t.EndAt > dayStart
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
             // GENERATE SLOTS
             // =================================================
 
@@ -162,14 +262,54 @@ public class DoctorService : IDoctorService
                 new List<SlotDTO>();
 
 
+            // =================================================
+            // CURRENT TIME POINTER
+            //
+            // Ví dụ:
+            //
+            // StartTime = 08:00
+            //
+            // currentTime bắt đầu = 08:00
+            // =================================================
+
             var currentTime =
                 schedule.StartTime;
 
-            // dk:  currentTime + slotminute (8:30 <= 17:00) thi tao slot 
-            while (currentTime.AddMinutes(schedule.SlotMinutes)<= schedule.EndTime)
+
+            // =================================================
+            // SLOT LOOP
+            //
+            // Ví dụ:
+            //
+            // currentTime = 08:00
+            // SlotMinutes = 30
+            //
+            // 08:00 + 30 = 08:30
+            //
+            // Nếu:
+            //
+            // 08:30 <= EndTime
+            //
+            // thì tạo slot.
+            // =================================================
+
+            while (
+                currentTime
+                    .AddMinutes(
+                        schedule.SlotMinutes
+                    )
+                <= schedule.EndTime
+            )
             {
                 // =============================================
-                // SLOT START / END
+                // SLOT START / END TIME
+                //
+                // TimeOnly
+                //
+                // Ví dụ:
+                //
+                // slotStartTime = 08:00
+                // slotEndTime   = 08:30
                 // =============================================
 
                 var slotStartTime =
@@ -182,7 +322,51 @@ public class DoctorService : IDoctorService
 
 
                 // =============================================
+                // SLOT DATE TIME
+                //
+                // Ghép:
+                //
+                // date
+                // +
+                // TimeOnly
+                //
+                // thành DateTime.
+                //
+                // Ví dụ:
+                //
+                // 2026-09-21
+                // +
+                // 09:00
+                //
+                // =
+                //
+                // 2026-09-21 09:00
+                // =============================================
+
+                var slotStart =
+                    date.ToDateTime(
+                        slotStartTime
+                    );
+
+                var slotEnd =
+                    date.ToDateTime(
+                        slotEndTime
+                    );
+
+
+                // =============================================
                 // CHECK BREAK
+                //
+                // Ví dụ:
+                //
+                // Break:
+                // 12:00 - 13:30
+                //
+                // Slot:
+                // 12:30 - 13:00
+                //
+                // → overlap
+                // → isBreakTime = true
                 // =============================================
 
                 var isBreakTime =
@@ -195,23 +379,55 @@ public class DoctorService : IDoctorService
 
 
                 // =============================================
-                // ADD SLOT IF NOT IN BREAK
+                // CHECK DOCTOR TIME OFF
+                //
+                // Công thức overlap:
+                //
+                // Slot.Start < TimeOff.End
+                // &&
+                // Slot.End > TimeOff.Start
+                //
+                // Ví dụ:
+                //
+                // TimeOff:
+                // 09:00 - 10:00
+                //
+                // Slot:
+                // 09:00 - 09:30
+                //
+                // → isTimeOff = true
                 // =============================================
 
-                if (!isBreakTime)
+                var isTimeOff =
+                    timeOffs.Any(
+                        t =>
+                            slotStart < t.EndAt &&
+                            slotEnd > t.StartAt
+                    );
+
+
+                // =============================================
+                // ADD AVAILABLE SLOT
+                //
+                // Chỉ add nếu:
+                //
+                // - không nằm trong giờ nghỉ Break
+                // - không nằm trong DoctorTimeOff
+                // =============================================
+
+                if (
+                    !isBreakTime &&
+                    !isTimeOff
+                )
                 {
                     slots.Add(
                         new SlotDTO
                         {
                             StartTime =
-                                date.ToDateTime(
-                                    slotStartTime
-                                ),
+                                slotStart,
 
                             EndTime =
-                                date.ToDateTime(
-                                    slotEndTime
-                                ),
+                                slotEnd,
 
                             IsAvailable =
                                 true
@@ -222,6 +438,16 @@ public class DoctorService : IDoctorService
 
                 // =============================================
                 // NEXT SLOT
+                //
+                // Ví dụ:
+                //
+                // slot hiện tại:
+                // 08:00 - 08:30
+                //
+                // currentTime = 08:30
+                //
+                // vòng sau:
+                // 08:30 - 09:00
                 // =============================================
 
                 currentTime =
@@ -242,6 +468,10 @@ public class DoctorService : IDoctorService
         }
         catch (Exception ex)
         {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
             _logger.LogError(
                 ex,
                 "Failed to get available slots. " +
@@ -251,6 +481,10 @@ public class DoctorService : IDoctorService
             );
 
 
+            // =================================================
+            // FAILED
+            // =================================================
+
             return SlotResponse(
                 500,
                 DoctorResponseMessageDTO
@@ -258,6 +492,7 @@ public class DoctorService : IDoctorService
             );
         }
     }
+
 
     // =====================================================
     // GET DOCTORS BY SPECIALTY
@@ -288,22 +523,27 @@ public class DoctorService : IDoctorService
             // QUERY DOCTORS
             //
             // Chỉ lấy:
+            //
             // - đúng chuyên khoa
             // - bác sĩ đang hoạt động
             // =================================================
 
             var doctors =
-                await _unitOfWork.DoctorRepository
+                await _unitOfWork
+                    .DoctorRepository
                     .WhereSql(
                         d =>
                             d.SpecialtyId == specialtyId &&
                             d.IsActive
                     )
-                    .OrderBy(d => d.FullName)
+                    .OrderBy(
+                        d => d.FullName
+                    )
                     .Select(
                         d => new DoctorDTO
                         {
-                            Id = d.Id,
+                            Id =
+                                d.Id,
 
                             SpecialtyId =
                                 d.SpecialtyId,
@@ -333,7 +573,9 @@ public class DoctorService : IDoctorService
             // =================================================
             // SUCCESS
             //
-            // Không có bác sĩ vẫn trả 200 + []
+            // Không có Doctor:
+            //
+            // vẫn trả 200 + []
             // =================================================
 
             return Response(
@@ -371,7 +613,7 @@ public class DoctorService : IDoctorService
 
 
     // =====================================================
-    // RESPONSE
+    // DOCTOR RESPONSE
     // =====================================================
 
     private static
@@ -383,15 +625,18 @@ public class DoctorService : IDoctorService
     {
         return new HttpResponseData<List<DoctorDTO>>
         {
-            StatusCode = statusCode,
+            StatusCode =
+                statusCode,
 
-            Message = message,
+            Message =
+                message,
 
             Content =
                 content ??
                 new List<DoctorDTO>()
         };
     }
+
 
     // =====================================================
     // SLOT RESPONSE
@@ -406,9 +651,11 @@ public class DoctorService : IDoctorService
     {
         return new HttpResponseData<List<SlotDTO>>
         {
-            StatusCode = statusCode,
+            StatusCode =
+                statusCode,
 
-            Message = message,
+            Message =
+                message,
 
             Content =
                 content ??

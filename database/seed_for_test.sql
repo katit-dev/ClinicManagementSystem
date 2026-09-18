@@ -152,3 +152,89 @@ SELECT TOP 10
     created_at
 FROM auth.password_reset_tokens
 ORDER BY id DESC;
+
+
+
+-- ============================================================
+-- TEST DATA - DOCTOR TIME OFF
+-- chon doctorId = 5, ngay test 2026-09-21, gio nghi 09:00-10:00
+-- ============================================================
+USE ClinicManagementSystem;
+GO
+
+
+DECLARE @DoctorId INT = 5;
+
+DECLARE @StartAt DATETIME =
+    '2026-09-21T09:00:00';
+
+DECLARE @EndAt DATETIME =
+    '2026-09-21T10:00:00';
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM scheduling.doctor_time_off
+    WHERE
+        doctor_id = @DoctorId
+        AND start_at = @StartAt
+        AND end_at = @EndAt
+)
+BEGIN
+
+    INSERT INTO scheduling.doctor_time_off
+    (
+        doctor_id,
+        start_at,
+        end_at,
+        reason,
+        created_at,
+        type,
+        is_full_day,
+        approved_by
+    )
+    VALUES
+    (
+        @DoctorId,
+        @StartAt,
+        @EndAt,
+        N'Test DoctorTimeOff',
+        GETDATE(),
+        NULL,
+        0,
+        NULL
+    );
+
+END;
+
+
+-- ============================================================
+-- VERIFY
+-- ============================================================
+
+SELECT
+    id,
+    doctor_id,
+    start_at,
+    end_at,
+    reason,
+    is_full_day
+FROM scheduling.doctor_time_off
+WHERE doctor_id = @DoctorId
+ORDER BY start_at;
+
+SELECT
+    id,
+    doctor_id,
+    start_at,
+    end_at,
+    reason,
+    is_full_day
+FROM scheduling.doctor_time_off
+WHERE
+    doctor_id = 5
+    AND start_at < '2026-09-22T00:00:00'
+    AND end_at > '2026-09-21T00:00:00';
+
+    
