@@ -50,7 +50,7 @@ public class AppointmentService : IAppointmentService
     // CANCEL APPOINTMENT
     // =====================================================
 
-    public async Task<HttpResponseData<AppointmentDTO>>CancelAppointmentAsync(int appointmentId, CancelAppointmentRequestDTO request, int currentUserId)
+    public async Task<HttpResponseData<AppointmentDTO>> CancelAppointmentAsync(int appointmentId, CancelAppointmentRequestDTO request, int currentUserId)
     {
         try
         {
@@ -167,15 +167,58 @@ public class AppointmentService : IAppointmentService
 
 
             // =================================================
-            // VALIDATION SUCCESS
+            // CURRENT STATUS
             //
-            // Chưa update database ở bước 3.3.
+            // Phải lưu lại trước khi đổi sang Cancelled
+            // để ghi AppointmentStatusHistory.
             // =================================================
 
-            return Response(
-                200,
-                "Lịch hẹn hợp lệ để hủy."
-            );
+            var fromStatus =
+                appointment.Status;
+
+            // =================================================
+            // UPDATE APPOINTMENT
+            // =================================================
+
+            var now =
+                DateTime.Now;
+
+            appointment.Status =
+                (byte)AppointmentStatus.Cancelled;
+
+            appointment.CancelReason =
+                request.CancelReason.Trim();
+
+            appointment.UpdatedAt =
+                now;
+
+            // =================================================
+            // CREATE STATUS HISTORY
+            // =================================================
+
+            var statusHistory =
+                new AppointmentStatusHistory
+                {
+                    AppointmentId =
+                        appointment.Id,
+
+                    FromStatus =
+                        fromStatus,
+
+                    ToStatus =
+                        (byte)AppointmentStatus.Cancelled,
+
+                    ChangedBy =
+                        currentUserId,
+
+                    Reason =
+                        request.CancelReason.Trim(),
+
+                    ChangedAt =
+                        now
+                };
+
+
         }
         catch (Exception ex)
         {
