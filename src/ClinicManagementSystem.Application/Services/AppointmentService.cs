@@ -193,7 +193,7 @@ public class AppointmentService : IAppointmentService
                 new Appointment
                 {
                     PatientId =
-                        request.PatientId,
+                        patient.Id,
 
                     DoctorId =
                         request.DoctorId,

@@ -12,16 +12,6 @@ public class CreateAppointmentRequestDTO
         ErrorMessage = "Bác sĩ không được để trống")]
     public int DoctorId { get; set; }
 
-
-    // =====================================================
-    // PATIENT
-    // =====================================================
-
-    [Required(
-        ErrorMessage = "Bệnh nhân không được để trống")]
-    public int PatientId { get; set; }
-
-
     // =====================================================
     // START TIME
     // =====================================================
