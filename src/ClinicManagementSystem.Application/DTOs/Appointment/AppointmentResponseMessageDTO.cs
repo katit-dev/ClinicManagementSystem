@@ -24,4 +24,13 @@ public static class AppointmentResponseMessageDTO
 
     public const string SlotNotAvailable =
         "Khung giờ này không còn khả dụng.";
+
+    // cho phan GetMyAppointmentAsync
+    public const string GetMyAppointmentsSuccess =
+    "Lấy danh sách lịch hẹn thành công.";
+
+    public const string GetMyAppointmentsFailed =
+        "Lấy danh sách lịch hẹn thất bại.";
+
+
 }
