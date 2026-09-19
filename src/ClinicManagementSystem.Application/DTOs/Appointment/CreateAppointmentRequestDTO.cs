@@ -30,14 +30,4 @@ public class CreateAppointmentRequestDTO
         ErrorMessage = "Lý do khám không được vượt quá 500 ký tự")]
     public string? Reason { get; set; }
 
-
-    // =====================================================
-    // SOURCE
-    //
-    // Online | WalkIn | Phone
-    // =====================================================
-
-    [Required(
-        ErrorMessage = "Nguồn đặt lịch không được để trống")]
-    public string Source { get; set; } = string.Empty;
 }
