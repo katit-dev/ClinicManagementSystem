@@ -15,7 +15,7 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IAppointmentService
 {
-    Task<HttpResponseData<AppointmentDTO>> CreateAppointmentAsync(CreateAppointmentRequestDTO request);
+    Task<HttpResponseData<AppointmentDTO>> CreateAppointmentAsync(CreateAppointmentRequestDTO request, int currentUserId);
 }
 
 
@@ -52,7 +52,7 @@ public class AppointmentService : IAppointmentService
     public async Task<
         HttpResponseData<AppointmentDTO>>
         CreateAppointmentAsync(
-            CreateAppointmentRequestDTO request)
+            CreateAppointmentRequestDTO request, int currentUserId)
     {
         bool transactionStarted = false;
         try
@@ -62,14 +62,10 @@ public class AppointmentService : IAppointmentService
             // =================================================
 
             var patient =
-                await _unitOfWork
-                    .PatientRepository
-                    .WhereSql(
-                        p =>
-                            p.Id == request.PatientId &&
-                            p.IsActive
-                    )
-                    .FirstOrDefaultAsync();
+         await _unitOfWork
+        .PatientRepository
+        .WhereSql(p => p.UserId == currentUserId && p.IsActive)
+        .FirstOrDefaultAsync();
 
             if (patient == null)
             {
