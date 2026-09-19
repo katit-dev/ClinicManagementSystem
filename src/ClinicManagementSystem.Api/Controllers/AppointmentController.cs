@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ClinicManagementSystem.Application.DTOs.Appointment;
+using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,16 +40,42 @@ public class AppointmentController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Patient")]
-public async Task<IActionResult>CreateAppointment([FromBody] CreateAppointmentRequestDTO request)
-{
-    var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-    if (!int.TryParse(userIdValue, out var currentUserId))
+    public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentRequestDTO request)
     {
-        return Unauthorized();
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _appointmentService.CreateAppointmentAsync(request, currentUserId);
+        return StatusCode(result.StatusCode, result);
     }
 
-    var result = await _appointmentService.CreateAppointmentAsync(request, currentUserId);
-    return StatusCode(result.StatusCode, result);
-}
+    // =====================================================
+    // GET MY APPOINTMENTS
+    //
+    // GET:
+    // /api/appointments/my?filter=All
+    // =====================================================
+
+    [HttpGet("my")]
+    [Authorize(Roles = "Patient")]
+    public async Task<IActionResult> GetMyAppointments([FromQuery] MyAppointmentFilter filter = MyAppointmentFilter.All)
+    {
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _appointmentService.GetMyAppointmentsAsync(currentUserId, filter);
+
+        return StatusCode(result.StatusCode, result);
+    }
+
+
+    
 }
