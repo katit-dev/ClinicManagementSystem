@@ -54,6 +54,7 @@ public class AppointmentService : IAppointmentService
         CreateAppointmentAsync(
             CreateAppointmentRequestDTO request)
     {
+        bool transactionStarted = false;
         try
         {
             // =================================================
@@ -103,6 +104,18 @@ public class AppointmentService : IAppointmentService
                 );
             }
 
+            // =================================================
+            // GET SPECIALTY (lay ten chuyen khoa de bo vao AppointmentDTO, vi endpoint response la AppointmentDTO)
+            // =================================================
+
+            var specialty =
+                await _unitOfWork
+                    .SpecialtyRepository
+                    .WhereSql(
+                        s =>
+                            s.Id == doctor.SpecialtyId
+                    )
+                    .FirstOrDefaultAsync();
 
             // =================================================
             // CHECK APPOINTMENT TIME
@@ -278,23 +291,177 @@ public class AppointmentService : IAppointmentService
                 };
 
             // =================================================
-            // CHƯA INSERT APPOINTMENT Ở BƯỚC NÀY
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+            // =================================================
+            // RE-CHECK APPOINTMENT CONFLICT
+            // =================================================
+
+            var appointmentExists =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.DoctorId ==
+                                request.DoctorId &&
+
+                            a.Status <
+                                (byte)AppointmentStatus.Cancelled &&
+
+                            a.StartTime <
+                                appointment.EndTime &&
+
+                            a.EndTime >
+                                appointment.StartTime
+                    )
+                    .AnyAsync();
+
+            // check appoitnmentExists
+            if (appointmentExists)
+            {
+                await _unitOfWork
+                    .RollbackTransactionAsync();
+
+                transactionStarted = false;
+
+                return Response(
+                    409,
+                    AppointmentResponseMessageDTO
+                        .SlotNotAvailable
+                );
+            }
+
+            // =================================================
+            // ADD APPOINTMENT
+            // =================================================
+
+            await _unitOfWork
+                .AppointmentRepository
+                .AddAsync(
+                    appointment
+                );
+
+
+            // =================================================
+            // ADD STATUS HISTORY
+            // =================================================
+
+            await _unitOfWork
+                .AppointmentStatusHistoryRepository
+                .AddAsync(
+                    statusHistory
+                );
+
+
+            // =================================================
+            // ADD NOTIFICATION
+            // =================================================
+
+            await _unitOfWork
+                .NotificationRepository
+                .AddAsync(
+                    notification
+                );
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+
+            // =================================================
+            // MAP RESPONSE DTO
+            // =================================================
+
+            var result =
+                new AppointmentDTO
+                {
+                    Id =
+                        appointment.Id,
+
+                    AppointmentCode =
+                        appointment.AppointmentCode,
+
+                    DoctorName =
+                        doctor.FullName,
+
+                    SpecialtyName =
+                        specialty?.Name
+                        ?? string.Empty,
+
+                    StartTime =
+                        appointment.StartTime,
+
+                    Status =
+                        appointment.Status,
+
+                    QueueNumber =
+                        appointment.QueueNumber,
+
+                    FeeSnapshot =
+                        appointment.FeeSnapshot
+                };
+
+
+            // =================================================
+            // SUCCESS
             // =================================================
 
             return Response(
-                200,
-                "Slot hợp lệ."
+                201,
+                AppointmentResponseMessageDTO
+                    .CreateSuccess,
+                result
             );
         }
         catch (Exception ex)
         {
+            // =================================================
+            // ROLLBACK TRANSACTION
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback appointment creation."
+                    );
+                }
+            }
+
             // =================================================
             // LOG ERROR
             // =================================================
 
             _logger.LogError(
                 ex,
-                "Failed to validate appointment creation."
+                "Failed to create appointment."
             );
 
 
