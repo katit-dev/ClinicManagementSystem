@@ -214,6 +214,26 @@ public class AppointmentService : IAppointmentService
                         doctor.ConsultationFee
                 };
 
+            // =================================================
+            // CREATE APPOINTMENT STATUS HISTORY
+            // =================================================
+
+            var statusHistory =
+                new AppointmentStatusHistory
+                {
+                    Appointment =
+                        appointment,
+
+                    FromStatus =
+                        null,
+
+                    ToStatus =
+                        (byte)AppointmentStatus.Pending,
+
+                    ChangedAt =
+                        now
+                };
+
 
             // =================================================
             // CHƯA INSERT APPOINTMENT Ở BƯỚC NÀY
