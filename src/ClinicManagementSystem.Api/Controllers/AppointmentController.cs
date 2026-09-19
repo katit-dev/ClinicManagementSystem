@@ -76,6 +76,28 @@ public class AppointmentController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+    // CANCEL APPOINTMENT
+    //
+    // PATCH:
+    // /api/appointments/{id}/cancel
+    // =====================================================
 
-    
+    [HttpPatch("{id}/cancel")]
+    [Authorize(Roles = "Patient")]
+    public async Task<IActionResult> CancelAppointment(int id, [FromBody] CancelAppointmentRequestDTO request)
+    {
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _appointmentService.CancelAppointmentAsync(id, request, currentUserId);
+
+        return StatusCode(result.StatusCode, result);
+    }
+
+
 }
