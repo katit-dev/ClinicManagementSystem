@@ -16,7 +16,7 @@ namespace ClinicManagementSystem.Application.Services;
 public interface IAppointmentService
 {
     Task<HttpResponseData<AppointmentDTO>> CreateAppointmentAsync(CreateAppointmentRequestDTO request, int currentUserId);
-    Task<HttpResponseData<List<MyAppointmentDTO>>>GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter);
+    Task<HttpResponseData<List<MyAppointmentDTO>>> GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter);
 }
 
 
@@ -43,6 +43,234 @@ public class AppointmentService : IAppointmentService
         _doctorService = doctorService;
 
         _logger = logger;
+    }
+
+    // =====================================================
+    // GET MY APPOINTMENTS
+    // =====================================================
+
+    public async Task<HttpResponseData<List<MyAppointmentDTO>>>GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter)
+    {
+        try
+        {
+            // =================================================
+            // GET CURRENT PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            p.UserId == currentUserId &&
+                            p.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+            if (patient == null)
+            {
+                return MyAppointmentsResponse(
+                    404,
+                    AppointmentResponseMessageDTO
+                        .PatientNotFound
+                );
+            }
+
+
+            // =================================================
+            // CURRENT TIME
+            // =================================================
+
+            var now =
+                DateTime.Now;
+
+
+            // =================================================
+            // BASE QUERY
+            //
+            // Chỉ lấy Appointment của Patient đang đăng nhập.
+            // =================================================
+
+            var query =
+                _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.PatientId == patient.Id
+                    );
+
+
+            // =================================================
+            // FILTER
+            // =================================================
+
+            switch (filter)
+            {
+                // =============================================
+                // UPCOMING
+                //
+                // Pending   = 0
+                // Confirmed = 1
+                // CheckedIn = 2
+                //
+                // Và lịch chưa qua.
+                // =============================================
+
+                case MyAppointmentFilter.Upcoming:
+
+                    query =
+                        query.Where(
+                            a =>
+                                a.StartTime >= now &&
+                                a.Status <
+                                    (byte)
+                                    AppointmentStatus.Completed
+                        );
+
+                    break;
+
+
+                // =============================================
+                // COMPLETED
+                // =============================================
+
+                case MyAppointmentFilter.Completed:
+
+                    query =
+                        query.Where(
+                            a =>
+                                a.Status ==
+                                    (byte)
+                                    AppointmentStatus.Completed
+                        );
+
+                    break;
+
+
+                // =============================================
+                // CANCELLED
+                // =============================================
+
+                case MyAppointmentFilter.Cancelled:
+
+                    query =
+                        query.Where(
+                            a =>
+                                a.Status ==
+                                    (byte)
+                                    AppointmentStatus.Cancelled
+                        );
+
+                    break;
+
+
+                // =============================================
+                // ALL
+                //
+                // Không thêm điều kiện.
+                // =============================================
+
+                case MyAppointmentFilter.All:
+
+                default:
+                    break;
+            }
+
+
+            // =================================================
+            // QUERY + MAP DTO
+            // =================================================
+
+            var appointments =
+                await query
+                    .OrderByDescending(
+                        a => a.StartTime
+                    )
+                    .Select(
+                        a =>
+                            new MyAppointmentDTO
+                            {
+                                Id =
+                                    a.Id,
+
+                                AppointmentCode =
+                                    a.AppointmentCode,
+
+                                DoctorName =
+                                    a.Doctor.FullName,
+
+                                SpecialtyName =
+                                    a.Doctor
+                                        .Specialty
+                                        .Name,
+
+                                StartTime =
+                                    a.StartTime,
+
+                                EndTime =
+                                    a.EndTime,
+
+                                Status =
+                                    a.Status,
+
+                                QueueNumber =
+                                    a.QueueNumber
+                            }
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // UPCOMING
+            //
+            // Với lịch sắp tới:
+            // lịch gần nhất nên nằm trên đầu.
+            // =================================================
+
+            if (
+                filter ==
+                MyAppointmentFilter.Upcoming
+            )
+            {
+                appointments =
+                    appointments
+                        .OrderBy(
+                            a => a.StartTime
+                        )
+                        .ToList();
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return MyAppointmentsResponse(
+                200,
+                AppointmentResponseMessageDTO
+                    .GetMyAppointmentsSuccess,
+                appointments
+            );
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to get appointments for UserId: {UserId}",
+                currentUserId
+            );
+
+
+            return MyAppointmentsResponse(
+                500,
+                AppointmentResponseMessageDTO
+                    .GetMyAppointmentsFailed
+            );
+        }
     }
 
 
@@ -475,12 +703,7 @@ public class AppointmentService : IAppointmentService
     // RESPONSE
     // =====================================================
 
-    private static
-        HttpResponseData<AppointmentDTO>
-        Response(
-            int statusCode,
-            string message,
-            AppointmentDTO? content = null)
+    private static HttpResponseData<AppointmentDTO> Response(int statusCode, string message, AppointmentDTO? content = null)
     {
         return new HttpResponseData<AppointmentDTO>
         {
@@ -492,6 +715,26 @@ public class AppointmentService : IAppointmentService
 
             Content =
                 content
+        };
+    }
+
+    // =====================================================
+    // MY APPOINTMENTS RESPONSE
+    // =====================================================
+
+    private static HttpResponseData<List<MyAppointmentDTO>> MyAppointmentsResponse(int statusCode, string message, List<MyAppointmentDTO>? content = null)
+    {
+        return new HttpResponseData<List<MyAppointmentDTO>>
+        {
+            StatusCode =
+                statusCode,
+
+            Message =
+                message,
+
+            Content =
+                content ??
+                new List<MyAppointmentDTO>()
         };
     }
 }
