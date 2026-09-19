@@ -47,10 +47,165 @@ public class AppointmentService : IAppointmentService
     }
 
     // =====================================================
+    // CANCEL APPOINTMENT
+    // =====================================================
+
+    public async Task<HttpResponseData<AppointmentDTO>>CancelAppointmentAsync(int appointmentId, CancelAppointmentRequestDTO request, int currentUserId)
+    {
+        try
+        {
+            // =================================================
+            // GET CURRENT PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            p.UserId == currentUserId &&
+                            p.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // PATIENT NOT FOUND
+            // =================================================
+
+            if (patient == null)
+            {
+                return Response(
+                    404,
+                    AppointmentResponseMessageDTO
+                        .PatientNotFound
+                );
+            }
+
+
+            // =================================================
+            // GET APPOINTMENT
+            // =================================================
+
+            var appointment =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id == appointmentId &&
+                            a.PatientId == patient.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // APPOINTMENT NOT FOUND
+            // =================================================
+
+            if (appointment == null)
+            {
+                return Response(
+                    404,
+                    AppointmentResponseMessageDTO
+                        .AppointmentNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK CANCELLABLE STATUS
+            //
+            // Patient chỉ được tự hủy khi:
+            //
+            // Pending
+            // Confirmed
+            //
+            // Không cho hủy:
+            //
+            // CheckedIn
+            // Completed
+            // Cancelled
+            // NoShow
+            // =================================================
+
+            var canCancel =
+                appointment.Status ==
+                    (byte)AppointmentStatus.Pending
+                ||
+                appointment.Status ==
+                    (byte)AppointmentStatus.Confirmed;
+
+
+            if (!canCancel)
+            {
+                return Response(
+                    400,
+                    AppointmentResponseMessageDTO
+                        .CannotCancelAppointment
+                );
+            }
+
+
+            // =================================================
+            // CHECK APPOINTMENT TIME
+            //
+            // Lịch đã tới hoặc đã qua
+            // thì Patient không được tự hủy nữa.
+            // =================================================
+
+            if (
+                appointment.StartTime <=
+                DateTime.Now
+            )
+            {
+                return Response(
+                    400,
+                    AppointmentResponseMessageDTO
+                        .CannotCancelAppointment
+                );
+            }
+
+
+            // =================================================
+            // VALIDATION SUCCESS
+            //
+            // Chưa update database ở bước 3.3.
+            // =================================================
+
+            return Response(
+                200,
+                "Lịch hẹn hợp lệ để hủy."
+            );
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to validate appointment cancellation. " +
+                "AppointmentId: {AppointmentId}, " +
+                "UserId: {UserId}",
+                appointmentId,
+                currentUserId
+            );
+
+
+            return Response(
+                500,
+                AppointmentResponseMessageDTO
+                    .CancelFailed
+            );
+        }
+    }
+
+    // =====================================================
     // GET MY APPOINTMENTS
     // =====================================================
 
-    public async Task<HttpResponseData<List<MyAppointmentDTO>>>GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter)
+    public async Task<HttpResponseData<List<MyAppointmentDTO>>> GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter)
     {
         try
         {
