@@ -52,6 +52,8 @@ public class AppointmentService : IAppointmentService
 
     public async Task<HttpResponseData<AppointmentDTO>> CancelAppointmentAsync(int appointmentId, CancelAppointmentRequestDTO request, int currentUserId)
     {
+        bool transactionStarted = false;
+
         try
         {
             // =================================================
@@ -218,17 +220,71 @@ public class AppointmentService : IAppointmentService
                         now
                 };
 
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork.BeginTransactionAsync();
+
+            transactionStarted = true;
+
+            // =================================================
+            // ADD STATUS HISTORY
+            // =================================================
+
+            await _unitOfWork.AppointmentStatusHistoryRepository.AddAsync(statusHistory);
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+            // =================================================
+            // COMMIT TRANSACTION
+            // =================================================
+
+            await _unitOfWork.CommitTransactionAsync();
+
+            transactionStarted = false;
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return Response(200, AppointmentResponseMessageDTO.CancelSuccess);
 
         }
         catch (Exception ex)
         {
+            // =================================================
+            // ROLLBACK TRANSACTION
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback appointment cancellation."
+                    );
+                }
+            }
+
+
             // =================================================
             // LOG ERROR
             // =================================================
 
             _logger.LogError(
                 ex,
-                "Failed to validate appointment cancellation. " +
+                "Failed to cancel appointment. " +
                 "AppointmentId: {AppointmentId}, " +
                 "UserId: {UserId}",
                 appointmentId,
