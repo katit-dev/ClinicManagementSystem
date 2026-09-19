@@ -1455,3 +1455,17 @@ ORDER BY
     ds.day_of_week;
 
 GO
+
+-- KIEM TRA DB sau khi create appointment api thanh cong
+SELECT TOP 10 *
+FROM scheduling.appointments
+ORDER BY id DESC;
+
+SELECT TOP 10 *
+FROM scheduling.appointment_status_history
+ORDER BY id DESC;
+
+SELECT TOP 10 *
+FROM auth.notifications
+ORDER BY id DESC;
+
