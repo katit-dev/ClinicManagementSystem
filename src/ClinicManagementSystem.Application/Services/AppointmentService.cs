@@ -234,6 +234,48 @@ public class AppointmentService : IAppointmentService
                         now
                 };
 
+            // =================================================
+            // REMINDER TIME
+            //
+            // Nhắc trước lịch khám 24 giờ.
+            // =================================================
+
+            var reminderAt =
+                appointment.StartTime.AddHours(-24);
+
+
+            // =================================================
+            // CREATE NOTIFICATION
+            // =================================================
+
+            var notification =
+                new Notification
+                {
+                    Appointment =
+                        appointment,
+
+                    UserId =
+                        patient.UserId,
+
+                    Channel =
+                        "InApp",
+
+                    Title =
+                        "Nhắc lịch khám",
+
+                    Content =
+                        $"Bạn có lịch khám vào " +
+                        $"{appointment.StartTime:HH:mm dd/MM/yyyy}.",
+
+                    Status =
+                        0,
+
+                    ScheduledAt =
+                        reminderAt,
+
+                    CreatedAt =
+                        now
+                };
 
             // =================================================
             // CHƯA INSERT APPOINTMENT Ở BƯỚC NÀY
