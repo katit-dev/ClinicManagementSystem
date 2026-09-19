@@ -16,6 +16,7 @@ namespace ClinicManagementSystem.Application.Services;
 public interface IAppointmentService
 {
     Task<HttpResponseData<AppointmentDTO>> CreateAppointmentAsync(CreateAppointmentRequestDTO request, int currentUserId);
+    Task<HttpResponseData<List<MyAppointmentDTO>>>GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter);
 }
 
 
