@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicManagementSystem.Api.Controllers;
@@ -36,17 +38,17 @@ public class AppointmentController : ControllerBase
     // =====================================================
 
     [HttpPost]
-    public async Task<IActionResult>CreateAppointment([FromBody] CreateAppointmentRequestDTO request)
-    {
-        var result =
-            await _appointmentService
-                .CreateAppointmentAsync(
-                    request
-                );
+    [Authorize(Roles = "Patient")]
+public async Task<IActionResult>CreateAppointment([FromBody] CreateAppointmentRequestDTO request)
+{
+    var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        return StatusCode(
-            result.StatusCode,
-            result
-        );
+    if (!int.TryParse(userIdValue, out var currentUserId))
+    {
+        return Unauthorized();
     }
+
+    var result = await _appointmentService.CreateAppointmentAsync(request, currentUserId);
+    return StatusCode(result.StatusCode, result);
+}
 }
