@@ -3,6 +3,8 @@ using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using ClinicManagementSystem.Application.Enums;
+using ClinicManagementSystem.Infrastructure.Models;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -13,7 +15,7 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IAppointmentService
 {
-    Task<HttpResponseData<AppointmentDTO>>CreateAppointmentAsync(CreateAppointmentRequestDTO request);
+    Task<HttpResponseData<AppointmentDTO>> CreateAppointmentAsync(CreateAppointmentRequestDTO request);
 }
 
 
@@ -154,6 +156,63 @@ public class AppointmentService : IAppointmentService
                         .SlotNotAvailable
                 );
             }
+
+            // =================================================
+            // PREPARE APPOINTMENT
+            // =================================================
+
+            var now =
+                DateTime.UtcNow;
+
+
+            // =================================================
+            // GENERATE APPOINTMENT CODE
+            // =================================================
+
+            var appointmentCode =
+                "APT" +
+                Guid.NewGuid()
+                    .ToString("N")[..17]
+                    .ToUpperInvariant();
+
+
+            // =================================================
+            // CREATE APPOINTMENT ENTITY
+            // =================================================
+
+            var appointment =
+                new Appointment
+                {
+                    PatientId =
+                        request.PatientId,
+
+                    DoctorId =
+                        request.DoctorId,
+
+                    StartTime =
+                        selectedSlot.StartTime,
+
+                    EndTime =
+                        selectedSlot.EndTime,
+
+                    Status =
+                        (byte)AppointmentStatus.Pending,
+
+                    Reason =
+                        request.Reason,
+
+                    CreatedAt =
+                        now,
+
+                    AppointmentCode =
+                        appointmentCode,
+
+                    Source =
+                        (byte)AppointmentSource.Online,
+
+                    FeeSnapshot =
+                        doctor.ConsultationFee
+                };
 
 
             // =================================================
