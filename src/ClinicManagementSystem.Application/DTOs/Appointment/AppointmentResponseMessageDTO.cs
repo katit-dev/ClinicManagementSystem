@@ -32,5 +32,18 @@ public static class AppointmentResponseMessageDTO
     public const string GetMyAppointmentsFailed =
         "Lấy danh sách lịch hẹn thất bại.";
 
+    // cho cancel appointment
+    public const string CancelSuccess =
+    "Hủy lịch hẹn thành công.";
+
+    public const string CancelFailed =
+        "Hủy lịch hẹn thất bại.";
+
+    public const string AppointmentNotFound =
+        "Không tìm thấy lịch hẹn.";
+
+    public const string CannotCancelAppointment =
+        "Lịch hẹn này không thể hủy.";
+
 
 }
