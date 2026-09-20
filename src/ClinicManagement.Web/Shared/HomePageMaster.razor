@@ -57,7 +57,8 @@
             DASHBOARD
             ========================================= *@
 
-            <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All" @onclick="CloseSidebar">
+            <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                     @onclick="CloseSidebar">
 
                 <i class="fas fa-home"></i>
 
@@ -74,7 +75,8 @@
 
             @if (HasRole("Patient"))
             {
-                <NavLink href="/book-appointment" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All" @onclick="CloseSidebar">
+                <NavLink href="/patient/book-appointment" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-plus"></i>
 
@@ -85,7 +87,8 @@
                 </NavLink>
 
 
-                <NavLink href="/my-appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All" @onclick="CloseSidebar">
+                <NavLink href="/patient/appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-check"></i>
 
@@ -190,23 +193,15 @@
                         <div class="header-user-information">
 
                             <div class="header-user-name">
-
-                                @_userStateService
-                                .CurrentUser
-                                .FullName
-
+                                @(_userStateService.CurrentUser.FullName)
                             </div>
 
 
                             <div class="header-user-role">
-
                                 @string.Join(
                                     ", ",
-                                    _userStateService
-                                        .CurrentUser
-                                        .Roles
+                                    _userStateService.CurrentUser.Roles
                                 )
-
                             </div>
 
                         </div>
