@@ -398,38 +398,44 @@
 
             </div>
         }
-
-
-        @* =================================================
-       APPOINTMENT
-       ================================================= *@
+        @* =====================================================
+   APPOINTMENT
+   ===================================================== *@
 
         else
         {
+            var appointment =
+                _nearestUpcomingAppointment!;
+
+
             <div class="upcoming-appointment-card">
+
+                @* =================================================
+           DATE
+           ================================================= *@
 
                 <div class="upcoming-date">
 
                     <span class="upcoming-date-day">
-
-                        @_nearestUpcomingAppointment
-                        .StartTime
-                        .ToString("dd")
-
+                        @(appointment.StartTime.ToString("dd"))
                     </span>
 
                     <span class="upcoming-date-month">
-
-                        Tháng @_nearestUpcomingAppointment
-                        .StartTime
-                        .ToString("MM")
-
+                        Tháng @(appointment.StartTime.ToString("MM"))
                     </span>
 
                 </div>
 
 
+                @* =================================================
+           APPOINTMENT INFORMATION
+           ================================================= *@
+
                 <div class="upcoming-information">
+
+                    @* =============================================
+               DOCTOR
+               ============================================= *@
 
                     <div class="upcoming-doctor">
 
@@ -443,11 +449,11 @@
                         <div>
 
                             <h4 class="upcoming-doctor-name">
-                                @_nearestUpcomingAppointment.DoctorName
+                                @(appointment.DoctorName)
                             </h4>
 
                             <div class="upcoming-specialty">
-                                @_nearestUpcomingAppointment.SpecialtyName
+                                @(appointment.SpecialtyName)
                             </div>
 
                         </div>
@@ -455,66 +461,72 @@
                     </div>
 
 
+                    @* =============================================
+               DETAILS
+               ============================================= *@
+
                     <div class="upcoming-details">
+
+                        @* =========================================
+                   TIME
+                   ========================================= *@
 
                         <div class="upcoming-detail">
 
                             <i class="far fa-clock"></i>
 
                             <span>
-
-                                @_nearestUpcomingAppointment
-                                .StartTime
-                                .ToString("HH:mm")
-
+                                @(appointment.StartTime.ToString("HH:mm"))
                                 -
-
-                                @_nearestUpcomingAppointment
-                                .EndTime
-                                .ToString("HH:mm")
-
+                                @(appointment.EndTime.ToString("HH:mm"))
                             </span>
 
                         </div>
 
+
+                        @* =========================================
+                   DATE
+                   ========================================= *@
 
                         <div class="upcoming-detail">
 
                             <i class="far fa-calendar"></i>
 
                             <span>
-
-                                @_nearestUpcomingAppointment
-                                .StartTime
-                                .ToString("dd/MM/yyyy")
-
+                                @(appointment.StartTime.ToString("dd/MM/yyyy"))
                             </span>
 
                         </div>
 
+
+                        @* =========================================
+                   APPOINTMENT CODE
+                   ========================================= *@
 
                         <div class="upcoming-detail">
 
                             <i class="fas fa-ticket-alt"></i>
 
                             <span>
-                                @_nearestUpcomingAppointment.AppointmentCode
+                                @(appointment.AppointmentCode)
                             </span>
 
                         </div>
 
 
-                        @if (_nearestUpcomingAppointment.QueueNumber.HasValue)
+                        @* =========================================
+                   QUEUE NUMBER
+                   ========================================= *@
+
+                        @if (appointment.QueueNumber.HasValue)
                         {
                             <div class="upcoming-detail">
 
                                 <i class="fas fa-list-ol"></i>
 
                                 <span>
-
                                     Số thứ tự:
-                                    @_nearestUpcomingAppointment.QueueNumber
-
+                                    @(appointment.QueueNumber.Value)
                                 </span>
 
                             </div>
@@ -525,13 +537,17 @@
                 </div>
 
 
+                @* =================================================
+           STATUS
+           ================================================= *@
+
                 <div class="upcoming-status">
 
-                    <span class="@GetAppointmentStatusClass(
-                                     _nearestUpcomingAppointment.Status)">
+                    <span class="@GetAppointmentStatusClass(appointment.Status)">
 
                         @GetAppointmentStatusText(
-                            _nearestUpcomingAppointment.Status)
+                            appointment.Status
+                        )
 
                     </span>
 
@@ -539,6 +555,9 @@
 
             </div>
         }
+
+
+        
 
     </section>
 
