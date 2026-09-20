@@ -8,6 +8,7 @@
 @inject UserStateService _userStateService
 @inject IPatientDashboardService _patientDashboardService
 @using ClinicManagementSystem.Application.Enums;
+@using ClinicManagementSystem.Application.DTOs.Appointment
 
 <PageTitle>Patient Dashboard</PageTitle>
 
@@ -245,6 +246,27 @@
 
         </div>
 
+        @* =====================================================
+   UPCOMING APPOINTMENT - TEMPORARY TEST
+   ===================================================== *@
+
+        @if (_nearestUpcomingAppointment != null)
+        {
+            <div class="alert alert-success mt-4">
+
+                Đã tải được lịch hẹn sắp tới.
+
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-secondary mt-4">
+
+                Hiện chưa có lịch hẹn sắp tới.
+
+            </div>
+        }
+
     </section>
 
 
@@ -252,6 +274,12 @@
 
 </div>
 @code {
+
+    // =====================================================
+    // UPCOMING APPOINTMENT STATE
+    // =====================================================
+
+    private MyAppointmentDTO? _nearestUpcomingAppointment;
 
     // =====================================================
     // SUMMARY STATE
@@ -275,16 +303,24 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadAppointmentSummaryAsync();
+
+        await LoadNearestUpcomingAppointmentAsync();
+    }
+
+    // =====================================================
+    // LOAD NEAREST UPCOMING APPOINTMENT
+    // =====================================================
+
+    private async Task LoadNearestUpcomingAppointmentAsync()
+    {
+        _nearestUpcomingAppointment =
+            await _patientDashboardService
+                .GetNearestUpcomingAppointmentAsync();
     }
 
     // =====================================================
     // LOAD APPOINTMENT SUMMARY
     // =====================================================
-
-    // =====================================================
-    // LOAD APPOINTMENT SUMMARY
-    // =====================================================
-
     private async Task LoadAppointmentSummaryAsync()
     {
         // =================================================
