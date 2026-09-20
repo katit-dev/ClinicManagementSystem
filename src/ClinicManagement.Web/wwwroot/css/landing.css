@@ -232,3 +232,156 @@
     box-shadow:
         0 14px 34px rgba(56, 189, 248, 0.32);
 }
+
+
+
+/* =====================================================
+   RESPONSIVE - TABLET / SMALL LAPTOP
+   ===================================================== */
+
+@media (max-width: 992px) {
+
+    .landing-page {
+        background-position: 62% center;
+    }
+
+
+    .landing-hero {
+        left: 6%;
+
+        width: 470px;
+        max-width: 52%;
+    }
+
+
+    .landing-title {
+        font-size: 48px;
+    }
+
+
+    .landing-description {
+        font-size: 17px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .landing-page {
+        background-position: 68% center;
+    }
+
+
+    .landing-overlay {
+        background:
+            linear-gradient(
+                90deg,
+                rgba(5, 39, 66, 0.9) 0%,
+                rgba(5, 39, 66, 0.78) 45%,
+                rgba(5, 39, 66, 0.35) 75%,
+                rgba(5, 39, 66, 0.15) 100%
+            );
+    }
+
+
+    .landing-hero {
+        left: 5%;
+
+        width: 90%;
+        max-width: 540px;
+    }
+
+
+    .landing-title {
+        font-size: 42px;
+    }
+
+
+    .landing-description {
+        max-width: 430px;
+
+        font-size: 16px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 576px) {
+
+    .landing-page {
+        background-position: 72% center;
+    }
+
+
+    .landing-overlay {
+        background:
+            linear-gradient(
+                90deg,
+                rgba(5, 39, 66, 0.94) 0%,
+                rgba(5, 39, 66, 0.88) 55%,
+                rgba(5, 39, 66, 0.6) 100%
+            );
+    }
+
+
+    .landing-hero {
+        top: 50%;
+        left: 0;
+
+        width: 100%;
+        max-width: none;
+
+        padding: 0 24px;
+
+        transform: translateY(-50%);
+    }
+
+
+    .landing-brand {
+        margin-bottom: 12px;
+
+        font-size: 12px;
+        letter-spacing: 2px;
+    }
+
+
+    .landing-title {
+        font-size: 36px;
+        line-height: 1.12;
+    }
+
+
+    .landing-description {
+        margin-top: 18px;
+
+        max-width: 100%;
+
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+
+    .landing-actions {
+        flex-direction: column;
+        align-items: stretch;
+
+        gap: 12px;
+
+        margin-top: 28px;
+    }
+
+
+    .landing-button {
+        width: 100%;
+        min-width: 0;
+
+        height: 48px;
+    }
+}
