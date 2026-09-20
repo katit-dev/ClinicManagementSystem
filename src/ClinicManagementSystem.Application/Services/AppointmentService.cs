@@ -18,7 +18,7 @@ public interface IAppointmentService
     Task<HttpResponseData<AppointmentDTO>> CreateAppointmentAsync(CreateAppointmentRequestDTO request, int currentUserId);
     Task<HttpResponseData<List<MyAppointmentDTO>>> GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter);
     Task<HttpResponseData<AppointmentDTO>> CancelAppointmentAsync(int appointmentId, CancelAppointmentRequestDTO request, int currentUserId);
-    Task<HttpResponseData<AppointmentDTO>>RescheduleAppointmentAsync(int appointmentId, RescheduleAppointmentRequestDTO request, int currentUserId);
+    Task<HttpResponseData<AppointmentDTO>> RescheduleAppointmentAsync(int appointmentId, RescheduleAppointmentRequestDTO request, int currentUserId);
 }
 
 
@@ -35,16 +35,206 @@ public class AppointmentService : IAppointmentService
     // CONSTRUCTOR
     // =====================================================
 
-    public AppointmentService(
-        IUnitOfWork unitOfWork,
-        IDoctorService doctorService,
-        ILogger<AppointmentService> logger)
+    public AppointmentService(IUnitOfWork unitOfWork, IDoctorService doctorService, ILogger<AppointmentService> logger)
     {
         _unitOfWork = unitOfWork;
 
         _doctorService = doctorService;
 
         _logger = logger;
+    }
+
+    // =====================================================
+    // RESCHEDULE APPOINTMENT
+    // =====================================================
+
+    public async Task<HttpResponseData<AppointmentDTO>> RescheduleAppointmentAsync(int appointmentId, RescheduleAppointmentRequestDTO request, int currentUserId)
+    {
+        try
+        {
+            // =================================================
+            // GET CURRENT PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            p.UserId == currentUserId &&
+                            p.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // PATIENT NOT FOUND
+            // =================================================
+
+            if (patient == null)
+            {
+                return Response(
+                    404,
+                    AppointmentResponseMessageDTO
+                        .PatientNotFound
+                );
+            }
+
+
+            // =================================================
+            // GET APPOINTMENT
+            //
+            // Chỉ lấy Appointment thuộc Patient hiện tại.
+            // =================================================
+
+            var appointment =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id == appointmentId &&
+                            a.PatientId == patient.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // APPOINTMENT NOT FOUND
+            // =================================================
+
+            if (appointment == null)
+            {
+                return Response(
+                    404,
+                    AppointmentResponseMessageDTO
+                        .AppointmentNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK RESCHEDULABLE STATUS
+            //
+            // Patient chỉ được đổi lịch khi:
+            //
+            // Pending
+            // Confirmed
+            //
+            // Không cho đổi:
+            //
+            // CheckedIn
+            // Completed
+            // Cancelled
+            // NoShow
+            // =================================================
+
+            var canReschedule =
+                appointment.Status ==
+                    (byte)AppointmentStatus.Pending
+                ||
+                appointment.Status ==
+                    (byte)AppointmentStatus.Confirmed;
+
+
+            if (!canReschedule)
+            {
+                return Response(
+                    400,
+                    AppointmentResponseMessageDTO
+                        .CannotRescheduleAppointment
+                );
+            }
+
+
+            // =================================================
+            // CHECK CURRENT APPOINTMENT TIME
+            //
+            // Appointment hiện tại đã tới hoặc qua giờ khám
+            // thì không cho Patient tự đổi nữa.
+            // =================================================
+
+            var now =
+                DateTime.Now;
+
+            if (appointment.StartTime <= now)
+            {
+                return Response(
+                    400,
+                    AppointmentResponseMessageDTO
+                        .CannotRescheduleAppointment
+                );
+            }
+
+
+            // =================================================
+            // CHECK NEW START TIME
+            //
+            // Giờ mới phải nằm trong tương lai.
+            // =================================================
+
+            if (request.NewStartTime <= now)
+            {
+                return Response(
+                    400,
+                    AppointmentResponseMessageDTO
+                        .InvalidAppointmentDate
+                );
+            }
+
+
+            // =================================================
+            // CHECK SAME TIME
+            //
+            // Không cần reschedule nếu giờ mới
+            // giống hệt giờ hiện tại.
+            // =================================================
+
+            if (
+                request.NewStartTime ==
+                appointment.StartTime
+            )
+            {
+                return Response(
+                    400,
+                    AppointmentResponseMessageDTO
+                        .CannotRescheduleAppointment
+                );
+            }
+
+
+            // =================================================
+            // VALIDATION SUCCESS
+            //
+            // Chưa update StartTime / EndTime ở bước này.
+            // =================================================
+
+            return Response(
+                200,
+                "Lịch hẹn hợp lệ để đổi giờ."
+            );
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to validate appointment reschedule. " +
+                "AppointmentId: {AppointmentId}, " +
+                "UserId: {UserId}",
+                appointmentId,
+                currentUserId
+            );
+
+
+            return Response(
+                500,
+                AppointmentResponseMessageDTO
+                    .RescheduleFailed
+            );
+        }
     }
 
     // =====================================================
