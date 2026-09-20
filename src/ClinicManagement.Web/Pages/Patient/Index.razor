@@ -6,7 +6,8 @@
 
 @inject NavigationManager _navigationManager
 @inject UserStateService _userStateService
-
+@inject IPatientDashboardService _patientDashboardService
+@using ClinicManagementSystem.Application.Enums;
 
 <PageTitle>Patient Dashboard</PageTitle>
 
@@ -131,7 +132,7 @@
                     </div>
 
                     <div class="summary-card-value">
-                        --
+                         @_upcomingAppointmentCount
                     </div>
 
                     <div class="summary-card-note">
@@ -163,7 +164,7 @@
                     </div>
 
                     <div class="summary-card-value">
-                        --
+                        @_completedAppointmentCount
                     </div>
 
                     <div class="summary-card-note">
@@ -195,7 +196,7 @@
                     </div>
 
                     <div class="summary-card-value">
-                        --
+                        @_cancelledAppointmentCount
                     </div>
 
                     <div class="summary-card-note">
@@ -215,6 +216,52 @@
 
 </div>
 @code {
+
+    // =====================================================
+    // SUMMARY STATE
+    // =====================================================
+
+    private int _upcomingAppointmentCount;
+
+    private int _completedAppointmentCount;
+
+    private int _cancelledAppointmentCount;
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAppointmentSummaryAsync();
+    }
+
+    // =====================================================
+    // LOAD APPOINTMENT SUMMARY
+    // =====================================================
+
+    private async Task LoadAppointmentSummaryAsync()
+    {
+        _upcomingAppointmentCount =
+            await _patientDashboardService
+                .GetAppointmentCountAsync(
+                    MyAppointmentFilter.Upcoming
+                );
+
+
+        _completedAppointmentCount =
+            await _patientDashboardService
+                .GetAppointmentCountAsync(
+                    MyAppointmentFilter.Completed
+                );
+
+
+        _cancelledAppointmentCount =
+            await _patientDashboardService
+                .GetAppointmentCountAsync(
+                    MyAppointmentFilter.Cancelled
+                );
+    }
 
 
     // =====================================================
