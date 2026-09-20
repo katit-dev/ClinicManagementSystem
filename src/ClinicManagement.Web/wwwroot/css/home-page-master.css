@@ -1,0 +1,265 @@
+/* =====================================================
+   APPLICATION LAYOUT
+   ===================================================== */
+
+.app-layout {
+    display: flex;
+
+    width: 100%;
+    min-height: 100vh;
+
+    background-color: #f5f7fb;
+}
+
+
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+
+.app-sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    width: 260px;
+
+    padding: 24px 18px;
+
+    background-color: #ffffff;
+
+    border-right: 1px solid #e8edf3;
+
+    z-index: 100;
+}
+
+
+/* =====================================================
+   SIDEBAR BRAND
+   ===================================================== */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 4px 8px 26px;
+}
+
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 44px;
+    height: 44px;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background-color: #38bdf8;
+
+    color: #ffffff;
+
+    font-size: 19px;
+}
+
+
+.sidebar-brand-text {
+    min-width: 0;
+}
+
+
+.sidebar-brand-title {
+    font-size: 18px;
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    color: #16324f;
+}
+
+
+.sidebar-brand-subtitle {
+    margin-top: 2px;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    color: #8b98a7;
+}
+
+
+/* =====================================================
+   SIDEBAR NAVIGATION
+   ===================================================== */
+
+.sidebar-navigation {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    flex: 1;
+}
+
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    min-height: 48px;
+
+    padding: 0 15px;
+
+    border-radius: 11px;
+
+    color: #667587;
+
+    font-size: 15px;
+    font-weight: 500;
+
+    text-decoration: none;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.sidebar-link i {
+    width: 20px;
+
+    flex-shrink: 0;
+
+    text-align: center;
+
+    font-size: 16px;
+}
+
+
+.sidebar-link:hover {
+    background-color: #eef8fd;
+
+    color: #169bd5;
+
+    transform: translateX(2px);
+}
+
+
+/* =====================================================
+   SIDEBAR BOTTOM
+   ===================================================== */
+
+.sidebar-bottom {
+    padding-top: 18px;
+
+    border-top: 1px solid #eef1f5;
+}
+
+
+.sidebar-logout {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    width: 100%;
+    min-height: 48px;
+
+    padding: 0 15px;
+
+    border: 0;
+    border-radius: 11px;
+
+    background-color: transparent;
+
+    color: #dc5a5a;
+
+    font-size: 15px;
+    font-weight: 500;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.sidebar-logout i {
+    width: 20px;
+
+    text-align: center;
+
+    font-size: 16px;
+}
+
+
+.sidebar-logout:hover {
+    background-color: #fff1f1;
+
+    color: #c53f3f;
+}
+
+
+/* =====================================================
+   APPLICATION CONTENT
+   ===================================================== */
+
+.app-content {
+    width: calc(100% - 260px);
+    min-height: 100vh;
+
+    margin-left: 260px;
+}
+
+
+/* =====================================================
+   TEMPORARY HEADER
+   ===================================================== */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    height: 72px;
+
+    padding: 0 32px;
+
+    background-color: #ffffff;
+
+    border-bottom: 1px solid #e8edf3;
+}
+
+
+.header-user-name {
+    font-size: 15px;
+    font-weight: 600;
+
+    color: #334155;
+}
+
+
+/* =====================================================
+   MAIN CONTENT
+   ===================================================== */
+
+.app-main {
+    min-height: calc(100vh - 72px);
+
+    padding: 32px;
+}

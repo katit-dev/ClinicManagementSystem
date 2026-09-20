@@ -6,181 +6,240 @@
 
 
 @* =====================================================
-   HEADER
+   APPLICATION LAYOUT
    ===================================================== *@
 
-<header class="bg-primary text-white">
-
-    <div class="container py-3">
-
-        <div class="d-flex justify-content-between align-items-center">
-
-            @* =================================================
-               LOGO / HOME
-               ================================================= *@
-
-            <a href="/" class="text-white text-decoration-none">
-
-                <h4 class="mb-0">
-
-                    <i class="fas fa-clinic-medical me-2"></i>
-
-                    Clinic Management
-
-                </h4>
-
-            </a>
+<div class="app-layout">
 
 
-            @* =================================================
-               USER INFORMATION
-               ================================================= *@
+    @* =================================================
+       SIDEBAR
+       ================================================= *@
 
-            <div class="d-flex align-items-center gap-3">
+    <aside class="app-sidebar">
 
-                @if (_userStateService.CurrentUser == null)
-                {
-                    @* =========================================
-                       CHƯA ĐĂNG NHẬP
-                       ========================================= *@
+        @* =============================================
+           BRAND
+           ============================================= *@
 
-                    <a href="/login" class="btn btn-light btn-sm">
+        <div class="sidebar-brand">
 
-                        <i class="fas fa-sign-in-alt me-1"></i>
+            <div class="sidebar-logo">
 
-                        Đăng nhập
+                <i class="fas fa-clinic-medical"></i>
 
-                    </a>
-                }
-                else
-                {
-                    <div class="text-end">
-
-                        <div class="fw-semibold">
-
-                            <i class="fas fa-user-circle me-1"></i>
-
-                            @_userStateService.CurrentUser.FullName
-
-                        </div>
-
-                        <div class="small opacity-75">
-
-                            @string.Join(
-                                ", ",
-                                _userStateService.CurrentUser.Roles
-                            )
-
-                        </div>
-
-                    </div>
+            </div>
 
 
-                    <a href="@GetDashboardUrl()" class="btn btn-light btn-sm">
+            <div class="sidebar-brand-text">
 
-                        <i class="fas fa-home me-1"></i>
+                <div class="sidebar-brand-title">
+                    Clinic
+                </div>
 
-                        Trang làm việc
+                <div class="sidebar-brand-subtitle">
+                    Management System
+                </div>
 
-                    </a>
-
-
-                    <button class="btn btn-outline-light btn-sm" @onclick="HandleLogout">
-
-                        <i class="fas fa-sign-out-alt me-1"></i>
-
-                        Đăng xuất
-
-                    </button>
-                }
             </div>
 
         </div>
 
+
+        @* =============================================
+           NAVIGATION
+           ============================================= *@
+
+        <nav class="sidebar-navigation">
+
+
+            @* =========================================
+               DASHBOARD
+               ========================================= *@
+
+            <a href="@GetDashboardUrl()"
+               class="sidebar-link">
+
+                <i class="fas fa-home"></i>
+
+                <span>
+                    Trang chủ
+                </span>
+
+            </a>
+
+
+            @* =========================================
+               PATIENT MENU
+               ========================================= *@
+
+            @if (HasRole("Patient"))
+            {
+                <a href="/book-appointment"
+                   class="sidebar-link">
+
+                    <i class="fas fa-calendar-plus"></i>
+
+                    <span>
+                        Đặt lịch khám
+                    </span>
+
+                </a>
+
+
+                <a href="/my-appointments"
+                   class="sidebar-link">
+
+                    <i class="fas fa-calendar-check"></i>
+
+                    <span>
+                        Lịch hẹn của tôi
+                    </span>
+
+                </a>
+            }
+
+        </nav>
+
+
+        @* =============================================
+           SIDEBAR BOTTOM
+           ============================================= *@
+
+        @if (_userStateService.CurrentUser != null)
+        {
+            <div class="sidebar-bottom">
+
+                <button type="button"
+                        class="sidebar-logout"
+                        @onclick="HandleLogout">
+
+                    <i class="fas fa-sign-out-alt"></i>
+
+                    <span>
+                        Đăng xuất
+                    </span>
+
+                </button>
+
+            </div>
+        }
+
+    </aside>
+
+
+    @* =================================================
+       APPLICATION CONTENT
+       ================================================= *@
+
+    <div class="app-content">
+
+
+        @* =============================================
+           TEMPORARY HEADER
+           ============================================= *@
+
+        <header class="app-header">
+
+            @if (_userStateService.CurrentUser != null)
+            {
+                <div class="header-user-name">
+
+                    @_userStateService.CurrentUser.FullName
+
+                </div>
+            }
+
+        </header>
+
+
+        @* =============================================
+           MAIN CONTENT
+           ============================================= *@
+
+        <main class="app-main">
+
+            @Body
+
+        </main>
+
     </div>
 
-</header>
-
-
-@* =====================================================
-   MAIN CONTENT
-   ===================================================== *@
-
-<main class="py-4">
-
-    <div class="container">
-
-        @Body
-
-    </div>
-
-</main>
-
-
-@* =====================================================
-   FOOTER
-   ===================================================== *@
-
-<footer class="bg-light border-top mt-5">
-
-    <div class="container py-4">
-
-        <div class="text-center text-secondary">
-
-            © 2026 Clinic Management System
-
-        </div>
-
-    </div>
-
-</footer>
+</div>
 
 
 @code {
 
+    // =====================================================
+    // CHECK ROLE
+    // =====================================================
+
+    private bool HasRole(
+        string roleName)
+    {
+        var user =
+            _userStateService.CurrentUser;
+
+
+        if (user == null)
+        {
+            return false;
+        }
+
+
+        return user.Roles.Any(
+            role =>
+                role.Equals(
+                    roleName,
+                    StringComparison.OrdinalIgnoreCase
+                )
+        );
+    }
+
+
+    // =====================================================
+    // GET DASHBOARD URL
+    // =====================================================
+
     private string GetDashboardUrl()
     {
-        var user = _userStateService.CurrentUser;
+        var user =
+            _userStateService.CurrentUser;
+
 
         if (user == null)
         {
             return "/";
         }
 
-        if (user.Roles.Any(
-            role => role.Equals(
-                "Admin",
-                StringComparison.OrdinalIgnoreCase)))
+
+        if (HasRole("Admin"))
         {
             return "/admin";
         }
 
-        if (user.Roles.Any(
-            role => role.Equals(
-                "Doctor",
-                StringComparison.OrdinalIgnoreCase)))
+
+        if (HasRole("Doctor"))
         {
             return "/doctor";
         }
 
-        if (user.Roles.Any(
-            role => role.Equals(
-                "Receptionist",
-                StringComparison.OrdinalIgnoreCase)))
+
+        if (HasRole("Receptionist"))
         {
             return "/reception";
         }
 
-        if (user.Roles.Any(
-            role => role.Equals(
-                "Patient",
-                StringComparison.OrdinalIgnoreCase)))
+
+        if (HasRole("Patient"))
         {
             return "/patient";
         }
 
+
         return "/";
     }
+
 
     // =====================================================
     // LOGOUT
@@ -188,8 +247,10 @@
 
     private async Task HandleLogout()
     {
-        await _userStateService.LogoutAsync();
+        await _userStateService
+            .LogoutAsync();
     }
+
 
     // =====================================================
     // COMPONENT INITIALIZATION
@@ -200,11 +261,15 @@
     // khi F5 hoặc mở lại website
     // =====================================================
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task
+        OnInitializedAsync()
     {
-        _userStateService.OnChange += StateHasChanged;
+        _userStateService.OnChange +=
+            StateHasChanged;
 
-        await _userStateService.LoadUserStateAsync();
+
+        await _userStateService
+            .LoadUserStateAsync();
     }
 
 
@@ -217,7 +282,7 @@
 
     public void Dispose()
     {
-        _userStateService.OnChange -= StateHasChanged;
+        _userStateService.OnChange -=
+            StateHasChanged;
     }
-
 }

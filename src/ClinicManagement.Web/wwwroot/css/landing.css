@@ -67,7 +67,6 @@
     min-height: 100vh;
 }
 
-
 /* =====================================================
    HERO CONTENT
    ===================================================== */
@@ -76,12 +75,12 @@
     position: absolute;
 
     top: 50%;
-    left: 8%;
+    left: 7.5%;
 
     transform: translateY(-50%);
 
-    width: 520px;
-    max-width: 45%;
+    width: 620px;
+    max-width: 48%;
 }
 
 
@@ -90,15 +89,15 @@
    ===================================================== */
 
 .landing-brand {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
 
-    letter-spacing: 3px;
+    letter-spacing: 3.5px;
     text-transform: uppercase;
 
-    color: rgba(255, 255, 255, 0.78);
+    color: rgba(255, 255, 255, 0.82);
 }
 
 
@@ -109,10 +108,10 @@
 .landing-title {
     margin: 0;
 
-    font-size: 58px;
+    font-size: 68px;
     font-weight: 700;
 
-    line-height: 1.08;
+    line-height: 1.06;
 
     color: #ffffff;
 }
@@ -120,7 +119,7 @@
 .landing-title span {
     display: block;
 
-    color: #7dd3fc;
+    color: #6dd3ff;
 }
 
 
@@ -129,29 +128,31 @@
    ===================================================== */
 
 .landing-description {
-    margin-top: 24px;
+    margin-top: 28px;
     margin-bottom: 0;
 
-    max-width: 470px;
+    max-width: 570px;
 
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 400;
 
-    line-height: 1.7;
+    line-height: 1.75;
 
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.88);
 }
 
+
 /* =====================================================
-   LANDING ACTIONS
+   ACTIONS
    ===================================================== */
 
 .landing-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
 
-    margin-top: 34px;
+    gap: 18px;
+
+    margin-top: 38px;
 }
 
 
@@ -164,14 +165,14 @@
     align-items: center;
     justify-content: center;
 
-    min-width: 145px;
-    height: 50px;
+    min-width: 175px;
+    height: 56px;
 
-    padding: 0 28px;
+    padding: 0 32px;
 
     border-radius: 10px;
 
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
 
     text-decoration: none;
@@ -182,7 +183,6 @@
         border-color 0.2s ease,
         box-shadow 0.2s ease;
 }
-
 
 /* =====================================================
    REGISTER BUTTON
