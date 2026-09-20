@@ -1,26 +1,34 @@
 @page "/"
 
-@layout HomePageMaster
+@layout LandingPageMaster
 
-@inject IHttpClientFactory HttpClientFactory
-
-<PageTitle>Trang chủ</PageTitle>
+<PageTitle>Clinic Management System</PageTitle>
 
 
-<div>
+@* =====================================================
+   LANDING PAGE
+   ===================================================== *@
 
-    <h1>Hệ thống quản lý phòng khám</h1>
+<section class="landing-page">
 
-    <p class="text-secondary">
-        Clinic Management System
-    </p>
+    @* =================================================
+       BACKGROUND OVERLAY
+       ================================================= *@
 
-    
-</div>
-
-
-@code {
+    <div class="landing-overlay"></div>
 
 
+    @* =================================================
+       CONTENT
+       ================================================= *@
 
-}
+    <div class="landing-content">
+
+        @*
+            Nội dung sẽ được thêm
+            ở các phần tiếp theo.
+        *@
+
+    </div>
+
+</section>
