@@ -50,6 +50,7 @@ public class AppointmentService : IAppointmentService
 
     public async Task<HttpResponseData<AppointmentDTO>> RescheduleAppointmentAsync(int appointmentId, RescheduleAppointmentRequestDTO request, int currentUserId)
     {
+        bool transactionStarted = false;
         try
         {
             // =================================================
@@ -259,16 +260,119 @@ public class AppointmentService : IAppointmentService
                 DateTime.Now;
 
 
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
+            // RE-CHECK APPOINTMENT CONFLICT
+            // =================================================
+
+            var appointmentExists =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id != appointment.Id &&
+
+                            a.DoctorId ==
+                                appointment.DoctorId &&
+
+                            a.Status <
+                                (byte)AppointmentStatus.Cancelled &&
+
+                            a.StartTime <
+                                appointment.EndTime &&
+
+                            a.EndTime >
+                                appointment.StartTime
+                    )
+                    .AnyAsync();
+
+
+            // =================================================
+            // SLOT NOT AVAILABLE
+            // =================================================
+
+            if (appointmentExists)
+            {
+                await _unitOfWork
+                    .RollbackTransactionAsync();
+
+                transactionStarted = false;
+
+                return Response(
+                    409,
+                    AppointmentResponseMessageDTO
+                        .SlotNotAvailable
+                );
+            }
+
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return Response(
+                200,
+                AppointmentResponseMessageDTO
+                    .RescheduleSuccess
+            );
         }
         catch (Exception ex)
         {
+            // =================================================
+            // ROLLBACK TRANSACTION
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback appointment reschedule."
+                    );
+                }
+            }
+
+
             // =================================================
             // LOG ERROR
             // =================================================
 
             _logger.LogError(
                 ex,
-                "Failed to validate appointment reschedule. " +
+                "Failed to reschedule appointment. " +
                 "AppointmentId: {AppointmentId}, " +
                 "UserId: {UserId}",
                 appointmentId,
