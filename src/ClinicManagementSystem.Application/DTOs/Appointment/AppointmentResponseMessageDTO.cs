@@ -45,5 +45,15 @@ public static class AppointmentResponseMessageDTO
     public const string CannotCancelAppointment =
         "Lịch hẹn này không thể hủy.";
 
+    // cho reschedule appointment
+    public const string RescheduleSuccess =
+    "Đổi lịch hẹn thành công.";
 
+    public const string RescheduleFailed =
+        "Đổi lịch hẹn thất bại.";
+
+    public const string CannotRescheduleAppointment =
+        "Lịch hẹn này không thể đổi giờ.";
+
+    
 }
