@@ -614,6 +614,182 @@ public class BookingStateService
     }
 
     // =====================================================
+    // CREATE APPOINTMENT
+    // =====================================================
+
+    public async Task<AppointmentDTO?>
+        CreateAppointmentAsync()
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return null;
+        }
+
+
+        // =================================================
+        // VALIDATE BOOKING
+        // =================================================
+
+        if (!ValidateBooking())
+        {
+            return null;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+
+        ErrorMessage =
+            string.Empty;
+
+        SuccessMessage =
+            string.Empty;
+
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CREATE REQUEST
+            //
+            // PatientId không gửi từ Frontend.
+            // Backend lấy Patient từ JWT.
+            // =================================================
+
+            var request =
+                new CreateAppointmentRequestDTO
+                {
+                    DoctorId =
+                        SelectedDoctor!.Id,
+
+                    StartTime =
+                        SelectedSlot!.StartTime,
+
+                    Reason =
+                        string.IsNullOrWhiteSpace(
+                            Reason)
+                            ? null
+                            : Reason
+                };
+
+
+            // =================================================
+            // CREATE HTTP CONTENT
+            // =================================================
+
+            var content =
+                JsonContent.Create(
+                    request
+                );
+
+
+            // =================================================
+            // CALL API
+            //
+            // POST /api/appointments
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        "/api/appointments",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            AppointmentDTO?>>();
+
+
+            // =================================================
+            // SLOT CONFLICT
+            //
+            // Ví dụ:
+            // User A và User B cùng chọn một slot.
+            // User A submit trước.
+            // User B submit sau => 409.
+            // =================================================
+
+            if (response.StatusCode ==
+                HttpStatusCode.Conflict)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Khung giờ vừa được người khác đặt. " +
+                       "Vui lòng chọn khung giờ khác.";
+
+
+                // Slot hiện tại không còn đáng tin cậy nữa.
+                SelectedSlot = null;
+
+                AvailableSlots.Clear();
+
+
+                return null;
+            }
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300 ||
+                responseData.Content == null)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tạo lịch hẹn.";
+
+                return null;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            SuccessMessage =
+                responseData.Message;
+
+
+            return responseData.Content;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống. " +
+                "Vui lòng thử lại.";
+
+            return null;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
     // NOTIFY STATE CHANGED
     // =====================================================
 
