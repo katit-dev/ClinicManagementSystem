@@ -416,3 +416,215 @@
 
     margin: 0 auto;
 }
+
+/* =====================================================
+   HEADER LEFT
+   ===================================================== */
+
+.header-left {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+}
+
+
+/* =====================================================
+   MOBILE MENU BUTTON
+   ===================================================== */
+
+.mobile-menu-button {
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    padding: 0;
+
+    border: 1px solid #e8edf3;
+    border-radius: 11px;
+
+    background-color: #ffffff;
+
+    color: #475569;
+
+    font-size: 17px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.mobile-menu-button:hover {
+    border-color: #bae6fd;
+
+    background-color: #f0f9ff;
+
+    color: #0ea5e9;
+}
+
+/* =====================================================
+   SIDEBAR OVERLAY
+   ===================================================== */
+
+.sidebar-overlay {
+    display: none;
+}
+/* =====================================================
+   RESPONSIVE - TABLET / MOBILE
+   ===================================================== */
+
+@media (max-width: 992px) {
+
+    /* =================================================
+       SIDEBAR
+       ================================================= */
+
+    .app-sidebar {
+        width: 260px;
+
+        transform:
+            translateX(-100%);
+
+        box-shadow:
+            8px 0 30px rgba(15, 23, 42, 0.12);
+
+        transition:
+            transform 0.25s ease;
+
+        z-index: 1000;
+    }
+
+
+    .app-sidebar.open {
+        transform:
+            translateX(0);
+    }
+
+
+    /* =================================================
+       OVERLAY
+       ================================================= */
+
+    .sidebar-overlay {
+        position: fixed;
+
+        inset: 0;
+
+        display: block;
+
+        background-color:
+            rgba(15, 23, 42, 0.42);
+
+        backdrop-filter:
+            blur(1px);
+
+        z-index: 900;
+    }
+
+
+    /* =================================================
+       APPLICATION CONTENT
+       ================================================= */
+
+    .app-content {
+        width: 100%;
+
+        margin-left: 0;
+    }
+
+
+    /* =================================================
+       MOBILE MENU BUTTON
+       ================================================= */
+
+    .mobile-menu-button {
+        display: flex;
+    }
+
+
+    /* =================================================
+       MAIN
+       ================================================= */
+
+    .app-main {
+        padding: 28px 24px;
+    }
+}
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 576px) {
+
+    /* =================================================
+       TOPBAR
+       ================================================= */
+
+    .app-header {
+        min-height: 72px;
+
+        padding: 10px 16px;
+    }
+
+
+    /* =================================================
+       HEADER INFORMATION
+       ================================================= */
+
+    .header-title {
+        font-size: 16px;
+    }
+
+
+    .header-subtitle {
+        display: none;
+    }
+
+
+    /* =================================================
+       USER PROFILE
+       ================================================= */
+
+    .header-user-information {
+        display: none;
+    }
+
+
+    .header-user {
+        padding: 0;
+    }
+
+
+    .header-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+
+    .header-logout {
+        width: 40px;
+        height: 40px;
+    }
+
+
+    /* =================================================
+       MAIN CONTENT
+       ================================================= */
+
+    .app-main {
+        min-height:
+            calc(100vh - 72px);
+
+        padding: 20px 16px;
+    }
+}

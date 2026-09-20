@@ -16,7 +16,7 @@
        SIDEBAR
        ================================================= *@
 
-    <aside class="app-sidebar">
+    <aside class="app-sidebar @(_isSidebarOpen ? "open" : "")">
 
         @* =============================================
            BRAND
@@ -57,7 +57,7 @@
             DASHBOARD
             ========================================= *@
 
-            <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All">
+            <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All" @onclick="CloseSidebar">
 
                 <i class="fas fa-home"></i>
 
@@ -74,7 +74,7 @@
 
             @if (HasRole("Patient"))
             {
-                <NavLink href="/book-appointment" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All">
+                <NavLink href="/book-appointment" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All" @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-plus"></i>
 
@@ -85,7 +85,7 @@
                 </NavLink>
 
 
-                <NavLink href="/my-appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All">
+                <NavLink href="/my-appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All" @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-check"></i>
 
@@ -101,6 +101,16 @@
         
 
     </aside>
+
+    @* =================================================
+    MOBILE SIDEBAR OVERLAY
+    ================================================= *@
+
+    @if (_isSidebarOpen)
+    {
+        <div class="sidebar-overlay" @onclick="CloseSidebar">
+        </div>
+    }
 
 
     @* =================================================
@@ -121,18 +131,37 @@
         <header class="app-header">
 
             @* =========================================
-            PAGE INFORMATION
+            HEADER LEFT
             ========================================= *@
 
-            <div class="header-information">
+            <div class="header-left">
 
-                <h1 class="header-title">
-                    Không gian làm việc
-                </h1>
+                @* =====================================
+                MOBILE MENU
+                ===================================== *@
 
-                <p class="header-subtitle">
-                    Quản lý hoạt động phòng khám
-                </p>
+                <button type="button" class="mobile-menu-button" aria-label="Mở menu" @onclick="ToggleSidebar">
+
+                    <i class="fas fa-bars"></i>
+
+                </button>
+
+
+                @* =====================================
+                PAGE INFORMATION
+                ===================================== *@
+
+                <div class="header-information">
+
+                    <h1 class="header-title">
+                        Không gian làm việc
+                    </h1>
+
+                    <p class="header-subtitle">
+                        Quản lý hoạt động phòng khám
+                    </p>
+
+                </div>
 
             </div>
 
@@ -369,6 +398,35 @@
 
         await _userStateService
             .LoadUserStateAsync();
+    }
+
+
+    // =====================================================
+    // SIDEBAR STATE
+    // =====================================================
+
+    private bool _isSidebarOpen;
+
+
+    // =====================================================
+    // TOGGLE SIDEBAR
+    // =====================================================
+
+    private void ToggleSidebar()
+    {
+        _isSidebarOpen =
+            !_isSidebarOpen;
+    }
+
+
+    // =====================================================
+    // CLOSE SIDEBAR
+    // =====================================================
+
+    private void CloseSidebar()
+    {
+        _isSidebarOpen =
+            false;
     }
 
     // =====================================================
