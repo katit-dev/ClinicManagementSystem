@@ -689,3 +689,96 @@
 
     color: #b91c1c;
 }
+
+/* =====================================================
+   UPCOMING APPOINTMENT STATES
+   ===================================================== */
+
+.upcoming-state-card {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    min-height: 110px;
+
+    padding: 24px;
+
+    border: 1px solid #e5edf5;
+    border-radius: 16px;
+
+    background-color: #ffffff;
+}
+
+
+.upcoming-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background-color: #e0f2fe;
+
+    color: #0284c7;
+
+    font-size: 18px;
+}
+
+
+.upcoming-state-content {
+    flex: 1;
+}
+
+
+.upcoming-state-card h4 {
+    margin: 0;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.upcoming-state-card p {
+    margin: 5px 0 0;
+
+    font-size: 13px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+   ===================================================== */
+
+.upcoming-state-empty .upcoming-state-icon {
+    background-color: #f0f9ff;
+
+    color: #0ea5e9;
+}
+
+
+/* =====================================================
+   ERROR STATE
+   ===================================================== */
+
+.upcoming-state-error {
+    border-color: #fecaca;
+
+    background-color: #fffafa;
+}
+
+
+.upcoming-state-error .upcoming-state-icon {
+    background-color: #fee2e2;
+
+    color: #dc2626;
+}

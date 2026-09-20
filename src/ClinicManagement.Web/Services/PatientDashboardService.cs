@@ -18,7 +18,6 @@ public interface IPatientDashboardService
     Task<int?> GetAppointmentCountAsync(
         MyAppointmentFilter filter);
 
-    Task<MyAppointmentDTO?> GetNearestUpcomingAppointmentAsync();
 }
 
 
@@ -44,54 +43,6 @@ public class PatientDashboardService
             authorizedApiService;
     }
 
-    // =====================================================
-    // GET NEAREST UPCOMING APPOINTMENT
-    // =====================================================
-
-    public async Task<MyAppointmentDTO?>
-        GetNearestUpcomingAppointmentAsync()
-    {
-        // =================================================
-        // GET UPCOMING APPOINTMENTS
-        // =================================================
-
-        var appointments =
-            await GetAppointmentsAsync(
-                MyAppointmentFilter.Upcoming
-            );
-
-
-        // =================================================
-        // API FAILED
-        // =================================================
-
-        if (appointments == null)
-        {
-            return null;
-        }
-
-
-        // =================================================
-        // NO UPCOMING APPOINTMENT
-        // =================================================
-
-        if (appointments.Count == 0)
-        {
-            return null;
-        }
-
-
-        // =================================================
-        // GET NEAREST APPOINTMENT
-        // =================================================
-
-        return appointments
-            .OrderBy(
-                appointment =>
-                    appointment.StartTime
-            )
-            .FirstOrDefault();
-    }
 
     // =====================================================
     // GET APPOINTMENTS
