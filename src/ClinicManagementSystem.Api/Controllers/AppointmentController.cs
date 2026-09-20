@@ -99,5 +99,33 @@ public class AppointmentController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+    // RESCHEDULE APPOINTMENT
+    //
+    // PATCH:
+    // /api/appointments/{id}/reschedule
+    // =====================================================
+
+    [HttpPatch("{id}/reschedule")]
+    [Authorize(Roles = "Patient")]
+    public async Task<IActionResult>
+        RescheduleAppointment(
+            int id,
+            [FromBody]
+        RescheduleAppointmentRequestDTO request)
+    {
+
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _appointmentService.RescheduleAppointmentAsync(id, request, currentUserId);
+
+        return StatusCode(result.StatusCode, result);
+    }
+
 
 }
