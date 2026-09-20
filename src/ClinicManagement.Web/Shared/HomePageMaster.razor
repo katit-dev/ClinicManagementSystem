@@ -99,27 +99,6 @@
         </nav>
 
 
-        @* =============================================
-           SIDEBAR BOTTOM
-           ============================================= *@
-
-        @if (_userStateService.CurrentUser != null)
-        {
-            <div class="sidebar-bottom">
-
-                <button type="button" class="sidebar-logout" @onclick="HandleLogout">
-
-                    <i class="fas fa-sign-out-alt"></i>
-
-                    <span>
-                        Đăng xuất
-                    </span>
-
-                </button>
-
-            </div>
-        }
-
     </aside>
 
 
@@ -135,14 +114,14 @@
            ============================================= *@
 
         @* =============================================
-   TOPBAR
-   ============================================= *@
+            TOPBAR
+            ============================================= *@
 
         <header class="app-header">
 
             @* =========================================
-       PAGE INFORMATION
-       ========================================= *@
+            PAGE INFORMATION
+            ========================================= *@
 
             <div class="header-information">
 
@@ -158,43 +137,62 @@
 
 
             @* =========================================
-       CURRENT USER
-       ========================================= *@
+            CURRENT USER
+            ========================================= *@
 
             @if (_userStateService.CurrentUser != null)
             {
-                <div class="header-user">
+                <div class="header-user-area">
 
-                    <div class="header-avatar">
+                    @* =====================================
+                    USER PROFILE
+                    ===================================== *@
 
-                        <i class="fas fa-user"></i>
+                    <div class="header-user">
 
-                    </div>
+                        <div class="header-avatar">
 
-
-                    <div class="header-user-information">
-
-                        <div class="header-user-name">
-
-                            @_userStateService
-                            .CurrentUser
-                            .FullName
+                            @GetUserInitials()
 
                         </div>
 
 
-                        <div class="header-user-role">
+                        <div class="header-user-information">
 
-                            @string.Join(
-                                ", ",
-                                _userStateService
-                                    .CurrentUser
-                                    .Roles
-                            )
+                            <div class="header-user-name">
+
+                                @_userStateService
+                                .CurrentUser
+                                .FullName
+
+                            </div>
+
+
+                            <div class="header-user-role">
+
+                                @string.Join(
+                                    ", ",
+                                    _userStateService
+                                        .CurrentUser
+                                        .Roles
+                                )
+
+                            </div>
 
                         </div>
 
                     </div>
+
+
+                    @* =====================================
+                    LOGOUT
+                    ===================================== *@
+
+                    <button type="button" class="header-logout" title="Đăng xuất" @onclick="HandleLogout">
+
+                        <i class="fas fa-sign-out-alt"></i>
+
+                    </button>
 
                 </div>
             }
@@ -304,14 +302,61 @@
             .LogoutAsync();
     }
 
+    // =====================================================
+    // GET USER INITIALS
+    //
+    // Ví dụ:
+    //
+    // "Trần Nguyên Khánh Vy"
+    // → TV
+    //
+    // "Nguyễn An"
+    // → NA
+    // =====================================================
+
+    private string GetUserInitials()
+    {
+        var fullName =
+            _userStateService
+                .CurrentUser?
+                .FullName;
+
+
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return "U";
+        }
+
+
+        var nameParts =
+            fullName
+                .Split(
+                    ' ',
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+
+        if (nameParts.Length == 1)
+        {
+            return nameParts[0]
+                .Substring(0, 1)
+                .ToUpper();
+        }
+
+
+        var firstInitial =
+            nameParts[0][0];
+
+        var lastInitial =
+            nameParts[^1][0];
+
+
+        return $"{firstInitial}{lastInitial}"
+            .ToUpper();
+    }
 
     // =====================================================
     // COMPONENT INITIALIZATION
-    //
-    // 1. Đăng ký lắng nghe UserStateService.OnChange
-    //
-    // 2. Load lại user từ LocalStorage
-    // khi F5 hoặc mở lại website
     // =====================================================
 
     protected override async Task
@@ -325,12 +370,8 @@
             .LoadUserStateAsync();
     }
 
-
     // =====================================================
     // DISPOSE
-    //
-    // Khi component bị hủy
-    // phải unsubscribe event
     // =====================================================
 
     public void Dispose()

@@ -156,65 +156,6 @@
     transform: translateX(2px);
 }
 
-
-/* =====================================================
-   SIDEBAR BOTTOM
-   ===================================================== */
-
-.sidebar-bottom {
-    padding-top: 18px;
-
-    border-top: 1px solid #eef1f5;
-}
-
-
-.sidebar-logout {
-    display: flex;
-    align-items: center;
-
-    gap: 14px;
-
-    width: 100%;
-    min-height: 48px;
-
-    padding: 0 15px;
-
-    border: 0;
-    border-radius: 11px;
-
-    background-color: transparent;
-
-    color: #dc5a5a;
-
-    font-size: 15px;
-    font-weight: 500;
-
-    text-align: left;
-
-    cursor: pointer;
-
-    transition:
-        background-color 0.2s ease,
-        color 0.2s ease;
-}
-
-
-.sidebar-logout i {
-    width: 20px;
-
-    text-align: center;
-
-    font-size: 16px;
-}
-
-
-.sidebar-logout:hover {
-    background-color: #fff1f1;
-
-    color: #c53f3f;
-}
-
-
 /* =====================================================
    APPLICATION CONTENT
    ===================================================== */
@@ -318,13 +259,81 @@
 
     border-radius: 50%;
 
-    background-color: #e6f6fd;
+    background:
+        linear-gradient(
+            135deg,
+            #38bdf8,
+            #0ea5e9
+        );
 
-    color: #169bd5;
+    color: #ffffff;
 
-    font-size: 16px;
+    font-size: 13px;
+    font-weight: 700;
+
+    letter-spacing: 0.5px;
+
+    box-shadow:
+        0 4px 12px rgba(14, 165, 233, 0.2);
 }
 
+/* =====================================================
+   USER AREA
+   ===================================================== */
+
+.header-user-area {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+/* =====================================================
+   LOGOUT BUTTON
+   ===================================================== */
+
+.header-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    border: 1px solid #e8edf3;
+    border-radius: 11px;
+
+    background-color: #ffffff;
+
+    color: #94a3b8;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.header-logout:hover {
+    border-color: #fecaca;
+
+    background-color: #fff1f2;
+
+    color: #dc2626;
+
+    transform: translateY(-1px);
+}
+
+
+.header-logout:active {
+    transform: translateY(0);
+}
 
 /* =====================================================
    USER INFORMATION
