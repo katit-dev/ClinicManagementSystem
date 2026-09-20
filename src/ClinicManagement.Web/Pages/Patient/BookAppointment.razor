@@ -1,127 +1,215 @@
 @page "/patient/booking"
 
-@using Microsoft.AspNetCore.Authorization
+@layout HomePageMaster
 
 @attribute [Authorize(Roles = "Patient")]
 
 <PageTitle>Đặt lịch khám</PageTitle>
 
 
-<div class="container py-4">
+@* =====================================================
+   BOOKING PAGE
+   ===================================================== *@
 
-    @* =====================================================
+<div class="booking-page">
+
+
+    @* =================================================
        PAGE HEADER
-       ===================================================== *@
+       ================================================= *@
 
-    <div class="mb-4">
-        <h2>Đặt lịch khám</h2>
+    <div class="booking-header">
 
-        <p class="text-muted mb-0">
-            Chọn chuyên khoa, bác sĩ và thời gian khám phù hợp.
-        </p>
-    </div>
+        <div>
 
+            <div class="booking-header-label">
 
-    @* =====================================================
-       BOOKING FORM
-       ===================================================== *@
+                <i class="fas fa-calendar-plus"></i>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
+                <span>
+                    VC-03
+                </span>
 
-            @* =================================================
-               STEP 1 - SPECIALTY
-               ================================================= *@
-
-            <div class="mb-3">
-                <label class="form-label">
-                    Chuyên khoa
-                </label>
-
-                <select class="form-select"
-                        disabled>
-                    <option>
-                        -- Chọn chuyên khoa --
-                    </option>
-                </select>
             </div>
 
 
-            @* =================================================
-               STEP 2 - DOCTOR
-               ================================================= *@
-
-            <div class="mb-3">
-                <label class="form-label">
-                    Bác sĩ
-                </label>
-
-                <select class="form-select"
-                        disabled>
-                    <option>
-                        -- Chọn bác sĩ --
-                    </option>
-                </select>
-            </div>
+            <h1 class="booking-title">
+                Đặt lịch khám
+            </h1>
 
 
-            @* =================================================
-               STEP 3 - APPOINTMENT DATE
-               ================================================= *@
-
-            <div class="mb-3">
-                <label class="form-label">
-                    Ngày khám
-                </label>
-
-                <input type="date"
-                       class="form-control"
-                       disabled />
-            </div>
-
-
-            @* =================================================
-               STEP 4 - AVAILABLE SLOT
-               ================================================= *@
-
-            <div class="mb-3">
-                <label class="form-label">
-                    Khung giờ
-                </label>
-
-                <div class="text-muted">
-                    Chưa có khung giờ được chọn.
-                </div>
-            </div>
-
-
-            @* =================================================
-               STEP 5 - REASON
-               ================================================= *@
-
-            <div class="mb-3">
-                <label class="form-label">
-                    Lý do khám
-                </label>
-
-                <textarea class="form-control"
-                          rows="3"
-                          disabled>
-                </textarea>
-            </div>
-
-
-            @* =================================================
-               SUBMIT
-               ================================================= *@
-
-            <button type="button"
-                    class="btn btn-primary"
-                    disabled>
-                Đặt lịch
-            </button>
+            <p class="booking-description">
+                Chọn chuyên khoa, bác sĩ và thời gian
+                phù hợp để tạo lịch khám mới.
+            </p>
 
         </div>
+
     </div>
+
+
+    @* =================================================
+       BOOKING STEPS
+       ================================================= *@
+
+    <div class="booking-steps">
+
+        @* =============================================
+           STEP 1
+           ============================================= *@
+
+        <div class="booking-step active">
+
+            <div class="booking-step-number">
+                1
+            </div>
+
+            <div class="booking-step-content">
+
+                <span class="booking-step-label">
+                    Bước 1
+                </span>
+
+                <span class="booking-step-title">
+                    Chuyên khoa
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="booking-step-line"></div>
+
+
+        @* =============================================
+           STEP 2
+           ============================================= *@
+
+        <div class="booking-step">
+
+            <div class="booking-step-number">
+                2
+            </div>
+
+            <div class="booking-step-content">
+
+                <span class="booking-step-label">
+                    Bước 2
+                </span>
+
+                <span class="booking-step-title">
+                    Bác sĩ
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="booking-step-line"></div>
+
+
+        @* =============================================
+           STEP 3
+           ============================================= *@
+
+        <div class="booking-step">
+
+            <div class="booking-step-number">
+                3
+            </div>
+
+            <div class="booking-step-content">
+
+                <span class="booking-step-label">
+                    Bước 3
+                </span>
+
+                <span class="booking-step-title">
+                    Thời gian
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="booking-step-line"></div>
+
+
+        @* =============================================
+           STEP 4
+           ============================================= *@
+
+        <div class="booking-step">
+
+            <div class="booking-step-number">
+                4
+            </div>
+
+            <div class="booking-step-content">
+
+                <span class="booking-step-label">
+                    Bước 4
+                </span>
+
+                <span class="booking-step-title">
+                    Xác nhận
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @* =================================================
+       BOOKING CONTENT
+       ================================================= *@
+
+    <section class="booking-content">
+
+        <div class="booking-content-header">
+
+            <div class="booking-content-icon">
+
+                <i class="fas fa-stethoscope"></i>
+
+            </div>
+
+
+            <div>
+
+                <h2>
+                    Chọn chuyên khoa
+                </h2>
+
+                <p>
+                    Chọn chuyên khoa phù hợp với
+                    nhu cầu khám của bạn.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           TEMPORARY CONTENT
+           ================================================= *@
+
+        <div class="booking-placeholder">
+
+            <i class="fas fa-clinic-medical"></i>
+
+            <span>
+                Danh sách chuyên khoa sẽ được hiển thị tại đây.
+            </span>
+
+        </div>
+
+    </section>
 
 </div>
