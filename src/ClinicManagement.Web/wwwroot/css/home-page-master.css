@@ -157,6 +157,32 @@
 }
 
 /* =====================================================
+   ACTIVE SIDEBAR LINK
+   ===================================================== */
+
+.sidebar-link.active {
+    background-color: #e9f7fd;
+
+    color: #0ea5e9;
+
+    font-weight: 600;
+}
+
+
+.sidebar-link.active i {
+    color: #0ea5e9;
+}
+
+
+.sidebar-link.active:hover {
+    background-color: #e1f4fc;
+
+    color: #0284c7;
+
+    transform: none;
+}
+
+/* =====================================================
    APPLICATION CONTENT
    ===================================================== */
 

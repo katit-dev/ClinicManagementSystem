@@ -47,17 +47,17 @@
 
 
         @* =============================================
-           NAVIGATION
-           ============================================= *@
+        NAVIGATION
+        ============================================= *@
 
         <nav class="sidebar-navigation">
 
 
             @* =========================================
-               DASHBOARD
-               ========================================= *@
+            DASHBOARD
+            ========================================= *@
 
-            <a href="@GetDashboardUrl()" class="sidebar-link">
+            <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All">
 
                 <i class="fas fa-home"></i>
 
@@ -65,16 +65,16 @@
                     Trang chủ
                 </span>
 
-            </a>
+            </NavLink>
 
 
             @* =========================================
-               PATIENT MENU
-               ========================================= *@
+            PATIENT MENU
+            ========================================= *@
 
             @if (HasRole("Patient"))
             {
-                <a href="/book-appointment" class="sidebar-link">
+                <NavLink href="/book-appointment" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All">
 
                     <i class="fas fa-calendar-plus"></i>
 
@@ -82,10 +82,10 @@
                         Đặt lịch khám
                     </span>
 
-                </a>
+                </NavLink>
 
 
-                <a href="/my-appointments" class="sidebar-link">
+                <NavLink href="/my-appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All">
 
                     <i class="fas fa-calendar-check"></i>
 
@@ -93,11 +93,12 @@
                         Lịch hẹn của tôi
                     </span>
 
-                </a>
+                </NavLink>
             }
 
         </nav>
 
+        
 
     </aside>
 
