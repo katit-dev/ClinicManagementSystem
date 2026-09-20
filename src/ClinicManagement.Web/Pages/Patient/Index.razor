@@ -1,6 +1,6 @@
 @page "/patient"
 
-@layout PatientLayout
+@layout HomePageMaster
 
 @attribute [Authorize(Roles = "Patient")]
 
@@ -207,7 +207,7 @@
     private void GoToBooking()
     {
         _navigationManager.NavigateTo(
-            "/patient/book-appointment"
+            "/patient/booking"
         );
     }
 
