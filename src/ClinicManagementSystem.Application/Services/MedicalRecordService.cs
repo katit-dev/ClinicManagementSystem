@@ -14,7 +14,7 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IMedicalRecordService
 {
-    Task<HttpResponseData<MedicalRecordDTO>>GetMedicalRecordByAppointmentAsync(int appointmentId, int currentUserId);
+    Task<HttpResponseData<MedicalRecordDTO>> GetMedicalRecordByAppointmentAsync(int appointmentId, int currentUserId);
 }
 
 // =====================================================
@@ -121,15 +121,122 @@ public class MedicalRecordService
 
 
             // =================================================
-            // VALIDATION SUCCESS
-            //
-            // Chưa lấy MedicalRecord ở bước 5.3.
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.AppointmentId ==
+                                appointment.Id &&
+                            m.PatientId ==
+                                patient.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (medicalRecord == null)
+            {
+                return Response(
+                    404,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK FINALIZED
+            // =================================================
+
+            if (
+                medicalRecord.Status !=
+                (byte)MedicalRecordStatus.Finalized
+            )
+            {
+                return Response(
+                    409,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFinalized
+                );
+            }
+
+
+            // =================================================
+            // GET DOCTOR
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.Id ==
+                            medicalRecord.DoctorId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new MedicalRecordDTO
+                {
+                    Id =
+                        medicalRecord.Id,
+
+                    AppointmentId =
+                        medicalRecord.AppointmentId,
+
+                    DoctorName =
+                        doctor?.FullName
+                        ?? string.Empty,
+
+                    Symptoms =
+                        medicalRecord.Symptoms,
+
+                    Diagnosis =
+                        medicalRecord.Diagnosis,
+
+                    Icd10Code =
+                        medicalRecord.Icd10Code,
+
+                    TreatmentPlan =
+                        medicalRecord.TreatmentPlan,
+
+                    Note =
+                        medicalRecord.Note,
+
+                    FollowUpDate =
+                        medicalRecord.FollowUpDate,
+
+                    Status =
+                        medicalRecord.Status,
+
+                    FinalizedAt =
+                        medicalRecord.FinalizedAt,
+
+                    CreatedAt =
+                        medicalRecord.CreatedAt
+                };
+
+
+            // =================================================
+            // SUCCESS
             // =================================================
 
             return Response(
                 200,
-                "Appointment hợp lệ để xem bệnh án."
+                MedicalRecordResponseMessageDTO
+                    .GetSuccess,
+                result
             );
+
+
         }
         catch (Exception ex)
         {
