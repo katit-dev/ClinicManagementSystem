@@ -201,17 +201,64 @@ public class AppointmentService : IAppointmentService
                 );
             }
 
-
             // =================================================
-            // VALIDATION SUCCESS
-            //
-            // Chưa update StartTime / EndTime ở bước này.
+            // GET NEW APPOINTMENT DATE
             // =================================================
 
-            return Response(
-                200,
-                "Lịch hẹn hợp lệ để đổi giờ."
-            );
+            var appointmentDate =
+                DateOnly.FromDateTime(
+                    request.NewStartTime
+                );
+
+            // =================================================
+            // RE-CHECK AVAILABLE SLOTS
+            // =================================================
+
+            var availableSlotsResponse =
+                await _doctorService
+                    .GetAvailableSlotsAsync(
+                        appointment.DoctorId,
+                        appointmentDate
+                    );
+
+            // =================================================
+            // FIND SELECTED SLOT
+            // =================================================
+
+            var selectedSlot =
+                availableSlotsResponse.Content?
+                    .FirstOrDefault(
+                        slot =>
+                            slot.StartTime ==
+                            request.NewStartTime
+                    );
+            // =================================================
+            // SLOT NOT AVAILABLE
+            // =================================================
+
+            if (selectedSlot == null)
+            {
+                return Response(
+                    409,
+                    AppointmentResponseMessageDTO
+                        .SlotNotAvailable
+                );
+            }
+
+            // =================================================
+            // UPDATE APPOINTMENT TIME
+            // =================================================
+
+            appointment.StartTime =
+                selectedSlot.StartTime;
+
+            appointment.EndTime =
+                selectedSlot.EndTime;
+
+            appointment.UpdatedAt =
+                DateTime.Now;
+
+
         }
         catch (Exception ex)
         {
