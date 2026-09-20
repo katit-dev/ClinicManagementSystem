@@ -87,6 +87,10 @@ public class BookingStateService
     public string SuccessMessage { get; private set; }
         = string.Empty;
 
+    // =====================================================
+    // SUBMIT STATE
+    // =====================================================
+    public bool IsSubmitting { get; private set; }
 
     // =====================================================
     // EVENT
@@ -512,6 +516,102 @@ public class BookingStateService
         }
     }
 
+    // =====================================================
+    // VALIDATE BOOKING
+    // =====================================================
+
+    public bool ValidateBooking()
+    {
+        ErrorMessage =
+            string.Empty;
+
+        SuccessMessage =
+            string.Empty;
+
+
+        // =================================================
+        // SPECIALTY
+        // =================================================
+
+        if (!SelectedSpecialtyId.HasValue)
+        {
+            ErrorMessage =
+                "Vui lòng chọn chuyên khoa.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // DOCTOR
+        // =================================================
+
+        if (SelectedDoctor == null)
+        {
+            ErrorMessage =
+                "Vui lòng chọn bác sĩ.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // DATE
+        // =================================================
+
+        if (!SelectedDate.HasValue)
+        {
+            ErrorMessage =
+                "Vui lòng chọn ngày khám.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // SLOT
+        // =================================================
+
+        if (SelectedSlot == null)
+        {
+            ErrorMessage =
+                "Vui lòng chọn khung giờ khám.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // REASON LENGTH
+        //
+        // Database: reason nvarchar(500)
+        // =================================================
+
+        if (Reason.Length > 500)
+        {
+            ErrorMessage =
+                "Lý do khám không được vượt quá 500 ký tự.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // VALID
+        // =================================================
+
+        return true;
+    }
 
     // =====================================================
     // NOTIFY STATE CHANGED
@@ -672,6 +772,7 @@ public class BookingStateService
 
         SuccessMessage = string.Empty;
 
+        IsSubmitting = false;
 
         StateHasChanged();
     }
