@@ -121,6 +121,21 @@
                     </span>
 
                 </NavLink>
+
+                @* =====================================================
+                MY INVOICES
+                ===================================================== *@
+
+                <NavLink href="/patient/invoices" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
+
+                    <i class="fas fa-file-invoice-dollar"></i>
+
+                    <span>
+                        Hóa đơn của tôi
+                    </span>
+
+                </NavLink>
             }
 
         </nav>
