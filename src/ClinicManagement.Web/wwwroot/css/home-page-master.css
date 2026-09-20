@@ -365,5 +365,19 @@
 .app-main {
     min-height: calc(100vh - 82px);
 
-    padding: 32px;
+    padding: 32px 36px;
+
+    background-color: #f5f7fb;
+}
+
+
+/* =====================================================
+   MAIN CONTENT CONTAINER
+   ===================================================== */
+
+.app-main-container {
+    width: 100%;
+    max-width: 1440px;
+
+    margin: 0 auto;
 }
