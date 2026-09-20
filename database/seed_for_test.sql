@@ -284,22 +284,114 @@ BEGIN
 
 END;
 
+USE ClinicManagementSystem
 
--- ============================================================
--- VERIFY
--- ============================================================
+-- test get medical record
+DECLARE @AppointmentId INT = 2;
+
+INSERT INTO clinical.medical_records
+(
+    appointment_id,
+    patient_id,
+    doctor_id,
+    symptoms,
+    diagnosis,
+    note,
+    created_at,
+    icd10_code,
+    treatment_plan,
+    follow_up_date,
+    status,
+    finalized_at
+)
+SELECT
+    a.id,
+    a.patient_id,
+    a.doctor_id,
+    N'Đau đầu, chóng mặt',
+    N'Đau đầu do căng thẳng',
+    N'Theo dõi thêm nếu triệu chứng kéo dài',
+    GETDATE(),
+    'R51',
+    N'Nghỉ ngơi, uống đủ nước và theo dõi triệu chứng',
+    DATEADD(DAY, 7, CAST(GETDATE() AS DATE)),
+    1,
+    GETDATE()
+FROM scheduling.appointments a
+WHERE a.id = @AppointmentId
+AND NOT EXISTS
+(
+    SELECT 1
+    FROM clinical.medical_records m
+    WHERE m.appointment_id = a.id
+);
 
 SELECT
     id,
-    appointment_code,
+    appointment_id,
     patient_id,
     doctor_id,
-    start_time,
-    end_time,
+    symptoms,
+    diagnosis,
+    icd10_code,
+    treatment_plan,
+    follow_up_date,
     status,
-    source,
-    fee_snapshot
-FROM scheduling.appointments
-WHERE
-    doctor_id = @DoctorId
-    AND start_time = @StartTime;
+    finalized_at
+FROM clinical.medical_records
+WHERE appointment_id = 2;
+
+-- tao medical record status = 0
+DECLARE @AppointmentId INT = 3;
+
+INSERT INTO clinical.medical_records
+(
+    appointment_id,
+    patient_id,
+    doctor_id,
+    symptoms,
+    diagnosis,
+    note,
+    created_at,
+    updated_at,
+    icd10_code,
+    treatment_plan,
+    follow_up_date,
+    status,
+    finalized_at
+)
+SELECT
+    a.id,
+    a.patient_id,
+    a.doctor_id,
+    N'Ho, đau họng nhẹ',
+    N'Đang chờ bác sĩ hoàn tất chẩn đoán',
+    N'Bệnh án đang ở trạng thái nháp để test',
+    GETDATE(),
+    NULL,
+    NULL,
+    N'Tiếp tục theo dõi',
+    NULL,
+    0,          -- Draft
+    NULL        -- Draft thì chưa có finalized_at
+FROM scheduling.appointments a
+WHERE a.id = @AppointmentId
+  AND NOT EXISTS
+  (
+      SELECT 1
+      FROM clinical.medical_records m
+      WHERE m.appointment_id = a.id
+  );
+
+  SELECT
+    id,
+    appointment_id,
+    patient_id,
+    doctor_id,
+    symptoms,
+    diagnosis,
+    status,
+    finalized_at,
+    created_at
+FROM clinical.medical_records
+WHERE appointment_id = 3;
