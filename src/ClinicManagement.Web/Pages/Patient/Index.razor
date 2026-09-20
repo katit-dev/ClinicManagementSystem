@@ -77,44 +77,27 @@
 
     </section>
 
+    @* =====================================================
+    SUMMARY
+    ==================================================== *@
 
-    @* =================================================
-       PATIENT FEATURES
+    <section class="patient-summary">
+
+        @* =================================================
+       SECTION HEADER
        ================================================= *@
 
-    <div class="row g-4">
+        <div class="patient-section-header">
 
+            <div>
 
-        @* =================================================
-           BOOKING
-           ================================================= *@
+                <h3 class="patient-section-title">
+                    Tổng quan lịch khám
+                </h3>
 
-        <div class="col-12 col-md-6">
-
-            <div class="card h-100 shadow-sm border-0">
-
-                <div class="card-body p-4">
-
-                    <div class="mb-3">
-
-                        <h4 class="fw-bold mb-2">
-                            Đặt lịch khám
-                        </h4>
-
-                        <p class="text-secondary mb-0">
-                            Chọn bác sĩ, ngày khám
-                            và khung giờ phù hợp.
-                        </p>
-
-                    </div>
-
-                    <button type="button" class="btn btn-primary" @onclick="GoToBooking">
-
-                        Đặt lịch khám
-
-                    </button>
-
-                </div>
+                <p class="patient-section-description">
+                    Theo dõi nhanh tình trạng các lịch hẹn của bạn.
+                </p>
 
             </div>
 
@@ -122,33 +105,102 @@
 
 
         @* =================================================
-           MY APPOINTMENTS
-           ================================================= *@
+       SUMMARY CARDS
+       ================================================= *@
 
-        <div class="col-12 col-md-6">
+        <div class="patient-summary-grid">
 
-            <div class="card h-100 shadow-sm border-0">
 
-                <div class="card-body p-4">
+            @* =============================================
+           UPCOMING APPOINTMENTS
+           ============================================= *@
 
-                    <div class="mb-3">
+            <div class="patient-summary-card">
 
-                        <h4 class="fw-bold mb-2">
-                            Lịch hẹn của tôi
-                        </h4>
+                <div class="summary-card-icon summary-card-icon-upcoming">
 
-                        <p class="text-secondary mb-0">
-                            Theo dõi các lịch hẹn khám
-                            đã đặt và trạng thái hiện tại.
-                        </p>
+                    <i class="fas fa-calendar-alt"></i>
 
+                </div>
+
+
+                <div class="summary-card-content">
+
+                    <div class="summary-card-label">
+                        Lịch hẹn sắp tới
                     </div>
 
-                    <button type="button" class="btn btn-outline-primary" @onclick="GoToAppointments">
+                    <div class="summary-card-value">
+                        --
+                    </div>
 
-                        Xem lịch hẹn
+                    <div class="summary-card-note">
+                        Các lịch đang chờ khám
+                    </div>
 
-                    </button>
+                </div>
+
+            </div>
+
+
+            @* =============================================
+           COMPLETED APPOINTMENTS
+           ============================================= *@
+
+            <div class="patient-summary-card">
+
+                <div class="summary-card-icon summary-card-icon-completed">
+
+                    <i class="fas fa-check-circle"></i>
+
+                </div>
+
+
+                <div class="summary-card-content">
+
+                    <div class="summary-card-label">
+                        Đã khám
+                    </div>
+
+                    <div class="summary-card-value">
+                        --
+                    </div>
+
+                    <div class="summary-card-note">
+                        Các lịch đã hoàn thành
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            @* =============================================
+           CANCELLED APPOINTMENTS
+           ============================================= *@
+
+            <div class="patient-summary-card">
+
+                <div class="summary-card-icon summary-card-icon-cancelled">
+
+                    <i class="fas fa-calendar-times"></i>
+
+                </div>
+
+
+                <div class="summary-card-content">
+
+                    <div class="summary-card-label">
+                        Đã hủy
+                    </div>
+
+                    <div class="summary-card-value">
+                        --
+                    </div>
+
+                    <div class="summary-card-note">
+                        Các lịch đã được hủy
+                    </div>
 
                 </div>
 
@@ -156,83 +208,12 @@
 
         </div>
 
-
-        @* =================================================
-           MEDICAL RECORDS
-           ================================================= *@
-
-        <div class="col-12 col-md-6">
-
-            <div class="card h-100 shadow-sm border-0">
-
-                <div class="card-body p-4">
-
-                    <div class="mb-3">
-
-                        <h4 class="fw-bold mb-2">
-                            Lịch sử khám & đơn thuốc
-                        </h4>
-
-                        <p class="text-secondary mb-0">
-                            Xem lại lịch sử khám bệnh
-                            và các đơn thuốc đã được kê.
-                        </p>
-
-                    </div>
-
-                    <button type="button" class="btn btn-outline-primary" @onclick="GoToRecords">
-
-                        Xem lịch sử khám
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
+    </section>
 
 
-        @* =================================================
-           INVOICES
-           ================================================= *@
-
-        <div class="col-12 col-md-6">
-
-            <div class="card h-100 shadow-sm border-0">
-
-                <div class="card-body p-4">
-
-                    <div class="mb-3">
-
-                        <h4 class="fw-bold mb-2">
-                            Hóa đơn của tôi
-                        </h4>
-
-                        <p class="text-secondary mb-0">
-                            Theo dõi các hóa đơn
-                            và thông tin thanh toán.
-                        </p>
-
-                    </div>
-
-                    <button type="button" class="btn btn-outline-primary" @onclick="GoToInvoices">
-
-                        Xem hóa đơn
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
+    
 
 </div>
-
-
 @code {
 
 

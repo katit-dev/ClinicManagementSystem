@@ -190,3 +190,174 @@
     background-color:
         rgba(14, 165, 233, 0.06);
 }
+
+
+/* =====================================================
+   PATIENT SUMMARY
+   ===================================================== */
+
+.patient-summary {
+    margin-top: 28px;
+}
+
+
+/* =====================================================
+   SECTION HEADER
+   ===================================================== */
+
+.patient-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 18px;
+}
+
+
+.patient-section-title {
+    margin: 0;
+
+    font-size: 20px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.patient-section-description {
+    margin: 5px 0 0;
+
+    font-size: 14px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   SUMMARY GRID
+   ===================================================== */
+
+.patient-summary-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+
+/* =====================================================
+   SUMMARY CARD
+   ===================================================== */
+
+.patient-summary-card {
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+
+    min-height: 145px;
+
+    padding: 24px;
+
+    border: 1px solid #e8edf3;
+    border-radius: 16px;
+
+    background-color: #ffffff;
+
+    box-shadow:
+        0 6px 24px rgba(15, 23, 42, 0.04);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.patient-summary-card:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.07);
+}
+
+
+/* =====================================================
+   SUMMARY CARD ICON
+   ===================================================== */
+
+.summary-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 54px;
+    height: 54px;
+
+    flex-shrink: 0;
+
+    border-radius: 14px;
+
+    font-size: 20px;
+}
+
+
+.summary-card-icon-upcoming {
+    background-color: #e0f2fe;
+
+    color: #0284c7;
+}
+
+
+.summary-card-icon-completed {
+    background-color: #dcfce7;
+
+    color: #16a34a;
+}
+
+
+.summary-card-icon-cancelled {
+    background-color: #fee2e2;
+
+    color: #dc2626;
+}
+
+
+/* =====================================================
+   SUMMARY CARD CONTENT
+   ===================================================== */
+
+.summary-card-content {
+    min-width: 0;
+}
+
+
+.summary-card-label {
+    font-size: 14px;
+    font-weight: 600;
+
+    color: #64748b;
+}
+
+
+.summary-card-value {
+    margin-top: 4px;
+
+    font-size: 32px;
+    font-weight: 700;
+
+    line-height: 1.15;
+
+    color: #16324f;
+}
+
+
+.summary-card-note {
+    margin-top: 5px;
+
+    font-size: 12px;
+
+    color: #94a3b8;
+}
