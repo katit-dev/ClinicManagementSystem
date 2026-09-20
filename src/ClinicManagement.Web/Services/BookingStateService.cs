@@ -1,3 +1,4 @@
+using System.Net;
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.DTOs.Doctor;
