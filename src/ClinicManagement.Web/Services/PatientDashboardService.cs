@@ -5,19 +5,36 @@ using ClinicManagementSystem.Application.Enums;
 
 namespace ClinicManagementSystem.Web.Services;
 
+// =====================================================
+// PATIENT DASHBOARD DATA
+// =====================================================
+
+public class PatientDashboardData
+{
+    public List<MyAppointmentDTO>?
+        UpcomingAppointments
+    { get; set; }
+
+    public List<MyAppointmentDTO>?
+        CompletedAppointments
+    { get; set; }
+
+    public List<MyAppointmentDTO>?
+        CancelledAppointments
+    { get; set; }
+}
+
 
 // =====================================================
 // PATIENT DASHBOARD SERVICE CONTRACT
 // =====================================================
-
 public interface IPatientDashboardService
 {
     Task<List<MyAppointmentDTO>?> GetAppointmentsAsync(
         MyAppointmentFilter filter);
 
-    Task<int?> GetAppointmentCountAsync(
-        MyAppointmentFilter filter);
-
+    Task<PatientDashboardData>
+        GetDashboardDataAsync();
 }
 
 
@@ -43,6 +60,59 @@ public class PatientDashboardService
             authorizedApiService;
     }
 
+    // =====================================================
+    // GET DASHBOARD DATA
+    // =====================================================
+
+    public async Task<PatientDashboardData>
+        GetDashboardDataAsync()
+    {
+        // =================================================
+        // UPCOMING APPOINTMENTS
+        // =================================================
+
+        var upcomingAppointments =
+            await GetAppointmentsAsync(
+                MyAppointmentFilter.Upcoming
+            );
+
+
+        // =================================================
+        // COMPLETED APPOINTMENTS
+        // =================================================
+
+        var completedAppointments =
+            await GetAppointmentsAsync(
+                MyAppointmentFilter.Completed
+            );
+
+
+        // =================================================
+        // CANCELLED APPOINTMENTS
+        // =================================================
+
+        var cancelledAppointments =
+            await GetAppointmentsAsync(
+                MyAppointmentFilter.Cancelled
+            );
+
+
+        // =================================================
+        // RETURN DASHBOARD DATA
+        // =================================================
+
+        return new PatientDashboardData
+        {
+            UpcomingAppointments =
+                upcomingAppointments,
+
+            CompletedAppointments =
+                completedAppointments,
+
+            CancelledAppointments =
+                cancelledAppointments
+        };
+    }
 
     // =====================================================
     // GET APPOINTMENTS
@@ -111,37 +181,4 @@ public class PatientDashboardService
         }
     }
 
-    // =====================================================
-    // GET APPOINTMENT COUNT
-    // =====================================================
-
-    // =====================================================
-    // GET APPOINTMENT COUNT
-    // =====================================================
-
-    public async Task<int?> GetAppointmentCountAsync(
-        MyAppointmentFilter filter)
-    {
-        var appointments =
-            await GetAppointmentsAsync(
-                filter
-            );
-
-
-        // =================================================
-        // API FAILED
-        // =================================================
-
-        if (appointments == null)
-        {
-            return null;
-        }
-
-
-        // =================================================
-        // RETURN COUNT
-        // =================================================
-
-        return appointments.Count;
-    }
 }

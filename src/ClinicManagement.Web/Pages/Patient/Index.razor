@@ -125,7 +125,7 @@
                 </div>
 
 
-                <button type="button" class="patient-summary-retry" @onclick="LoadAppointmentSummaryAsync">
+                <button type="button" class="patient-summary-retry" @onclick="LoadDashboardDataAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -348,7 +348,7 @@
                 </div>
 
 
-                <button type="button" class="patient-summary-retry" @onclick="LoadNearestUpcomingAppointmentAsync">
+                <button type="button" class="patient-summary-retry" @onclick="LoadDashboardDataAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -599,9 +599,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAppointmentSummaryAsync();
-
-        await LoadNearestUpcomingAppointmentAsync();
+        await LoadDashboardDataAsync();
     }
 
     // =====================================================
@@ -651,17 +649,24 @@
     }
 
     // =====================================================
-    // LOAD NEAREST UPCOMING APPOINTMENT
+    // LOAD DASHBOARD DATA
     // =====================================================
-    private async Task LoadNearestUpcomingAppointmentAsync()
+
+    private async Task LoadDashboardDataAsync()
     {
         // =================================================
         // START LOADING
         // =================================================
 
+        _isSummaryLoading = true;
         _isUpcomingLoading = true;
 
+        _hasSummaryError = false;
         _hasUpcomingError = false;
+
+        _upcomingAppointmentCount = null;
+        _completedAppointmentCount = null;
+        _cancelledAppointmentCount = null;
 
         _nearestUpcomingAppointment = null;
 
@@ -669,143 +674,77 @@
         try
         {
             // =================================================
-            // GET UPCOMING APPOINTMENTS
+            // GET DASHBOARD DATA
             // =================================================
 
-            var appointments =
+            var data =
                 await _patientDashboardService
-                    .GetAppointmentsAsync(
-                        MyAppointmentFilter.Upcoming
-                    );
+                    .GetDashboardDataAsync();
 
 
             // =================================================
-            // API FAILED
+            // UPCOMING APPOINTMENTS
             // =================================================
 
-            if (appointments == null)
-            {
-                _hasUpcomingError = true;
-
-                return;
-            }
-
-
-            // =================================================
-            // GET NEAREST APPOINTMENT
-            //
-            // List rỗng => FirstOrDefault() trả null.
-            // Đây là trạng thái hợp lệ, không phải lỗi.
-            // =================================================
-
-            _nearestUpcomingAppointment =
-                appointments
-                    .OrderBy(
-                        appointment =>
-                            appointment.StartTime
-                    )
-                    .FirstOrDefault();
-        }
-        catch
-        {
-            _hasUpcomingError = true;
-        }
-        finally
-        {
-            _isUpcomingLoading = false;
-        }
-    }
-
-    // =====================================================
-    // LOAD APPOINTMENT SUMMARY
-    // =====================================================
-    private async Task LoadAppointmentSummaryAsync()
-    {
-        // =================================================
-        // START LOADING
-        // =================================================
-
-        _isSummaryLoading = true;
-
-        _hasSummaryError = false;
-
-
-        _upcomingAppointmentCount = null;
-
-        _completedAppointmentCount = null;
-
-        _cancelledAppointmentCount = null;
-
-
-        try
-        {
-            // =================================================
-            // UPCOMING
-            // =================================================
-
-            var upcomingCount =
-                await _patientDashboardService
-                    .GetAppointmentCountAsync(
-                        MyAppointmentFilter.Upcoming
-                    );
-
-
-            // =================================================
-            // COMPLETED
-            // =================================================
-
-            var completedCount =
-                await _patientDashboardService
-                    .GetAppointmentCountAsync(
-                        MyAppointmentFilter.Completed
-                    );
-
-
-            // =================================================
-            // CANCELLED
-            // =================================================
-
-            var cancelledCount =
-                await _patientDashboardService
-                    .GetAppointmentCountAsync(
-                        MyAppointmentFilter.Cancelled
-                    );
-
-
-            // =================================================
-            // CHECK ERROR
-            // =================================================
-
-            if (!upcomingCount.HasValue ||
-                !completedCount.HasValue ||
-                !cancelledCount.HasValue)
+            if (data.UpcomingAppointments == null)
             {
                 _hasSummaryError = true;
+                _hasUpcomingError = true;
+            }
+            else
+            {
+                _upcomingAppointmentCount =
+                    data.UpcomingAppointments.Count;
 
-                return;
+
+                _nearestUpcomingAppointment =
+                    data.UpcomingAppointments
+                        .OrderBy(
+                            appointment =>
+                                appointment.StartTime
+                        )
+                        .FirstOrDefault();
             }
 
 
             // =================================================
-            // UPDATE STATE
+            // COMPLETED APPOINTMENTS
             // =================================================
 
-            _upcomingAppointmentCount =
-                upcomingCount.Value;
+            if (data.CompletedAppointments == null)
+            {
+                _hasSummaryError = true;
+            }
+            else
+            {
+                _completedAppointmentCount =
+                    data.CompletedAppointments.Count;
+            }
 
-            _completedAppointmentCount =
-                completedCount.Value;
 
-            _cancelledAppointmentCount =
-                cancelledCount.Value;
+            // =================================================
+            // CANCELLED APPOINTMENTS
+            // =================================================
+
+            if (data.CancelledAppointments == null)
+            {
+                _hasSummaryError = true;
+            }
+            else
+            {
+                _cancelledAppointmentCount =
+                    data.CancelledAppointments.Count;
+            }
         }
         catch
         {
             _hasSummaryError = true;
+            _hasUpcomingError = true;
         }
         finally
         {
             _isSummaryLoading = false;
+            _isUpcomingLoading = false;
         }
     }
 
