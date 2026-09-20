@@ -3,6 +3,7 @@ using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using ClinicManagementSystem.Application.Enums;
 
 
 namespace ClinicManagementSystem.Application.Services;
