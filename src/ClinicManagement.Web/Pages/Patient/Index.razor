@@ -5,6 +5,7 @@
 @attribute [Authorize(Roles = "Patient")]
 
 @inject NavigationManager _navigationManager
+@inject UserStateService _userStateService
 
 
 <PageTitle>Patient Dashboard</PageTitle>
@@ -17,22 +18,64 @@
 <div>
 
 
-    @* =================================================
-       HEADER
-       ================================================= *@
+    @* =====================================================
+    WELCOME HEADER
+    ===================================================== *@
 
-    <div class="mb-4">
+    <section class="patient-welcome">
 
-        <h2 class="fw-bold mb-2">
-            Tổng quan bệnh nhân
-        </h2>
+        @* =============================================
+       WELCOME CONTENT
+       ============================================= *@
 
-        <p class="text-secondary mb-0">
-            Quản lý lịch khám, lịch hẹn,
-            hồ sơ khám bệnh và hóa đơn của bạn.
-        </p>
+        <div class="patient-welcome-content">
 
-    </div>
+            <div class="patient-welcome-label">
+
+                <i class="fas fa-heartbeat"></i>
+
+                <span>
+                    Tổng quan sức khỏe
+                </span>
+
+            </div>
+
+
+            <h2 class="patient-welcome-title">
+
+                Xin chào,
+
+                <span>
+                    @GetPatientName()
+                </span>
+
+                👋
+
+            </h2>
+
+
+            <p class="patient-welcome-description">
+
+                Chào mừng bạn quay trở lại.
+                Theo dõi lịch khám và thông tin
+                sức khỏe của bạn tại đây.
+
+            </p>
+
+        </div>
+
+
+        @* =============================================
+       DECORATION
+       ============================================= *@
+
+        <div class="patient-welcome-icon">
+
+            <i class="fas fa-user-md"></i>
+
+        </div>
+
+    </section>
 
 
     @* =================================================
@@ -65,9 +108,7 @@
 
                     </div>
 
-                    <button type="button"
-                            class="btn btn-primary"
-                            @onclick="GoToBooking">
+                    <button type="button" class="btn btn-primary" @onclick="GoToBooking">
 
                         Đặt lịch khám
 
@@ -103,9 +144,7 @@
 
                     </div>
 
-                    <button type="button"
-                            class="btn btn-outline-primary"
-                            @onclick="GoToAppointments">
+                    <button type="button" class="btn btn-outline-primary" @onclick="GoToAppointments">
 
                         Xem lịch hẹn
 
@@ -141,9 +180,7 @@
 
                     </div>
 
-                    <button type="button"
-                            class="btn btn-outline-primary"
-                            @onclick="GoToRecords">
+                    <button type="button" class="btn btn-outline-primary" @onclick="GoToRecords">
 
                         Xem lịch sử khám
 
@@ -179,9 +216,7 @@
 
                     </div>
 
-                    <button type="button"
-                            class="btn btn-outline-primary"
-                            @onclick="GoToInvoices">
+                    <button type="button" class="btn btn-outline-primary" @onclick="GoToInvoices">
 
                         Xem hóa đơn
 
@@ -199,6 +234,28 @@
 
 
 @code {
+
+
+    // =====================================================
+    // GET PATIENT NAME
+    // =====================================================
+
+    private string GetPatientName()
+    {
+        var fullName =
+            _userStateService
+                .CurrentUser?
+                .FullName;
+
+
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return "bạn";
+        }
+
+
+        return fullName;
+    }
 
     // =====================================================
     // BOOKING NAVIGATION
