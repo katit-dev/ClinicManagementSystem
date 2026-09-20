@@ -246,187 +246,185 @@
 
         </div>
 
-        @* =====================================================
-   UPCOMING APPOINTMENT
-   ===================================================== *@
+    </section>
 
-        @if (_nearestUpcomingAppointment != null)
-        {
-            <section class="patient-upcoming">
+    @* =====================================================
+    UPCOMING APPOINTMENT
+    ===================================================== *@
 
-                @* =================================================
+    @if (_nearestUpcomingAppointment != null)
+    {
+        <section class="patient-upcoming">
+
+            @* =================================================
            SECTION HEADER
            ================================================= *@
 
-                <div class="patient-section-header">
+            <div class="patient-section-header">
 
-                    <div>
+                <div>
 
-                        <h3 class="patient-section-title">
-                            Lịch hẹn gần nhất
-                        </h3>
+                    <h3 class="patient-section-title">
+                        Lịch hẹn gần nhất
+                    </h3>
 
-                        <p class="patient-section-description">
-                            Thông tin lịch khám sắp tới của bạn.
-                        </p>
-
-                    </div>
-
-
-                    <button type="button" class="patient-section-action" @onclick="GoToAppointments">
-
-                        Xem tất cả
-
-                        <i class="fas fa-arrow-right"></i>
-
-                    </button>
+                    <p class="patient-section-description">
+                        Thông tin lịch khám sắp tới của bạn.
+                    </p>
 
                 </div>
 
 
-                @* =================================================
+                <button type="button" class="patient-section-action" @onclick="GoToAppointments">
+
+                    Xem tất cả
+
+                    <i class="fas fa-arrow-right"></i>
+
+                </button>
+
+            </div>
+
+
+            @* =================================================
            APPOINTMENT CARD
            ================================================= *@
 
-                <div class="upcoming-appointment-card">
+            <div class="upcoming-appointment-card">
 
-                    @* =============================================
+                @* =============================================
                DATE
                ============================================= *@
 
-                    <div class="upcoming-date">
+                <div class="upcoming-date">
 
-                        <span class="upcoming-date-day">
-                            @_nearestUpcomingAppointment
-                            .StartTime
-                            .ToString("dd")
-                        </span>
+                    <span class="upcoming-date-day">
+                        @_nearestUpcomingAppointment
+                        .StartTime
+                        .ToString("dd")
+                    </span>
 
-                        <span class="upcoming-date-month">
-                            Tháng @_nearestUpcomingAppointment
-                            .StartTime
-                            .ToString("MM")
-                        </span>
+                    <span class="upcoming-date-month">
+                        Tháng @_nearestUpcomingAppointment
+                        .StartTime
+                        .ToString("MM")
+                    </span>
 
-                    </div>
+                </div>
 
 
-                    @* =============================================
+                @* =============================================
                APPOINTMENT INFORMATION
                ============================================= *@
 
-                    <div class="upcoming-information">
+                <div class="upcoming-information">
 
-                        <div class="upcoming-doctor">
+                    <div class="upcoming-doctor">
 
-                            <div class="upcoming-doctor-icon">
+                        <div class="upcoming-doctor-icon">
 
-                                <i class="fas fa-user-md"></i>
-
-                            </div>
-
-
-                            <div>
-
-                                <h4 class="upcoming-doctor-name">
-                                    @_nearestUpcomingAppointment.DoctorName
-                                </h4>
-
-                                <div class="upcoming-specialty">
-                                    @_nearestUpcomingAppointment.SpecialtyName
-                                </div>
-
-                            </div>
+                            <i class="fas fa-user-md"></i>
 
                         </div>
 
 
-                        <div class="upcoming-details">
+                        <div>
 
-                            <div class="upcoming-detail">
+                            <h4 class="upcoming-doctor-name">
+                                @_nearestUpcomingAppointment.DoctorName
+                            </h4>
 
-                                <i class="far fa-clock"></i>
-
-                                <span>
-                                    @_nearestUpcomingAppointment
-                                    .StartTime
-                                    .ToString("HH:mm")
-                                    -
-                                    @_nearestUpcomingAppointment
-                                    .EndTime
-                                    .ToString("HH:mm")
-                                </span>
-
+                            <div class="upcoming-specialty">
+                                @_nearestUpcomingAppointment.SpecialtyName
                             </div>
-
-
-                            <div class="upcoming-detail">
-
-                                <i class="far fa-calendar"></i>
-
-                                <span>
-                                    @_nearestUpcomingAppointment
-                                    .StartTime
-                                    .ToString("dd/MM/yyyy")
-                                </span>
-
-                            </div>
-
-
-                            <div class="upcoming-detail">
-
-                                <i class="fas fa-ticket-alt"></i>
-
-                                <span>
-                                    @_nearestUpcomingAppointment.AppointmentCode
-                                </span>
-
-                            </div>
-
-
-                            @if (_nearestUpcomingAppointment.QueueNumber.HasValue)
-                            {
-                                <div class="upcoming-detail">
-
-                                    <i class="fas fa-list-ol"></i>
-
-                                    <span>
-                                        Số thứ tự:
-                                        @_nearestUpcomingAppointment.QueueNumber
-                                    </span>
-
-                                </div>
-                            }
 
                         </div>
 
                     </div>
 
 
-                    @* =============================================
-               STATUS
-               ============================================= *@
+                    <div class="upcoming-details">
 
-                    <div class="upcoming-status">
+                        <div class="upcoming-detail">
 
-                        <span class="@GetAppointmentStatusClass(
-                                         _nearestUpcomingAppointment.Status)">
+                            <i class="far fa-clock"></i>
 
-                            @GetAppointmentStatusText(
-                                _nearestUpcomingAppointment.Status)
+                            <span>
+                                @_nearestUpcomingAppointment
+                                .StartTime
+                                .ToString("HH:mm")
+                                -
+                                @_nearestUpcomingAppointment
+                                .EndTime
+                                .ToString("HH:mm")
+                            </span>
 
-                        </span>
+                        </div>
+
+
+                        <div class="upcoming-detail">
+
+                            <i class="far fa-calendar"></i>
+
+                            <span>
+                                @_nearestUpcomingAppointment
+                                .StartTime
+                                .ToString("dd/MM/yyyy")
+                            </span>
+
+                        </div>
+
+
+                        <div class="upcoming-detail">
+
+                            <i class="fas fa-ticket-alt"></i>
+
+                            <span>
+                                @_nearestUpcomingAppointment.AppointmentCode
+                            </span>
+
+                        </div>
+
+
+                        @if (_nearestUpcomingAppointment.QueueNumber.HasValue)
+                        {
+                            <div class="upcoming-detail">
+
+                                <i class="fas fa-list-ol"></i>
+
+                                <span>
+                                    Số thứ tự:
+                                    @_nearestUpcomingAppointment.QueueNumber
+                                </span>
+
+                            </div>
+                        }
 
                     </div>
 
                 </div>
 
-            </section>
-        }
 
-    </section>
+                @* =============================================
+               STATUS
+               ============================================= *@
 
+                <div class="upcoming-status">
 
+                    <span class="@GetAppointmentStatusClass(
+                                     _nearestUpcomingAppointment.Status)">
+
+                        @GetAppointmentStatusText(
+                            _nearestUpcomingAppointment.Status)
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+    }
     
 
 </div>
