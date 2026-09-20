@@ -346,6 +346,172 @@ public class BookingStateService
         }
     }
 
+    // =====================================================
+    // LOAD AVAILABLE SLOTS
+    // =====================================================
+
+    public async Task<bool> LoadAvailableSlotsAsync()
+    {
+        // =================================================
+        // VALIDATE SELECTED DOCTOR
+        // =================================================
+
+        if (SelectedDoctor == null)
+        {
+            ErrorMessage =
+                "Vui lòng chọn bác sĩ trước.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE SELECTED DATE
+        // =================================================
+
+        if (!SelectedDate.HasValue)
+        {
+            ErrorMessage =
+                "Vui lòng chọn ngày khám trước.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START LOADING
+        // =================================================
+
+        IsLoading = true;
+
+        ErrorMessage =
+            string.Empty;
+
+        SuccessMessage =
+            string.Empty;
+
+
+        SelectedSlot = null;
+
+        AvailableSlots.Clear();
+
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // GET DOCTOR ID
+            // =================================================
+
+            var doctorId =
+                SelectedDoctor.Id;
+
+
+            // =================================================
+            // FORMAT DATE
+            //
+            // yyyy-MM-dd
+            // =================================================
+
+            var date =
+                SelectedDate.Value
+                    .ToString(
+                        "yyyy-MM-dd"
+                    );
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/doctors/{doctorId}" +
+                        $"/available-slots" +
+                        $"?date={date}"
+                    );
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ErrorMessage =
+                    "Không thể tải khung giờ khám.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<SlotDTO>>>();
+
+
+            // =================================================
+            // INVALID RESPONSE
+            // =================================================
+
+            if (responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không nhận được dữ liệu khung giờ.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE STATE
+            //
+            // []:
+            // - bác sĩ không làm ngày này
+            // - hết slot
+            // - tất cả slot đã được đặt
+            //
+            // Đây không phải lỗi API.
+            // =================================================
+
+            AvailableSlots =
+                responseData.Content
+                ?? new List<SlotDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
 
     // =====================================================
     // NOTIFY STATE CHANGED
