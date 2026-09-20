@@ -432,3 +432,260 @@
 
     border-color: #fca5a5;
 }
+
+/* =====================================================
+   UPCOMING APPOINTMENT
+   ===================================================== */
+
+.patient-upcoming {
+    margin-top: 32px;
+}
+
+
+/* =====================================================
+   SECTION ACTION
+   ===================================================== */
+
+.patient-section-action {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 9px 14px;
+
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+
+    background-color: #ffffff;
+
+    color: #0284c7;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.patient-section-action:hover {
+    background-color: #f0f9ff;
+
+    border-color: #bae6fd;
+}
+
+
+/* =====================================================
+   APPOINTMENT CARD
+   ===================================================== */
+
+.upcoming-appointment-card {
+    display: flex;
+    align-items: center;
+
+    gap: 28px;
+
+    padding: 26px;
+
+    border: 1px solid #e5edf5;
+    border-radius: 18px;
+
+    background-color: #ffffff;
+
+    box-shadow:
+        0 8px 28px rgba(15, 23, 42, 0.05);
+}
+
+
+/* =====================================================
+   DATE
+   ===================================================== */
+
+.upcoming-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    width: 82px;
+    height: 82px;
+
+    flex-shrink: 0;
+
+    border-radius: 16px;
+
+    background-color: #e0f2fe;
+}
+
+
+.upcoming-date-day {
+    font-size: 30px;
+    font-weight: 700;
+
+    line-height: 1;
+
+    color: #0284c7;
+}
+
+
+.upcoming-date-month {
+    margin-top: 7px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   INFORMATION
+   ===================================================== */
+
+.upcoming-information {
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.upcoming-doctor {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.upcoming-doctor-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background-color: #f0f9ff;
+
+    color: #0ea5e9;
+
+    font-size: 17px;
+}
+
+
+.upcoming-doctor-name {
+    margin: 0;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.upcoming-specialty {
+    margin-top: 3px;
+
+    font-size: 13px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   DETAILS
+   ===================================================== */
+
+.upcoming-details {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 10px 22px;
+
+    margin-top: 18px;
+}
+
+
+.upcoming-detail {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    font-size: 13px;
+
+    color: #64748b;
+}
+
+
+.upcoming-detail i {
+    width: 16px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.upcoming-status {
+    flex-shrink: 0;
+}
+
+
+.appointment-status {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 7px 11px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.appointment-status-pending {
+    background-color: #fef3c7;
+
+    color: #b45309;
+}
+
+
+.appointment-status-confirmed {
+    background-color: #dcfce7;
+
+    color: #15803d;
+}
+
+
+.appointment-status-checked-in {
+    background-color: #dbeafe;
+
+    color: #1d4ed8;
+}
+
+
+.appointment-status-completed {
+    background-color: #e2e8f0;
+
+    color: #475569;
+}
+
+
+.appointment-status-cancelled,
+.appointment-status-no-show {
+    background-color: #fee2e2;
+
+    color: #b91c1c;
+}

@@ -247,24 +247,181 @@
         </div>
 
         @* =====================================================
-   UPCOMING APPOINTMENT - TEMPORARY TEST
+   UPCOMING APPOINTMENT
    ===================================================== *@
 
         @if (_nearestUpcomingAppointment != null)
         {
-            <div class="alert alert-success mt-4">
+            <section class="patient-upcoming">
 
-                Đã tải được lịch hẹn sắp tới.
+                @* =================================================
+           SECTION HEADER
+           ================================================= *@
 
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-secondary mt-4">
+                <div class="patient-section-header">
 
-                Hiện chưa có lịch hẹn sắp tới.
+                    <div>
 
-            </div>
+                        <h3 class="patient-section-title">
+                            Lịch hẹn gần nhất
+                        </h3>
+
+                        <p class="patient-section-description">
+                            Thông tin lịch khám sắp tới của bạn.
+                        </p>
+
+                    </div>
+
+
+                    <button type="button" class="patient-section-action" @onclick="GoToAppointments">
+
+                        Xem tất cả
+
+                        <i class="fas fa-arrow-right"></i>
+
+                    </button>
+
+                </div>
+
+
+                @* =================================================
+           APPOINTMENT CARD
+           ================================================= *@
+
+                <div class="upcoming-appointment-card">
+
+                    @* =============================================
+               DATE
+               ============================================= *@
+
+                    <div class="upcoming-date">
+
+                        <span class="upcoming-date-day">
+                            @_nearestUpcomingAppointment
+                            .StartTime
+                            .ToString("dd")
+                        </span>
+
+                        <span class="upcoming-date-month">
+                            Tháng @_nearestUpcomingAppointment
+                            .StartTime
+                            .ToString("MM")
+                        </span>
+
+                    </div>
+
+
+                    @* =============================================
+               APPOINTMENT INFORMATION
+               ============================================= *@
+
+                    <div class="upcoming-information">
+
+                        <div class="upcoming-doctor">
+
+                            <div class="upcoming-doctor-icon">
+
+                                <i class="fas fa-user-md"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <h4 class="upcoming-doctor-name">
+                                    @_nearestUpcomingAppointment.DoctorName
+                                </h4>
+
+                                <div class="upcoming-specialty">
+                                    @_nearestUpcomingAppointment.SpecialtyName
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="upcoming-details">
+
+                            <div class="upcoming-detail">
+
+                                <i class="far fa-clock"></i>
+
+                                <span>
+                                    @_nearestUpcomingAppointment
+                                    .StartTime
+                                    .ToString("HH:mm")
+                                    -
+                                    @_nearestUpcomingAppointment
+                                    .EndTime
+                                    .ToString("HH:mm")
+                                </span>
+
+                            </div>
+
+
+                            <div class="upcoming-detail">
+
+                                <i class="far fa-calendar"></i>
+
+                                <span>
+                                    @_nearestUpcomingAppointment
+                                    .StartTime
+                                    .ToString("dd/MM/yyyy")
+                                </span>
+
+                            </div>
+
+
+                            <div class="upcoming-detail">
+
+                                <i class="fas fa-ticket-alt"></i>
+
+                                <span>
+                                    @_nearestUpcomingAppointment.AppointmentCode
+                                </span>
+
+                            </div>
+
+
+                            @if (_nearestUpcomingAppointment.QueueNumber.HasValue)
+                            {
+                                <div class="upcoming-detail">
+
+                                    <i class="fas fa-list-ol"></i>
+
+                                    <span>
+                                        Số thứ tự:
+                                        @_nearestUpcomingAppointment.QueueNumber
+                                    </span>
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+
+                    @* =============================================
+               STATUS
+               ============================================= *@
+
+                    <div class="upcoming-status">
+
+                        <span class="@GetAppointmentStatusClass(
+                                         _nearestUpcomingAppointment.Status)">
+
+                            @GetAppointmentStatusText(
+                                _nearestUpcomingAppointment.Status)
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
         }
 
     </section>
@@ -305,6 +462,52 @@
         await LoadAppointmentSummaryAsync();
 
         await LoadNearestUpcomingAppointmentAsync();
+    }
+
+    // =====================================================
+    // GET APPOINTMENT STATUS TEXT
+    // =====================================================
+
+    private string GetAppointmentStatusText(
+        byte status)
+    {
+        return status switch
+        {
+            0 => "Chờ xác nhận",
+            1 => "Đã xác nhận",
+            2 => "Đã check-in",
+            3 => "Đã hoàn thành",
+            4 => "Đã hủy",
+            5 => "Vắng mặt",
+
+            _ => "Không xác định"
+        };
+    }
+
+
+    // =====================================================
+    // GET APPOINTMENT STATUS CLASS
+    // =====================================================
+
+    private string GetAppointmentStatusClass(
+        byte status)
+    {
+        return status switch
+        {
+            0 => "appointment-status appointment-status-pending",
+
+            1 => "appointment-status appointment-status-confirmed",
+
+            2 => "appointment-status appointment-status-checked-in",
+
+            3 => "appointment-status appointment-status-completed",
+
+            4 => "appointment-status appointment-status-cancelled",
+
+            5 => "appointment-status appointment-status-no-show",
+
+            _ => "appointment-status"
+        };
     }
 
     // =====================================================
