@@ -214,6 +214,138 @@ public class BookingStateService
         }
     }
 
+    // =====================================================
+    // LOAD DOCTORS
+    // =====================================================
+
+    public async Task<bool> LoadDoctorsAsync()
+    {
+        // =================================================
+        // VALIDATE SELECTED SPECIALTY
+        // =================================================
+
+        if (!SelectedSpecialtyId.HasValue)
+        {
+            ErrorMessage =
+                "Vui lòng chọn chuyên khoa trước.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START LOADING
+        // =================================================
+
+        IsLoading = true;
+
+        ErrorMessage =
+            string.Empty;
+
+        SuccessMessage =
+            string.Empty;
+
+
+        Doctors.Clear();
+
+        SelectedDoctor = null;
+
+        SelectedDate = null;
+
+        SelectedSlot = null;
+
+        AvailableSlots.Clear();
+
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/doctors" +
+                        $"?specialtyId={SelectedSpecialtyId.Value}"
+                    );
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ErrorMessage =
+                    "Không thể tải danh sách bác sĩ.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<DoctorDTO>>>();
+
+
+            // =================================================
+            // INVALID RESPONSE
+            // =================================================
+
+            if (responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không nhận được dữ liệu bác sĩ.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE STATE
+            //
+            // []:
+            // API thành công nhưng chuyên khoa hiện chưa
+            // có bác sĩ phù hợp.
+            // =================================================
+
+            Doctors =
+                responseData.Content
+                ?? new List<DoctorDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
 
     // =====================================================
     // NOTIFY STATE CHANGED
