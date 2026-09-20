@@ -1,0 +1,68 @@
+/* =====================================================
+   LANDING PAGE LAYOUT
+   ===================================================== */
+
+.landing-layout {
+    width: 100%;
+    min-height: 100vh;
+
+    margin: 0;
+    padding: 0;
+}
+
+
+/* =====================================================
+   LANDING PAGE
+   ===================================================== */
+
+.landing-page {
+    position: relative;
+
+    width: 100%;
+    min-height: 100vh;
+
+    overflow: hidden;
+
+    background-image:
+        url('/images/landing/clinic-background.png');
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+/* =====================================================
+   BACKGROUND OVERLAY
+   ===================================================== */
+
+.landing-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(5, 39, 66, 0.82) 0%,
+            rgba(5, 39, 66, 0.64) 28%,
+            rgba(5, 39, 66, 0.32) 48%,
+            rgba(5, 39, 66, 0.08) 68%,
+            rgba(5, 39, 66, 0) 100%
+        );
+
+    z-index: 1;
+}
+
+
+/* =====================================================
+   LANDING CONTENT
+   ===================================================== */
+
+.landing-content {
+    position: relative;
+
+    z-index: 2;
+
+    min-height: 100vh;
+}
