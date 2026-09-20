@@ -12,8 +12,11 @@ namespace ClinicManagementSystem.Web.Services;
 
 public interface IPatientDashboardService
 {
+    Task<List<MyAppointmentDTO>?> GetAppointmentsAsync(
+        MyAppointmentFilter filter);
+
     Task<int?> GetAppointmentCountAsync(
-    MyAppointmentFilter filter);
+        MyAppointmentFilter filter);
 }
 
 
@@ -39,13 +42,13 @@ public class PatientDashboardService
             authorizedApiService;
     }
 
-
     // =====================================================
-    // GET APPOINTMENT COUNT
+    // GET APPOINTMENTS
     // =====================================================
 
-    public async Task<int?> GetAppointmentCountAsync(
-        MyAppointmentFilter filter)
+    public async Task<List<MyAppointmentDTO>?>
+        GetAppointmentsAsync(
+            MyAppointmentFilter filter)
     {
         try
         {
@@ -95,14 +98,48 @@ public class PatientDashboardService
 
 
             // =================================================
-            // RETURN COUNT
+            // SUCCESS
             // =================================================
 
-            return responseData.Content.Count;
+            return responseData.Content;
         }
         catch
         {
             return null;
         }
+    }
+
+    // =====================================================
+    // GET APPOINTMENT COUNT
+    // =====================================================
+
+    // =====================================================
+    // GET APPOINTMENT COUNT
+    // =====================================================
+
+    public async Task<int?> GetAppointmentCountAsync(
+        MyAppointmentFilter filter)
+    {
+        var appointments =
+            await GetAppointmentsAsync(
+                filter
+            );
+
+
+        // =================================================
+        // API FAILED
+        // =================================================
+
+        if (appointments == null)
+        {
+            return null;
+        }
+
+
+        // =================================================
+        // RETURN COUNT
+        // =================================================
+
+        return appointments.Count;
     }
 }
