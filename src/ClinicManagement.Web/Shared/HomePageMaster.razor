@@ -57,8 +57,7 @@
                DASHBOARD
                ========================================= *@
 
-            <a href="@GetDashboardUrl()"
-               class="sidebar-link">
+            <a href="@GetDashboardUrl()" class="sidebar-link">
 
                 <i class="fas fa-home"></i>
 
@@ -75,8 +74,7 @@
 
             @if (HasRole("Patient"))
             {
-                <a href="/book-appointment"
-                   class="sidebar-link">
+                <a href="/book-appointment" class="sidebar-link">
 
                     <i class="fas fa-calendar-plus"></i>
 
@@ -87,8 +85,7 @@
                 </a>
 
 
-                <a href="/my-appointments"
-                   class="sidebar-link">
+                <a href="/my-appointments" class="sidebar-link">
 
                     <i class="fas fa-calendar-check"></i>
 
@@ -110,9 +107,7 @@
         {
             <div class="sidebar-bottom">
 
-                <button type="button"
-                        class="sidebar-logout"
-                        @onclick="HandleLogout">
+                <button type="button" class="sidebar-logout" @onclick="HandleLogout">
 
                     <i class="fas fa-sign-out-alt"></i>
 
@@ -139,13 +134,67 @@
            TEMPORARY HEADER
            ============================================= *@
 
+        @* =============================================
+   TOPBAR
+   ============================================= *@
+
         <header class="app-header">
+
+            @* =========================================
+       PAGE INFORMATION
+       ========================================= *@
+
+            <div class="header-information">
+
+                <h1 class="header-title">
+                    Không gian làm việc
+                </h1>
+
+                <p class="header-subtitle">
+                    Quản lý hoạt động phòng khám
+                </p>
+
+            </div>
+
+
+            @* =========================================
+       CURRENT USER
+       ========================================= *@
 
             @if (_userStateService.CurrentUser != null)
             {
-                <div class="header-user-name">
+                <div class="header-user">
 
-                    @_userStateService.CurrentUser.FullName
+                    <div class="header-avatar">
+
+                        <i class="fas fa-user"></i>
+
+                    </div>
+
+
+                    <div class="header-user-information">
+
+                        <div class="header-user-name">
+
+                            @_userStateService
+                            .CurrentUser
+                            .FullName
+
+                        </div>
+
+
+                        <div class="header-user-role">
+
+                            @string.Join(
+                                ", ",
+                                _userStateService
+                                    .CurrentUser
+                                    .Roles
+                            )
+
+                        </div>
+
+                    </div>
 
                 </div>
             }
