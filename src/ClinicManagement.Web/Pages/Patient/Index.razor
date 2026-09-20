@@ -4,13 +4,14 @@
 
 @attribute [Authorize(Roles = "Patient")]
 
+@using ClinicManagementSystem.Application.DTOs.Appointment
+@using ClinicManagementSystem.Application.Enums
+
 @inject NavigationManager _navigationManager
 @inject UserStateService _userStateService
 @inject IPatientDashboardService _patientDashboardService
-@using ClinicManagementSystem.Application.Enums;
-@using ClinicManagementSystem.Application.DTOs.Appointment
 
-<PageTitle>Patient Dashboard</PageTitle>
+<PageTitle>Tổng quan bệnh nhân</PageTitle>
 
 
 @* =====================================================
