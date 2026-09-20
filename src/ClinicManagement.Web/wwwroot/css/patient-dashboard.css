@@ -782,3 +782,409 @@
 
     color: #dc2626;
 }
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 992px) {
+
+    /* =================================================
+       WELCOME
+       ================================================= */
+
+    .patient-welcome {
+        min-height: 170px;
+
+        padding: 28px;
+    }
+
+
+    .patient-welcome-title {
+        font-size: 26px;
+    }
+
+
+    .patient-welcome-icon {
+        width: 90px;
+        height: 90px;
+
+        margin-right: 10px;
+
+        font-size: 34px;
+    }
+
+
+    /* =================================================
+       SUMMARY
+       ================================================= */
+
+    .patient-summary-grid {
+        gap: 16px;
+    }
+
+
+    .patient-summary-card {
+        gap: 14px;
+
+        padding: 20px;
+    }
+
+
+    .summary-card-icon {
+        width: 48px;
+        height: 48px;
+    }
+
+
+    .summary-card-value {
+        font-size: 28px;
+    }
+
+
+    /* =================================================
+       UPCOMING APPOINTMENT
+       ================================================= */
+
+    .upcoming-appointment-card {
+        gap: 20px;
+
+        padding: 22px;
+    }
+
+
+    .upcoming-details {
+        gap: 10px 16px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    /* =================================================
+       WELCOME
+       ================================================= */
+
+    .patient-welcome {
+        min-height: auto;
+
+        padding: 24px;
+
+        margin-bottom: 24px;
+    }
+
+
+    .patient-welcome-content {
+        max-width: 100%;
+    }
+
+
+    .patient-welcome-icon {
+        display: none;
+    }
+
+
+    .patient-welcome-title {
+        font-size: 24px;
+    }
+
+
+    .patient-welcome-description {
+        font-size: 14px;
+
+        line-height: 1.6;
+    }
+
+
+    /* =================================================
+       SECTION HEADER
+       ================================================= */
+
+    .patient-section-header {
+        align-items: flex-start;
+
+        gap: 12px;
+    }
+
+
+    .patient-section-title {
+        font-size: 18px;
+    }
+
+
+    /* =================================================
+       SUMMARY
+       ================================================= */
+
+    .patient-summary-grid {
+        grid-template-columns: 1fr;
+
+        gap: 14px;
+    }
+
+
+    .patient-summary-card {
+        min-height: 120px;
+    }
+
+
+    /* =================================================
+       UPCOMING APPOINTMENT
+       ================================================= */
+
+    .upcoming-appointment-card {
+        align-items: flex-start;
+
+        flex-wrap: wrap;
+
+        gap: 18px;
+    }
+
+
+    .upcoming-date {
+        width: 72px;
+        height: 72px;
+    }
+
+
+    .upcoming-date-day {
+        font-size: 26px;
+    }
+
+
+    .upcoming-information {
+        flex: 1;
+
+        min-width: 220px;
+    }
+
+
+    .upcoming-status {
+        width: 100%;
+
+        padding-left: 90px;
+    }
+
+
+    /* =================================================
+       UPCOMING STATES
+       ================================================= */
+
+    .upcoming-state-card {
+        flex-wrap: wrap;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - SMALL MOBILE
+   ===================================================== */
+
+@media (max-width: 576px) {
+
+    /* =================================================
+       WELCOME
+       ================================================= */
+
+    .patient-welcome {
+        padding: 20px;
+
+        border-radius: 14px;
+    }
+
+
+    .patient-welcome-label {
+        margin-bottom: 12px;
+
+        font-size: 12px;
+    }
+
+
+    .patient-welcome-title {
+        font-size: 21px;
+    }
+
+
+    .patient-welcome-description {
+        margin-top: 10px;
+
+        font-size: 13px;
+    }
+
+
+    /* =================================================
+       SECTION HEADER
+       ================================================= */
+
+    .patient-section-header {
+        flex-direction: column;
+
+        margin-bottom: 16px;
+    }
+
+
+    .patient-section-action {
+        width: 100%;
+
+        justify-content: center;
+    }
+
+
+    /* =================================================
+       SUMMARY
+       ================================================= */
+
+    .patient-summary {
+        margin-top: 24px;
+    }
+
+
+    .patient-summary-card {
+        min-height: 110px;
+
+        padding: 18px;
+    }
+
+
+    .summary-card-icon {
+        width: 46px;
+        height: 46px;
+
+        border-radius: 12px;
+
+        font-size: 17px;
+    }
+
+
+    .summary-card-label {
+        font-size: 13px;
+    }
+
+
+    .summary-card-value {
+        font-size: 26px;
+    }
+
+
+    .summary-card-note {
+        font-size: 11px;
+    }
+
+
+    /* =================================================
+       SUMMARY ERROR
+       ================================================= */
+
+    .patient-summary-error {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .patient-summary-retry {
+        justify-content: center;
+
+        width: 100%;
+    }
+
+
+    /* =================================================
+       UPCOMING
+       ================================================= */
+
+    .patient-upcoming {
+        margin-top: 28px;
+    }
+
+
+    .upcoming-appointment-card {
+        flex-direction: column;
+
+        align-items: stretch;
+
+        padding: 20px;
+    }
+
+
+    .upcoming-date {
+        width: 64px;
+        height: 64px;
+    }
+
+
+    .upcoming-date-day {
+        font-size: 24px;
+    }
+
+
+    .upcoming-information {
+        min-width: 0;
+
+        width: 100%;
+    }
+
+
+    .upcoming-doctor {
+        align-items: flex-start;
+    }
+
+
+    .upcoming-doctor-name {
+        font-size: 16px;
+    }
+
+
+    .upcoming-details {
+        flex-direction: column;
+
+        gap: 10px;
+
+        margin-top: 16px;
+    }
+
+
+    .upcoming-status {
+        width: 100%;
+
+        padding-left: 0;
+    }
+
+
+    .appointment-status {
+        width: fit-content;
+    }
+
+
+    /* =================================================
+       UPCOMING STATE
+       ================================================= */
+
+    .upcoming-state-card {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        padding: 20px;
+    }
+
+
+    .upcoming-state-content {
+        width: 100%;
+    }
+
+
+    .upcoming-state-card
+    .patient-section-action,
+
+    .upcoming-state-card
+    .patient-summary-retry {
+        width: 100%;
+
+        justify-content: center;
+    }
+}
