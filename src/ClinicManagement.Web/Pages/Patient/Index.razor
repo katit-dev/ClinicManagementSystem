@@ -104,6 +104,36 @@
 
         </div>
 
+        @* =====================================================
+         SUMMARY ERROR
+        ===================================================== *@
+
+        @if (_hasSummaryError)
+        {
+            <div class="patient-summary-error">
+
+                <div class="patient-summary-error-content">
+
+                    <i class="fas fa-exclamation-circle"></i>
+
+                    <span>
+                        Không thể tải dữ liệu tổng quan lịch khám.
+                    </span>
+
+                </div>
+
+
+                <button type="button" class="patient-summary-retry" @onclick="LoadAppointmentSummaryAsync">
+
+                    <i class="fas fa-redo-alt"></i>
+
+                    Thử lại
+
+                </button>
+
+            </div>
+        }
+
 
         @* =================================================
        SUMMARY CARDS
@@ -132,7 +162,9 @@
                     </div>
 
                     <div class="summary-card-value">
-                         @_upcomingAppointmentCount
+                        @GetSummaryDisplayValue(
+                            _upcomingAppointmentCount
+                        )
                     </div>
 
                     <div class="summary-card-note">
@@ -164,7 +196,9 @@
                     </div>
 
                     <div class="summary-card-value">
-                        @_completedAppointmentCount
+                        @GetSummaryDisplayValue(
+                            _completedAppointmentCount
+                        )
                     </div>
 
                     <div class="summary-card-note">
@@ -196,7 +230,9 @@
                     </div>
 
                     <div class="summary-card-value">
-                        @_cancelledAppointmentCount
+                        @GetSummaryDisplayValue(
+                            _cancelledAppointmentCount
+                        )
                     </div>
 
                     <div class="summary-card-note">
@@ -221,11 +257,16 @@
     // SUMMARY STATE
     // =====================================================
 
-    private int _upcomingAppointmentCount;
+    private int? _upcomingAppointmentCount;
 
-    private int _completedAppointmentCount;
+    private int? _completedAppointmentCount;
 
-    private int _cancelledAppointmentCount;
+    private int? _cancelledAppointmentCount;
+
+
+    private bool _isSummaryLoading = true;
+
+    private bool _hasSummaryError;
 
     // =====================================================
     // INITIALIZE
@@ -240,27 +281,121 @@
     // LOAD APPOINTMENT SUMMARY
     // =====================================================
 
+    // =====================================================
+    // LOAD APPOINTMENT SUMMARY
+    // =====================================================
+
     private async Task LoadAppointmentSummaryAsync()
     {
-        _upcomingAppointmentCount =
-            await _patientDashboardService
-                .GetAppointmentCountAsync(
-                    MyAppointmentFilter.Upcoming
-                );
+        // =================================================
+        // START LOADING
+        // =================================================
+
+        _isSummaryLoading = true;
+
+        _hasSummaryError = false;
 
 
-        _completedAppointmentCount =
-            await _patientDashboardService
-                .GetAppointmentCountAsync(
-                    MyAppointmentFilter.Completed
-                );
+        _upcomingAppointmentCount = null;
+
+        _completedAppointmentCount = null;
+
+        _cancelledAppointmentCount = null;
 
 
-        _cancelledAppointmentCount =
-            await _patientDashboardService
-                .GetAppointmentCountAsync(
-                    MyAppointmentFilter.Cancelled
-                );
+        try
+        {
+            // =================================================
+            // UPCOMING
+            // =================================================
+
+            var upcomingCount =
+                await _patientDashboardService
+                    .GetAppointmentCountAsync(
+                        MyAppointmentFilter.Upcoming
+                    );
+
+
+            // =================================================
+            // COMPLETED
+            // =================================================
+
+            var completedCount =
+                await _patientDashboardService
+                    .GetAppointmentCountAsync(
+                        MyAppointmentFilter.Completed
+                    );
+
+
+            // =================================================
+            // CANCELLED
+            // =================================================
+
+            var cancelledCount =
+                await _patientDashboardService
+                    .GetAppointmentCountAsync(
+                        MyAppointmentFilter.Cancelled
+                    );
+
+
+            // =================================================
+            // CHECK ERROR
+            // =================================================
+
+            if (!upcomingCount.HasValue ||
+                !completedCount.HasValue ||
+                !cancelledCount.HasValue)
+            {
+                _hasSummaryError = true;
+
+                return;
+            }
+
+
+            // =================================================
+            // UPDATE STATE
+            // =================================================
+
+            _upcomingAppointmentCount =
+                upcomingCount.Value;
+
+            _completedAppointmentCount =
+                completedCount.Value;
+
+            _cancelledAppointmentCount =
+                cancelledCount.Value;
+        }
+        catch
+        {
+            _hasSummaryError = true;
+        }
+        finally
+        {
+            _isSummaryLoading = false;
+        }
+    }
+
+    // =====================================================
+    // GET SUMMARY DISPLAY VALUE
+    // =====================================================
+
+    private string GetSummaryDisplayValue(
+        int? value)
+    {
+        if (_isSummaryLoading)
+        {
+            return "...";
+        }
+
+
+        if (_hasSummaryError ||
+            !value.HasValue)
+        {
+            return "--";
+        }
+
+
+        return value.Value.ToString();
     }
 
 

@@ -12,8 +12,8 @@ namespace ClinicManagementSystem.Web.Services;
 
 public interface IPatientDashboardService
 {
-    Task<int> GetAppointmentCountAsync(
-        MyAppointmentFilter filter);
+    Task<int?> GetAppointmentCountAsync(
+    MyAppointmentFilter filter);
 }
 
 
@@ -44,55 +44,65 @@ public class PatientDashboardService
     // GET APPOINTMENT COUNT
     // =====================================================
 
-    public async Task<int> GetAppointmentCountAsync(
+    public async Task<int?> GetAppointmentCountAsync(
         MyAppointmentFilter filter)
     {
-        // =================================================
-        // CALL API
-        // =================================================
-
-        var response =
-            await _authorizedApiService
-                .GetAsync(
-                    $"/api/appointments/my?filter={filter}"
-                );
-
-
-        // =================================================
-        // API FAILED
-        // =================================================
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            return 0;
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/appointments/my?filter={filter}"
+                    );
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<MyAppointmentDTO>>>();
+
+
+            // =================================================
+            // INVALID RESPONSE
+            // =================================================
+
+            if (responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300 ||
+                responseData.Content == null)
+            {
+                return null;
+            }
+
+
+            // =================================================
+            // RETURN COUNT
+            // =================================================
+
+            return responseData.Content.Count;
         }
-
-
-        // =================================================
-        // READ RESPONSE
-        // =================================================
-
-        var responseData =
-            await response.Content
-                .ReadFromJsonAsync<
-                    HttpResponseData<
-                        List<MyAppointmentDTO>>>();
-
-
-        // =================================================
-        // RESPONSE NULL
-        // =================================================
-
-        if (responseData?.Content == null)
+        catch
         {
-            return 0;
+            return null;
         }
-
-
-        // =================================================
-        // RETURN COUNT
-        // =================================================
-
-        return responseData.Content.Count;
     }
 }

@@ -361,3 +361,74 @@
 
     color: #94a3b8;
 }
+
+/* =====================================================
+   SUMMARY ERROR
+   ===================================================== */
+
+.patient-summary-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 18px;
+
+    padding: 14px 16px;
+
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+
+    background-color: #fff7f7;
+}
+
+
+.patient-summary-error-content {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    font-size: 14px;
+
+    color: #b91c1c;
+}
+
+
+.patient-summary-error-content i {
+    font-size: 16px;
+}
+
+
+.patient-summary-retry {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 7px 12px;
+
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+
+    color: #b91c1c;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.patient-summary-retry:hover {
+    background-color: #fef2f2;
+
+    border-color: #fca5a5;
+}
