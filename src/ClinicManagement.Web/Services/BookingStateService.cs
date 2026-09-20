@@ -1,5 +1,7 @@
+using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.DTOs.Doctor;
+using ClinicManagementSystem.Application.DTOs.Specialty;
 
 namespace ClinicManagementSystem.Web.Services;
 
@@ -15,6 +17,11 @@ public class BookingStateService
 
     public int CurrentStep { get; private set; } = 1;
 
+    // =====================================================
+    // SPECIALTIES
+    // =====================================================
+
+    public List<SpecialtyDTO> Specialties { get; private set; } = new();
 
     // =====================================================
     // DOCTORS
@@ -99,6 +106,114 @@ public class BookingStateService
             authorizedApiService;
     }
 
+    // =====================================================
+    // LOAD SPECIALTIES
+    // =====================================================
+
+    public async Task<bool> LoadSpecialtiesAsync()
+    {
+        // =================================================
+        // START LOADING
+        // =================================================
+
+        IsLoading = true;
+
+        ErrorMessage =
+            string.Empty;
+
+        SuccessMessage =
+            string.Empty;
+
+        Specialties.Clear();
+
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            //
+            // Chỉ lấy Specialty đang hoạt động.
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        "/api/specialties?active=true"
+                    );
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ErrorMessage =
+                    "Không thể tải danh sách chuyên khoa.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<SpecialtyDTO>>>();
+
+
+            // =================================================
+            // INVALID RESPONSE
+            // =================================================
+
+            if (responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không nhận được dữ liệu chuyên khoa.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE STATE
+            //
+            // [] là hợp lệ:
+            // API thành công nhưng chưa có Specialty.
+            // =================================================
+
+            Specialties =
+                responseData.Content
+                ?? new List<SpecialtyDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
 
     // =====================================================
     // NOTIFY STATE CHANGED
@@ -117,9 +232,7 @@ public class BookingStateService
     public void SelectSpecialty(
         int specialtyId)
     {
-        SelectedSpecialtyId =
-            specialtyId;
-
+        SelectedSpecialtyId = specialtyId;
 
         // =================================================
         // SPECIALTY THAY ĐỔI
@@ -136,9 +249,7 @@ public class BookingStateService
 
         AvailableSlots.Clear();
 
-
         CurrentStep = 2;
-
 
         StateHasChanged();
     }
@@ -254,6 +365,8 @@ public class BookingStateService
         Doctors.Clear();
 
         AvailableSlots.Clear();
+
+        Specialties.Clear();
 
         IsLoading = false;
 
