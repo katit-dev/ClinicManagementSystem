@@ -75,6 +75,10 @@
 
             @if (HasRole("Patient"))
             {
+                @* =====================================================
+                BOOK APPOINTMENT
+                ===================================================== *@
+
                 <NavLink href="/patient/booking" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
@@ -87,6 +91,10 @@
                 </NavLink>
 
 
+                @* =====================================================
+                MY APPOINTMENTS
+                ===================================================== *@
+
                 <NavLink href="/patient/appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
@@ -94,6 +102,22 @@
 
                     <span>
                         Lịch hẹn của tôi
+                    </span>
+
+                </NavLink>
+
+
+                @* =====================================================
+                MEDICAL RECORDS
+                ===================================================== *@
+
+                <NavLink href="/patient/records" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
+
+                    <i class="fas fa-file-medical-alt"></i>
+
+                    <span>
+                        Lịch sử khám
                     </span>
 
                 </NavLink>
