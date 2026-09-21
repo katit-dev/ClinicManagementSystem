@@ -8,6 +8,7 @@
 
 @implements IDisposable
 
+
 <PageTitle>Đặt lịch khám</PageTitle>
 
 
@@ -53,14 +54,15 @@
 
 
     @* =====================================================
-   BOOKING STEPS
-   ===================================================== *@
+       BOOKING STEPS
+       ===================================================== *@
 
     <div class="booking-steps">
 
+
         @* =================================================
-       STEP 1 - SPECIALTY
-       ================================================= *@
+           STEP 1 - SPECIALTY
+           ================================================= *@
 
         <div class="booking-step @GetStepClass(1)">
 
@@ -76,6 +78,7 @@
                 }
 
             </div>
+
 
             <div class="booking-step-content">
 
@@ -97,8 +100,8 @@
 
 
         @* =================================================
-       STEP 2 - DOCTOR
-       ================================================= *@
+           STEP 2 - DOCTOR
+           ================================================= *@
 
         <div class="booking-step @GetStepClass(2)">
 
@@ -114,6 +117,7 @@
                 }
 
             </div>
+
 
             <div class="booking-step-content">
 
@@ -135,8 +139,8 @@
 
 
         @* =================================================
-       STEP 3 - TIME
-       ================================================= *@
+           STEP 3 - TIME
+           ================================================= *@
 
         <div class="booking-step @GetStepClass(3)">
 
@@ -152,6 +156,7 @@
                 }
 
             </div>
+
 
             <div class="booking-step-content">
 
@@ -173,14 +178,15 @@
 
 
         @* =================================================
-       STEP 4 - CONFIRM
-       ================================================= *@
+           STEP 4 - CONFIRM
+           ================================================= *@
 
         <div class="booking-step @GetStepClass(4)">
 
             <div class="booking-step-number">
                 <span>4</span>
             </div>
+
 
             <div class="booking-step-content">
 
@@ -199,17 +205,22 @@
     </div>
 
 
-    @* =================================================
+    @* =====================================================
        BOOKING CONTENT
-       ================================================= *@
+       ===================================================== *@
 
     <section class="booking-content">
+
+
+        @* =================================================
+           CONTENT HEADER
+           ================================================= *@
 
         <div class="booking-content-header">
 
             <div class="booking-content-icon">
 
-                <i class="fas fa-stethoscope"></i>
+                <i class="@GetContentIcon()"></i>
 
             </div>
 
@@ -217,174 +228,223 @@
             <div>
 
                 <h2>
-                    Chọn chuyên khoa
+                    @GetContentTitle()
                 </h2>
 
                 <p>
-                    Chọn chuyên khoa phù hợp với
-                    nhu cầu khám của bạn.
+                    @GetContentDescription()
                 </p>
 
             </div>
 
         </div>
 
-        @* =====================================================
-        SPECIALTY CONTENT
-        ===================================================== *@
 
-        @if (_bookingStateService.IsLoading &&
-             _bookingStateService.CurrentStep == 1)
+        @* =================================================
+           STEP 1 - SPECIALTY
+           ================================================= *@
+
+        @if (_bookingStateService.CurrentStep == 1)
         {
-            @* =================================================
-            LOADING
-            ================================================= *@
+            @* =============================================
+               LOADING
+               ============================================= *@
 
-            <div class="booking-state">
+            @if (_bookingStateService.IsLoading)
+            {
+                <div class="booking-state">
 
-                <div class="booking-state-icon">
+                    <div class="booking-state-icon">
 
-                    <i class="fas fa-spinner fa-spin"></i>
+                        <i class="fas fa-spinner fa-spin"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Đang tải chuyên khoa
+                    </h3>
+
+
+                    <p>
+                        Vui lòng chờ trong giây lát.
+                    </p>
 
                 </div>
-
-                <h3>
-                    Đang tải chuyên khoa
-                </h3>
-
-                <p>
-                    Vui lòng chờ trong giây lát.
-                </p>
-
-            </div>
-        }
-        else if (_bookingStateService.CurrentStep == 1 &&
-                 !string.IsNullOrWhiteSpace(
-                     _bookingStateService.ErrorMessage))
-        {
-            @* =================================================
-            ERROR
-            ================================================= *@
-
-            <div class="booking-state booking-state-error">
-
-                <div class="booking-state-icon">
-
-                    <i class="fas fa-exclamation-circle"></i>
-
-                </div>
-
-                <h3>
-                    Không thể tải chuyên khoa
-                </h3>
-
-                <p>
-                    @_bookingStateService.ErrorMessage
-                </p>
-
-                <button type="button" class="booking-retry-button" @onclick="RetrySpecialtiesAsync">
-
-                    <i class="fas fa-redo-alt"></i>
-
-                    Thử lại
-
-                </button>
-
-            </div>
-        }
-        else if (_bookingStateService.Specialties.Count == 0)
-        {
-            @* =================================================
-            EMPTY
-            ================================================= *@
-
-            <div class="booking-state">
-
-                <div class="booking-state-icon">
-
-                    <i class="fas fa-stethoscope"></i>
-
-                </div>
-
-                <h3>
-                    Chưa có chuyên khoa
-                </h3>
-
-                <p>
-                    Hiện chưa có chuyên khoa nào
-                    đang hoạt động.
-                </p>
-
-            </div>
-        }
-        else
-        {
-            @* =================================================
-            SPECIALTY GRID
-             ================================================= *@
-
-            <div class="specialty-grid">
-
-                @foreach (var specialty in
-                    _bookingStateService.Specialties)
-                {
-                    var isSelected =
-                        _bookingStateService
-                            .SelectedSpecialtyId ==
-                        specialty.Id;
+            }
 
 
-                    <button type="button" class="specialty-card @(isSelected ? "selected" : "")" @onclick="() => SelectSpecialtyAsync(
-                                specialty.Id)">
+            @* =============================================
+               ERROR
+               ============================================= *@
 
-@* =========================================
-                   ICON
-                   ========================================= *@
+            else if (!string.IsNullOrWhiteSpace(
+                _bookingStateService.ErrorMessage))
+            {
+                <div class="booking-state booking-state-error">
 
-<div class="specialty-card-icon">
+                    <div class="booking-state-icon">
 
-                            <i class="fas fa-stethoscope"></i>
+                        <i class="fas fa-exclamation-circle"></i>
 
-                        </div>
-
-
-                        @* =========================================
-                        INFORMATION
-                        ========================================= *@
-
-                        <div class="specialty-card-content">
-
-                            <h3 class="specialty-card-name">
-                                @specialty.Name
-                            </h3>
-
-                            <p class="specialty-card-description">
-                                Chọn chuyên khoa này để xem
-                                danh sách bác sĩ phù hợp.
-                            </p>
-
-                        </div>
+                    </div>
 
 
-                        @* =========================================
-                        ACTION
-                        ======================================== *@
+                    <h3>
+                        Không thể tải chuyên khoa
+                    </h3>
 
-                        <div class="specialty-card-arrow">
 
-                            @if (isSelected)
-                            {
-                                <i class="fas fa-check"></i>
-                            }
-                            else
-                            {
-                                <i class="fas fa-arrow-right"></i>
-                            }
+                    <p>
+                        @_bookingStateService.ErrorMessage
+                    </p>
 
-                        </div>
+
+                    <button type="button"
+                            class="booking-retry-button"
+                            @onclick="RetrySpecialtiesAsync">
+
+                        <i class="fas fa-redo-alt"></i>
+
+                        Thử lại
 
                     </button>
-                }
+
+                </div>
+            }
+
+
+            @* =============================================
+               EMPTY
+               ============================================= *@
+
+            else if (_bookingStateService.Specialties.Count == 0)
+            {
+                <div class="booking-state">
+
+                    <div class="booking-state-icon">
+
+                        <i class="fas fa-stethoscope"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Chưa có chuyên khoa
+                    </h3>
+
+
+                    <p>
+                        Hiện chưa có chuyên khoa nào
+                        đang hoạt động.
+                    </p>
+
+                </div>
+            }
+
+
+            @* =============================================
+               SPECIALTY LIST
+               ============================================= *@
+
+            else
+            {
+                <div class="specialty-grid">
+
+                    @foreach (var specialty in
+                        _bookingStateService.Specialties)
+                    {
+                        var isSelected =
+                            _bookingStateService
+                                .SelectedSpecialtyId ==
+                            specialty.Id;
+
+
+                        <button type="button"
+                                class="specialty-card @(isSelected ? "selected" : "")"
+                                @onclick="() => SelectSpecialtyAsync(
+                                    specialty.Id)">
+
+
+                            @* =================================
+                               ICON
+                               ================================= *@
+
+                            <div class="specialty-card-icon">
+
+                                <i class="fas fa-stethoscope"></i>
+
+                            </div>
+
+
+                            @* =================================
+                               INFORMATION
+                               ================================= *@
+
+                            <div class="specialty-card-content">
+
+                                <h3 class="specialty-card-name">
+                                    @specialty.Name
+                                </h3>
+
+
+                                <p class="specialty-card-description">
+                                    Chọn chuyên khoa này để xem
+                                    danh sách bác sĩ phù hợp.
+                                </p>
+
+                            </div>
+
+
+                            @* =================================
+                               ACTION
+                               ================================= *@
+
+                            <div class="specialty-card-arrow">
+
+                                @if (isSelected)
+                                {
+                                    <i class="fas fa-check"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-arrow-right"></i>
+                                }
+
+                            </div>
+
+                        </button>
+                    }
+
+                </div>
+            }
+        }
+
+
+        @* =================================================
+           STEP 2 - DOCTOR
+           ================================================= *@
+
+        else if (_bookingStateService.CurrentStep == 2)
+        {
+            <div class="booking-state">
+
+                <div class="booking-state-icon">
+
+                    <i class="fas fa-user-md"></i>
+
+                </div>
+
+
+                <h3>
+                    Danh sách bác sĩ đã sẵn sàng
+                </h3>
+
+
+                <p>
+                    Có @_bookingStateService.Doctors.Count
+                    bác sĩ phù hợp với chuyên khoa đã chọn.
+                </p>
 
             </div>
         }
@@ -392,6 +452,7 @@
     </section>
 
 </div>
+
 
 @code
 {
@@ -411,9 +472,6 @@
 
         // =================================================
         // RESET BOOKING FLOW
-        //
-        // Khi user mở lại trang Booking
-        // => bắt đầu một lượt đặt lịch mới.
         // =================================================
 
         _bookingStateService.Reset();
@@ -426,6 +484,7 @@
         await _bookingStateService
             .LoadSpecialtiesAsync();
     }
+
 
     // =====================================================
     // SELECT SPECIALTY
@@ -452,6 +511,7 @@
             .LoadDoctorsAsync();
     }
 
+
     // =====================================================
     // RETRY SPECIALTIES
     // =====================================================
@@ -461,6 +521,7 @@
         await _bookingStateService
             .LoadSpecialtiesAsync();
     }
+
 
     // =====================================================
     // GET STEP CLASS
@@ -499,12 +560,90 @@
 
 
     // =====================================================
+    // GET CONTENT TITLE
+    // =====================================================
+
+    private string GetContentTitle()
+    {
+        return _bookingStateService.CurrentStep switch
+        {
+            1 =>
+                "Chọn chuyên khoa",
+
+            2 =>
+                "Chọn bác sĩ",
+
+            3 =>
+                "Chọn thời gian khám",
+
+            4 =>
+                "Xác nhận lịch khám",
+
+            _ =>
+                "Đặt lịch khám"
+        };
+    }
+
+
+    // =====================================================
+    // GET CONTENT DESCRIPTION
+    // =====================================================
+
+    private string GetContentDescription()
+    {
+        return _bookingStateService.CurrentStep switch
+        {
+            1 =>
+                "Chọn chuyên khoa phù hợp với nhu cầu khám của bạn.",
+
+            2 =>
+                "Chọn bác sĩ phù hợp trong chuyên khoa đã chọn.",
+
+            3 =>
+                "Chọn ngày và khung giờ khám còn trống.",
+
+            4 =>
+                "Kiểm tra lại thông tin trước khi xác nhận đặt lịch.",
+
+            _ =>
+                string.Empty
+        };
+    }
+
+
+    // =====================================================
+    // GET CONTENT ICON
+    // =====================================================
+
+    private string GetContentIcon()
+    {
+        return _bookingStateService.CurrentStep switch
+        {
+            1 =>
+                "fas fa-stethoscope",
+
+            2 =>
+                "fas fa-user-md",
+
+            3 =>
+                "far fa-clock",
+
+            4 =>
+                "fas fa-clipboard-check",
+
+            _ =>
+                "fas fa-calendar-plus"
+        };
+    }
+
+
+    // =====================================================
     // HANDLE BOOKING STATE CHANGED
     // =====================================================
 
     private void HandleBookingStateChanged()
     {
-        InvokeAsync(
+        _ = InvokeAsync(
             StateHasChanged
         );
     }
