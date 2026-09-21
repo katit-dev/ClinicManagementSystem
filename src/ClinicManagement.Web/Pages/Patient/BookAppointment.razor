@@ -827,8 +827,8 @@
                             else
                             {
                                 @* =========================================
-       AVAILABLE SLOT LIST
-       ========================================= *@
+                                AVAILABLE SLOT LIST
+                                ========================================= *@
 
                                 <div class="booking-slot-section">
 
@@ -878,6 +878,192 @@
                     </div>
 
                 </div>
+
+            </div>
+        }
+
+        @* =================================================
+        STEP 4 - CONFIRM
+        ================================================= *@
+
+        else if (_bookingStateService.CurrentStep == 4)
+        {
+            <div class="booking-confirm-section">
+
+                @* =============================================
+                CONFIRM HEADER
+                ============================================= *@
+
+                <div class="booking-confirm-message">
+
+                    <div class="booking-confirm-message-icon">
+
+                        <i class="fas fa-clipboard-check"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <h3>
+                            Kiểm tra thông tin lịch khám
+                        </h3>
+
+                        <p>
+                            Vui lòng kiểm tra lại thông tin
+                            trước khi xác nhận đặt lịch.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                @* =============================================
+                DOCTOR
+                ============================================= *@
+
+                @if (_bookingStateService.SelectedDoctor != null)
+                {
+                    var doctor =
+                        _bookingStateService.SelectedDoctor;
+
+
+                    <div class="booking-confirm-item">
+
+                        <div class="booking-confirm-icon">
+
+                            <i class="fas fa-user-md"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Bác sĩ
+                            </span>
+
+                            <strong>
+                                @doctor.FullName
+                            </strong>
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                doctor.Title))
+                            {
+                                <small>
+                                    @doctor.Title
+                                </small>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+
+                @* =============================================
+                DATE
+                ============================================= *@
+
+                @if (_bookingStateService.SelectedDate.HasValue)
+                {
+                    <div class="booking-confirm-item">
+
+                        <div class="booking-confirm-icon">
+
+                            <i class="far fa-calendar-alt"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Ngày khám
+                            </span>
+
+                            <strong>
+                                @(_bookingStateService
+                                    .SelectedDate.Value
+                                    .ToString("dd/MM/yyyy"))
+                            </strong>
+
+                        </div>
+
+                    </div>
+                }
+
+
+                @* =============================================
+                SLOT
+                ============================================= *@
+
+                @if (_bookingStateService.SelectedSlot != null)
+                {
+                    var slot =
+                        _bookingStateService.SelectedSlot;
+
+
+                    <div class="booking-confirm-item">
+
+                        <div class="booking-confirm-icon">
+
+                            <i class="far fa-clock"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Khung giờ
+                            </span>
+
+                            <strong>
+                                @(slot.StartTime.ToString("HH:mm"))
+                                -
+                                @(slot.EndTime.ToString("HH:mm"))
+                            </strong>
+
+                        </div>
+
+                    </div>
+                }
+
+
+                @* =============================================
+                CONSULTATION FEE
+                ============================================= *@
+
+                @if (_bookingStateService.SelectedDoctor != null)
+                {
+                    <div class="booking-confirm-item">
+
+                        <div class="booking-confirm-icon">
+
+                            <i class="fas fa-money-bill-wave"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Phí khám dự kiến
+                            </span>
+
+                            <strong>
+                                @(_bookingStateService
+                                    .SelectedDoctor
+                                    .ConsultationFee
+                                    .ToString("N0")) đ
+                            </strong>
+
+                        </div>
+
+                    </div>
+                }
 
             </div>
         }
