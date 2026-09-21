@@ -9,6 +9,7 @@
 @implements IDisposable
 
 @using ClinicManagementSystem.Application.DTOs.Doctor
+@using ClinicManagementSystem.Application.DTOs.Appointment
 
 
 <PageTitle>Đặt lịch khám</PageTitle>
@@ -825,14 +826,50 @@
                             }
                             else
                             {
-                                <div class="slot-load-state">
+                                @* =========================================
+       AVAILABLE SLOT LIST
+       ========================================= *@
 
-                                    <i class="fas fa-clock"></i>
+                                <div class="booking-slot-section">
 
-                                    <span>
-                                        Có @_bookingStateService.AvailableSlots.Count
-                                        khung giờ khả dụng.
-                                    </span>
+                                    <div class="booking-section-title">
+
+                                        <div>
+
+                                            <h3>
+                                                Chọn khung giờ
+                                            </h3>
+
+                                            <p>
+                                                Chọn thời gian bạn muốn đến khám.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="slot-grid">
+
+                                        @foreach (var slot in
+                                            _bookingStateService.AvailableSlots)
+                                        {
+                                            <button type="button" class="slot-card" @onclick="() => SelectSlot(slot)">
+
+                                                <i class="far fa-clock"></i>
+
+                                                <span>
+                                                    @(slot.StartTime.ToString("HH:mm"))
+                                                </span>
+
+                                                <small>
+                                                    @(slot.EndTime.ToString("HH:mm"))
+                                                </small>
+
+                                            </button>
+                                        }
+
+                                    </div>
 
                                 </div>
                             }
@@ -1154,6 +1191,19 @@
 
         await _bookingStateService
             .LoadAvailableSlotsAsync();
+    }
+
+    // =====================================================
+    // SELECT SLOT
+    // =====================================================
+
+    private void SelectSlot(
+        SlotDTO slot)
+    {
+        _bookingStateService
+            .SelectSlot(
+                slot
+            );
     }
 
     
