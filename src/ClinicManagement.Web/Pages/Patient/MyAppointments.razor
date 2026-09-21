@@ -215,28 +215,155 @@
         }
         else
         {
-            @* =============================================
-            DATA LOADED
-            ============================================= *@
+            @* =================================================
+       APPOINTMENT LIST
+       ================================================= *@
 
-            <div class="appointments-placeholder">
+            <div class="appointment-list">
 
-                <div class="appointments-placeholder-icon">
-
-                    <i class="fas fa-calendar-check"></i>
-
-                </div>
-
-
-                <h3>
-                    Đã tải lịch hẹn
-                </h3>
+                @foreach (var appointment in
+                    _appointmentStateService.Appointments)
+                {
+                    <article class="appointment-card">
 
 
-                <p>
-                    Có @_appointmentStateService.Appointments.Count
-                    lịch hẹn.
-                </p>
+                        @* =====================================
+                   DATE
+                   ===================================== *@
+
+                        <div class="appointment-date">
+
+                            <span class="appointment-date-day">
+                                @(appointment.StartTime.ToString("dd"))
+                            </span>
+
+                            <span class="appointment-date-month">
+                                Tháng @(appointment.StartTime.ToString("MM"))
+                            </span>
+
+                            <span class="appointment-date-year">
+                                @(appointment.StartTime.ToString("yyyy"))
+                            </span>
+
+                        </div>
+
+
+                        @* =====================================
+                   MAIN CONTENT
+                   ===================================== *@
+
+                        <div class="appointment-card-content">
+
+
+                            @* =================================
+                       HEADER
+                       ================================= *@
+
+                            <div class="appointment-card-header">
+
+                                <div>
+
+                                    <span class="appointment-code">
+                                        @appointment.AppointmentCode
+                                    </span>
+
+
+                                    <h3 class="appointment-doctor">
+                                        @appointment.DoctorName
+                                    </h3>
+
+
+                                    <p class="appointment-specialty">
+
+                                        <i class="fas fa-stethoscope"></i>
+
+                                        @appointment.SpecialtyName
+
+                                    </p>
+
+                                </div>
+
+
+                                <span class="appointment-status @GetStatusClass(appointment.Status)">
+                                    @GetStatusText(appointment.Status)
+                                </span>
+
+                            </div>
+
+
+                            @* =================================
+                       DETAILS
+                       ================================= *@
+
+                            <div class="appointment-details">
+
+                                <div class="appointment-detail-item">
+
+                                    <i class="far fa-clock"></i>
+
+                                    <div>
+
+                                        <span>
+                                            Thời gian
+                                        </span>
+
+                                        <strong>
+                                            @(appointment.StartTime.ToString("HH:mm"))
+                                            -
+                                            @(appointment.EndTime.ToString("HH:mm"))
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="appointment-detail-item">
+
+                                    <i class="far fa-calendar-alt"></i>
+
+                                    <div>
+
+                                        <span>
+                                            Ngày khám
+                                        </span>
+
+                                        <strong>
+                                            @(appointment.StartTime.ToString("dd/MM/yyyy"))
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+
+                                @if (appointment.QueueNumber.HasValue)
+                                {
+                                    <div class="appointment-detail-item">
+
+                                        <i class="fas fa-list-ol"></i>
+
+                                        <div>
+
+                                            <span>
+                                                Số thứ tự
+                                            </span>
+
+                                            <strong>
+                                                #@appointment.QueueNumber.Value
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </article>
+                }
 
             </div>
         }
@@ -374,6 +501,71 @@
 
             MyAppointmentFilter.Cancelled =>
                 "Các lịch hẹn đã được hủy.",
+
+            _ =>
+                string.Empty
+        };
+    }
+
+    // =====================================================
+    // GET APPOINTMENT STATUS TEXT
+    // =====================================================
+
+    private string GetStatusText(
+        byte status)
+    {
+        return status switch
+        {
+            0 =>
+                "Chờ xác nhận",
+
+            1 =>
+                "Đã xác nhận",
+
+            2 =>
+                "Đã check-in",
+
+            3 =>
+                "Hoàn thành",
+
+            4 =>
+                "Đã hủy",
+
+            5 =>
+                "Không đến",
+
+            _ =>
+                "Không xác định"
+        };
+    }
+
+
+    // =====================================================
+    // GET APPOINTMENT STATUS CLASS
+    // =====================================================
+
+    private string GetStatusClass(
+        byte status)
+    {
+        return status switch
+        {
+            0 =>
+                "pending",
+
+            1 =>
+                "confirmed",
+
+            2 =>
+                "checked-in",
+
+            3 =>
+                "completed",
+
+            4 =>
+                "cancelled",
+
+            5 =>
+                "no-show",
 
             _ =>
                 string.Empty

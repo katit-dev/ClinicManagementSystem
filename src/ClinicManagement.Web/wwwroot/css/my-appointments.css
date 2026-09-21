@@ -307,3 +307,346 @@
 .appointments-retry-button:hover {
     background-color: #fef2f2;
 }
+
+/* =====================================================
+   APPOINTMENT LIST
+   ===================================================== */
+
+.appointment-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+
+/* =====================================================
+   APPOINTMENT CARD
+   ===================================================== */
+
+.appointment-card {
+    display: flex;
+
+    gap: 18px;
+
+    padding: 18px;
+
+    border: 1px solid #e5edf5;
+    border-radius: 15px;
+
+    background-color: #ffffff;
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.appointment-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #bae6fd;
+
+    box-shadow:
+        0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+
+/* =====================================================
+   APPOINTMENT DATE
+   ===================================================== */
+
+.appointment-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    width: 78px;
+    min-width: 78px;
+    height: 92px;
+
+    border-radius: 13px;
+
+    background-color: #f0f9ff;
+
+    text-align: center;
+}
+
+
+.appointment-date-day {
+    font-size: 27px;
+    font-weight: 700;
+
+    line-height: 1;
+
+    color: #0284c7;
+}
+
+
+.appointment-date-month {
+    margin-top: 5px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    color: #64748b;
+}
+
+
+.appointment-date-year {
+    margin-top: 2px;
+
+    font-size: 10px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   APPOINTMENT CONTENT
+   ===================================================== */
+
+.appointment-card-content {
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.appointment-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 16px;
+}
+
+
+.appointment-code {
+    display: block;
+
+    margin-bottom: 4px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    color: #94a3b8;
+}
+
+
+.appointment-doctor {
+    margin: 0;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.appointment-specialty {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    margin: 5px 0 0;
+
+    font-size: 12px;
+
+    color: #64748b;
+}
+
+
+.appointment-specialty i {
+    color: #0284c7;
+}
+
+
+/* =====================================================
+   APPOINTMENT DETAILS
+   ===================================================== */
+
+.appointment-details {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 18px 28px;
+
+    margin-top: 17px;
+    padding-top: 15px;
+
+    border-top: 1px solid #f1f5f9;
+}
+
+
+.appointment-detail-item {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+
+.appointment-detail-item > i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    border-radius: 8px;
+
+    background-color: #f8fafc;
+
+    color: #0284c7;
+}
+
+
+.appointment-detail-item div {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.appointment-detail-item span {
+    font-size: 10px;
+
+    color: #94a3b8;
+}
+
+
+.appointment-detail-item strong {
+    font-size: 12px;
+    font-weight: 700;
+
+    color: #334155;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.appointment-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+/* PENDING */
+
+.appointment-status.pending {
+    background-color: #fef3c7;
+
+    color: #b45309;
+}
+
+
+/* CONFIRMED */
+
+.appointment-status.confirmed {
+    background-color: #e0f2fe;
+
+    color: #0369a1;
+}
+
+
+/* CHECKED IN */
+
+.appointment-status.checked-in {
+    background-color: #ede9fe;
+
+    color: #6d28d9;
+}
+
+
+/* COMPLETED */
+
+.appointment-status.completed {
+    background-color: #dcfce7;
+
+    color: #15803d;
+}
+
+
+/* CANCELLED */
+
+.appointment-status.cancelled {
+    background-color: #fee2e2;
+
+    color: #b91c1c;
+}
+
+
+/* NO SHOW */
+
+.appointment-status.no-show {
+    background-color: #f1f5f9;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   RESPONSIVE APPOINTMENT CARD
+   ===================================================== */
+
+@media (max-width: 576px) {
+
+    .appointment-card {
+        flex-direction: column;
+    }
+
+
+    .appointment-date {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+
+        flex-direction: row;
+        justify-content: flex-start;
+
+        gap: 5px;
+
+        padding: 10px 12px;
+    }
+
+
+    .appointment-date-day {
+        font-size: 18px;
+    }
+
+
+    .appointment-date-month,
+    .appointment-date-year {
+        margin-top: 0;
+    }
+
+
+    .appointment-card-header {
+        flex-direction: column;
+    }
+
+
+    .appointment-details {
+        flex-direction: column;
+
+        gap: 12px;
+    }
+}
