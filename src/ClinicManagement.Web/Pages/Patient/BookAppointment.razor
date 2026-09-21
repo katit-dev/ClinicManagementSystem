@@ -221,7 +221,8 @@
 
         @* =================================================
            CONTENT HEADER
-           ================================================= *@       
+           ================================================= *@
+
         <div class="booking-content-header">
 
             <div class="booking-content-header-main">
@@ -261,6 +262,182 @@
 
         </div>
 
+        @* =================================================
+           STEP 1 - SPECIALTY
+           ================================================= *@
+
+        @if (_bookingStateService.CurrentStep == 1)
+        {
+            @* =============================================
+               LOADING
+               ============================================= *@
+
+            @if (_bookingStateService.IsLoading)
+            {
+                <div class="booking-state">
+
+                    <div class="booking-state-icon">
+
+                        <i class="fas fa-spinner fa-spin"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Đang tải chuyên khoa
+                    </h3>
+
+
+                    <p>
+                        Vui lòng chờ trong giây lát.
+                    </p>
+
+                </div>
+            }
+
+
+            @* =============================================
+               ERROR
+               ============================================= *@
+
+            else if (!string.IsNullOrWhiteSpace(
+                _bookingStateService.ErrorMessage))
+            {
+                <div class="booking-state booking-state-error">
+
+                    <div class="booking-state-icon">
+
+                        <i class="fas fa-exclamation-circle"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Không thể tải chuyên khoa
+                    </h3>
+
+
+                    <p>
+                        @_bookingStateService.ErrorMessage
+                    </p>
+
+
+                    <button type="button" class="booking-retry-button" @onclick="RetrySpecialtiesAsync">
+
+                        <i class="fas fa-redo-alt"></i>
+
+                        Thử lại
+
+                    </button>
+
+                </div>
+            }
+
+
+            @* =============================================
+               EMPTY
+               ============================================= *@
+
+            else if (_bookingStateService.Specialties.Count == 0)
+            {
+                <div class="booking-state">
+
+                    <div class="booking-state-icon">
+
+                        <i class="fas fa-stethoscope"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Chưa có chuyên khoa
+                    </h3>
+
+
+                    <p>
+                        Hiện chưa có chuyên khoa nào
+                        đang hoạt động.
+                    </p>
+
+                </div>
+            }
+
+
+            @* =============================================
+               SPECIALTY LIST
+               ============================================= *@
+
+            else
+            {
+                <div class="specialty-grid">
+
+                    @foreach (var specialty in
+                        _bookingStateService.Specialties)
+                    {
+                        var isSelected =
+                            _bookingStateService
+                                .SelectedSpecialtyId ==
+                            specialty.Id;
+
+
+                        <button type="button" class="specialty-card @(isSelected ? "selected" : "")"
+                                @onclick="() => SelectSpecialtyAsync(specialty.Id)">
+
+
+                            @* =================================
+                               ICON
+                               ================================= *@
+
+                            <div class="specialty-card-icon">
+
+                                <i class="fas fa-stethoscope"></i>
+
+                            </div>
+
+
+                            @* =================================
+                               INFORMATION
+                               ================================= *@
+
+                            <div class="specialty-card-content">
+
+                                <h3 class="specialty-card-name">
+                                    @specialty.Name
+                                </h3>
+
+
+                                <p class="specialty-card-description">
+                                    Chọn chuyên khoa này để xem
+                                    danh sách bác sĩ phù hợp.
+                                </p>
+
+                            </div>
+
+
+                            @* =================================
+                               ACTION
+                               ================================= *@
+
+                            <div class="specialty-card-arrow">
+
+                                @if (isSelected)
+                                {
+                                    <i class="fas fa-check"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-arrow-right"></i>
+                                }
+
+                            </div>
+
+                        </button>
+                    }
+
+                </div>
+            }
+        }
+
 
         @* =================================================
            STEP 2 - DOCTOR
@@ -268,230 +445,230 @@
 
         else if (_bookingStateService.CurrentStep == 2)
         {
-        @* =============================================
+            @* =============================================
                LOADING
                ============================================= *@
 
-        @if (_bookingStateService.IsLoading)
-        {
-            <div class="booking-state">
+            @if (_bookingStateService.IsLoading)
+            {
+                <div class="booking-state">
 
-                <div class="booking-state-icon">
+                    <div class="booking-state-icon">
 
-                    <i class="fas fa-spinner fa-spin"></i>
+                        <i class="fas fa-spinner fa-spin"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Đang tải danh sách bác sĩ
+                    </h3>
+
+
+                    <p>
+                        Vui lòng chờ trong giây lát.
+                    </p>
 
                 </div>
+            }
 
 
-                <h3>
-                    Đang tải danh sách bác sĩ
-                </h3>
-
-
-                <p>
-                    Vui lòng chờ trong giây lát.
-                </p>
-
-            </div>
-        }
-
-
-        @* =============================================
+            @* =============================================
                ERROR
                ============================================= *@
 
-        else if (!string.IsNullOrWhiteSpace(
-            _bookingStateService.ErrorMessage))
-        {
-            <div class="booking-state booking-state-error">
+            else if (!string.IsNullOrWhiteSpace(
+                _bookingStateService.ErrorMessage))
+            {
+                <div class="booking-state booking-state-error">
 
-                <div class="booking-state-icon">
+                    <div class="booking-state-icon">
 
-                    <i class="fas fa-exclamation-circle"></i>
+                        <i class="fas fa-exclamation-circle"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Không thể tải danh sách bác sĩ
+                    </h3>
+
+
+                    <p>
+                        @_bookingStateService.ErrorMessage
+                    </p>
+
+
+                    <button type="button" class="booking-retry-button" @onclick="RetryDoctorsAsync">
+
+                        <i class="fas fa-redo-alt"></i>
+
+                        Thử lại
+
+                    </button>
 
                 </div>
+            }
 
 
-                <h3>
-                    Không thể tải danh sách bác sĩ
-                </h3>
-
-
-                <p>
-                    @_bookingStateService.ErrorMessage
-                </p>
-
-
-                <button type="button" class="booking-retry-button" @onclick="RetryDoctorsAsync">
-
-                    <i class="fas fa-redo-alt"></i>
-
-                    Thử lại
-
-                </button>
-
-            </div>
-        }
-
-
-        @* =============================================
+            @* =============================================
                EMPTY
                ============================================= *@
 
-        else if (_bookingStateService.Doctors.Count == 0)
-        {
-            <div class="booking-state">
+            else if (_bookingStateService.Doctors.Count == 0)
+            {
+                <div class="booking-state">
 
-                <div class="booking-state-icon">
+                    <div class="booking-state-icon">
 
-                    <i class="fas fa-user-md"></i>
+                        <i class="fas fa-user-md"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Chưa có bác sĩ phù hợp
+                    </h3>
+
+
+                    <p>
+                        Hiện chưa có bác sĩ đang hoạt động
+                        trong chuyên khoa đã chọn.
+                    </p>
 
                 </div>
+            }
 
 
-                <h3>
-                    Chưa có bác sĩ phù hợp
-                </h3>
-
-
-                <p>
-                    Hiện chưa có bác sĩ đang hoạt động
-                    trong chuyên khoa đã chọn.
-                </p>
-
-            </div>
-        }
-
-
-        @* =============================================
+            @* =============================================
                DOCTOR LIST
                ============================================= *@
 
-        else
-        {
-            <div class="doctor-grid">
+            else
+            {
+                <div class="doctor-grid">
 
-                @foreach (var doctor in
-                    _bookingStateService.Doctors)
-                {
-                    <button type="button" class="doctor-card" @onclick="() => SelectDoctor(doctor)">
+                    @foreach (var doctor in
+                        _bookingStateService.Doctors)
+                    {
+                        <button type="button" class="doctor-card" @onclick="() => SelectDoctor(doctor)">
 
 
-                        @* =================================
+                            @* =================================
                                AVATAR
                                ================================= *@
 
-                        <div class="doctor-avatar">
+                            <div class="doctor-avatar">
 
-                            @if (!string.IsNullOrWhiteSpace(
-                                doctor.AvatarUrl))
-                            {
-                                <img src="@doctor.AvatarUrl" alt="@doctor.FullName" />
-                            }
-                            else
-                            {
-                                <i class="fas fa-user-md"></i>
-                            }
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.AvatarUrl))
+                                {
+                                    <img src="@doctor.AvatarUrl" alt="@doctor.FullName" />
+                                }
+                                else
+                                {
+                                    <i class="fas fa-user-md"></i>
+                                }
 
-                        </div>
+                            </div>
 
 
-                        @* =================================
+                            @* =================================
                                INFORMATION
                                ================================= *@
 
-                        <div class="doctor-card-content">
+                            <div class="doctor-card-content">
 
-                            <div class="doctor-card-header">
+                                <div class="doctor-card-header">
 
-                                <div>
+                                    <div>
 
-                                    @if (!string.IsNullOrWhiteSpace(
-                                        doctor.Title))
-                                    {
-                                        <span class="doctor-title">
-                                            @doctor.Title
-                                        </span>
-                                    }
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            doctor.Title))
+                                        {
+                                            <span class="doctor-title">
+                                                @doctor.Title
+                                            </span>
+                                        }
 
 
-                                    <h3 class="doctor-name">
-                                        @doctor.FullName
-                                    </h3>
+                                        <h3 class="doctor-name">
+                                            @doctor.FullName
+                                        </h3>
+
+                                    </div>
+
+
+                                    <div class="doctor-select-icon">
+
+                                        <i class="fas fa-arrow-right"></i>
+
+                                    </div>
 
                                 </div>
 
 
-                                <div class="doctor-select-icon">
-
-                                    <i class="fas fa-arrow-right"></i>
-
-                                </div>
-
-                            </div>
-
-
-                            @* =================================
+                                @* =================================
                                    DETAILS
                                    ================================= *@
 
-                            <div class="doctor-details">
+                                <div class="doctor-details">
 
-                                @if (doctor.ExperienceYears > 0)
-                                {
-                                    <div class="doctor-detail-item">
+                                    @if (doctor.ExperienceYears > 0)
+                                    {
+                                        <div class="doctor-detail-item">
 
-                                        <i class="fas fa-briefcase-medical"></i>
+                                            <i class="fas fa-briefcase-medical"></i>
 
-                                        <span>
-                                            @doctor.ExperienceYears năm kinh nghiệm
-                                        </span>
+                                            <span>
+                                                @doctor.ExperienceYears năm kinh nghiệm
+                                            </span>
 
-                                    </div>
-                                }
-
-
-                                @if (!string.IsNullOrWhiteSpace(
-                                    doctor.Room))
-                                {
-                                    <div class="doctor-detail-item">
-
-                                        <i class="fas fa-door-open"></i>
-
-                                        <span>
-                                            Phòng @doctor.Room
-                                        </span>
-
-                                    </div>
-                                }
-
-                            </div>
+                                        </div>
+                                    }
 
 
-                            @* =================================
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        doctor.Room))
+                                    {
+                                        <div class="doctor-detail-item">
+
+                                            <i class="fas fa-door-open"></i>
+
+                                            <span>
+                                                Phòng @doctor.Room
+                                            </span>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+
+                                @* =================================
                                    CONSULTATION FEE
                                    ================================= *@
 
-                            <div class="doctor-card-footer">
+                                <div class="doctor-card-footer">
 
-                                <span class="doctor-fee-label">
-                                    Phí khám
-                                </span>
+                                    <span class="doctor-fee-label">
+                                        Phí khám
+                                    </span>
 
 
-                                <span class="doctor-fee">
-                                    @doctor.ConsultationFee.ToString("N0") đ
-                                </span>
+                                    <span class="doctor-fee">
+                                        @doctor.ConsultationFee.ToString("N0") đ
+                                    </span>
+
+                                </div>
 
                             </div>
 
-                        </div>
+                        </button>
+                    }
 
-                    </button>
-                }
-
-            </div>
-        }
+                </div>
+            }
         }
 
         @* =================================================
@@ -500,285 +677,285 @@
 
         else if (_bookingStateService.CurrentStep == 3)
         {
-        <div class="booking-time-section">
+            <div class="booking-time-section">
 
-            @* =============================================
+                @* =============================================
            SELECTED DOCTOR
            ============================================= *@
 
-            @if (_bookingStateService.SelectedDoctor != null)
-            {
-                var doctor =
-                    _bookingStateService.SelectedDoctor;
+                @if (_bookingStateService.SelectedDoctor != null)
+                {
+                    var doctor =
+                        _bookingStateService.SelectedDoctor;
 
 
-                <div class="selected-doctor-summary">
+                    <div class="selected-doctor-summary">
 
-                    <div class="selected-doctor-icon">
+                        <div class="selected-doctor-icon">
 
-                        <i class="fas fa-user-md"></i>
-
-                    </div>
-
-
-                    <div class="selected-doctor-content">
-
-                        <span class="selected-doctor-label">
-                            Bác sĩ đã chọn
-                        </span>
-
-
-                        <h3 class="selected-doctor-name">
-                            @doctor.FullName
-                        </h3>
-
-
-                        <div class="selected-doctor-meta">
-
-                            @if (!string.IsNullOrWhiteSpace(
-                                doctor.Title))
-                            {
-                                <span>
-                                    @doctor.Title
-                                </span>
-                            }
-
-
-                            @if (!string.IsNullOrWhiteSpace(
-                                doctor.Room))
-                            {
-                                <span>
-                                    Phòng @doctor.Room
-                                </span>
-                            }
+                            <i class="fas fa-user-md"></i>
 
                         </div>
 
-                    </div>
+
+                        <div class="selected-doctor-content">
+
+                            <span class="selected-doctor-label">
+                                Bác sĩ đã chọn
+                            </span>
 
 
-                    <div class="selected-doctor-fee">
-
-                        <span>
-                            Phí khám
-                        </span>
-
-                        <strong>
-                            @doctor.ConsultationFee.ToString("N0") đ
-                        </strong>
-
-                    </div>
-
-                </div>
-            }
+                            <h3 class="selected-doctor-name">
+                                @doctor.FullName
+                            </h3>
 
 
-            @* =============================================
-           DATE SECTION
-           ============================================= *@
+                            <div class="selected-doctor-meta">
 
-            <div class="booking-date-section">
-
-                <div class="booking-section-title">
-
-                    <div>
-
-                        <h3>
-                            Chọn ngày khám
-                        </h3>
-
-                        <p>
-                            Chọn ngày bạn muốn đến khám.
-                        </p>
-
-                    </div>
-
-                </div>
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.Title))
+                                {
+                                    <span>
+                                        @doctor.Title
+                                    </span>
+                                }
 
 
-                @* =========================================
-                DATE PICKER
-                ========================================= *@
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.Room))
+                                {
+                                    <span>
+                                        Phòng @doctor.Room
+                                    </span>
+                                }
 
-                <div class="booking-date-picker">
+                            </div>
 
-                    <label for="appointment-date" class="booking-date-label">
-
-                        <i class="far fa-calendar-alt"></i>
-
-                        Ngày khám
-
-                    </label>
+                        </div>
 
 
-                    <input id="appointment-date" type="date" class="booking-date-input" min="@GetMinimumDate()"
-                           value="@GetSelectedDateValue()" @onchange="HandleDateChanged" />
-
-
-                    @if (_bookingStateService.SelectedDate.HasValue)
-                    {
-                        <div class="selected-date-info">
-
-                            <i class="fas fa-check-circle"></i>
+                        <div class="selected-doctor-fee">
 
                             <span>
-                                Ngày đã chọn:
+                                Phí khám
                             </span>
 
                             <strong>
-                                @_bookingStateService.SelectedDate.Value.ToString("dd/MM/yyyy")
+                                @doctor.ConsultationFee.ToString("N0") đ
                             </strong>
 
                         </div>
-                    }
+
+                    </div>
+                }
+
+
+                @* =============================================
+           DATE SECTION
+           ============================================= *@
+
+                <div class="booking-date-section">
+
+                    <div class="booking-section-title">
+
+                        <div>
+
+                            <h3>
+                                Chọn ngày khám
+                            </h3>
+
+                            <p>
+                                Chọn ngày bạn muốn đến khám.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
                     @* =========================================
+                DATE PICKER
+                ========================================= *@
+
+                    <div class="booking-date-picker">
+
+                        <label for="appointment-date" class="booking-date-label">
+
+                            <i class="far fa-calendar-alt"></i>
+
+                            Ngày khám
+
+                        </label>
+
+
+                        <input id="appointment-date" type="date" class="booking-date-input" min="@GetMinimumDate()"
+                               value="@GetSelectedDateValue()" @onchange="HandleDateChanged" />
+
+
+                        @if (_bookingStateService.SelectedDate.HasValue)
+                        {
+                            <div class="selected-date-info">
+
+                                <i class="fas fa-check-circle"></i>
+
+                                <span>
+                                    Ngày đã chọn:
+                                </span>
+
+                                <strong>
+                                    @_bookingStateService.SelectedDate.Value.ToString("dd/MM/yyyy")
+                                </strong>
+
+                            </div>
+                        }
+                        @* =========================================
                         SLOT STATE
                         ========================================= *@
 
-                    @if (_bookingStateService.SelectedDate.HasValue)
-                    {
-                        @* =====================================
+                        @if (_bookingStateService.SelectedDate.HasValue)
+                        {
+                            @* =====================================
                             LOADING
                             ===================================== *@
 
-                        @if (_bookingStateService.IsLoading)
-                        {
-                            <div class="slot-load-state">
+                            @if (_bookingStateService.IsLoading)
+                            {
+                                <div class="slot-load-state">
 
-                                <i class="fas fa-spinner fa-spin"></i>
+                                    <i class="fas fa-spinner fa-spin"></i>
 
-                                <span>
-                                    Đang kiểm tra khung giờ trống...
-                                </span>
+                                    <span>
+                                        Đang kiểm tra khung giờ trống...
+                                    </span>
 
-                            </div>
-                        }
+                                </div>
+                            }
 
 
-                        @* =====================================
+                            @* =====================================
                             ERROR
                             ===================================== *@
 
-                        else if (!string.IsNullOrWhiteSpace(
-                            _bookingStateService.ErrorMessage))
-                        {
-                            <div class="booking-state booking-state-error slot-state">
+                            else if (!string.IsNullOrWhiteSpace(
+                                _bookingStateService.ErrorMessage))
+                            {
+                                <div class="booking-state booking-state-error slot-state">
 
-                                <div class="booking-state-icon">
+                                    <div class="booking-state-icon">
 
-                                    <i class="fas fa-exclamation-circle"></i>
+                                        <i class="fas fa-exclamation-circle"></i>
+
+                                    </div>
+
+
+                                    <h3>
+                                        Không thể tải khung giờ
+                                    </h3>
+
+
+                                    <p>
+                                        @_bookingStateService.ErrorMessage
+                                    </p>
+
+
+                                    <button type="button" class="booking-retry-button" @onclick="RetrySlotsAsync">
+
+                                        <i class="fas fa-redo-alt"></i>
+
+                                        Thử lại
+
+                                    </button>
 
                                 </div>
+                            }
 
 
-                                <h3>
-                                    Không thể tải khung giờ
-                                </h3>
-
-
-                                <p>
-                                    @_bookingStateService.ErrorMessage
-                                </p>
-
-
-                                <button type="button" class="booking-retry-button" @onclick="RetrySlotsAsync">
-
-                                    <i class="fas fa-redo-alt"></i>
-
-                                    Thử lại
-
-                                </button>
-
-                            </div>
-                        }
-
-
-                        @* =====================================
+                            @* =====================================
                             EMPTY
                             ===================================== *@
 
-                        else if (_bookingStateService.AvailableSlots.Count == 0)
-                        {
-                            <div class="booking-state slot-state">
+                            else if (_bookingStateService.AvailableSlots.Count == 0)
+                            {
+                                <div class="booking-state slot-state">
 
-                                <div class="booking-state-icon">
+                                    <div class="booking-state-icon">
 
-                                    <i class="far fa-calendar-times"></i>
+                                        <i class="far fa-calendar-times"></i>
+
+                                    </div>
+
+
+                                    <h3>
+                                        Không còn khung giờ phù hợp
+                                    </h3>
+
+
+                                    <p>
+                                        Bác sĩ hiện không còn khung giờ trống
+                                        trong ngày đã chọn.
+                                        Vui lòng chọn ngày khác.
+                                    </p>
 
                                 </div>
+                            }
 
 
-                                <h3>
-                                    Không còn khung giờ phù hợp
-                                </h3>
-
-
-                                <p>
-                                    Bác sĩ hiện không còn khung giờ trống
-                                    trong ngày đã chọn.
-                                    Vui lòng chọn ngày khác.
-                                </p>
-
-                            </div>
-                        }
-
-
-                        @* =====================================
+                            @* =====================================
                             AVAILABLE SLOTS
                             ===================================== *@
 
-                        else
-                        {
-                            <div class="booking-slot-section">
+                            else
+                            {
+                                <div class="booking-slot-section">
 
-                                <div class="booking-section-title">
+                                    <div class="booking-section-title">
 
-                                    <div>
+                                        <div>
 
-                                        <h3>
-                                            Chọn khung giờ
-                                        </h3>
+                                            <h3>
+                                                Chọn khung giờ
+                                            </h3>
 
-                                        <p>
-                                            Chọn thời gian bạn muốn đến khám.
-                                        </p>
+                                            <p>
+                                                Chọn thời gian bạn muốn đến khám.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="slot-grid">
+
+                                        @foreach (var slot in
+                                            _bookingStateService.AvailableSlots)
+                                        {
+                                            <button type="button" class="slot-card" @onclick="() => SelectSlot(slot)">
+
+                                                <i class="far fa-clock"></i>
+
+                                                <span>
+                                                    @(slot.StartTime.ToString("HH:mm"))
+                                                </span>
+
+                                                <small>
+                                                    đến @(slot.EndTime.ToString("HH:mm"))
+                                                </small>
+
+                                            </button>
+                                        }
 
                                     </div>
 
                                 </div>
-
-
-                                <div class="slot-grid">
-
-                                    @foreach (var slot in
-                                        _bookingStateService.AvailableSlots)
-                                    {
-                                        <button type="button" class="slot-card" @onclick="() => SelectSlot(slot)">
-
-                                            <i class="far fa-clock"></i>
-
-                                            <span>
-                                                @(slot.StartTime.ToString("HH:mm"))
-                                            </span>
-
-                                            <small>
-                                                đến @(slot.EndTime.ToString("HH:mm"))
-                                            </small>
-
-                                        </button>
-                                    }
-
-                                </div>
-
-                            </div>
+                            }
                         }
-                    }
+
+                    </div>
 
                 </div>
 
             </div>
-
-        </div>
         }
 
         @* =================================================
@@ -787,184 +964,184 @@
 
         else if (_bookingStateService.CurrentStep == 4)
         {
-        <div class="booking-confirm-section">
+            <div class="booking-confirm-section">
 
-            @* =============================================
+                @* =============================================
                 CONFIRM HEADER
                 ============================================= *@
 
-            <div class="booking-confirm-message">
+                <div class="booking-confirm-message">
 
-                <div class="booking-confirm-message-icon">
+                    <div class="booking-confirm-message-icon">
 
-                    <i class="fas fa-clipboard-check"></i>
+                        <i class="fas fa-clipboard-check"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <h3>
+                            Kiểm tra thông tin lịch khám
+                        </h3>
+
+                        <p>
+                            Vui lòng kiểm tra lại thông tin
+                            trước khi xác nhận đặt lịch.
+                        </p>
+
+                    </div>
 
                 </div>
 
 
-                <div>
-
-                    <h3>
-                        Kiểm tra thông tin lịch khám
-                    </h3>
-
-                    <p>
-                        Vui lòng kiểm tra lại thông tin
-                        trước khi xác nhận đặt lịch.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            @* =============================================
+                @* =============================================
                 DOCTOR
                 ============================================= *@
 
-            @if (_bookingStateService.SelectedDoctor != null)
-            {
-                var doctor =
-                    _bookingStateService.SelectedDoctor;
+                @if (_bookingStateService.SelectedDoctor != null)
+                {
+                    var doctor =
+                        _bookingStateService.SelectedDoctor;
 
 
-                <div class="booking-confirm-item">
+                    <div class="booking-confirm-item">
 
-                    <div class="booking-confirm-icon">
+                        <div class="booking-confirm-icon">
 
-                        <i class="fas fa-user-md"></i>
+                            <i class="fas fa-user-md"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Bác sĩ
+                            </span>
+
+                            <strong>
+                                @doctor.FullName
+                            </strong>
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                doctor.Title))
+                            {
+                                <small>
+                                    @doctor.Title
+                                </small>
+                            }
+
+                        </div>
 
                     </div>
+                }
 
 
-                    <div class="booking-confirm-content">
-
-                        <span>
-                            Bác sĩ
-                        </span>
-
-                        <strong>
-                            @doctor.FullName
-                        </strong>
-
-                        @if (!string.IsNullOrWhiteSpace(
-                            doctor.Title))
-                        {
-                            <small>
-                                @doctor.Title
-                            </small>
-                        }
-
-                    </div>
-
-                </div>
-            }
-
-
-            @* =============================================
+                @* =============================================
                 DATE
                 ============================================= *@
 
-            @if (_bookingStateService.SelectedDate.HasValue)
-            {
-                <div class="booking-confirm-item">
+                @if (_bookingStateService.SelectedDate.HasValue)
+                {
+                    <div class="booking-confirm-item">
 
-                    <div class="booking-confirm-icon">
+                        <div class="booking-confirm-icon">
 
-                        <i class="far fa-calendar-alt"></i>
+                            <i class="far fa-calendar-alt"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Ngày khám
+                            </span>
+
+                            <strong>
+                                @(_bookingStateService
+                                    .SelectedDate.Value
+                                    .ToString("dd/MM/yyyy"))
+                            </strong>
+
+                        </div>
 
                     </div>
+                }
 
 
-                    <div class="booking-confirm-content">
-
-                        <span>
-                            Ngày khám
-                        </span>
-
-                        <strong>
-                            @(_bookingStateService
-                                .SelectedDate.Value
-                                .ToString("dd/MM/yyyy"))
-                        </strong>
-
-                    </div>
-
-                </div>
-            }
-
-
-            @* =============================================
+                @* =============================================
                 SLOT
                 ============================================= *@
 
-            @if (_bookingStateService.SelectedSlot != null)
-            {
-                var slot =
-                    _bookingStateService.SelectedSlot;
+                @if (_bookingStateService.SelectedSlot != null)
+                {
+                    var slot =
+                        _bookingStateService.SelectedSlot;
 
 
-                <div class="booking-confirm-item">
+                    <div class="booking-confirm-item">
 
-                    <div class="booking-confirm-icon">
+                        <div class="booking-confirm-icon">
 
-                        <i class="far fa-clock"></i>
+                            <i class="far fa-clock"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Khung giờ
+                            </span>
+
+                            <strong>
+                                @(slot.StartTime.ToString("HH:mm"))
+                                -
+                                @(slot.EndTime.ToString("HH:mm"))
+                            </strong>
+
+                        </div>
 
                     </div>
+                }
 
 
-                    <div class="booking-confirm-content">
-
-                        <span>
-                            Khung giờ
-                        </span>
-
-                        <strong>
-                            @(slot.StartTime.ToString("HH:mm"))
-                            -
-                            @(slot.EndTime.ToString("HH:mm"))
-                        </strong>
-
-                    </div>
-
-                </div>
-            }
-
-
-            @* =============================================
+                @* =============================================
                 CONSULTATION FEE
                 ============================================= *@
 
-            @if (_bookingStateService.SelectedDoctor != null)
-            {
-                <div class="booking-confirm-item">
+                @if (_bookingStateService.SelectedDoctor != null)
+                {
+                    <div class="booking-confirm-item">
 
-                    <div class="booking-confirm-icon">
+                        <div class="booking-confirm-icon">
 
-                        <i class="fas fa-money-bill-wave"></i>
+                            <i class="fas fa-money-bill-wave"></i>
+
+                        </div>
+
+
+                        <div class="booking-confirm-content">
+
+                            <span>
+                                Phí khám dự kiến
+                            </span>
+
+                            <strong>
+                                @(_bookingStateService
+                                    .SelectedDoctor
+                                    .ConsultationFee
+                                    .ToString("N0")) đ
+                            </strong>
+
+                        </div>
 
                     </div>
+                }
 
-
-                    <div class="booking-confirm-content">
-
-                        <span>
-                            Phí khám dự kiến
-                        </span>
-
-                        <strong>
-                            @(_bookingStateService
-                                .SelectedDoctor
-                                .ConsultationFee
-                                .ToString("N0")) đ
-                        </strong>
-
-                    </div>
-
-                </div>
-            }
-
-        </div>
+            </div>
         }
 
     </section>
@@ -1011,6 +1188,7 @@
     {
         _bookingStateService.GoBack();
     }
+
 
     // =====================================================
     // SELECT SPECIALTY
