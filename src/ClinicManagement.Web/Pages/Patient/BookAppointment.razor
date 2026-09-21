@@ -5,11 +5,12 @@
 @attribute [Authorize(Roles = "Patient")]
 
 @inject BookingStateService _bookingStateService
+@inject NavigationManager _navigationManager
 
 @implements IDisposable
 
-@using ClinicManagementSystem.Application.DTOs.Doctor
 @using ClinicManagementSystem.Application.DTOs.Appointment
+@using ClinicManagementSystem.Application.DTOs.Doctor
 
 
 <PageTitle>Đặt lịch khám</PageTitle>
@@ -249,9 +250,12 @@
             </div>
 
 
-            @if (_bookingStateService.CurrentStep > 1)
+            @if (_bookingStateService.CurrentStep > 1 &&
+                 _createdAppointment == null)
             {
-                <button type="button" class="booking-back-button" @onclick="GoBack">
+                <button type="button"
+                        class="booking-back-button"
+                        @onclick="GoBack">
 
                     <i class="fas fa-arrow-left"></i>
 
@@ -261,6 +265,7 @@
             }
 
         </div>
+
 
         @* =================================================
            STEP 1 - SPECIALTY
@@ -322,7 +327,9 @@
                     </p>
 
 
-                    <button type="button" class="booking-retry-button" @onclick="RetrySpecialtiesAsync">
+                    <button type="button"
+                            class="booking-retry-button"
+                            @onclick="RetrySpecialtiesAsync">
 
                         <i class="fas fa-redo-alt"></i>
 
@@ -380,13 +387,9 @@
                             specialty.Id;
 
 
-                        <button type="button" class="specialty-card @(isSelected ? "selected" : "")"
+                        <button type="button"
+                                class="specialty-card @(isSelected ? "selected" : "")"
                                 @onclick="() => SelectSpecialtyAsync(specialty.Id)">
-
-
-                            @* =================================
-                               ICON
-                               ================================= *@
 
                             <div class="specialty-card-icon">
 
@@ -394,10 +397,6 @@
 
                             </div>
 
-
-                            @* =================================
-                               INFORMATION
-                               ================================= *@
 
                             <div class="specialty-card-content">
 
@@ -413,10 +412,6 @@
 
                             </div>
 
-
-                            @* =================================
-                               ACTION
-                               ================================= *@
 
                             <div class="specialty-card-arrow">
 
@@ -499,7 +494,9 @@
                     </p>
 
 
-                    <button type="button" class="booking-retry-button" @onclick="RetryDoctorsAsync">
+                    <button type="button"
+                            class="booking-retry-button"
+                            @onclick="RetryDoctorsAsync">
 
                         <i class="fas fa-redo-alt"></i>
 
@@ -551,19 +548,17 @@
                     @foreach (var doctor in
                         _bookingStateService.Doctors)
                     {
-                        <button type="button" class="doctor-card" @onclick="() => SelectDoctor(doctor)">
-
-
-                            @* =================================
-                               AVATAR
-                               ================================= *@
+                        <button type="button"
+                                class="doctor-card"
+                                @onclick="() => SelectDoctor(doctor)">
 
                             <div class="doctor-avatar">
 
                                 @if (!string.IsNullOrWhiteSpace(
                                     doctor.AvatarUrl))
                                 {
-                                    <img src="@doctor.AvatarUrl" alt="@doctor.FullName" />
+                                    <img src="@doctor.AvatarUrl"
+                                         alt="@doctor.FullName" />
                                 }
                                 else
                                 {
@@ -572,10 +567,6 @@
 
                             </div>
 
-
-                            @* =================================
-                               INFORMATION
-                               ================================= *@
 
                             <div class="doctor-card-content">
 
@@ -607,10 +598,6 @@
 
                                 </div>
 
-
-                                @* =================================
-                                   DETAILS
-                                   ================================= *@
 
                                 <div class="doctor-details">
 
@@ -645,10 +632,6 @@
                                 </div>
 
 
-                                @* =================================
-                                   CONSULTATION FEE
-                                   ================================= *@
-
                                 <div class="doctor-card-footer">
 
                                     <span class="doctor-fee-label">
@@ -671,17 +654,19 @@
             }
         }
 
+
         @* =================================================
-        STEP 3 - TIME
-        ================================================= *@
+           STEP 3 - TIME
+           ================================================= *@
 
         else if (_bookingStateService.CurrentStep == 3)
         {
             <div class="booking-time-section">
 
-                @* =============================================
-           SELECTED DOCTOR
-           ============================================= *@
+
+                @* =========================================
+                   SELECTED DOCTOR
+                   ========================================= *@
 
                 @if (_bookingStateService.SelectedDoctor != null)
                 {
@@ -750,9 +735,9 @@
                 }
 
 
-                @* =============================================
-           DATE SECTION
-           ============================================= *@
+                @* =========================================
+                   DATE SECTION
+                   ========================================= *@
 
                 <div class="booking-date-section">
 
@@ -773,13 +758,14 @@
                     </div>
 
 
-                    @* =========================================
-                DATE PICKER
-                ========================================= *@
+                    @* =====================================
+                       DATE PICKER
+                       ===================================== *@
 
                     <div class="booking-date-picker">
 
-                        <label for="appointment-date" class="booking-date-label">
+                        <label for="appointment-date"
+                               class="booking-date-label">
 
                             <i class="far fa-calendar-alt"></i>
 
@@ -788,8 +774,12 @@
                         </label>
 
 
-                        <input id="appointment-date" type="date" class="booking-date-input" min="@GetMinimumDate()"
-                               value="@GetSelectedDateValue()" @onchange="HandleDateChanged" />
+                        <input id="appointment-date"
+                               type="date"
+                               class="booking-date-input"
+                               min="@GetMinimumDate()"
+                               value="@GetSelectedDateValue()"
+                               @onchange="HandleDateChanged" />
 
 
                         @if (_bookingStateService.SelectedDate.HasValue)
@@ -803,438 +793,579 @@
                                 </span>
 
                                 <strong>
-                                    @_bookingStateService.SelectedDate.Value.ToString("dd/MM/yyyy")
+                                    @(_bookingStateService
+                                        .SelectedDate.Value
+                                        .ToString("dd/MM/yyyy"))
                                 </strong>
 
                             </div>
                         }
-                        @* =========================================
-                        SLOT STATE
-                        ========================================= *@
-
-                        @if (_bookingStateService.SelectedDate.HasValue)
-                        {
-                            @* =====================================
-                            LOADING
-                            ===================================== *@
-
-                            @if (_bookingStateService.IsLoading)
-                            {
-                                <div class="slot-load-state">
-
-                                    <i class="fas fa-spinner fa-spin"></i>
-
-                                    <span>
-                                        Đang kiểm tra khung giờ trống...
-                                    </span>
-
-                                </div>
-                            }
-
-
-                            @* =====================================
-                            ERROR
-                            ===================================== *@
-
-                            else if (!string.IsNullOrWhiteSpace(
-                                _bookingStateService.ErrorMessage))
-                            {
-                                <div class="booking-state booking-state-error slot-state">
-
-                                    <div class="booking-state-icon">
-
-                                        <i class="fas fa-exclamation-circle"></i>
-
-                                    </div>
-
-
-                                    <h3>
-                                        Không thể tải khung giờ
-                                    </h3>
-
-
-                                    <p>
-                                        @_bookingStateService.ErrorMessage
-                                    </p>
-
-
-                                    <button type="button" class="booking-retry-button" @onclick="RetrySlotsAsync">
-
-                                        <i class="fas fa-redo-alt"></i>
-
-                                        Thử lại
-
-                                    </button>
-
-                                </div>
-                            }
-
-
-                            @* =====================================
-                            EMPTY
-                            ===================================== *@
-
-                            else if (_bookingStateService.AvailableSlots.Count == 0)
-                            {
-                                <div class="booking-state slot-state">
-
-                                    <div class="booking-state-icon">
-
-                                        <i class="far fa-calendar-times"></i>
-
-                                    </div>
-
-
-                                    <h3>
-                                        Không còn khung giờ phù hợp
-                                    </h3>
-
-
-                                    <p>
-                                        Bác sĩ hiện không còn khung giờ trống
-                                        trong ngày đã chọn.
-                                        Vui lòng chọn ngày khác.
-                                    </p>
-
-                                </div>
-                            }
-
-
-                            @* =====================================
-                            AVAILABLE SLOTS
-                            ===================================== *@
-
-                            else
-                            {
-                                <div class="booking-slot-section">
-
-                                    <div class="booking-section-title">
-
-                                        <div>
-
-                                            <h3>
-                                                Chọn khung giờ
-                                            </h3>
-
-                                            <p>
-                                                Chọn thời gian bạn muốn đến khám.
-                                            </p>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div class="slot-grid">
-
-                                        @foreach (var slot in
-                                            _bookingStateService.AvailableSlots)
-                                        {
-                                            <button type="button" class="slot-card" @onclick="() => SelectSlot(slot)">
-
-                                                <i class="far fa-clock"></i>
-
-                                                <span>
-                                                    @(slot.StartTime.ToString("HH:mm"))
-                                                </span>
-
-                                                <small>
-                                                    đến @(slot.EndTime.ToString("HH:mm"))
-                                                </small>
-
-                                            </button>
-                                        }
-
-                                    </div>
-
-                                </div>
-                            }
-                        }
 
                     </div>
+
+
+                    @* =====================================
+                       SLOT STATE
+                       ===================================== *@
+
+                    @if (_bookingStateService.SelectedDate.HasValue)
+                    {
+                        @* =================================
+                           LOADING
+                           ================================= *@
+
+                        @if (_bookingStateService.IsLoading)
+                        {
+                            <div class="slot-load-state">
+
+                                <i class="fas fa-spinner fa-spin"></i>
+
+                                <span>
+                                    Đang kiểm tra khung giờ trống...
+                                </span>
+
+                            </div>
+                        }
+
+
+                        @* =================================
+                           ERROR
+                           ================================= *@
+
+                        else if (!string.IsNullOrWhiteSpace(
+                            _bookingStateService.ErrorMessage))
+                        {
+                            <div class="booking-state booking-state-error slot-state">
+
+                                <div class="booking-state-icon">
+
+                                    <i class="fas fa-exclamation-circle"></i>
+
+                                </div>
+
+
+                                <h3>
+                                    Không thể tải khung giờ
+                                </h3>
+
+
+                                <p>
+                                    @_bookingStateService.ErrorMessage
+                                </p>
+
+
+                                <button type="button"
+                                        class="booking-retry-button"
+                                        @onclick="RetrySlotsAsync">
+
+                                    <i class="fas fa-redo-alt"></i>
+
+                                    Thử lại
+
+                                </button>
+
+                            </div>
+                        }
+
+
+                        @* =================================
+                           EMPTY
+                           ================================= *@
+
+                        else if (_bookingStateService.AvailableSlots.Count == 0)
+                        {
+                            <div class="booking-state slot-state">
+
+                                <div class="booking-state-icon">
+
+                                    <i class="far fa-calendar-times"></i>
+
+                                </div>
+
+
+                                <h3>
+                                    Không còn khung giờ phù hợp
+                                </h3>
+
+
+                                <p>
+                                    Bác sĩ hiện không còn khung giờ trống
+                                    trong ngày đã chọn.
+                                    Vui lòng chọn ngày khác.
+                                </p>
+
+                            </div>
+                        }
+
+
+                        @* =================================
+                           AVAILABLE SLOTS
+                           ================================= *@
+
+                        else
+                        {
+                            <div class="booking-slot-section">
+
+                                <div class="booking-section-title">
+
+                                    <div>
+
+                                        <h3>
+                                            Chọn khung giờ
+                                        </h3>
+
+                                        <p>
+                                            Chọn thời gian bạn muốn đến khám.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="slot-grid">
+
+                                    @foreach (var slot in
+                                        _bookingStateService.AvailableSlots)
+                                    {
+                                        <button type="button"
+                                                class="slot-card"
+                                                @onclick="() => SelectSlot(slot)">
+
+                                            <i class="far fa-clock"></i>
+
+                                            <span>
+                                                @(slot.StartTime.ToString("HH:mm"))
+                                            </span>
+
+                                            <small>
+                                                đến @(slot.EndTime.ToString("HH:mm"))
+                                            </small>
+
+                                        </button>
+                                    }
+
+                                </div>
+
+                            </div>
+                        }
+                    }
 
                 </div>
 
             </div>
         }
 
+
         @* =================================================
-        STEP 4 - CONFIRM
-        ================================================= *@
+           STEP 4 - CONFIRM
+           ================================================= *@
 
         else if (_bookingStateService.CurrentStep == 4)
         {
-            <div class="booking-confirm-section">
+            @* =============================================
+               SUCCESS
+               ============================================= *@
 
-                @* =============================================
-                CONFIRM HEADER
-                ============================================= *@
+            @if (_createdAppointment != null)
+            {
+                <div class="booking-success">
 
-                <div class="booking-confirm-message">
+                    <div class="booking-success-icon">
 
-                    <div class="booking-confirm-message-icon">
-
-                        <i class="fas fa-clipboard-check"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <h3>
-                            Kiểm tra thông tin lịch khám
-                        </h3>
-
-                        <p>
-                            Vui lòng kiểm tra lại thông tin
-                            trước khi xác nhận đặt lịch.
-                        </p>
+                        <i class="fas fa-check"></i>
 
                     </div>
 
-                </div>
 
+                    <h2>
+                        Đặt lịch thành công
+                    </h2>
 
-                @* =============================================
-                DOCTOR
-                ============================================= *@
 
-                @if (_bookingStateService.SelectedDoctor != null)
-                {
-                    var doctor =
-                        _bookingStateService.SelectedDoctor;
+                    <p>
+                        Lịch khám của bạn đã được tạo thành công.
+                        Bạn có thể xem và quản lý lịch hẹn
+                        trong mục Lịch hẹn của tôi.
+                    </p>
 
 
-                    <div class="booking-confirm-item">
+                    <div class="booking-success-summary">
 
-                        <div class="booking-confirm-icon">
 
-                            <i class="fas fa-user-md"></i>
+                        @* =================================
+                           DOCTOR
+                           ================================= *@
 
-                        </div>
-
-
-                        <div class="booking-confirm-content">
-
-                            <span>
-                                Bác sĩ
-                            </span>
-
-                            <strong>
-                                @doctor.FullName
-                            </strong>
-
-                            @if (!string.IsNullOrWhiteSpace(
-                                doctor.Title))
-                            {
-                                <small>
-                                    @doctor.Title
-                                </small>
-                            }
-
-                        </div>
-
-                    </div>
-                }
-
-
-                @* =============================================
-                DATE
-                ============================================= *@
-
-                @if (_bookingStateService.SelectedDate.HasValue)
-                {
-                    <div class="booking-confirm-item">
-
-                        <div class="booking-confirm-icon">
-
-                            <i class="far fa-calendar-alt"></i>
-
-                        </div>
-
-
-                        <div class="booking-confirm-content">
-
-                            <span>
-                                Ngày khám
-                            </span>
-
-                            <strong>
-                                @(_bookingStateService
-                                    .SelectedDate.Value
-                                    .ToString("dd/MM/yyyy"))
-                            </strong>
-
-                        </div>
-
-                    </div>
-                }
-
-
-                @* =============================================
-                SLOT
-                ============================================= *@
-
-                @if (_bookingStateService.SelectedSlot != null)
-                {
-                    var slot =
-                        _bookingStateService.SelectedSlot;
-
-
-                    <div class="booking-confirm-item">
-
-                        <div class="booking-confirm-icon">
-
-                            <i class="far fa-clock"></i>
-
-                        </div>
-
-
-                        <div class="booking-confirm-content">
-
-                            <span>
-                                Khung giờ
-                            </span>
-
-                            <strong>
-                                @(slot.StartTime.ToString("HH:mm"))
-                                -
-                                @(slot.EndTime.ToString("HH:mm"))
-                            </strong>
-
-                        </div>
-
-                    </div>
-                }
-
-
-                @* =============================================
-                CONSULTATION FEE
-                ============================================= *@
-
-                @* =============================================
-                CONSULTATION FEE
-                ============================================= *@
-
-                @if (_bookingStateService.SelectedDoctor != null)
-                {
-                    <div class="booking-confirm-item">
-
-                        <div class="booking-confirm-icon">
-
-                            <i class="fas fa-money-bill-wave"></i>
-
-                        </div>
-
-
-                        <div class="booking-confirm-content">
-
-                            <span>
-                                Phí khám dự kiến
-                            </span>
-
-                            <strong>
-                                @(_bookingStateService
-                                    .SelectedDoctor
-                                    .ConsultationFee
-                                    .ToString("N0")) đ
-                            </strong>
-
-                        </div>
-
-                    </div>
-                }
-
-
-                @* =============================================
-                REASON
-                ============================================= *@
-
-                <div class="booking-reason-section">
-
-                    <div class="booking-reason-header">
-
-                        <div>
-
-                            <label for="booking-reason" class="booking-reason-label">
-
-                                Lý do khám
-
-                            </label>
-
-                            <p>
-                                Mô tả ngắn gọn triệu chứng hoặc
-                                lý do bạn muốn đến khám.
-                            </p>
-
-                        </div>
-
-
-                        <span class="booking-reason-count">
-
-                            @_bookingStateService.Reason.Length/500
-
-                        </span>
-
-                    </div>
-
-
-                    <textarea id="booking-reason" class="booking-reason-input" rows="4" maxlength="500"
-                              placeholder="Ví dụ: Đau đầu kéo dài 3 ngày..." value="@_bookingStateService.Reason"
-                              @oninput="HandleReasonChanged"></textarea>
-
-                </div>
-
-
-                @* =============================================
-                SUBMIT ERROR
-                ============================================= *@
-
-                @if (!string.IsNullOrWhiteSpace(
-                    _bookingStateService.ErrorMessage))
-                {
-                    <div class="booking-submit-error">
-
-                        <i class="fas fa-exclamation-circle"></i>
-
-                        <span>
-                            @_bookingStateService.ErrorMessage
-                        </span>
-
-                    </div>
-                }
-
-
-                @* =============================================
-                SUBMIT
-                ============================================= *@
-
-                <div class="booking-submit-section">
-
-                    <button type="button" class="booking-submit-button" disabled="@_bookingStateService.IsSubmitting"
-                            @onclick="SubmitBookingAsync">
-
-                        @if (_bookingStateService.IsSubmitting)
+                        @if (_bookingStateService.SelectedDoctor != null)
                         {
-                            <i class="fas fa-spinner fa-spin"></i>
+                            <div class="booking-success-item">
 
-                            <span>
-                                Đang đặt lịch...
-                            </span>
+                                <span>
+                                    Bác sĩ
+                                </span>
+
+                                <strong>
+                                    @_bookingStateService
+                                        .SelectedDoctor
+                                        .FullName
+                                </strong>
+
+                            </div>
                         }
-                        else
+
+
+                        @* =================================
+                           DATE
+                           ================================= *@
+
+                        @if (_bookingStateService.SelectedDate.HasValue)
                         {
-                            <i class="fas fa-calendar-check"></i>
+                            <div class="booking-success-item">
 
-                            <span>
-                                Xác nhận đặt lịch
-                            </span>
+                                <span>
+                                    Ngày khám
+                                </span>
+
+                                <strong>
+                                    @(_bookingStateService
+                                        .SelectedDate.Value
+                                        .ToString("dd/MM/yyyy"))
+                                </strong>
+
+                            </div>
                         }
+
+
+                        @* =================================
+                           TIME
+                           ================================= *@
+
+                        @if (_bookingStateService.SelectedSlot != null)
+                        {
+                            <div class="booking-success-item">
+
+                                <span>
+                                    Khung giờ
+                                </span>
+
+                                <strong>
+                                    @(_bookingStateService
+                                        .SelectedSlot
+                                        .StartTime
+                                        .ToString("HH:mm"))
+
+                                    -
+
+                                    @(_bookingStateService
+                                        .SelectedSlot
+                                        .EndTime
+                                        .ToString("HH:mm"))
+                                </strong>
+
+                            </div>
+                        }
+
+                    </div>
+
+
+                    <button type="button"
+                            class="booking-success-button"
+                            @onclick="GoToMyAppointments">
+
+                        <i class="fas fa-calendar-alt"></i>
+
+                        Xem lịch hẹn của tôi
 
                     </button>
 
                 </div>
-            </div>
+            }
+
+
+            @* =============================================
+               CONFIRM FORM
+               ============================================= *@
+
+            else
+            {
+                <div class="booking-confirm-section">
+
+
+                    @* =====================================
+                       CONFIRM MESSAGE
+                       ===================================== *@
+
+                    <div class="booking-confirm-message">
+
+                        <div class="booking-confirm-message-icon">
+
+                            <i class="fas fa-clipboard-check"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <h3>
+                                Kiểm tra thông tin lịch khám
+                            </h3>
+
+                            <p>
+                                Vui lòng kiểm tra lại thông tin
+                                trước khi xác nhận đặt lịch.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    @* =====================================
+                       DOCTOR
+                       ===================================== *@
+
+                    @if (_bookingStateService.SelectedDoctor != null)
+                    {
+                        var doctor =
+                            _bookingStateService.SelectedDoctor;
+
+
+                        <div class="booking-confirm-item">
+
+                            <div class="booking-confirm-icon">
+
+                                <i class="fas fa-user-md"></i>
+
+                            </div>
+
+
+                            <div class="booking-confirm-content">
+
+                                <span>
+                                    Bác sĩ
+                                </span>
+
+                                <strong>
+                                    @doctor.FullName
+                                </strong>
+
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.Title))
+                                {
+                                    <small>
+                                        @doctor.Title
+                                    </small>
+                                }
+
+                            </div>
+
+                        </div>
+                    }
+
+
+                    @* =====================================
+                       DATE
+                       ===================================== *@
+
+                    @if (_bookingStateService.SelectedDate.HasValue)
+                    {
+                        <div class="booking-confirm-item">
+
+                            <div class="booking-confirm-icon">
+
+                                <i class="far fa-calendar-alt"></i>
+
+                            </div>
+
+
+                            <div class="booking-confirm-content">
+
+                                <span>
+                                    Ngày khám
+                                </span>
+
+                                <strong>
+                                    @(_bookingStateService
+                                        .SelectedDate.Value
+                                        .ToString("dd/MM/yyyy"))
+                                </strong>
+
+                            </div>
+
+                        </div>
+                    }
+
+
+                    @* =====================================
+                       SLOT
+                       ===================================== *@
+
+                    @if (_bookingStateService.SelectedSlot != null)
+                    {
+                        var slot =
+                            _bookingStateService.SelectedSlot;
+
+
+                        <div class="booking-confirm-item">
+
+                            <div class="booking-confirm-icon">
+
+                                <i class="far fa-clock"></i>
+
+                            </div>
+
+
+                            <div class="booking-confirm-content">
+
+                                <span>
+                                    Khung giờ
+                                </span>
+
+                                <strong>
+                                    @(slot.StartTime.ToString("HH:mm"))
+                                    -
+                                    @(slot.EndTime.ToString("HH:mm"))
+                                </strong>
+
+                            </div>
+
+                        </div>
+                    }
+
+
+                    @* =====================================
+                       CONSULTATION FEE
+                       ===================================== *@
+
+                    @if (_bookingStateService.SelectedDoctor != null)
+                    {
+                        <div class="booking-confirm-item">
+
+                            <div class="booking-confirm-icon">
+
+                                <i class="fas fa-money-bill-wave"></i>
+
+                            </div>
+
+
+                            <div class="booking-confirm-content">
+
+                                <span>
+                                    Phí khám dự kiến
+                                </span>
+
+                                <strong>
+                                    @(_bookingStateService
+                                        .SelectedDoctor
+                                        .ConsultationFee
+                                        .ToString("N0")) đ
+                                </strong>
+
+                            </div>
+
+                        </div>
+                    }
+
+
+                    @* =====================================
+                       REASON
+                       ===================================== *@
+
+                    <div class="booking-reason-section">
+
+                        <div class="booking-reason-header">
+
+                            <div>
+
+                                <label for="booking-reason"
+                                       class="booking-reason-label">
+
+                                    Lý do khám
+
+                                </label>
+
+
+                                <p>
+                                    Mô tả ngắn gọn triệu chứng hoặc
+                                    lý do bạn muốn đến khám.
+                                </p>
+
+                            </div>
+
+
+                            <span class="booking-reason-count">
+                                @_bookingStateService.Reason.Length/500
+                            </span>
+
+                        </div>
+
+
+                        <textarea id="booking-reason"
+                                  class="booking-reason-input"
+                                  rows="4"
+                                  maxlength="500"
+                                  placeholder="Ví dụ: Đau đầu kéo dài 3 ngày..."
+                                  value="@_bookingStateService.Reason"
+                                  @oninput="HandleReasonChanged"></textarea>
+
+                    </div>
+
+
+                    @* =====================================
+                       SUBMIT ERROR
+                       ===================================== *@
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        _bookingStateService.ErrorMessage))
+                    {
+                        <div class="booking-submit-error">
+
+                            <i class="fas fa-exclamation-circle"></i>
+
+                            <span>
+                                @_bookingStateService.ErrorMessage
+                            </span>
+
+                        </div>
+                    }
+
+
+                    @* =====================================
+                       SUBMIT
+                       ===================================== *@
+
+                    <div class="booking-submit-section">
+
+                        <button type="button"
+                                class="booking-submit-button"
+                                disabled="@_bookingStateService.IsSubmitting"
+                                @onclick="SubmitBookingAsync">
+
+                            @if (_bookingStateService.IsSubmitting)
+                            {
+                                <i class="fas fa-spinner fa-spin"></i>
+
+                                <span>
+                                    Đang đặt lịch...
+                                </span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-calendar-check"></i>
+
+                                <span>
+                                    Xác nhận đặt lịch
+                                </span>
+                            }
+
+                        </button>
+
+                    </div>
+
+                </div>
+            }
         }
 
     </section>
@@ -1247,7 +1378,9 @@
     // =====================================================
     // CREATED APPOINTMENT
     // =====================================================
+
     private AppointmentDTO? _createdAppointment;
+
 
     // =====================================================
     // INITIALIZE
@@ -1278,15 +1411,6 @@
             .LoadSpecialtiesAsync();
     }
 
-    // =====================================================
-    // GO BACK
-    // =====================================================
-
-    private void GoBack()
-    {
-        _bookingStateService.GoBack();
-    }
-
 
     // =====================================================
     // SELECT SPECIALTY
@@ -1295,19 +1419,11 @@
     private async Task SelectSpecialtyAsync(
         int specialtyId)
     {
-        // =================================================
-        // UPDATE SELECTED SPECIALTY
-        // =================================================
-
         _bookingStateService
             .SelectSpecialty(
                 specialtyId
             );
 
-
-        // =================================================
-        // LOAD DOCTORS
-        // =================================================
 
         await _bookingStateService
             .LoadDoctorsAsync();
@@ -1326,6 +1442,20 @@
 
 
     // =====================================================
+    // SELECT DOCTOR
+    // =====================================================
+
+    private void SelectDoctor(
+        DoctorDTO doctor)
+    {
+        _bookingStateService
+            .SelectDoctor(
+                doctor
+            );
+    }
+
+
+    // =====================================================
     // RETRY DOCTORS
     // =====================================================
 
@@ -1337,16 +1467,191 @@
 
 
     // =====================================================
-    // SELECT DOCTOR
+    // HANDLE DATE CHANGED
     // =====================================================
 
-    private void SelectDoctor(
-        DoctorDTO doctor)
+    private async Task HandleDateChanged(
+        ChangeEventArgs e)
+    {
+        var value =
+            e.Value?.ToString();
+
+
+        if (string.IsNullOrWhiteSpace(
+            value))
+        {
+            return;
+        }
+
+
+        if (!DateOnly.TryParse(
+            value,
+            out var selectedDate))
+        {
+            return;
+        }
+
+
+        var today =
+            DateOnly.FromDateTime(
+                DateTime.Today
+            );
+
+
+        if (selectedDate < today)
+        {
+            return;
+        }
+
+
+        _bookingStateService
+            .SelectDate(
+                selectedDate
+            );
+
+
+        await _bookingStateService
+            .LoadAvailableSlotsAsync();
+    }
+
+
+    // =====================================================
+    // GET MINIMUM DATE
+    // =====================================================
+
+    private string GetMinimumDate()
+    {
+        return DateOnly
+            .FromDateTime(
+                DateTime.Today
+            )
+            .ToString(
+                "yyyy-MM-dd"
+            );
+    }
+
+
+    // =====================================================
+    // GET SELECTED DATE VALUE
+    // =====================================================
+
+    private string GetSelectedDateValue()
+    {
+        return _bookingStateService
+            .SelectedDate?
+            .ToString(
+                "yyyy-MM-dd"
+            )
+            ?? string.Empty;
+    }
+
+
+    // =====================================================
+    // RETRY SLOTS
+    // =====================================================
+
+    private async Task RetrySlotsAsync()
+    {
+        await _bookingStateService
+            .LoadAvailableSlotsAsync();
+    }
+
+
+    // =====================================================
+    // SELECT SLOT
+    // =====================================================
+
+    private void SelectSlot(
+        SlotDTO slot)
     {
         _bookingStateService
-            .SelectDoctor(
-                doctor
+            .SelectSlot(
+                slot
             );
+    }
+
+
+    // =====================================================
+    // HANDLE REASON CHANGED
+    // =====================================================
+
+    private void HandleReasonChanged(
+        ChangeEventArgs e)
+    {
+        var reason =
+            e.Value?.ToString()
+            ?? string.Empty;
+
+
+        _bookingStateService
+            .SetReason(
+                reason
+            );
+    }
+
+
+    // =====================================================
+    // SUBMIT BOOKING
+    // =====================================================
+
+    private async Task SubmitBookingAsync()
+    {
+        // =================================================
+        // CLEAR PREVIOUS RESULT
+        // =================================================
+
+        _createdAppointment = null;
+
+
+        // =================================================
+        // CREATE APPOINTMENT
+        // =================================================
+
+        var appointment =
+            await _bookingStateService
+                .CreateAppointmentAsync();
+
+
+        // =================================================
+        // FAILED
+        // =================================================
+
+        if (appointment == null)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // SUCCESS
+        // =================================================
+
+        _createdAppointment =
+            appointment;
+    }
+
+
+    // =====================================================
+    // GO TO MY APPOINTMENTS
+    // =====================================================
+
+    private void GoToMyAppointments()
+    {
+        _navigationManager
+            .NavigateTo(
+                "/patient/appointments"
+            );
+    }
+
+
+    // =====================================================
+    // GO BACK
+    // =====================================================
+
+    private void GoBack()
+    {
+        _bookingStateService
+            .GoBack();
     }
 
 
@@ -1392,6 +1697,12 @@
 
     private string GetContentTitle()
     {
+        if (_createdAppointment != null)
+        {
+            return "Đặt lịch thành công";
+        }
+
+
         return _bookingStateService.CurrentStep switch
         {
             1 =>
@@ -1418,6 +1729,12 @@
 
     private string GetContentDescription()
     {
+        if (_createdAppointment != null)
+        {
+            return "Lịch khám của bạn đã được ghi nhận.";
+        }
+
+
         return _bookingStateService.CurrentStep switch
         {
             1 =>
@@ -1444,6 +1761,12 @@
 
     private string GetContentIcon()
     {
+        if (_createdAppointment != null)
+        {
+            return "fas fa-check-circle";
+        }
+
+
         return _bookingStateService.CurrentStep switch
         {
             1 =>
@@ -1463,186 +1786,7 @@
         };
     }
 
-    // =====================================================
-    // GET MINIMUM DATE
-    // =====================================================
 
-    private string GetMinimumDate()
-    {
-        return DateOnly
-            .FromDateTime(
-                DateTime.Today
-            )
-            .ToString(
-                "yyyy-MM-dd"
-            );
-    }
-
-
-    // =====================================================
-    // GET SELECTED DATE VALUE
-    // =====================================================
-
-    private string GetSelectedDateValue()
-    {
-        return _bookingStateService
-            .SelectedDate?
-            .ToString(
-                "yyyy-MM-dd"
-            )
-            ?? string.Empty;
-    }
-
-
-    // =====================================================
-    // HANDLE DATE CHANGED
-    // =====================================================
-
-    private async Task HandleDateChanged(
-        ChangeEventArgs e)
-    {
-        var value =
-            e.Value?.ToString();
-
-
-        // =================================================
-        // EMPTY DATE
-        // =================================================
-
-        if (string.IsNullOrWhiteSpace(
-            value))
-        {
-            return;
-        }
-
-
-        // =================================================
-        // PARSE DATE
-        // =================================================
-
-        if (!DateOnly.TryParse(
-            value,
-            out var selectedDate))
-        {
-            return;
-        }
-
-
-        // =================================================
-        // PREVENT PAST DATE
-        // =================================================
-
-        var today =
-            DateOnly.FromDateTime(
-                DateTime.Today
-            );
-
-
-        if (selectedDate < today)
-        {
-            return;
-        }
-
-
-        // =================================================
-        // SELECT DATE
-        // =================================================
-
-        _bookingStateService
-            .SelectDate(
-                selectedDate
-            );
-
-
-        // =================================================
-        // LOAD AVAILABLE SLOTS
-        // =================================================
-
-        await _bookingStateService
-            .LoadAvailableSlotsAsync();
-    }
-
-    // =====================================================
-    // SELECT SLOT
-    // =====================================================
-
-    private void SelectSlot(
-        SlotDTO slot)
-    {
-        _bookingStateService
-            .SelectSlot(
-                slot
-            );
-    }
-
-    // =====================================================
-    // RETRY SLOTS
-    // =====================================================
-
-    private async Task RetrySlotsAsync()
-    {
-        await _bookingStateService.LoadAvailableSlotsAsync();
-    }
-
-    // =====================================================
-    // HANDLE REASON CHANGED
-    // =====================================================
-
-    private void HandleReasonChanged(
-        ChangeEventArgs e)
-    {
-        var reason =
-            e.Value?.ToString()
-            ?? string.Empty;
-
-
-        _bookingStateService
-            .SetReason(
-                reason
-            );
-    }
-
-    // =====================================================
-    // SUBMIT BOOKING
-    // =====================================================
-
-    private async Task SubmitBookingAsync()
-    {
-        // =================================================
-        // CLEAR PREVIOUS RESULT
-        // =================================================
-
-        _createdAppointment = null;
-
-
-        // =================================================
-        // CREATE APPOINTMENT
-        // =================================================
-
-        var appointment =
-            await _bookingStateService
-                .CreateAppointmentAsync();
-
-
-        // =================================================
-        // FAILED
-        //
-        // ErrorMessage đã được BookingStateService xử lý.
-        // =================================================
-
-        if (appointment == null)
-        {
-            return;
-        }
-
-
-        // =================================================
-        // SUCCESS
-        // =================================================
-
-        _createdAppointment =
-            appointment;
-    }
     // =====================================================
     // HANDLE BOOKING STATE CHANGED
     // =====================================================

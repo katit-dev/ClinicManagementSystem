@@ -1709,3 +1709,159 @@
 .booking-submit-error i {
     color: #dc2626;
 }
+
+/* =====================================================
+   BOOKING SUCCESS
+   ===================================================== */
+
+.booking-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 36px 28px;
+
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f0fdf4 0%,
+            #ffffff 100%
+        );
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   SUCCESS ICON
+   ===================================================== */
+
+.booking-success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 64px;
+    height: 64px;
+
+    margin-bottom: 16px;
+
+    border-radius: 50%;
+
+    background-color: #22c55e;
+
+    color: #ffffff;
+
+    font-size: 25px;
+}
+
+
+.booking-success h2 {
+    margin: 0;
+
+    font-size: 22px;
+    font-weight: 700;
+
+    color: #14532d;
+}
+
+
+.booking-success > p {
+    max-width: 520px;
+
+    margin: 8px 0 0;
+
+    font-size: 13px;
+    line-height: 1.6;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   SUCCESS SUMMARY
+   ===================================================== */
+
+.booking-success-summary {
+    width: 100%;
+    max-width: 520px;
+
+    margin-top: 24px;
+
+    border: 1px solid #dcfce7;
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    background-color: #ffffff;
+}
+
+
+.booking-success-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 13px 16px;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+
+.booking-success-item:last-child {
+    border-bottom: none;
+}
+
+
+.booking-success-item span {
+    font-size: 12px;
+
+    color: #94a3b8;
+}
+
+
+.booking-success-item strong {
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+/* =====================================================
+   SUCCESS BUTTON
+   ===================================================== */
+
+.booking-success-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 24px;
+
+    padding: 11px 17px;
+
+    border: none;
+    border-radius: 10px;
+
+    background-color: #0ea5e9;
+
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.booking-success-button:hover {
+    background-color: #0284c7;
+}
