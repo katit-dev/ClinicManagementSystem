@@ -433,3 +433,160 @@
 
     transform: translateX(2px);
 }
+
+/* =====================================================
+   SELECTED SPECIALTY
+   ===================================================== */
+
+.specialty-card.selected {
+    border-color: #0ea5e9;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f0f9ff 0%,
+            #ffffff 100%
+        );
+
+    box-shadow:
+        0 8px 26px rgba(14, 165, 233, 0.12);
+}
+
+
+.specialty-card.selected
+.specialty-card-icon {
+    background-color: #0ea5e9;
+
+    color: #ffffff;
+}
+
+
+.specialty-card.selected
+.specialty-card-arrow {
+    background-color: #dcfce7;
+
+    color: #16a34a;
+}
+
+/* =====================================================
+   BOOKING STATE
+   ===================================================== */
+
+.booking-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 260px;
+
+    padding: 32px;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+
+    background-color: #f8fafc;
+
+    text-align: center;
+}
+
+
+.booking-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 54px;
+    height: 54px;
+
+    margin-bottom: 14px;
+
+    border-radius: 14px;
+
+    background-color: #e0f2fe;
+
+    color: #0284c7;
+
+    font-size: 20px;
+}
+
+
+.booking-state h3 {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.booking-state p {
+    max-width: 420px;
+
+    margin: 7px 0 0;
+
+    font-size: 13px;
+    line-height: 1.6;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   ERROR STATE
+   ===================================================== */
+
+.booking-state-error {
+    border-color: #fecaca;
+
+    background-color: #fffafa;
+}
+
+
+.booking-state-error
+.booking-state-icon {
+    background-color: #fee2e2;
+
+    color: #dc2626;
+}
+
+
+/* =====================================================
+   RETRY BUTTON
+   ===================================================== */
+
+.booking-retry-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 18px;
+
+    padding: 9px 14px;
+
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+
+    color: #b91c1c;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.booking-retry-button:hover {
+    background-color: #fef2f2;
+
+    border-color: #fca5a5;
+}

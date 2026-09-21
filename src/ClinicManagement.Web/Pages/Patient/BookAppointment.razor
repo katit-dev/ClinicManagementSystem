@@ -200,20 +200,111 @@
         </div>
 
         @* =====================================================
-        SPECIALTY LIST
+        SPECIALTY CONTENT
         ===================================================== *@
 
-        @if (!_bookingStateService.IsLoading &&
-             string.IsNullOrWhiteSpace(
-                 _bookingStateService.ErrorMessage) &&
-             _bookingStateService.Specialties.Count > 0)
+        @if (_bookingStateService.IsLoading &&
+             _bookingStateService.CurrentStep == 1)
         {
+            @* =================================================
+            LOADING
+            ================================================= *@
+
+            <div class="booking-state">
+
+                <div class="booking-state-icon">
+
+                    <i class="fas fa-spinner fa-spin"></i>
+
+                </div>
+
+                <h3>
+                    Đang tải chuyên khoa
+                </h3>
+
+                <p>
+                    Vui lòng chờ trong giây lát.
+                </p>
+
+            </div>
+        }
+        else if (_bookingStateService.CurrentStep == 1 &&
+                 !string.IsNullOrWhiteSpace(
+                     _bookingStateService.ErrorMessage))
+        {
+            @* =================================================
+            ERROR
+            ================================================= *@
+
+            <div class="booking-state booking-state-error">
+
+                <div class="booking-state-icon">
+
+                    <i class="fas fa-exclamation-circle"></i>
+
+                </div>
+
+                <h3>
+                    Không thể tải chuyên khoa
+                </h3>
+
+                <p>
+                    @_bookingStateService.ErrorMessage
+                </p>
+
+                <button type="button" class="booking-retry-button" @onclick="RetrySpecialtiesAsync">
+
+                    <i class="fas fa-redo-alt"></i>
+
+                    Thử lại
+
+                </button>
+
+            </div>
+        }
+        else if (_bookingStateService.Specialties.Count == 0)
+        {
+            @* =================================================
+            EMPTY
+            ================================================= *@
+
+            <div class="booking-state">
+
+                <div class="booking-state-icon">
+
+                    <i class="fas fa-stethoscope"></i>
+
+                </div>
+
+                <h3>
+                    Chưa có chuyên khoa
+                </h3>
+
+                <p>
+                    Hiện chưa có chuyên khoa nào
+                    đang hoạt động.
+                </p>
+
+            </div>
+        }
+        else
+        {
+            @* =================================================
+            SPECIALTY GRID
+             ================================================= *@
+
             <div class="specialty-grid">
 
                 @foreach (var specialty in
                     _bookingStateService.Specialties)
                 {
-                    <button type="button" class="specialty-card" @onclick="() => SelectSpecialtyAsync(
+                    var isSelected =
+                        _bookingStateService
+                            .SelectedSpecialtyId ==
+                        specialty.Id;
+
+
+                    <button type="button" class="specialty-card @(isSelected ? "selected" : "")" @onclick="() => SelectSpecialtyAsync(
                                 specialty.Id)">
 
 @* =========================================
@@ -246,12 +337,19 @@
 
 
                         @* =========================================
-                        RROW
-                        ========================================= *@
+                        ACTION
+                        ======================================== *@
 
                         <div class="specialty-card-arrow">
 
-                            <i class="fas fa-arrow-right"></i>
+                            @if (isSelected)
+                            {
+                                <i class="fas fa-check"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-arrow-right"></i>
+                            }
 
                         </div>
 
@@ -322,6 +420,16 @@
 
         await _bookingStateService
             .LoadDoctorsAsync();
+    }
+
+    // =====================================================
+    // RETRY SPECIALTIES
+    // =====================================================
+
+    private async Task RetrySpecialtiesAsync()
+    {
+        await _bookingStateService
+            .LoadSpecialtiesAsync();
     }
 
 
