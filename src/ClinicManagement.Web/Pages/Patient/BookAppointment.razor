@@ -4,6 +4,10 @@
 
 @attribute [Authorize(Roles = "Patient")]
 
+@inject BookingStateService _bookingStateService
+
+@implements IDisposable
+
 <PageTitle>Đặt lịch khám</PageTitle>
 
 
@@ -200,16 +204,108 @@
            TEMPORARY CONTENT
            ================================================= *@
 
-        <div class="booking-placeholder">
+        @* =====================================================
+   SPECIALTY STATE TEST
+   ===================================================== *@
 
-            <i class="fas fa-clinic-medical"></i>
+        @if (_bookingStateService.IsLoading)
+        {
+            <div class="booking-placeholder">
 
-            <span>
-                Danh sách chuyên khoa sẽ được hiển thị tại đây.
-            </span>
+                <i class="fas fa-spinner fa-spin"></i>
 
-        </div>
+                <span>
+                    Đang tải danh sách chuyên khoa...
+                </span>
+
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(
+            _bookingStateService.ErrorMessage))
+        {
+            <div class="booking-placeholder">
+
+                <i class="fas fa-exclamation-circle"></i>
+
+                <span>
+                    @_bookingStateService.ErrorMessage
+                </span>
+
+            </div>
+        }
+        else
+        {
+            <div class="booking-placeholder">
+
+                <i class="fas fa-check-circle"></i>
+
+                <span>
+                    Đã tải
+                    @_bookingStateService.Specialties.Count
+                    chuyên khoa.
+                </span>
+
+            </div>
+        }
 
     </section>
 
 </div>
+
+@code
+{
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        // =================================================
+        // SUBSCRIBE STATE CHANGE
+        // =================================================
+
+        _bookingStateService.OnChange +=
+            HandleBookingStateChanged;
+
+
+        // =================================================
+        // RESET BOOKING FLOW
+        //
+        // Khi user mở lại trang Booking
+        // => bắt đầu một lượt đặt lịch mới.
+        // =================================================
+
+        _bookingStateService.Reset();
+
+
+        // =================================================
+        // LOAD SPECIALTIES
+        // =================================================
+
+        await _bookingStateService
+            .LoadSpecialtiesAsync();
+    }
+
+
+    // =====================================================
+    // HANDLE BOOKING STATE CHANGED
+    // =====================================================
+
+    private void HandleBookingStateChanged()
+    {
+        InvokeAsync(
+            StateHasChanged
+        );
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        _bookingStateService.OnChange -=
+            HandleBookingStateChanged;
+    }
+}
