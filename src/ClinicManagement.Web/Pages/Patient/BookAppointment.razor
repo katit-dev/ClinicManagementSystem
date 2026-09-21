@@ -7,6 +7,7 @@
 @inject BookingStateService _bookingStateService
 
 @implements IDisposable
+@using ClinicManagementSystem.Application.DTOs.Doctor
 
 
 <PageTitle>Đặt lịch khám</PageTitle>
@@ -300,9 +301,7 @@
                     </p>
 
 
-                    <button type="button"
-                            class="booking-retry-button"
-                            @onclick="RetrySpecialtiesAsync">
+                    <button type="button" class="booking-retry-button" @onclick="RetrySpecialtiesAsync">
 
                         <i class="fas fa-redo-alt"></i>
 
@@ -360,17 +359,15 @@
                             specialty.Id;
 
 
-                        <button type="button"
-                                class="specialty-card @(isSelected ? "selected" : "")"
-                                @onclick="() => SelectSpecialtyAsync(
+                        <button type="button" class="specialty-card @(isSelected ? "selected" : "")" @onclick="() => SelectSpecialtyAsync(
                                     specialty.Id)">
 
 
-                            @* =================================
+@* =================================
                                ICON
                                ================================= *@
 
-                            <div class="specialty-card-icon">
+<div class="specialty-card-icon">
 
                                 <i class="fas fa-stethoscope"></i>
 
@@ -422,31 +419,163 @@
 
 
         @* =================================================
-           STEP 2 - DOCTOR
-           ================================================= *@
+        STEP 2 - DOCTOR
+        ================================================= *@
 
         else if (_bookingStateService.CurrentStep == 2)
         {
-            <div class="booking-state">
+            @* =============================================
+            LOADING DOCTORS
+            ============================================= *@
 
-                <div class="booking-state-icon">
+            @if (_bookingStateService.IsLoading)
+            {
+                <div class="booking-state">
 
-                    <i class="fas fa-user-md"></i>
+                    <div class="booking-state-icon">
+
+                        <i class="fas fa-spinner fa-spin"></i>
+
+                    </div>
+
+                    <h3>
+                        Đang tải danh sách bác sĩ
+                    </h3>
+
+                    <p>
+                        Vui lòng chờ trong giây lát.
+                    </p>
 
                 </div>
+            }
+
+            @* =============================================
+             DOCTOR LIST
+            ============================================= *@
+
+            else
+            {
+                <div class="doctor-grid">
+
+                    @foreach (var doctor in
+                        _bookingStateService.Doctors)
+                    {
+                        <button type="button" class="doctor-card" @onclick="() => SelectDoctor(
+                                    doctor)">
+
+@* =================================
+                       AVATAR
+                       ================================= *@
+
+<div class="doctor-avatar">
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.AvatarUrl))
+                                {
+                                    <img src="@doctor.AvatarUrl" alt="@doctor.FullName" />
+                                }
+                                else
+                                {
+                                    <i class="fas fa-user-md"></i>
+                                }
+
+                            </div>
 
 
-                <h3>
-                    Danh sách bác sĩ đã sẵn sàng
-                </h3>
+                            @* =================================
+                       INFORMATION
+                       ================================= *@
+
+                            <div class="doctor-card-content">
+
+                                <div class="doctor-card-header">
+
+                                    <div>
+
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            doctor.Title))
+                                        {
+                                            <span class="doctor-title">
+                                                @doctor.Title
+                                            </span>
+                                        }
+
+                                        <h3 class="doctor-name">
+                                            @doctor.FullName
+                                        </h3>
+
+                                    </div>
 
 
-                <p>
-                    Có @_bookingStateService.Doctors.Count
-                    bác sĩ phù hợp với chuyên khoa đã chọn.
-                </p>
+                                    <div class="doctor-select-icon">
 
-            </div>
+                                        <i class="fas fa-arrow-right"></i>
+
+                                    </div>
+
+                                </div>
+
+
+                                @* =================================
+                           DETAILS
+                           ================================= *@
+
+                                <div class="doctor-details">
+
+                                    @if (doctor.ExperienceYears > 0)
+                                    {
+                                        <div class="doctor-detail-item">
+
+                                            <i class="fas fa-briefcase-medical"></i>
+
+                                            <span>
+                                                @doctor.ExperienceYears năm kinh nghiệm
+                                            </span>
+
+                                        </div>
+                                    }
+
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        doctor.Room))
+                                    {
+                                        <div class="doctor-detail-item">
+
+                                            <i class="fas fa-door-open"></i>
+
+                                            <span>
+                                                Phòng @doctor.Room
+                                            </span>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+
+                                @* =================================
+                           CONSULTATION FEE
+                           ================================= *@
+
+                                <div class="doctor-card-footer">
+
+                                    <span class="doctor-fee-label">
+                                        Phí khám
+                                    </span>
+
+                                    <span class="doctor-fee">
+                                        @doctor.ConsultationFee.ToString("N0") đ
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </button>
+                    }
+
+                </div>
+            }
         }
 
     </section>
@@ -636,6 +765,14 @@
         };
     }
 
+    // =====================================================
+    // SELECT DOCTOR
+    // =====================================================
+
+    private void SelectDoctor(DoctorDTO doctor)
+    {
+        _bookingStateService.SelectDoctor(doctor);
+    }
 
     // =====================================================
     // HANDLE BOOKING STATE CHANGED
