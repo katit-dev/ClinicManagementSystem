@@ -982,10 +982,7 @@ public class BookingStateService
     public void SetReason(
         string reason)
     {
-        Reason =
-            reason?.Trim()
-            ?? string.Empty;
-
+        Reason = reason ?? string.Empty;
 
         StateHasChanged();
     }
