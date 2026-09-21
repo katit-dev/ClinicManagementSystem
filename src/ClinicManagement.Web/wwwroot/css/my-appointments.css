@@ -650,3 +650,58 @@
         gap: 12px;
     }
 }
+
+/* =====================================================
+   APPOINTMENT ACTIONS
+   ===================================================== */
+
+.appointment-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 15px;
+    padding-top: 14px;
+
+    border-top: 1px solid #f1f5f9;
+}
+
+
+/* =====================================================
+   CANCEL BUTTON
+   ===================================================== */
+
+.appointment-cancel-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+
+    color: #dc2626;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.appointment-cancel-button:hover {
+    border-color: #fca5a5;
+
+    background-color: #fef2f2;
+}

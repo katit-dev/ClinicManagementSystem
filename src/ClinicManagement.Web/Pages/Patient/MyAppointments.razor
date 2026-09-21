@@ -8,6 +8,7 @@
 
 @implements IDisposable
 
+@using ClinicManagementSystem.Application.DTOs.Appointment
 @using ClinicManagementSystem.Application.Enums
 
 
@@ -29,6 +30,17 @@
 
         <div>
 
+            <div class="appointments-header-label">
+
+                <i class="fas fa-calendar-check"></i>
+
+                <span>
+                    VC-04
+                </span>
+
+            </div>
+
+
             <h1 class="appointments-title">
                 Lịch hẹn của tôi
             </h1>
@@ -45,12 +57,13 @@
 
 
     @* =================================================
-    FILTERS
-    ================================================= *@
+       FILTERS
+       ================================================= *@
 
     <div class="appointments-filter">
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.All)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.All)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.All)">
 
             <i class="fas fa-list"></i>
@@ -60,7 +73,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Upcoming)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Upcoming)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Upcoming)">
 
             <i class="far fa-clock"></i>
@@ -70,7 +84,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Completed)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Completed)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Completed)">
 
             <i class="fas fa-check-circle"></i>
@@ -80,7 +95,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Cancelled)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Cancelled)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Cancelled)">
 
             <i class="fas fa-times-circle"></i>
@@ -98,6 +114,11 @@
 
     <section class="appointments-content">
 
+
+        @* =================================================
+           CONTENT HEADER
+           ================================================= *@
+
         <div class="appointments-content-header">
 
             <div>
@@ -106,9 +127,9 @@
                     @GetFilterTitle()
                 </h2>
 
+
                 <p>
-                    Các lịch hẹn của bạn sẽ được
-                    hiển thị tại đây.
+                    @GetFilterDescription()
                 </p>
 
             </div>
@@ -117,19 +138,11 @@
 
 
         @* =================================================
-           PLACEHOLDER
+           LOADING
            ================================================= *@
-
-        @* =================================================
-        APPOINTMENT STATE
-        ================================================= *@
 
         @if (_appointmentStateService.IsLoading)
         {
-            @* =============================================
-            LOADING
-            ============================================= *@
-
             <div class="appointments-placeholder">
 
                 <div class="appointments-placeholder-icon">
@@ -150,13 +163,15 @@
 
             </div>
         }
+
+
+        @* =================================================
+           ERROR
+           ================================================= *@
+
         else if (!string.IsNullOrWhiteSpace(
             _appointmentStateService.ErrorMessage))
         {
-            @* =============================================
-       ERROR
-       ============================================= *@
-
             <div class="appointments-placeholder appointments-error">
 
                 <div class="appointments-placeholder-icon">
@@ -176,7 +191,9 @@
                 </p>
 
 
-                <button type="button" class="appointments-retry-button" @onclick="RetryAppointmentsAsync">
+                <button type="button"
+                        class="appointments-retry-button"
+                        @onclick="RetryAppointmentsAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -186,12 +203,14 @@
 
             </div>
         }
+
+
+        @* =================================================
+           EMPTY
+           ================================================= *@
+
         else if (_appointmentStateService.Appointments.Count == 0)
         {
-            @* =============================================
-            EMPTY
-            ============================================= *@
-
             <div class="appointments-placeholder">
 
                 <div class="appointments-placeholder-icon">
@@ -213,12 +232,14 @@
 
             </div>
         }
+
+
+        @* =================================================
+           APPOINTMENT LIST
+           ================================================= *@
+
         else
         {
-            @* =================================================
-       APPOINTMENT LIST
-       ================================================= *@
-
             <div class="appointment-list">
 
                 @foreach (var appointment in
@@ -228,36 +249,48 @@
 
 
                         @* =====================================
-                   DATE
-                   ===================================== *@
+                           DATE
+                           ===================================== *@
 
                         <div class="appointment-date">
 
                             <span class="appointment-date-day">
-                                @(appointment.StartTime.ToString("dd"))
+
+                                @(appointment.StartTime
+                                    .ToString("dd"))
+
                             </span>
+
 
                             <span class="appointment-date-month">
-                                Tháng @(appointment.StartTime.ToString("MM"))
+
+                                Tháng
+                                @(appointment.StartTime
+                                    .ToString("MM"))
+
                             </span>
 
+
                             <span class="appointment-date-year">
-                                @(appointment.StartTime.ToString("yyyy"))
+
+                                @(appointment.StartTime
+                                    .ToString("yyyy"))
+
                             </span>
 
                         </div>
 
 
                         @* =====================================
-                   MAIN CONTENT
-                   ===================================== *@
+                           CONTENT
+                           ===================================== *@
 
                         <div class="appointment-card-content">
 
 
                             @* =================================
-                       HEADER
-                       ================================= *@
+                               HEADER
+                               ================================= *@
 
                             <div class="appointment-card-header">
 
@@ -285,21 +318,30 @@
 
 
                                 <span class="appointment-status @GetStatusClass(appointment.Status)">
-                                    @GetStatusText(appointment.Status)
+
+                                    @GetStatusText(
+                                        appointment.Status)
+
                                 </span>
 
                             </div>
 
 
                             @* =================================
-                       DETAILS
-                       ================================= *@
+                               DETAILS
+                               ================================= *@
 
                             <div class="appointment-details">
+
+
+                                @* =============================
+                                   TIME
+                                   ============================= *@
 
                                 <div class="appointment-detail-item">
 
                                     <i class="far fa-clock"></i>
+
 
                                     <div>
 
@@ -307,10 +349,17 @@
                                             Thời gian
                                         </span>
 
+
                                         <strong>
-                                            @(appointment.StartTime.ToString("HH:mm"))
+
+                                            @(appointment.StartTime
+                                                .ToString("HH:mm"))
+
                                             -
-                                            @(appointment.EndTime.ToString("HH:mm"))
+
+                                            @(appointment.EndTime
+                                                .ToString("HH:mm"))
+
                                         </strong>
 
                                     </div>
@@ -318,9 +367,14 @@
                                 </div>
 
 
+                                @* =============================
+                                   DATE
+                                   ============================= *@
+
                                 <div class="appointment-detail-item">
 
                                     <i class="far fa-calendar-alt"></i>
+
 
                                     <div>
 
@@ -328,8 +382,12 @@
                                             Ngày khám
                                         </span>
 
+
                                         <strong>
-                                            @(appointment.StartTime.ToString("dd/MM/yyyy"))
+
+                                            @(appointment.StartTime
+                                                .ToString("dd/MM/yyyy"))
+
                                         </strong>
 
                                     </div>
@@ -337,11 +395,16 @@
                                 </div>
 
 
+                                @* =============================
+                                   QUEUE NUMBER
+                                   ============================= *@
+
                                 @if (appointment.QueueNumber.HasValue)
                                 {
                                     <div class="appointment-detail-item">
 
                                         <i class="fas fa-list-ol"></i>
+
 
                                         <div>
 
@@ -349,8 +412,11 @@
                                                 Số thứ tự
                                             </span>
 
+
                                             <strong>
+
                                                 #@appointment.QueueNumber.Value
+
                                             </strong>
 
                                         </div>
@@ -359,6 +425,29 @@
                                 }
 
                             </div>
+
+
+                            @* =================================
+                               ACTIONS
+                               ================================= *@
+
+                            @if (CanCancelAppointment(
+                                appointment))
+                            {
+                                <div class="appointment-actions">
+
+                                    <button type="button"
+                                            class="appointment-cancel-button"
+                                            @onclick="() => OpenCancelAppointment(appointment.Id)">
+
+                                        <i class="fas fa-times"></i>
+
+                                        Hủy lịch
+
+                                    </button>
+
+                                </div>
+                            }
 
                         </div>
 
@@ -372,8 +461,16 @@
 
 </div>
 
+
 @code
 {
+    // =====================================================
+    // CANCEL APPOINTMENT UI STATE
+    // =====================================================
+
+    private int? _cancelAppointmentId;
+
+
     // =====================================================
     // INITIALIZE
     // =====================================================
@@ -405,18 +502,6 @@
 
 
     // =====================================================
-    // RETRY APPOINTMENTS
-    // =====================================================
-
-    private async Task RetryAppointmentsAsync()
-    {
-        await _appointmentStateService
-            .LoadAppointmentsAsync(
-                _appointmentStateService.CurrentFilter
-            );
-    }
-
-    // =====================================================
     // CHANGE FILTER
     // =====================================================
 
@@ -435,7 +520,7 @@
 
 
         // =================================================
-        // LOAD APPOINTMENTS BY FILTER
+        // LOAD FILTER
         // =================================================
 
         await _appointmentStateService
@@ -443,6 +528,20 @@
                 filter
             );
     }
+
+
+    // =====================================================
+    // RETRY APPOINTMENTS
+    // =====================================================
+
+    private async Task RetryAppointmentsAsync()
+    {
+        await _appointmentStateService
+            .LoadAppointmentsAsync(
+                _appointmentStateService.CurrentFilter
+            );
+    }
+
 
     // =====================================================
     // GET FILTER CLASS
@@ -455,6 +554,7 @@
             ? "active"
             : string.Empty;
     }
+
 
     // =====================================================
     // GET FILTER TITLE
@@ -506,6 +606,7 @@
                 string.Empty
         };
     }
+
 
     // =====================================================
     // GET APPOINTMENT STATUS TEXT
@@ -571,6 +672,49 @@
                 string.Empty
         };
     }
+
+
+    // =====================================================
+    // CAN CANCEL APPOINTMENT
+    // =====================================================
+
+    private bool CanCancelAppointment(
+        MyAppointmentDTO appointment)
+    {
+        // =================================================
+        // CHỈ PENDING / CONFIRMED
+        // VÀ LỊCH PHẢI Ở TƯƠNG LAI
+        //
+        // 0 = Pending
+        // 1 = Confirmed
+        // =================================================
+
+        var canCancelStatus =
+            appointment.Status == 0 ||
+            appointment.Status == 1;
+
+
+        var isFuture =
+            appointment.StartTime >
+            DateTime.Now;
+
+
+        return canCancelStatus &&
+               isFuture;
+    }
+
+
+    // =====================================================
+    // OPEN CANCEL APPOINTMENT
+    // =====================================================
+
+    private void OpenCancelAppointment(
+        int appointmentId)
+    {
+        _cancelAppointmentId =
+            appointmentId;
+    }
+
 
     // =====================================================
     // HANDLE STATE CHANGED
