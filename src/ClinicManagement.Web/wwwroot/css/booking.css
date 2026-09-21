@@ -1452,3 +1452,66 @@
 
     margin-top: 18px;
 }
+
+/* =====================================================
+   CONTENT HEADER MAIN
+   ===================================================== */
+
+.booking-content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+}
+
+
+.booking-content-header-main {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+}
+
+
+/* =====================================================
+   BACK BUTTON
+   ===================================================== */
+
+.booking-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 9px 13px;
+
+    flex-shrink: 0;
+
+    border: 1px solid #dbe5ef;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.booking-back-button:hover {
+    border-color: #7dd3fc;
+
+    background-color: #f0f9ff;
+
+    color: #0284c7;
+}

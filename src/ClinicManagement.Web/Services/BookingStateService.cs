@@ -518,6 +518,78 @@ public class BookingStateService
     }
 
     // =====================================================
+    // GO BACK
+    // =====================================================
+
+    public void GoBack()
+    {
+        switch (CurrentStep)
+        {
+            // =================================================
+            // DOCTOR -> SPECIALTY
+            // =================================================
+
+            case 2:
+
+                SelectedDoctor = null;
+
+                SelectedDate = null;
+
+                SelectedSlot = null;
+
+                Doctors.Clear();
+
+                AvailableSlots.Clear();
+
+                CurrentStep = 1;
+
+                break;
+
+
+            // =================================================
+            // TIME -> DOCTOR
+            // =================================================
+
+            case 3:
+
+                SelectedDoctor = null;
+
+                SelectedDate = null;
+
+                SelectedSlot = null;
+
+                AvailableSlots.Clear();
+
+                CurrentStep = 2;
+
+                break;
+
+
+            // =================================================
+            // CONFIRM -> TIME
+            // =================================================
+
+            case 4:
+
+                SelectedSlot = null;
+
+                CurrentStep = 3;
+
+                break;
+        }
+
+
+        ErrorMessage =
+            string.Empty;
+
+        SuccessMessage =
+            string.Empty;
+
+
+        StateHasChanged();
+    }
+
+    // =====================================================
     // VALIDATE BOOKING
     // =====================================================
 
