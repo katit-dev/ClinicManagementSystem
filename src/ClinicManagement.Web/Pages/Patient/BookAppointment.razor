@@ -1117,8 +1117,8 @@
                     <div class="booking-confirm-item">
 
                         @* =============================================
-   REASON
-   ============================================= *@
+                        REASON
+                        ============================================= *@
 
                         <div class="booking-reason-section">
 
@@ -1146,6 +1146,53 @@
 
                             </div>
 
+                            @* =============================================
+                            SUBMIT
+                            ============================================= *@
+
+                            <div class="booking-submit-section">
+
+                                <button type="button" class="booking-submit-button"
+                                        disabled="@_bookingStateService.IsSubmitting" @onclick="SubmitBookingAsync">
+
+                                    @if (_bookingStateService.IsSubmitting)
+                                    {
+                                        <i class="fas fa-spinner fa-spin"></i>
+
+                                        <span>
+                                            Đang đặt lịch...
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-calendar-check"></i>
+
+                                        <span>
+                                            Xác nhận đặt lịch
+                                        </span>
+                                    }
+
+                                </button>
+
+                            </div>
+
+                            @* =============================================
+                            SUBMIT ERROR
+                            ============================================= *@
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                _bookingStateService.ErrorMessage))
+                            {
+                                <div class="booking-submit-error">
+
+                                    <i class="fas fa-exclamation-circle"></i>
+
+                                    <span>
+                                        @_bookingStateService.ErrorMessage
+                                    </span>
+
+                                </div>
+                            }
 
                             <textarea id="booking-reason" class="booking-reason-input" rows="4" maxlength="500"
                                       placeholder="Ví dụ: Đau đầu kéo dài 3 ngày..." value="@_bookingStateService.Reason"
@@ -1188,6 +1235,11 @@
 
 @code
 {
+    // =====================================================
+    // CREATED APPOINTMENT
+    // =====================================================
+    private AppointmentDTO? _createdAppointment;
+
     // =====================================================
     // INITIALIZE
     // =====================================================
@@ -1541,6 +1593,47 @@
             );
     }
 
+    // =====================================================
+    // SUBMIT BOOKING
+    // =====================================================
+
+    private async Task SubmitBookingAsync()
+    {
+        // =================================================
+        // CLEAR PREVIOUS RESULT
+        // =================================================
+
+        _createdAppointment = null;
+
+
+        // =================================================
+        // CREATE APPOINTMENT
+        // =================================================
+
+        var appointment =
+            await _bookingStateService
+                .CreateAppointmentAsync();
+
+
+        // =================================================
+        // FAILED
+        //
+        // ErrorMessage đã được BookingStateService xử lý.
+        // =================================================
+
+        if (appointment == null)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // SUCCESS
+        // =================================================
+
+        _createdAppointment =
+            appointment;
+    }
     // =====================================================
     // HANDLE BOOKING STATE CHANGED
     // =====================================================

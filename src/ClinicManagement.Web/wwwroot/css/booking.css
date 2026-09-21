@@ -1619,3 +1619,93 @@
 .booking-reason-input::placeholder {
     color: #94a3b8;
 }
+
+/* =====================================================
+   BOOKING SUBMIT SECTION
+   ===================================================== */
+
+.booking-submit-section {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-top: 6px;
+}
+
+
+/* =====================================================
+   SUBMIT BUTTON
+   ===================================================== */
+
+.booking-submit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    min-width: 190px;
+
+    padding: 12px 18px;
+
+    border: none;
+    border-radius: 10px;
+
+    background-color: #0ea5e9;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.booking-submit-button:hover:not(:disabled) {
+    background-color: #0284c7;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 8px 20px rgba(14, 165, 233, 0.2);
+}
+
+
+.booking-submit-button:disabled {
+    opacity: 0.65;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   SUBMIT ERROR
+   ===================================================== */
+
+.booking-submit-error {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 11px 13px;
+
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+
+    background-color: #fef2f2;
+
+    color: #b91c1c;
+
+    font-size: 13px;
+}
+
+
+.booking-submit-error i {
+    color: #dc2626;
+}
