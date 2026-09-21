@@ -101,38 +101,227 @@
 
 
         @* =================================================
-           STEP 2 - DOCTOR
-           ================================================= *@
+   STEP 2 - DOCTOR
+   ================================================= *@
 
-        <div class="booking-step @GetStepClass(2)">
+        else if (_bookingStateService.CurrentStep == 2)
+        {
+        @* =============================================
+       LOADING
+       ============================================= *@
 
-            <div class="booking-step-number">
+        @if (_bookingStateService.IsLoading)
+        {
+            <div class="booking-state">
 
-                @if (_bookingStateService.CurrentStep > 2)
+                <div class="booking-state-icon">
+
+                    <i class="fas fa-spinner fa-spin"></i>
+
+                </div>
+
+                <h3>
+                    Đang tải danh sách bác sĩ
+                </h3>
+
+                <p>
+                    Vui lòng chờ trong giây lát.
+                </p>
+
+            </div>
+        }
+
+
+        @* =============================================
+       ERROR
+       ============================================= *@
+
+        else if (!string.IsNullOrWhiteSpace(
+            _bookingStateService.ErrorMessage))
+        {
+            <div class="booking-state booking-state-error">
+
+                <div class="booking-state-icon">
+
+                    <i class="fas fa-exclamation-circle"></i>
+
+                </div>
+
+                <h3>
+                    Không thể tải danh sách bác sĩ
+                </h3>
+
+                <p>
+                    @_bookingStateService.ErrorMessage
+                </p>
+
+                <button type="button" class="booking-retry-button" @onclick="RetryDoctorsAsync">
+
+                    <i class="fas fa-redo-alt"></i>
+
+                    Thử lại
+
+                </button>
+
+            </div>
+        }
+
+
+        @* =============================================
+       EMPTY
+       ============================================= *@
+
+        else if (_bookingStateService.Doctors.Count == 0)
+        {
+            <div class="booking-state">
+
+                <div class="booking-state-icon">
+
+                    <i class="fas fa-user-md"></i>
+
+                </div>
+
+                <h3>
+                    Chưa có bác sĩ phù hợp
+                </h3>
+
+                <p>
+                    Hiện chưa có bác sĩ đang hoạt động
+                    trong chuyên khoa đã chọn.
+                </p>
+
+            </div>
+        }
+
+
+        @* =============================================
+       DOCTOR LIST
+       ============================================= *@
+
+        else
+        {
+            <div class="doctor-grid">
+
+                @foreach (var doctor in
+                    _bookingStateService.Doctors)
                 {
-                    <i class="fas fa-check"></i>
-                }
-                else
-                {
-                    <span>2</span>
+                    <button type="button" class="doctor-card" @onclick="() => SelectDoctor(
+                                doctor)">
+
+@* =================================
+                       AVATAR
+                       ================================= *@
+
+<div class="doctor-avatar">
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                doctor.AvatarUrl))
+                            {
+                                <img src="@doctor.AvatarUrl" alt="@doctor.FullName" />
+                            }
+                            else
+                            {
+                                <i class="fas fa-user-md"></i>
+                            }
+
+                        </div>
+
+
+                        @* =================================
+                       INFORMATION
+                       ================================= *@
+
+                        <div class="doctor-card-content">
+
+                            <div class="doctor-card-header">
+
+                                <div>
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        doctor.Title))
+                                    {
+                                        <span class="doctor-title">
+                                            @doctor.Title
+                                        </span>
+                                    }
+
+                                    <h3 class="doctor-name">
+                                        @doctor.FullName
+                                    </h3>
+
+                                </div>
+
+
+                                <div class="doctor-select-icon">
+
+                                    <i class="fas fa-arrow-right"></i>
+
+                                </div>
+
+                            </div>
+
+
+                            @* =================================
+                           DETAILS
+                           ================================= *@
+
+                            <div class="doctor-details">
+
+                                @if (doctor.ExperienceYears > 0)
+                                {
+                                    <div class="doctor-detail-item">
+
+                                        <i class="fas fa-briefcase-medical"></i>
+
+                                        <span>
+                                            @doctor.ExperienceYears năm kinh nghiệm
+                                        </span>
+
+                                    </div>
+                                }
+
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.Room))
+                                {
+                                    <div class="doctor-detail-item">
+
+                                        <i class="fas fa-door-open"></i>
+
+                                        <span>
+                                            Phòng @doctor.Room
+                                        </span>
+
+                                    </div>
+                                }
+
+                            </div>
+
+
+                            @* =================================
+                           CONSULTATION FEE
+                           ================================= *@
+
+                            <div class="doctor-card-footer">
+
+                                <span class="doctor-fee-label">
+                                    Phí khám
+                                </span>
+
+                                <span class="doctor-fee">
+                                    @doctor.ConsultationFee.ToString("N0") đ
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </button>
                 }
 
             </div>
-
-
-            <div class="booking-step-content">
-
-                <span class="booking-step-label">
-                    Bước 2
-                </span>
-
-                <span class="booking-step-title">
-                    Bác sĩ
-                </span>
-
-            </div>
-
-        </div>
+        }
+        }
 
 
         <div class="booking-step-line @GetStepLineClass(2)">
@@ -649,6 +838,16 @@
     {
         await _bookingStateService
             .LoadSpecialtiesAsync();
+    }
+
+    // =====================================================
+    // RETRY DOCTORS
+    // =====================================================
+
+    private async Task RetryDoctorsAsync()
+    {
+        await _bookingStateService
+            .LoadDoctorsAsync();
     }
 
 
