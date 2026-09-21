@@ -794,11 +794,15 @@
                             </div>
                         }
                         @* =========================================
-                        SLOT LOAD STATE
+                        SLOT STATE
                         ========================================= *@
 
                         @if (_bookingStateService.SelectedDate.HasValue)
                         {
+                            @* =====================================
+                            LOADING
+                            ===================================== *@
+
                             @if (_bookingStateService.IsLoading)
                             {
                                 <div class="slot-load-state">
@@ -811,25 +815,82 @@
 
                                 </div>
                             }
+
+
+                            @* =====================================
+                            ERROR
+                            ===================================== *@
+
                             else if (!string.IsNullOrWhiteSpace(
                                 _bookingStateService.ErrorMessage))
                             {
-                                <div class="slot-load-state slot-load-error">
+                                <div class="booking-state booking-state-error slot-state">
 
-                                    <i class="fas fa-exclamation-circle"></i>
+                                    <div class="booking-state-icon">
 
-                                    <span>
+                                        <i class="fas fa-exclamation-circle"></i>
+
+                                    </div>
+
+
+                                    <h3>
+                                        Không thể tải khung giờ
+                                    </h3>
+
+
+                                    <p>
                                         @_bookingStateService.ErrorMessage
-                                    </span>
+                                    </p>
+
+
+                                    <button type="button" class="booking-retry-button" @onclick="RetrySlotsAsync">
+
+                                        <i class="fas fa-redo-alt"></i>
+
+                                        Thử lại
+
+                                    </button>
 
                                 </div>
                             }
+
+
+                            @* =====================================
+                            EMPTY
+                            ===================================== *@
+
+                            else if (_bookingStateService.AvailableSlots.Count == 0)
+                            {
+                                <div class="booking-state slot-state">
+
+                                    <div class="booking-state-icon">
+
+                                        <i class="far fa-calendar-times"></i>
+
+                                    </div>
+
+
+                                    <h3>
+                                        Không còn khung giờ phù hợp
+                                    </h3>
+
+
+                                    <p>
+                                        Bác sĩ hiện không còn khung giờ trống
+                                        trong ngày đã chọn.
+                                        Vui lòng chọn ngày khác.
+                                    </p>
+
+                                </div>
+                            }
+
+
+                            @* =====================================
+                            AVAILABLE SLOTS
+                            ===================================== *@
+
                             else
                             {
-                                @* =========================================
-                                AVAILABLE SLOT LIST
-                                ========================================= *@
-
                                 <div class="booking-slot-section">
 
                                     <div class="booking-section-title">
@@ -863,7 +924,7 @@
                                                 </span>
 
                                                 <small>
-                                                    @(slot.EndTime.ToString("HH:mm"))
+                                                    đến @(slot.EndTime.ToString("HH:mm"))
                                                 </small>
 
                                             </button>
@@ -1390,6 +1451,15 @@
             .SelectSlot(
                 slot
             );
+    }
+
+    // =====================================================
+    // RETRY SLOTS
+    // =====================================================
+
+    private async Task RetrySlotsAsync()
+    {
+        await _bookingStateService.LoadAvailableSlotsAsync();
     }
 
     
