@@ -1,0 +1,257 @@
+/* =====================================================
+   MY APPOINTMENTS PAGE
+   ===================================================== */
+
+.appointments-page {
+    display: flex;
+    flex-direction: column;
+
+    gap: 22px;
+}
+
+
+/* =====================================================
+   PAGE HEADER
+   ===================================================== */
+
+.appointments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
+.appointments-header-label {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    margin-bottom: 8px;
+
+    color: #0284c7;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+}
+
+
+.appointments-title {
+    margin: 0;
+
+    font-size: 28px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.appointments-description {
+    margin: 7px 0 0;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   FILTERS
+   ===================================================== */
+
+.appointments-filter {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 6px;
+
+    overflow-x: auto;
+
+    border: 1px solid #e5edf5;
+    border-radius: 12px;
+
+    background-color: #ffffff;
+}
+
+
+.appointments-filter-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 10px 14px;
+
+    flex-shrink: 0;
+
+    border: none;
+    border-radius: 9px;
+
+    background-color: transparent;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.appointments-filter-button:hover {
+    background-color: #f0f9ff;
+
+    color: #0284c7;
+}
+
+
+.appointments-filter-button.active {
+    background-color: #0ea5e9;
+
+    color: #ffffff;
+}
+
+
+/* =====================================================
+   CONTENT
+   ===================================================== */
+
+.appointments-content {
+    padding: 22px;
+
+    border: 1px solid #e5edf5;
+    border-radius: 16px;
+
+    background-color: #ffffff;
+}
+
+
+.appointments-content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 20px;
+}
+
+
+.appointments-content-header h2 {
+    margin: 0;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.appointments-content-header p {
+    margin: 5px 0 0;
+
+    font-size: 13px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+   ===================================================== */
+
+.appointments-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 300px;
+
+    padding: 32px;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+
+    background-color: #f8fafc;
+
+    text-align: center;
+}
+
+
+.appointments-placeholder-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 58px;
+    height: 58px;
+
+    margin-bottom: 14px;
+
+    border-radius: 15px;
+
+    background-color: #e0f2fe;
+
+    color: #0284c7;
+
+    font-size: 22px;
+}
+
+
+.appointments-placeholder h3 {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.appointments-placeholder p {
+    max-width: 420px;
+
+    margin: 7px 0 0;
+
+    font-size: 13px;
+    line-height: 1.6;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .appointments-title {
+        font-size: 24px;
+    }
+
+
+    .appointments-content {
+        padding: 16px;
+    }
+
+
+    .appointments-placeholder {
+        min-height: 250px;
+
+        padding: 24px 16px;
+    }
+}
