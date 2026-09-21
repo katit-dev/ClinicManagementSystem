@@ -165,6 +165,33 @@ public class AuthorizedApiService
         );
     }
 
+    // =====================================================
+    // PATCH
+    // =====================================================
+
+    public async Task<HttpResponseMessage> PatchAsync(
+        string requestUri,
+        HttpContent content)
+    {
+        var isAuthorized =
+            await PrepareAuthorizationAsync();
+
+
+        if (!isAuthorized)
+        {
+            return new HttpResponseMessage(
+                System.Net.HttpStatusCode.Unauthorized
+            );
+        }
+
+
+        return await _httpClient
+            .PatchAsync(
+                requestUri,
+                content
+            );
+    }
+
 
     // =====================================================
     // DELETE
