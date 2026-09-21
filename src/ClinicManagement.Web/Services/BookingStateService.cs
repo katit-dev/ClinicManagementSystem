@@ -741,17 +741,11 @@ public class BookingStateService
             var request =
                 new CreateAppointmentRequestDTO
                 {
-                    DoctorId =
-                        SelectedDoctor!.Id,
+                    DoctorId = SelectedDoctor!.Id,
 
-                    StartTime =
-                        SelectedSlot!.StartTime,
+                    StartTime = SelectedSlot!.StartTime,
 
-                    Reason =
-                        string.IsNullOrWhiteSpace(
-                            Reason)
-                            ? null
-                            : Reason
+                    Reason = string.IsNullOrWhiteSpace(Reason) ? null : Reason.Trim()
                 };
 
 
