@@ -479,6 +479,20 @@
 
                                     </div>
 
+                                    @if (!string.IsNullOrWhiteSpace(
+    _appointmentStateService.CancelErrorMessage))
+                                    {
+                                        <div class="appointment-cancel-error">
+
+                                            <i class="fas fa-exclamation-circle"></i>
+
+                                            <span>
+                                                @_appointmentStateService.CancelErrorMessage
+                                            </span>
+
+                                        </div>
+                                    }
+
 
                                     <div class="appointment-cancel-form-actions">
 
@@ -494,7 +508,8 @@
                                                 disabled="@_appointmentStateService.IsCancelling" @onclick="() => ConfirmCancelAppointmentAsync(
                                                     appointment.Id)">
 
-                                            @if (_appointmentStateService.IsCancelling && _appointmentStateService.CancellingAppointmentId == appointment.Id)
+                                            @if (_appointmentStateService.IsCancelling &&
+                                _appointmentStateService.CancellingAppointmentId == appointment.Id)
                                             {
                                                 <i class="fas fa-spinner fa-spin"></i>
 
@@ -757,10 +772,17 @@
     private void OpenCancelAppointment(
         int appointmentId)
     {
-        _cancelAppointmentId = appointmentId;
+        _appointmentStateService
+            .ClearCancelError();
 
-        _cancelReason = string.Empty;
+
+        _cancelAppointmentId =
+            appointmentId;
+
+        _cancelReason =
+            string.Empty;
     }
+
 
     // =====================================================
     // CLOSE CANCEL APPOINTMENT
@@ -768,9 +790,15 @@
 
     private void CloseCancelAppointment()
     {
-        _cancelAppointmentId = null;
+        _appointmentStateService
+            .ClearCancelError();
 
-        _cancelReason = string.Empty;
+
+        _cancelAppointmentId =
+            null;
+
+        _cancelReason =
+            string.Empty;
     }
 
     // =====================================================

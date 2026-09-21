@@ -840,3 +840,32 @@
 
     cursor: not-allowed;
 }
+
+/* =====================================================
+   CANCEL ERROR
+   ===================================================== */
+
+.appointment-cancel-error {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 10px;
+
+    padding: 9px 11px;
+
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+
+    background-color: #fef2f2;
+
+    color: #b91c1c;
+
+    font-size: 12px;
+}
+
+
+.appointment-cancel-error i {
+    color: #dc2626;
+}

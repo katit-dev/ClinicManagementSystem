@@ -14,19 +14,20 @@ namespace ClinicManagementSystem.Web.Services;
 
 public class PatientAppointmentStateService
 {
-    private readonly AuthorizedApiService
-        _authorizedApiService;
+    private readonly AuthorizedApiService _authorizedApiService;
 
 
     // =====================================================
     // APPOINTMENTS
     // =====================================================
+    public List<MyAppointmentDTO> Appointments { get; private set; } = new();
 
-    public List<MyAppointmentDTO> Appointments
-    {
-        get;
-        private set;
-    } = new();
+    // CANCEL ERROR MESSAGE
+    public string CancelErrorMessage { get; private set; } = string.Empty;
+    public int? CancellingAppointmentId { get; private set; }
+
+
+    public bool IsCancelling { get; private set; }
 
 
     // =====================================================
@@ -199,10 +200,16 @@ public class PatientAppointmentStateService
     // CANCEL APPOINTMENT
     // =====================================================
 
-    public async Task<bool> CancelAppointmentAsync(
-        int appointmentId,
-        string reason)
+    public async Task<bool> CancelAppointmentAsync(int appointmentId, string reason)
     {
+        // =================================================
+        // CLEAR PREVIOUS CANCEL ERROR
+        // =================================================
+
+        CancelErrorMessage =
+            string.Empty;
+
+
         // =================================================
         // VALIDATE REASON
         // =================================================
@@ -210,7 +217,7 @@ public class PatientAppointmentStateService
         if (string.IsNullOrWhiteSpace(
             reason))
         {
-            ErrorMessage =
+            CancelErrorMessage =
                 "Vui lòng nhập lý do hủy lịch.";
 
             StateHasChanged();
@@ -221,7 +228,7 @@ public class PatientAppointmentStateService
 
         if (reason.Trim().Length > 500)
         {
-            ErrorMessage =
+            CancelErrorMessage =
                 "Lý do hủy không được vượt quá 500 ký tự.";
 
             StateHasChanged();
@@ -239,7 +246,7 @@ public class PatientAppointmentStateService
         CancellingAppointmentId =
             appointmentId;
 
-        ErrorMessage =
+        CancelErrorMessage =
             string.Empty;
 
 
@@ -248,15 +255,10 @@ public class PatientAppointmentStateService
 
         try
         {
-            // =================================================
-            // CREATE REQUEST
-            // =================================================
-
             var request =
                 new CancelAppointmentRequestDTO
                 {
-                    CancelReason =
-                        reason.Trim()
+                    CancelReason = reason.Trim()
                 };
 
 
@@ -266,13 +268,6 @@ public class PatientAppointmentStateService
                 );
 
 
-            // =================================================
-            // CALL API
-            //
-            // PATCH:
-            // /api/appointments/{id}/cancel
-            // =================================================
-
             var response =
                 await _authorizedApiService
                     .PatchAsync(
@@ -281,26 +276,18 @@ public class PatientAppointmentStateService
                     );
 
 
-            // =================================================
-            // READ RESPONSE
-            // =================================================
-
             var responseData =
                 await response.Content
                     .ReadFromJsonAsync<
                         HttpResponseData<object>>();
 
 
-            // =================================================
-            // FAILED
-            // =================================================
-
             if (!response.IsSuccessStatusCode ||
                 responseData == null ||
                 responseData.StatusCode < 200 ||
                 responseData.StatusCode >= 300)
             {
-                ErrorMessage =
+                CancelErrorMessage =
                     responseData?.Message
                     ?? "Không thể hủy lịch hẹn.";
 
@@ -308,15 +295,11 @@ public class PatientAppointmentStateService
             }
 
 
-            // =================================================
-            // SUCCESS
-            // =================================================
-
             return true;
         }
         catch
         {
-            ErrorMessage =
+            CancelErrorMessage =
                 "Không thể kết nối đến hệ thống.";
 
             return false;
@@ -328,27 +311,22 @@ public class PatientAppointmentStateService
             CancellingAppointmentId =
                 null;
 
-
             StateHasChanged();
         }
     }
 
     // =====================================================
-    // CANCEL STATE
+    // CLEAR CANCEL ERROR
     // =====================================================
 
-    public int? CancellingAppointmentId
+    public void ClearCancelError()
     {
-        get;
-        private set;
+        CancelErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
     }
 
-
-    public bool IsCancelling
-    {
-        get;
-        private set;
-    }
 
     // =====================================================
     // RESET
@@ -370,6 +348,8 @@ public class PatientAppointmentStateService
 
         ErrorMessage =
             string.Empty;
+
+        CancelErrorMessage = string.Empty;
 
 
         StateHasChanged();
