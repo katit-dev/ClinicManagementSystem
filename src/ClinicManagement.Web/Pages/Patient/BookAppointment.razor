@@ -306,9 +306,7 @@
                     </p>
 
 
-                    <button type="button"
-                            class="booking-retry-button"
-                            @onclick="RetrySpecialtiesAsync">
+                    <button type="button" class="booking-retry-button" @onclick="RetrySpecialtiesAsync">
 
                         <i class="fas fa-redo-alt"></i>
 
@@ -366,8 +364,7 @@
                             specialty.Id;
 
 
-                        <button type="button"
-                                class="specialty-card @(isSelected ? "selected" : "")"
+                        <button type="button" class="specialty-card @(isSelected ? "selected" : "")"
                                 @onclick="() => SelectSpecialtyAsync(specialty.Id)">
 
 
@@ -486,9 +483,7 @@
                     </p>
 
 
-                    <button type="button"
-                            class="booking-retry-button"
-                            @onclick="RetryDoctorsAsync">
+                    <button type="button" class="booking-retry-button" @onclick="RetryDoctorsAsync">
 
                         <i class="fas fa-redo-alt"></i>
 
@@ -540,9 +535,7 @@
                     @foreach (var doctor in
                         _bookingStateService.Doctors)
                     {
-                        <button type="button"
-                                class="doctor-card"
-                                @onclick="() => SelectDoctor(doctor)">
+                        <button type="button" class="doctor-card" @onclick="() => SelectDoctor(doctor)">
 
 
                             @* =================================
@@ -554,8 +547,7 @@
                                 @if (!string.IsNullOrWhiteSpace(
                                     doctor.AvatarUrl))
                                 {
-                                    <img src="@doctor.AvatarUrl"
-                                         alt="@doctor.FullName" />
+                                    <img src="@doctor.AvatarUrl" alt="@doctor.FullName" />
                                 }
                                 else
                                 {
@@ -661,6 +653,127 @@
 
                 </div>
             }
+        }
+
+        @* =================================================
+        STEP 3 - TIME
+        ================================================= *@
+
+        else if (_bookingStateService.CurrentStep == 3)
+        {
+            <div class="booking-time-section">
+
+                @* =============================================
+           SELECTED DOCTOR
+           ============================================= *@
+
+                @if (_bookingStateService.SelectedDoctor != null)
+                {
+                    var doctor =
+                        _bookingStateService.SelectedDoctor;
+
+
+                    <div class="selected-doctor-summary">
+
+                        <div class="selected-doctor-icon">
+
+                            <i class="fas fa-user-md"></i>
+
+                        </div>
+
+
+                        <div class="selected-doctor-content">
+
+                            <span class="selected-doctor-label">
+                                Bác sĩ đã chọn
+                            </span>
+
+
+                            <h3 class="selected-doctor-name">
+                                @doctor.FullName
+                            </h3>
+
+
+                            <div class="selected-doctor-meta">
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.Title))
+                                {
+                                    <span>
+                                        @doctor.Title
+                                    </span>
+                                }
+
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    doctor.Room))
+                                {
+                                    <span>
+                                        Phòng @doctor.Room
+                                    </span>
+                                }
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="selected-doctor-fee">
+
+                            <span>
+                                Phí khám
+                            </span>
+
+                            <strong>
+                                @doctor.ConsultationFee.ToString("N0") đ
+                            </strong>
+
+                        </div>
+
+                    </div>
+                }
+
+
+                @* =============================================
+           DATE SECTION
+           ============================================= *@
+
+                <div class="booking-date-section">
+
+                    <div class="booking-section-title">
+
+                        <div>
+
+                            <h3>
+                                Chọn ngày khám
+                            </h3>
+
+                            <p>
+                                Chọn ngày bạn muốn đến khám.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    @* =========================================
+               DATE PICKER PLACEHOLDER
+               ========================================= *@
+
+                    <div class="booking-date-placeholder">
+
+                        <i class="far fa-calendar-alt"></i>
+
+                        <span>
+                            Date Picker sẽ được thêm ở bước tiếp theo.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
         }
 
     </section>

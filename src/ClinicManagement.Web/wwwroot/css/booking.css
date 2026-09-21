@@ -862,3 +862,194 @@
 
     color: #0f766e;
 }
+
+/* =====================================================
+   BOOKING TIME SECTION
+   ===================================================== */
+
+.booking-time-section {
+    display: flex;
+    flex-direction: column;
+
+    gap: 22px;
+}
+
+
+/* =====================================================
+   SELECTED DOCTOR SUMMARY
+   ===================================================== */
+
+.selected-doctor-summary {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 18px 20px;
+
+    border: 1px solid #bae6fd;
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f0f9ff 0%,
+            #ffffff 100%
+        );
+}
+
+
+.selected-doctor-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    border-radius: 13px;
+
+    background-color: #0ea5e9;
+
+    color: #ffffff;
+
+    font-size: 18px;
+}
+
+
+.selected-doctor-content {
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.selected-doctor-label {
+    display: block;
+
+    margin-bottom: 3px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    color: #0284c7;
+}
+
+
+.selected-doctor-name {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.selected-doctor-meta {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 6px 12px;
+
+    margin-top: 5px;
+
+    font-size: 12px;
+
+    color: #64748b;
+}
+
+
+.selected-doctor-fee {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    flex-shrink: 0;
+}
+
+
+.selected-doctor-fee span {
+    font-size: 11px;
+
+    color: #94a3b8;
+}
+
+
+.selected-doctor-fee strong {
+    margin-top: 2px;
+
+    font-size: 15px;
+
+    color: #0f766e;
+}
+
+
+/* =====================================================
+   DATE SECTION
+   ===================================================== */
+
+.booking-date-section {
+    padding: 20px;
+
+    border: 1px solid #e5edf5;
+    border-radius: 15px;
+
+    background-color: #ffffff;
+}
+
+
+.booking-section-title h3 {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.booking-section-title p {
+    margin: 5px 0 0;
+
+    font-size: 13px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   DATE PLACEHOLDER
+   ===================================================== */
+
+.booking-date-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    min-height: 110px;
+
+    margin-top: 16px;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+
+    background-color: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+.booking-date-placeholder i {
+    color: #0284c7;
+
+    font-size: 18px;
+}
