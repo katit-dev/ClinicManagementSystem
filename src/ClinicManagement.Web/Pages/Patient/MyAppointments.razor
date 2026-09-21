@@ -8,6 +8,8 @@
 
 @implements IDisposable
 
+@using ClinicManagementSystem.Application.Enums
+
 
 <PageTitle>Lịch hẹn của tôi</PageTitle>
 
@@ -43,12 +45,13 @@
 
 
     @* =================================================
-       FILTERS
-       ================================================= *@
+    FILTERS
+    ================================================= *@
 
     <div class="appointments-filter">
 
-        <button type="button" class="appointments-filter-button active">
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.All)"
+                @onclick="() => ChangeFilterAsync(MyAppointmentFilter.All)">
 
             <i class="fas fa-list"></i>
 
@@ -57,7 +60,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button">
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Upcoming)"
+                @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Upcoming)">
 
             <i class="far fa-clock"></i>
 
@@ -66,7 +70,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button">
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Completed)"
+                @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Completed)">
 
             <i class="fas fa-check-circle"></i>
 
@@ -75,7 +80,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button">
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Cancelled)"
+                @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Cancelled)">
 
             <i class="fas fa-times-circle"></i>
 
@@ -97,7 +103,7 @@
             <div>
 
                 <h2>
-                    Danh sách lịch hẹn
+                    @GetFilterTitle()
                 </h2>
 
                 <p>
@@ -115,14 +121,14 @@
            ================================================= *@
 
         @* =================================================
-   APPOINTMENT STATE
-   ================================================= *@
+        APPOINTMENT STATE
+        ================================================= *@
 
         @if (_appointmentStateService.IsLoading)
         {
             @* =============================================
-       LOADING
-       ============================================= *@
+            LOADING
+            ============================================= *@
 
             <div class="appointments-placeholder">
 
@@ -183,8 +189,8 @@
         else if (_appointmentStateService.Appointments.Count == 0)
         {
             @* =============================================
-       EMPTY
-       ============================================= *@
+            EMPTY
+            ============================================= *@
 
             <div class="appointments-placeholder">
 
@@ -210,8 +216,8 @@
         else
         {
             @* =============================================
-       DATA LOADED
-       ============================================= *@
+            DATA LOADED
+            ============================================= *@
 
             <div class="appointments-placeholder">
 
@@ -283,6 +289,96 @@
             );
     }
 
+    // =====================================================
+    // CHANGE FILTER
+    // =====================================================
+
+    private async Task ChangeFilterAsync(
+        MyAppointmentFilter filter)
+    {
+        // =================================================
+        // SAME FILTER
+        // =================================================
+
+        if (_appointmentStateService.CurrentFilter == filter &&
+            _appointmentStateService.Appointments.Count > 0)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // LOAD APPOINTMENTS BY FILTER
+        // =================================================
+
+        await _appointmentStateService
+            .LoadAppointmentsAsync(
+                filter
+            );
+    }
+
+    // =====================================================
+    // GET FILTER CLASS
+    // =====================================================
+
+    private string GetFilterClass(
+        MyAppointmentFilter filter)
+    {
+        return _appointmentStateService.CurrentFilter == filter
+            ? "active"
+            : string.Empty;
+    }
+
+    // =====================================================
+    // GET FILTER TITLE
+    // =====================================================
+
+    private string GetFilterTitle()
+    {
+        return _appointmentStateService.CurrentFilter switch
+        {
+            MyAppointmentFilter.All =>
+                "Tất cả lịch hẹn",
+
+            MyAppointmentFilter.Upcoming =>
+                "Lịch hẹn sắp tới",
+
+            MyAppointmentFilter.Completed =>
+                "Lịch hẹn đã hoàn thành",
+
+            MyAppointmentFilter.Cancelled =>
+                "Lịch hẹn đã hủy",
+
+            _ =>
+                "Danh sách lịch hẹn"
+        };
+    }
+
+
+    // =====================================================
+    // GET FILTER DESCRIPTION
+    // =====================================================
+
+    private string GetFilterDescription()
+    {
+        return _appointmentStateService.CurrentFilter switch
+        {
+            MyAppointmentFilter.All =>
+                "Toàn bộ lịch hẹn của bạn.",
+
+            MyAppointmentFilter.Upcoming =>
+                "Các lịch hẹn sắp diễn ra.",
+
+            MyAppointmentFilter.Completed =>
+                "Các lịch khám đã hoàn thành.",
+
+            MyAppointmentFilter.Cancelled =>
+                "Các lịch hẹn đã được hủy.",
+
+            _ =>
+                string.Empty
+        };
+    }
 
     // =====================================================
     // HANDLE STATE CHANGED
