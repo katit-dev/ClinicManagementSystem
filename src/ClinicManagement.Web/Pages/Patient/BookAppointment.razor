@@ -1116,6 +1116,43 @@
                 {
                     <div class="booking-confirm-item">
 
+                        @* =============================================
+   REASON
+   ============================================= *@
+
+                        <div class="booking-reason-section">
+
+                            <div class="booking-reason-header">
+
+                                <div>
+
+                                    <label for="booking-reason" class="booking-reason-label">
+
+                                        Lý do khám
+
+                                    </label>
+
+                                    <p>
+                                        Mô tả ngắn gọn triệu chứng hoặc
+                                        lý do bạn muốn đến khám.
+                                    </p>
+
+                                </div>
+
+
+                                <span class="booking-reason-count">
+                                    @_bookingStateService.Reason.Length/500
+                                </span>
+
+                            </div>
+
+
+                            <textarea id="booking-reason" class="booking-reason-input" rows="4" maxlength="500"
+                                      placeholder="Ví dụ: Đau đầu kéo dài 3 ngày..." value="@_bookingStateService.Reason"
+                                      @oninput="HandleReasonChanged"> </textarea>
+
+                        </div>
+
                         <div class="booking-confirm-icon">
 
                             <i class="fas fa-money-bill-wave"></i>
@@ -1486,7 +1523,23 @@
         await _bookingStateService.LoadAvailableSlotsAsync();
     }
 
-    
+    // =====================================================
+    // HANDLE REASON CHANGED
+    // =====================================================
+
+    private void HandleReasonChanged(
+        ChangeEventArgs e)
+    {
+        var reason =
+            e.Value?.ToString()
+            ?? string.Empty;
+
+
+        _bookingStateService
+            .SetReason(
+                reason
+            );
+    }
 
     // =====================================================
     // HANDLE BOOKING STATE CHANGED

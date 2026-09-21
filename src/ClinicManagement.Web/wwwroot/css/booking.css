@@ -1515,3 +1515,107 @@
 
     color: #0284c7;
 }
+
+/* =====================================================
+   BOOKING REASON
+   ===================================================== */
+
+.booking-reason-section {
+    padding: 18px;
+
+    border: 1px solid #e5edf5;
+    border-radius: 12px;
+
+    background-color: #ffffff;
+}
+
+
+/* =====================================================
+   REASON HEADER
+   ===================================================== */
+
+.booking-reason-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 12px;
+}
+
+
+.booking-reason-label {
+    display: block;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.booking-reason-header p {
+    margin: 4px 0 0;
+
+    font-size: 12px;
+    line-height: 1.5;
+
+    color: #94a3b8;
+}
+
+
+.booking-reason-count {
+    flex-shrink: 0;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   REASON INPUT
+   ===================================================== */
+
+.booking-reason-input {
+    width: 100%;
+
+    min-height: 110px;
+
+    padding: 12px 14px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+
+    background-color: #ffffff;
+
+    color: #16324f;
+
+    font-family: inherit;
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    resize: vertical;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.booking-reason-input:focus {
+    border-color: #0ea5e9;
+
+    box-shadow:
+        0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+
+.booking-reason-input::placeholder {
+    color: #94a3b8;
+}
