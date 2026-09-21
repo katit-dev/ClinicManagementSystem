@@ -758,16 +758,41 @@
 
 
                     @* =========================================
-               DATE PICKER PLACEHOLDER
-               ========================================= *@
+                DATE PICKER
+                ========================================= *@
 
-                    <div class="booking-date-placeholder">
+                    <div class="booking-date-picker">
 
-                        <i class="far fa-calendar-alt"></i>
+                        <label for="appointment-date" class="booking-date-label">
 
-                        <span>
-                            Date Picker sẽ được thêm ở bước tiếp theo.
-                        </span>
+                            <i class="far fa-calendar-alt"></i>
+
+                            Ngày khám
+
+                        </label>
+
+
+                        <input id="appointment-date" type="date" class="booking-date-input" min="@GetMinimumDate()"
+                               value="@GetSelectedDateValue()" @onchange="HandleDateChanged" />
+
+
+                        @if (_bookingStateService.SelectedDate.HasValue)
+                        {
+                            <div class="selected-date-info">
+
+                                <i class="fas fa-check-circle"></i>
+
+                                <span>
+                                    Ngày đã chọn:
+                                </span>
+
+                                <strong>
+                                    @_bookingStateService.SelectedDate.Value
+                                    .ToString("dd/MM/yyyy")
+                                </strong>
+
+                            </div>
+                        }
 
                     </div>
 
@@ -988,6 +1013,96 @@
         };
     }
 
+    // =====================================================
+    // GET MINIMUM DATE
+    // =====================================================
+
+    private string GetMinimumDate()
+    {
+        return DateOnly
+            .FromDateTime(
+                DateTime.Today
+            )
+            .ToString(
+                "yyyy-MM-dd"
+            );
+    }
+
+
+    // =====================================================
+    // GET SELECTED DATE VALUE
+    // =====================================================
+
+    private string GetSelectedDateValue()
+    {
+        return _bookingStateService
+            .SelectedDate?
+            .ToString(
+                "yyyy-MM-dd"
+            )
+            ?? string.Empty;
+    }
+
+
+    // =====================================================
+    // HANDLE DATE CHANGED
+    // =====================================================
+
+    private void HandleDateChanged(
+        ChangeEventArgs e)
+    {
+        var value =
+            e.Value?.ToString();
+
+
+        // =================================================
+        // EMPTY DATE
+        // =================================================
+
+        if (string.IsNullOrWhiteSpace(
+            value))
+        {
+            return;
+        }
+
+
+        // =================================================
+        // PARSE DATE
+        // =================================================
+
+        if (!DateOnly.TryParse(
+            value,
+            out var selectedDate))
+        {
+            return;
+        }
+
+
+        // =================================================
+        // PREVENT PAST DATE
+        // =================================================
+
+        var today =
+            DateOnly.FromDateTime(
+                DateTime.Today
+            );
+
+
+        if (selectedDate < today)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // UPDATE BOOKING STATE
+        // =================================================
+
+        _bookingStateService
+            .SelectDate(
+                selectedDate
+            );
+    }
 
     // =====================================================
     // HANDLE BOOKING STATE CHANGED

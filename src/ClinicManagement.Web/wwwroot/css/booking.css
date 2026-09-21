@@ -1053,3 +1053,103 @@
 
     font-size: 18px;
 }
+
+/* =====================================================
+   DATE PICKER
+   ===================================================== */
+
+.booking-date-picker {
+    margin-top: 18px;
+}
+
+
+/* =====================================================
+   DATE LABEL
+   ===================================================== */
+
+.booking-date-label {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    color: #475569;
+}
+
+
+.booking-date-label i {
+    color: #0284c7;
+}
+
+
+/* =====================================================
+   DATE INPUT
+   ===================================================== */
+
+.booking-date-input {
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+
+    background-color: #ffffff;
+
+    color: #16324f;
+
+    font-size: 14px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.booking-date-input:focus {
+    border-color: #0ea5e9;
+
+    box-shadow:
+        0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+
+/* =====================================================
+   SELECTED DATE
+   ===================================================== */
+
+.selected-date-info {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    margin-top: 12px;
+
+    padding: 10px 12px;
+
+    border-radius: 9px;
+
+    background-color: #f0fdf4;
+
+    font-size: 13px;
+
+    color: #475569;
+}
+
+
+.selected-date-info i {
+    color: #16a34a;
+}
+
+
+.selected-date-info strong {
+    color: #166534;
+}
