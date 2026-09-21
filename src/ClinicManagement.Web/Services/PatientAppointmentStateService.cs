@@ -195,6 +195,160 @@ public class PatientAppointmentStateService
         }
     }
 
+    // =====================================================
+    // CANCEL APPOINTMENT
+    // =====================================================
+
+    public async Task<bool> CancelAppointmentAsync(
+        int appointmentId,
+        string reason)
+    {
+        // =================================================
+        // VALIDATE REASON
+        // =================================================
+
+        if (string.IsNullOrWhiteSpace(
+            reason))
+        {
+            ErrorMessage =
+                "Vui lòng nhập lý do hủy lịch.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        if (reason.Trim().Length > 500)
+        {
+            ErrorMessage =
+                "Lý do hủy không được vượt quá 500 ký tự.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START CANCELLING
+        // =================================================
+
+        IsCancelling = true;
+
+        CancellingAppointmentId =
+            appointmentId;
+
+        ErrorMessage =
+            string.Empty;
+
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CREATE REQUEST
+            // =================================================
+
+            var request =
+                new CancelAppointmentRequestDTO
+                {
+                    CancelReason =
+                        reason.Trim()
+                };
+
+
+            var content =
+                JsonContent.Create(
+                    request
+                );
+
+
+            // =================================================
+            // CALL API
+            //
+            // PATCH:
+            // /api/appointments/{id}/cancel
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PatchAsync(
+                        $"/api/appointments/{appointmentId}/cancel",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<object>>();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể hủy lịch hẹn.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsCancelling = false;
+
+            CancellingAppointmentId =
+                null;
+
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
+    // CANCEL STATE
+    // =====================================================
+
+    public int? CancellingAppointmentId
+    {
+        get;
+        private set;
+    }
+
+
+    public bool IsCancelling
+    {
+        get;
+        private set;
+    }
 
     // =====================================================
     // RESET
@@ -208,6 +362,11 @@ public class PatientAppointmentStateService
             MyAppointmentFilter.All;
 
         IsLoading = false;
+
+        IsCancelling = false;
+
+        CancellingAppointmentId =
+            null;
 
         ErrorMessage =
             string.Empty;
