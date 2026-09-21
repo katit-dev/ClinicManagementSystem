@@ -255,3 +255,55 @@
         padding: 24px 16px;
     }
 }
+
+/* =====================================================
+   ERROR STATE
+   ===================================================== */
+
+.appointments-error {
+    border-color: #fecaca;
+
+    background-color: #fffafa;
+}
+
+
+.appointments-error
+.appointments-placeholder-icon {
+    background-color: #fee2e2;
+
+    color: #dc2626;
+}
+
+
+/* =====================================================
+   RETRY BUTTON
+   ===================================================== */
+
+.appointments-retry-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 18px;
+
+    padding: 9px 14px;
+
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+
+    color: #b91c1c;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+.appointments-retry-button:hover {
+    background-color: #fef2f2;
+}

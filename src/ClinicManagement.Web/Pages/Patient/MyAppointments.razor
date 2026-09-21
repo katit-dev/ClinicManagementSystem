@@ -4,6 +4,10 @@
 
 @attribute [Authorize(Roles = "Patient")]
 
+@inject PatientAppointmentStateService _appointmentStateService
+
+@implements IDisposable
+
 
 <PageTitle>Lịch hẹn của tôi</PageTitle>
 
@@ -44,8 +48,7 @@
 
     <div class="appointments-filter">
 
-        <button type="button"
-                class="appointments-filter-button active">
+        <button type="button" class="appointments-filter-button active">
 
             <i class="fas fa-list"></i>
 
@@ -54,8 +57,7 @@
         </button>
 
 
-        <button type="button"
-                class="appointments-filter-button">
+        <button type="button" class="appointments-filter-button">
 
             <i class="far fa-clock"></i>
 
@@ -64,8 +66,7 @@
         </button>
 
 
-        <button type="button"
-                class="appointments-filter-button">
+        <button type="button" class="appointments-filter-button">
 
             <i class="fas fa-check-circle"></i>
 
@@ -74,8 +75,7 @@
         </button>
 
 
-        <button type="button"
-                class="appointments-filter-button">
+        <button type="button" class="appointments-filter-button">
 
             <i class="fas fa-times-circle"></i>
 
@@ -114,27 +114,195 @@
            PLACEHOLDER
            ================================================= *@
 
-        <div class="appointments-placeholder">
+        @* =================================================
+   APPOINTMENT STATE
+   ================================================= *@
 
-            <div class="appointments-placeholder-icon">
+        @if (_appointmentStateService.IsLoading)
+        {
+            @* =============================================
+       LOADING
+       ============================================= *@
 
-                <i class="far fa-calendar-alt"></i>
+            <div class="appointments-placeholder">
+
+                <div class="appointments-placeholder-icon">
+
+                    <i class="fas fa-spinner fa-spin"></i>
+
+                </div>
+
+
+                <h3>
+                    Đang tải lịch hẹn
+                </h3>
+
+
+                <p>
+                    Vui lòng chờ trong giây lát.
+                </p>
 
             </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(
+            _appointmentStateService.ErrorMessage))
+        {
+            @* =============================================
+       ERROR
+       ============================================= *@
+
+            <div class="appointments-placeholder appointments-error">
+
+                <div class="appointments-placeholder-icon">
+
+                    <i class="fas fa-exclamation-circle"></i>
+
+                </div>
 
 
-            <h3>
-                Chưa tải dữ liệu lịch hẹn
-            </h3>
+                <h3>
+                    Không thể tải lịch hẹn
+                </h3>
 
 
-            <p>
-                Danh sách lịch hẹn sẽ được kết nối
-                với API ở bước tiếp theo.
-            </p>
+                <p>
+                    @_appointmentStateService.ErrorMessage
+                </p>
 
-        </div>
+
+                <button type="button" class="appointments-retry-button" @onclick="RetryAppointmentsAsync">
+
+                    <i class="fas fa-redo-alt"></i>
+
+                    Thử lại
+
+                </button>
+
+            </div>
+        }
+        else if (_appointmentStateService.Appointments.Count == 0)
+        {
+            @* =============================================
+       EMPTY
+       ============================================= *@
+
+            <div class="appointments-placeholder">
+
+                <div class="appointments-placeholder-icon">
+
+                    <i class="far fa-calendar-times"></i>
+
+                </div>
+
+
+                <h3>
+                    Chưa có lịch hẹn
+                </h3>
+
+
+                <p>
+                    Bạn chưa có lịch hẹn nào
+                    trong nhóm đang xem.
+                </p>
+
+            </div>
+        }
+        else
+        {
+            @* =============================================
+       DATA LOADED
+       ============================================= *@
+
+            <div class="appointments-placeholder">
+
+                <div class="appointments-placeholder-icon">
+
+                    <i class="fas fa-calendar-check"></i>
+
+                </div>
+
+
+                <h3>
+                    Đã tải lịch hẹn
+                </h3>
+
+
+                <p>
+                    Có @_appointmentStateService.Appointments.Count
+                    lịch hẹn.
+                </p>
+
+            </div>
+        }
 
     </section>
 
 </div>
+
+@code
+{
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        // =================================================
+        // SUBSCRIBE STATE CHANGE
+        // =================================================
+
+        _appointmentStateService.OnChange +=
+            HandleAppointmentStateChanged;
+
+
+        // =================================================
+        // RESET STATE
+        // =================================================
+
+        _appointmentStateService.Reset();
+
+
+        // =================================================
+        // LOAD ALL APPOINTMENTS
+        // =================================================
+
+        await _appointmentStateService
+            .LoadAppointmentsAsync();
+    }
+
+
+    // =====================================================
+    // RETRY APPOINTMENTS
+    // =====================================================
+
+    private async Task RetryAppointmentsAsync()
+    {
+        await _appointmentStateService
+            .LoadAppointmentsAsync(
+                _appointmentStateService.CurrentFilter
+            );
+    }
+
+
+    // =====================================================
+    // HANDLE STATE CHANGED
+    // =====================================================
+
+    private void HandleAppointmentStateChanged()
+    {
+        _ = InvokeAsync(
+            StateHasChanged
+        );
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        _appointmentStateService.OnChange -=
+            HandleAppointmentStateChanged;
+    }
+}
