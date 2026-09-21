@@ -590,3 +590,41 @@
 
     border-color: #fca5a5;
 }
+
+/* =====================================================
+   COMPLETED STEP
+   ===================================================== */
+
+.booking-step.completed
+.booking-step-number {
+    background-color: #dcfce7;
+
+    color: #16a34a;
+}
+
+
+.booking-step.completed
+.booking-step-label {
+    color: #86efac;
+}
+
+
+.booking-step.completed
+.booking-step-title {
+    color: #16a34a;
+}
+
+
+.booking-step.completed
+.booking-step-number i {
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   COMPLETED STEP LINE
+   ===================================================== */
+
+.booking-step-line.completed {
+    background-color: #38bdf8;
+}

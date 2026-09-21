@@ -52,20 +52,29 @@
     </div>
 
 
-    @* =================================================
-       BOOKING STEPS
-       ================================================= *@
+    @* =====================================================
+   BOOKING STEPS
+   ===================================================== *@
 
     <div class="booking-steps">
 
-        @* =============================================
-           STEP 1
-           ============================================= *@
+        @* =================================================
+       STEP 1 - SPECIALTY
+       ================================================= *@
 
-        <div class="booking-step active">
+        <div class="booking-step @GetStepClass(1)">
 
             <div class="booking-step-number">
-                1
+
+                @if (_bookingStateService.CurrentStep > 1)
+                {
+                    <i class="fas fa-check"></i>
+                }
+                else
+                {
+                    <span>1</span>
+                }
+
             </div>
 
             <div class="booking-step-content">
@@ -83,17 +92,27 @@
         </div>
 
 
-        <div class="booking-step-line"></div>
+        <div class="booking-step-line @GetStepLineClass(1)">
+        </div>
 
 
-        @* =============================================
-           STEP 2
-           ============================================= *@
+        @* =================================================
+       STEP 2 - DOCTOR
+       ================================================= *@
 
-        <div class="booking-step">
+        <div class="booking-step @GetStepClass(2)">
 
             <div class="booking-step-number">
-                2
+
+                @if (_bookingStateService.CurrentStep > 2)
+                {
+                    <i class="fas fa-check"></i>
+                }
+                else
+                {
+                    <span>2</span>
+                }
+
             </div>
 
             <div class="booking-step-content">
@@ -111,17 +130,27 @@
         </div>
 
 
-        <div class="booking-step-line"></div>
+        <div class="booking-step-line @GetStepLineClass(2)">
+        </div>
 
 
-        @* =============================================
-           STEP 3
-           ============================================= *@
+        @* =================================================
+       STEP 3 - TIME
+       ================================================= *@
 
-        <div class="booking-step">
+        <div class="booking-step @GetStepClass(3)">
 
             <div class="booking-step-number">
-                3
+
+                @if (_bookingStateService.CurrentStep > 3)
+                {
+                    <i class="fas fa-check"></i>
+                }
+                else
+                {
+                    <span>3</span>
+                }
+
             </div>
 
             <div class="booking-step-content">
@@ -139,17 +168,18 @@
         </div>
 
 
-        <div class="booking-step-line"></div>
+        <div class="booking-step-line @GetStepLineClass(3)">
+        </div>
 
 
-        @* =============================================
-           STEP 4
-           ============================================= *@
+        @* =================================================
+       STEP 4 - CONFIRM
+       ================================================= *@
 
-        <div class="booking-step">
+        <div class="booking-step @GetStepClass(4)">
 
             <div class="booking-step-number">
-                4
+                <span>4</span>
             </div>
 
             <div class="booking-step-content">
@@ -430,6 +460,41 @@
     {
         await _bookingStateService
             .LoadSpecialtiesAsync();
+    }
+
+    // =====================================================
+    // GET STEP CLASS
+    // =====================================================
+
+    private string GetStepClass(
+        int step)
+    {
+        if (_bookingStateService.CurrentStep == step)
+        {
+            return "active";
+        }
+
+
+        if (_bookingStateService.CurrentStep > step)
+        {
+            return "completed";
+        }
+
+
+        return string.Empty;
+    }
+
+
+    // =====================================================
+    // GET STEP LINE CLASS
+    // =====================================================
+
+    private string GetStepLineClass(
+        int step)
+    {
+        return _bookingStateService.CurrentStep > step
+            ? "completed"
+            : string.Empty;
     }
 
 
