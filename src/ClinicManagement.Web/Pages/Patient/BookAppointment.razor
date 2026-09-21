@@ -199,51 +199,64 @@
 
         </div>
 
-
-        @* =================================================
-           TEMPORARY CONTENT
-           ================================================= *@
-
         @* =====================================================
-   SPECIALTY STATE TEST
-   ===================================================== *@
+        SPECIALTY LIST
+        ===================================================== *@
 
-        @if (_bookingStateService.IsLoading)
+        @if (!_bookingStateService.IsLoading &&
+             string.IsNullOrWhiteSpace(
+                 _bookingStateService.ErrorMessage) &&
+             _bookingStateService.Specialties.Count > 0)
         {
-            <div class="booking-placeholder">
+            <div class="specialty-grid">
 
-                <i class="fas fa-spinner fa-spin"></i>
+                @foreach (var specialty in
+                    _bookingStateService.Specialties)
+                {
+                    <button type="button" class="specialty-card" @onclick="() => SelectSpecialtyAsync(
+                                specialty.Id)">
 
-                <span>
-                    Đang tải danh sách chuyên khoa...
-                </span>
+@* =========================================
+                   ICON
+                   ========================================= *@
 
-            </div>
-        }
-        else if (!string.IsNullOrWhiteSpace(
-            _bookingStateService.ErrorMessage))
-        {
-            <div class="booking-placeholder">
+<div class="specialty-card-icon">
 
-                <i class="fas fa-exclamation-circle"></i>
+                            <i class="fas fa-stethoscope"></i>
 
-                <span>
-                    @_bookingStateService.ErrorMessage
-                </span>
+                        </div>
 
-            </div>
-        }
-        else
-        {
-            <div class="booking-placeholder">
 
-                <i class="fas fa-check-circle"></i>
+                        @* =========================================
+                        INFORMATION
+                        ========================================= *@
 
-                <span>
-                    Đã tải
-                    @_bookingStateService.Specialties.Count
-                    chuyên khoa.
-                </span>
+                        <div class="specialty-card-content">
+
+                            <h3 class="specialty-card-name">
+                                @specialty.Name
+                            </h3>
+
+                            <p class="specialty-card-description">
+                                Chọn chuyên khoa này để xem
+                                danh sách bác sĩ phù hợp.
+                            </p>
+
+                        </div>
+
+
+                        @* =========================================
+                        RROW
+                        ========================================= *@
+
+                        <div class="specialty-card-arrow">
+
+                            <i class="fas fa-arrow-right"></i>
+
+                        </div>
+
+                    </button>
+                }
 
             </div>
         }
@@ -284,6 +297,31 @@
 
         await _bookingStateService
             .LoadSpecialtiesAsync();
+    }
+
+    // =====================================================
+    // SELECT SPECIALTY
+    // =====================================================
+
+    private async Task SelectSpecialtyAsync(
+        int specialtyId)
+    {
+        // =================================================
+        // UPDATE SELECTED SPECIALTY
+        // =================================================
+
+        _bookingStateService
+            .SelectSpecialty(
+                specialtyId
+            );
+
+
+        // =================================================
+        // LOAD DOCTORS
+        // =================================================
+
+        await _bookingStateService
+            .LoadDoctorsAsync();
     }
 
 

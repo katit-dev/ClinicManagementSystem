@@ -287,3 +287,149 @@
 .booking-placeholder span {
     font-size: 14px;
 }
+
+/* =====================================================
+   SPECIALTY GRID
+   ===================================================== */
+
+.specialty-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 16px;
+}
+
+
+/* =====================================================
+   SPECIALTY CARD
+   ===================================================== */
+
+.specialty-card {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    width: 100%;
+
+    min-height: 110px;
+
+    padding: 20px;
+
+    border: 1px solid #e5edf5;
+    border-radius: 15px;
+
+    background-color: #ffffff;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.specialty-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #7dd3fc;
+
+    box-shadow:
+        0 10px 26px rgba(15, 23, 42, 0.07);
+}
+
+
+/* =====================================================
+   SPECIALTY ICON
+   ===================================================== */
+
+.specialty-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 52px;
+    height: 52px;
+
+    flex-shrink: 0;
+
+    border-radius: 14px;
+
+    background-color: #e0f2fe;
+
+    color: #0284c7;
+
+    font-size: 20px;
+}
+
+
+/* =====================================================
+   SPECIALTY CONTENT
+   ===================================================== */
+
+.specialty-card-content {
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.specialty-card-name {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    color: #16324f;
+}
+
+
+.specialty-card-description {
+    margin: 5px 0 0;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   SPECIALTY ARROW
+   ===================================================== */
+
+.specialty-card-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    border-radius: 9px;
+
+    color: #94a3b8;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.specialty-card:hover
+.specialty-card-arrow {
+    background-color: #e0f2fe;
+
+    color: #0284c7;
+
+    transform: translateX(2px);
+}
