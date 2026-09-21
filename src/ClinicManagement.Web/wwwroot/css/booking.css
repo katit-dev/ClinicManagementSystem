@@ -1153,3 +1153,43 @@
 .selected-date-info strong {
     color: #166534;
 }
+
+/* =====================================================
+   SLOT LOAD STATE
+   ===================================================== */
+
+.slot-load-state {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 12px;
+
+    padding: 10px 12px;
+
+    border-radius: 9px;
+
+    background-color: #f8fafc;
+
+    font-size: 13px;
+
+    color: #64748b;
+}
+
+
+.slot-load-state i {
+    color: #0284c7;
+}
+
+
+.slot-load-error {
+    background-color: #fef2f2;
+
+    color: #b91c1c;
+}
+
+
+.slot-load-error i {
+    color: #dc2626;
+}

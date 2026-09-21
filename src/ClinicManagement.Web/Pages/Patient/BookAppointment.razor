@@ -787,11 +787,55 @@
                                 </span>
 
                                 <strong>
-                                    @_bookingStateService.SelectedDate.Value
-                                    .ToString("dd/MM/yyyy")
+                                    @_bookingStateService.SelectedDate.Value.ToString("dd/MM/yyyy")
                                 </strong>
 
                             </div>
+                        }
+                        @* =========================================
+                        SLOT LOAD STATE
+                        ========================================= *@
+
+                        @if (_bookingStateService.SelectedDate.HasValue)
+                        {
+                            @if (_bookingStateService.IsLoading)
+                            {
+                                <div class="slot-load-state">
+
+                                    <i class="fas fa-spinner fa-spin"></i>
+
+                                    <span>
+                                        Đang kiểm tra khung giờ trống...
+                                    </span>
+
+                                </div>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(
+                                _bookingStateService.ErrorMessage))
+                            {
+                                <div class="slot-load-state slot-load-error">
+
+                                    <i class="fas fa-exclamation-circle"></i>
+
+                                    <span>
+                                        @_bookingStateService.ErrorMessage
+                                    </span>
+
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="slot-load-state">
+
+                                    <i class="fas fa-clock"></i>
+
+                                    <span>
+                                        Có @_bookingStateService.AvailableSlots.Count
+                                        khung giờ khả dụng.
+                                    </span>
+
+                                </div>
+                            }
                         }
 
                     </div>
@@ -1048,7 +1092,7 @@
     // HANDLE DATE CHANGED
     // =====================================================
 
-    private void HandleDateChanged(
+    private async Task HandleDateChanged(
         ChangeEventArgs e)
     {
         var value =
@@ -1095,14 +1139,24 @@
 
 
         // =================================================
-        // UPDATE BOOKING STATE
+        // SELECT DATE
         // =================================================
 
         _bookingStateService
             .SelectDate(
                 selectedDate
             );
+
+
+        // =================================================
+        // LOAD AVAILABLE SLOTS
+        // =================================================
+
+        await _bookingStateService
+            .LoadAvailableSlotsAsync();
     }
+
+    
 
     // =====================================================
     // HANDLE BOOKING STATE CHANGED
