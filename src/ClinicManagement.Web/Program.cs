@@ -85,6 +85,7 @@ builder.Services.AddScoped<PatientStateService>();
 builder.Services.AddScoped<AuthorizedApiService>();
 builder.Services.AddScoped<IPatientDashboardService, PatientDashboardService>();
 builder.Services.AddScoped<BookingStateService>();
+builder.Services.AddScoped<PatientAppointmentStateService>();
 
 
 var app = builder.Build();
