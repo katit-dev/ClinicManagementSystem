@@ -22,52 +22,32 @@ public class PatientAppointmentStateService
     // =====================================================
     public List<MyAppointmentDTO> Appointments { get; private set; } = new();
 
-    // CANCEL ERROR MESSAGE
-    public string CancelErrorMessage { get; private set; } = string.Empty;
-    public int? CancellingAppointmentId { get; private set; }
-
-
-    public bool IsCancelling { get; private set; }
-
-
-    // =====================================================
-    // CURRENT FILTER
-    // =====================================================
-
-    public MyAppointmentFilter CurrentFilter
-    {
-        get;
-        private set;
-    } = MyAppointmentFilter.All;
-
 
     // =====================================================
     // STATE
     // =====================================================
 
-    public bool IsLoading
-    {
-        get;
-        private set;
-    }
+    // CANCEL ERROR MESSAGE
+    public string CancelErrorMessage { get; private set; } = string.Empty;
+    public int? CancellingAppointmentId { get; private set; }
+
+    public bool IsCancelling { get; private set; }
+
+    public bool IsLoading { get; private set; }
+
+    public string ErrorMessage { get; private set; } = string.Empty;
+
+    // RESCHEDULE STATE
+    public int? ReschedulingAppointmentId { get; private set; }
+
+    public bool IsRescheduling { get; private set; }
+
+    public string RescheduleErrorMessage { get; private set; } = string.Empty;
 
 
-    public string ErrorMessage
-    {
-        get;
-        private set;
-    } = string.Empty;
+    // CURRENT FILTER
+    public MyAppointmentFilter CurrentFilter { get; private set; } = MyAppointmentFilter.All;
 
-
-    // =====================================================
-    // STATE CHANGE EVENT
-    // =====================================================
-
-    public Action? OnChange
-    {
-        get;
-        set;
-    }
 
 
     // =====================================================
@@ -79,6 +59,143 @@ public class PatientAppointmentStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // STATE CHANGE EVENT
+    // =====================================================
+
+    public Action? OnChange { get; set; }
+
+    // =====================================================
+    // RESCHEDULE APPOINTMENT
+    // =====================================================
+
+    public async Task<bool> RescheduleAppointmentAsync(int appointmentId, DateTime newStartTime)
+    {
+        // =================================================
+        // CLEAR PREVIOUS ERROR
+        // =================================================
+
+        RescheduleErrorMessage = string.Empty;
+
+
+        // =================================================
+        // VALIDATE NEW START TIME
+        // =================================================
+
+        if (newStartTime <= DateTime.Now)
+        {
+            RescheduleErrorMessage =
+                "Thời gian khám mới phải ở tương lai.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START RESCHEDULING
+        // =================================================
+
+        IsRescheduling = true;
+
+        ReschedulingAppointmentId = appointmentId;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CREATE REQUEST
+            // =================================================
+
+            var request = new RescheduleAppointmentRequestDTO
+            {
+                NewStartTime = newStartTime
+            };
+
+
+            var content =
+                JsonContent.Create(request);
+
+
+            // =================================================
+            // CALL API
+            //
+            // PATCH:
+            // /api/appointments/{id}/reschedule
+            // =================================================
+
+            var response =
+                await _authorizedApiService.PatchAsync(
+                    $"/api/appointments/{appointmentId}/reschedule",
+                    content
+                );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<object>>();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                RescheduleErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể đổi lịch hẹn.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return true;
+        }
+        catch
+        {
+            RescheduleErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsRescheduling = false;
+
+            ReschedulingAppointmentId = null;
+
+            StateHasChanged();
+        }
+    }
+
+
+    // =====================================================
+    // CLEAR RESCHEDULE ERROR
+    // =====================================================
+
+    public void ClearRescheduleError()
+    {
+        RescheduleErrorMessage = string.Empty;
+
+        StateHasChanged();
     }
 
 
@@ -336,20 +453,33 @@ public class PatientAppointmentStateService
     {
         Appointments.Clear();
 
-        CurrentFilter =
-            MyAppointmentFilter.All;
+        CurrentFilter = MyAppointmentFilter.All;
 
         IsLoading = false;
 
+        ErrorMessage = string.Empty;
+
+
+        // =================================================
+        // CANCEL
+        // =================================================
+
         IsCancelling = false;
 
-        CancellingAppointmentId =
-            null;
-
-        ErrorMessage =
-            string.Empty;
+        CancellingAppointmentId = null;
 
         CancelErrorMessage = string.Empty;
+
+
+        // =================================================
+        // RESCHEDULE
+        // =================================================
+
+        IsRescheduling = false;
+
+        ReschedulingAppointmentId = null;
+
+        RescheduleErrorMessage = string.Empty;
 
 
         StateHasChanged();

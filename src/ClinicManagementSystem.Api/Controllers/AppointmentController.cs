@@ -108,11 +108,7 @@ public class AppointmentController : ControllerBase
 
     [HttpPatch("{id}/reschedule")]
     [Authorize(Roles = "Patient")]
-    public async Task<IActionResult>
-        RescheduleAppointment(
-            int id,
-            [FromBody]
-        RescheduleAppointmentRequestDTO request)
+    public async Task<IActionResult> RescheduleAppointment(int id, [FromBody] RescheduleAppointmentRequestDTO request)
     {
 
         var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
