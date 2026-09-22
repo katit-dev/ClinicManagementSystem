@@ -62,8 +62,7 @@
 
     <div class="appointments-filter">
 
-        <button type="button"
-                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.All)"
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.All)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.All)">
 
             <i class="fas fa-list"></i>
@@ -73,8 +72,7 @@
         </button>
 
 
-        <button type="button"
-                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Upcoming)"
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Upcoming)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Upcoming)">
 
             <i class="far fa-clock"></i>
@@ -84,8 +82,7 @@
         </button>
 
 
-        <button type="button"
-                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Completed)"
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Completed)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Completed)">
 
             <i class="fas fa-check-circle"></i>
@@ -95,8 +92,7 @@
         </button>
 
 
-        <button type="button"
-                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Cancelled)"
+        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Cancelled)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Cancelled)">
 
             <i class="fas fa-times-circle"></i>
@@ -191,9 +187,7 @@
                 </p>
 
 
-                <button type="button"
-                        class="appointments-retry-button"
-                        @onclick="RetryAppointmentsAsync">
+                <button type="button" class="appointments-retry-button" @onclick="RetryAppointmentsAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -426,8 +420,7 @@
                             {
                                 <div class="appointment-actions">
 
-                                    <button type="button"
-                                            class="appointment-reschedule-button"
+                                    <button type="button" class="appointment-reschedule-button"
                                             @onclick="() => OpenRescheduleAppointment(appointment.Id)">
 
                                         <i class="fas fa-calendar-alt"></i>
@@ -437,8 +430,7 @@
                                     </button>
 
 
-                                    <button type="button"
-                                            class="appointment-cancel-button"
+                                    <button type="button" class="appointment-cancel-button"
                                             @onclick="() => OpenCancelAppointment(appointment.Id)">
 
                                         <i class="fas fa-times"></i>
@@ -446,6 +438,136 @@
                                         Hủy lịch
 
                                     </button>
+
+                                </div>
+                            }
+
+                            @* =================================
+                            RESCHEDULE FORM
+                            ================================= *@
+
+                            @if (_rescheduleAppointmentId == appointment.Id)
+                            {
+                                <div class="appointment-reschedule-form">
+
+                                    @* =============================
+                                    HEADER
+                                    ============================= *@
+
+                                    <div class="appointment-reschedule-form-header">
+
+                                        <div>
+
+                                            <h4>
+                                                Đổi lịch hẹn
+                                            </h4>
+
+                                            <p>
+                                                Chọn ngày khám mới cho lịch hẹn này.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    @* =============================
+                                    CURRENT APPOINTMENT
+                                    ============================= *@
+
+                                    <div class="appointment-reschedule-current">
+
+                                        <i class="far fa-calendar-alt"></i>
+
+                                        <div>
+
+                                            <span>
+                                                Lịch hiện tại
+                                            </span>
+
+                                            <strong>
+                                                @(appointment.StartTime.ToString("dd/MM/yyyy"))
+                                                ·
+                                                @(appointment.StartTime.ToString("HH:mm"))
+                                                -
+                                                @(appointment.EndTime.ToString("HH:mm"))
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    @* =============================
+                                    NEW DATE
+                                    ============================= *@
+
+                                    <div class="appointment-reschedule-field">
+
+                                        <label for="reschedule-date-@appointment.Id">
+                                            Ngày khám mới
+                                        </label>
+
+                                        <input id="reschedule-date-@appointment.Id" type="date" class="appointment-reschedule-date"
+                                               min="@GetRescheduleMinimumDate()" @onchange="HandleRescheduleDateChanged" />
+
+                                    </div>
+
+
+                                    @* =============================
+                                    SELECTED DATE
+                                    ============================= *@
+
+                                    @if (_rescheduleDate.HasValue)
+                                    {
+                                        <div class="appointment-reschedule-selected">
+
+                                            <i class="fas fa-check-circle"></i>
+
+                                            <span>
+                                                Ngày mới:
+                                                <strong>
+                                                    @(_rescheduleDate.Value.ToString("dd/MM/yyyy"))
+                                                </strong>
+                                            </span>
+
+                                        </div>
+                                    }
+
+
+                                    @* =============================
+                                    ERROR
+                                    ============================= *@
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        _appointmentStateService.RescheduleErrorMessage))
+                                    {
+                                        <div class="appointment-reschedule-error">
+
+                                            <i class="fas fa-exclamation-circle"></i>
+
+                                            <span>
+                                                @_appointmentStateService.RescheduleErrorMessage
+                                            </span>
+
+                                        </div>
+                                    }
+
+
+                                    @* =============================
+                                    ACTIONS
+                                    ============================= *@
+
+                                    <div class="appointment-reschedule-form-actions">
+
+                                        <button type="button" class="appointment-reschedule-close-button"
+                                                @onclick="CloseRescheduleAppointment">
+
+                                            Đóng
+
+                                        </button>
+
+                                    </div>
 
                                 </div>
                             }
@@ -486,11 +608,8 @@
                                        REASON
                                        ============================= *@
 
-                                    <textarea class="appointment-cancel-reason"
-                                              rows="3"
-                                              maxlength="500"
-                                              placeholder="Ví dụ: Tôi có việc đột xuất..."
-                                              value="@_cancelReason"
+                                    <textarea class="appointment-cancel-reason" rows="3" maxlength="500"
+                                              placeholder="Ví dụ: Tôi có việc đột xuất..." value="@_cancelReason"
                                               @oninput="HandleCancelReasonChanged"></textarea>
 
 
@@ -531,18 +650,15 @@
 
                                     <div class="appointment-cancel-form-actions">
 
-                                        <button type="button"
-                                                class="appointment-cancel-close-button"
-                                                disabled="@_appointmentStateService.IsCancelling"
-                                                @onclick="CloseCancelAppointment">
+                                        <button type="button" class="appointment-cancel-close-button"
+                                                disabled="@_appointmentStateService.IsCancelling" @onclick="CloseCancelAppointment">
 
                                             Đóng
 
                                         </button>
 
 
-                                        <button type="button"
-                                                class="appointment-cancel-confirm-button"
+                                        <button type="button" class="appointment-cancel-confirm-button"
                                                 disabled="@_appointmentStateService.IsCancelling"
                                                 @onclick="() => ConfirmCancelAppointmentAsync(appointment.Id)">
 
@@ -587,19 +703,16 @@
 @code
 {
     // =====================================================
-    // CANCEL APPOINTMENT UI STATE
+    // UI STATE
     // =====================================================
 
     private int? _cancelAppointmentId;
 
     private string _cancelReason = string.Empty;
 
-
-    // =====================================================
-    // RESCHEDULE APPOINTMENT UI STATE
-    // =====================================================
-
     private int? _rescheduleAppointmentId;
+
+    private DateOnly? _rescheduleDate;
 
 
     // =====================================================
@@ -657,6 +770,9 @@
         _cancelReason = string.Empty;
 
         _rescheduleAppointmentId = null;
+
+        _rescheduleAppointmentId = null;
+        _rescheduleDate = null;
 
 
         // =================================================
@@ -838,31 +954,71 @@
 
     private void OpenRescheduleAppointment(int appointmentId)
     {
-        // =================================================
-        // CLEAR PREVIOUS ERRORS
-        // =================================================
-
         _appointmentStateService.ClearRescheduleError();
-
         _appointmentStateService.ClearCancelError();
 
-
-        // =================================================
-        // CLOSE CANCEL FORM
-        // =================================================
-
         _cancelAppointmentId = null;
-
         _cancelReason = string.Empty;
 
-
-        // =================================================
-        // SELECT RESCHEDULE APPOINTMENT
-        // =================================================
-
         _rescheduleAppointmentId = appointmentId;
+        _rescheduleDate = null;
     }
 
+    // =====================================================
+    // CLOSE RESCHEDULE APPOINTMENT
+    // =====================================================
+
+    private void CloseRescheduleAppointment()
+    {
+        _appointmentStateService.ClearRescheduleError();
+
+        _rescheduleAppointmentId = null;
+        _rescheduleDate = null;
+    }
+
+    // =====================================================
+    // HANDLE RESCHEDULE DATE CHANGED
+    // =====================================================
+
+    private void HandleRescheduleDateChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            _rescheduleDate = null;
+            return;
+        }
+
+        if (!DateOnly.TryParse(value, out var selectedDate))
+        {
+            _rescheduleDate = null;
+            return;
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        if (selectedDate < today)
+        {
+            _rescheduleDate = null;
+            return;
+        }
+
+        _rescheduleDate = selectedDate;
+    }
+
+    // =====================================================
+    // Helper: GET RESCHEDULE MINIMUM DATE
+    // =====================================================
+
+    private string GetRescheduleMinimumDate()
+    {
+        return DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd");
+    }
+
+    // =====================================================
+    // OPEN CANCEL APPOINTMENT
+    // =====================================================
 
     // =====================================================
     // OPEN CANCEL APPOINTMENT
@@ -870,28 +1026,13 @@
 
     private void OpenCancelAppointment(int appointmentId)
     {
-        // =================================================
-        // CLEAR PREVIOUS ERRORS
-        // =================================================
-
         _appointmentStateService.ClearCancelError();
-
         _appointmentStateService.ClearRescheduleError();
 
-
-        // =================================================
-        // CLOSE RESCHEDULE FORM
-        // =================================================
-
         _rescheduleAppointmentId = null;
-
-
-        // =================================================
-        // OPEN CANCEL FORM
-        // =================================================
+        _rescheduleDate = null;
 
         _cancelAppointmentId = appointmentId;
-
         _cancelReason = string.Empty;
     }
 

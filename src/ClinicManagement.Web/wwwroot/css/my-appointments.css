@@ -905,3 +905,209 @@
 
     background-color: #f0f9ff;
 }
+
+/* =====================================================
+   RESCHEDULE FORM
+   ===================================================== */
+
+.appointment-reschedule-form {
+    margin-top: 14px;
+    padding: 16px;
+
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+
+    background-color: #f8fdff;
+}
+
+
+.appointment-reschedule-form-header h4 {
+    margin: 0;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #075985;
+}
+
+
+.appointment-reschedule-form-header p {
+    margin: 4px 0 0;
+
+    font-size: 12px;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   CURRENT APPOINTMENT
+   ===================================================== */
+
+.appointment-reschedule-current {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-top: 14px;
+    padding: 11px 12px;
+
+    border-radius: 9px;
+
+    background-color: #ffffff;
+}
+
+
+.appointment-reschedule-current > i {
+    color: #0284c7;
+}
+
+
+.appointment-reschedule-current div {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.appointment-reschedule-current span {
+    font-size: 10px;
+
+    color: #94a3b8;
+}
+
+
+.appointment-reschedule-current strong {
+    font-size: 12px;
+
+    color: #334155;
+}
+
+
+/* =====================================================
+   RESCHEDULE DATE
+   ===================================================== */
+
+.appointment-reschedule-field {
+    margin-top: 14px;
+}
+
+
+.appointment-reschedule-field label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    color: #475569;
+}
+
+
+.appointment-reschedule-date {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+
+    color: #16324f;
+
+    font-size: 13px;
+
+    outline: none;
+}
+
+
+.appointment-reschedule-date:focus {
+    border-color: #0ea5e9;
+
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+
+/* =====================================================
+   SELECTED DATE
+   ===================================================== */
+
+.appointment-reschedule-selected {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    margin-top: 10px;
+    padding: 9px 11px;
+
+    border-radius: 8px;
+
+    background-color: #f0fdf4;
+
+    color: #475569;
+
+    font-size: 12px;
+}
+
+
+.appointment-reschedule-selected i {
+    color: #16a34a;
+}
+
+
+/* =====================================================
+   RESCHEDULE ERROR
+   ===================================================== */
+
+.appointment-reschedule-error {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 10px;
+    padding: 9px 11px;
+
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+
+    background-color: #fef2f2;
+
+    color: #b91c1c;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   RESCHEDULE FORM ACTIONS
+   ===================================================== */
+
+.appointment-reschedule-form-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-top: 12px;
+}
+
+
+.appointment-reschedule-close-button {
+    padding: 8px 12px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
