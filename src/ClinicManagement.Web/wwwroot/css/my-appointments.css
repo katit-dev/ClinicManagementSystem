@@ -1216,3 +1216,38 @@
     opacity: 0.55;
     cursor: not-allowed;
 }
+
+/* =====================================================
+   MEDICAL RECORD BUTTON
+   ===================================================== */
+
+.appointment-medical-record-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #bbf7d0;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+
+    color: #15803d;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.appointment-medical-record-button:hover:not(:disabled) {
+    border-color: #86efac;
+    background-color: #f0fdf4;
+}
+
+.appointment-medical-record-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

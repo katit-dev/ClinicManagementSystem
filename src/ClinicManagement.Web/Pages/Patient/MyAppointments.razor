@@ -415,29 +415,61 @@
                             @* =================================
                                ACTIONS
                                ================================= *@
-
-                            @if (CanManageAppointment(appointment))
+                            @if (CanManageAppointment(appointment) ||
+                                 CanViewMedicalRecord(appointment))
                             {
                                 <div class="appointment-actions">
 
-                                    <button type="button" class="appointment-reschedule-button"
-                                            @onclick="() => OpenRescheduleAppointment(appointment.Id)">
+                                    @if (CanManageAppointment(appointment))
+                                    {
+                                        <button type="button" class="appointment-reschedule-button"
+                                                @onclick="() => OpenRescheduleAppointment(appointment.Id)">
 
-                                        <i class="fas fa-calendar-alt"></i>
+                                            <i class="fas fa-calendar-alt"></i>
 
-                                        Đổi lịch
+                                            Đổi lịch
 
-                                    </button>
+                                        </button>
 
 
-                                    <button type="button" class="appointment-cancel-button"
-                                            @onclick="() => OpenCancelAppointment(appointment.Id)">
+                                        <button type="button" class="appointment-cancel-button"
+                                                @onclick="() => OpenCancelAppointment(appointment.Id)">
 
-                                        <i class="fas fa-times"></i>
+                                            <i class="fas fa-times"></i>
 
-                                        Hủy lịch
+                                            Hủy lịch
 
-                                    </button>
+                                        </button>
+                                    }
+
+
+                                    @if (CanViewMedicalRecord(appointment))
+                                    {
+                                        <button type="button" class="appointment-medical-record-button"
+                                                disabled="@(_appointmentStateService.IsLoadingMedicalRecord &&
+                                                            _appointmentStateService.MedicalRecordAppointmentId == appointment.Id)"
+                                                @onclick="() => OpenMedicalRecordAsync(appointment.Id)">
+
+                                            @if (_appointmentStateService.IsLoadingMedicalRecord &&
+                                                 _appointmentStateService.MedicalRecordAppointmentId == appointment.Id)
+                                            {
+                                                <i class="fas fa-spinner fa-spin"></i>
+
+                                                <span>
+                                                    Đang tải...
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-file-medical"></i>
+
+                                                <span>
+                                                    Xem bệnh án
+                                                </span>
+                                            }
+
+                                        </button>
+                                    }
 
                                 </div>
                             }
@@ -831,12 +863,54 @@
 
         _appointmentStateService.Reset();
 
-
         // =================================================
         // LOAD ALL APPOINTMENTS
         // =================================================
 
         await _appointmentStateService.LoadAppointmentsAsync();
+    }
+
+    // =====================================================
+    // CAN VIEW MEDICAL RECORD
+    // =====================================================
+
+    private bool CanViewMedicalRecord(MyAppointmentDTO appointment)
+    {
+        return appointment.Status == 3;
+    }
+
+
+    // =====================================================
+    // OPEN MEDICAL RECORD
+    // =====================================================
+
+    private async Task OpenMedicalRecordAsync(int appointmentId)
+    {
+        // =================================================
+        // CLOSE OTHER FORMS
+        // =================================================
+
+        _cancelAppointmentId = null;
+        _cancelReason = string.Empty;
+
+        _rescheduleAppointmentId = null;
+        _rescheduleDate = null;
+        _selectedRescheduleSlot = null;
+
+
+        // =================================================
+        // CLEAR OTHER ERRORS
+        // =================================================
+
+        _appointmentStateService.ClearCancelError();
+        _appointmentStateService.ClearRescheduleError();
+
+
+        // =================================================
+        // LOAD MEDICAL RECORD
+        // =================================================
+
+        await _appointmentStateService.LoadMedicalRecordAsync(appointmentId);
     }
 
 
@@ -880,6 +954,7 @@
 
         _appointmentStateService.ClearRescheduleError();
 
+        _appointmentStateService.ClearMedicalRecord();
 
         // =================================================
         // LOAD FILTER
