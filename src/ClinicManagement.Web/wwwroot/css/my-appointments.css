@@ -1497,3 +1497,231 @@
         grid-column: auto;
     }
 }
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 992px) {
+
+    .appointments-filter {
+        flex-wrap: wrap;
+    }
+
+    .appointment-card {
+        align-items: flex-start;
+    }
+
+    .appointment-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    /* =================================================
+       PAGE
+       ================================================= */
+
+    .appointments-page {
+        padding: 16px;
+    }
+
+
+    /* =================================================
+       HEADER
+       ================================================= */
+
+    .appointments-title {
+        font-size: 24px;
+    }
+
+    .appointments-description {
+        font-size: 13px;
+    }
+
+
+    /* =================================================
+       FILTER
+       ================================================= */
+
+    .appointments-filter {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .appointments-filter-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+
+    /* =================================================
+       CARD
+       ================================================= */
+
+    .appointment-card {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .appointment-date {
+        width: 100%;
+
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        gap: 6px;
+
+        padding: 10px 12px;
+    }
+
+    .appointment-date-day {
+        font-size: 20px;
+    }
+
+    .appointment-date-month,
+    .appointment-date-year {
+        font-size: 11px;
+    }
+
+    .appointment-card-content {
+        width: 100%;
+    }
+
+
+    /* =================================================
+       CARD HEADER
+       ================================================= */
+
+    .appointment-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+
+    /* =================================================
+       DETAILS
+       ================================================= */
+
+    .appointment-details {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+
+    /* =================================================
+       ACTIONS
+       ================================================= */
+
+    .appointment-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .appointment-reschedule-button,
+    .appointment-cancel-button,
+    .appointment-medical-record-button {
+        width: 100%;
+    }
+
+
+    /* =================================================
+       CANCEL FORM ACTIONS
+       ================================================= */
+
+    .appointment-cancel-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .appointment-cancel-close-button,
+    .appointment-cancel-confirm-button {
+        width: 100%;
+    }
+
+
+    /* =================================================
+       RESCHEDULE FORM ACTIONS
+       ================================================= */
+
+    .appointment-reschedule-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .appointment-reschedule-close-button,
+    .appointment-reschedule-confirm-button {
+        width: 100%;
+    }
+
+
+    /* =================================================
+       RESCHEDULE SLOTS
+       ================================================= */
+
+    .appointment-reschedule-slot-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .appointment-reschedule-slot {
+        width: 100%;
+    }
+
+
+    /* =================================================
+       MEDICAL RECORD
+       ================================================= */
+
+    .appointment-medical-record-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .appointment-medical-record-item-full {
+        grid-column: auto;
+    }
+
+    .appointment-medical-record-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - SMALL MOBILE
+   ===================================================== */
+
+@media (max-width: 480px) {
+
+    .appointments-page {
+        padding: 12px;
+    }
+
+    .appointments-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .appointment-reschedule-slot-list {
+        grid-template-columns: 1fr;
+    }
+
+    .appointment-card {
+        padding: 12px;
+    }
+
+    .appointment-cancel-form,
+    .appointment-reschedule-form,
+    .appointment-medical-record {
+        padding: 12px;
+    }
+}
