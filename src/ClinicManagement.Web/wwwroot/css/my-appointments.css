@@ -869,3 +869,39 @@
 .appointment-cancel-error i {
     color: #dc2626;
 }
+
+/* =====================================================
+   RESCHEDULE BUTTON
+   ===================================================== */
+
+.appointment-reschedule-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #bae6fd;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+
+    color: #0284c7;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.appointment-reschedule-button:hover {
+    border-color: #7dd3fc;
+
+    background-color: #f0f9ff;
+}
