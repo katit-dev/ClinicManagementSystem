@@ -3,8 +3,7 @@ using System.Net.Http.Json;
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.Enums;
-using ClinicManagementSystem.Application.DTOs.Appointment;
-
+using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 
 namespace ClinicManagementSystem.Web.Services;
 
@@ -54,6 +53,15 @@ public class PatientAppointmentStateService
 
     public bool IsLoadingRescheduleSlots { get; private set; }
 
+    // MEDICAL RECORD STATE
+    public MedicalRecordDTO? MedicalRecord { get; private set; }
+
+    public int? MedicalRecordAppointmentId { get; private set; }
+
+    public bool IsLoadingMedicalRecord { get; private set; }
+
+    public string MedicalRecordErrorMessage { get; private set; } = string.Empty;
+
 
     // =====================================================
     // CONSTRUCTOR
@@ -71,6 +79,111 @@ public class PatientAppointmentStateService
     // =====================================================
 
     public Action? OnChange { get; set; }
+
+    // =====================================================
+    // LOAD MEDICAL RECORD
+    // =====================================================
+
+    public async Task<bool> LoadMedicalRecordAsync(int appointmentId)
+    {
+        MedicalRecord = null;
+
+        MedicalRecordAppointmentId = appointmentId;
+
+        MedicalRecordErrorMessage = string.Empty;
+
+        IsLoadingMedicalRecord = true;
+
+        StateHasChanged();
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response = await _authorizedApiService.GetAsync(
+                $"/api/medical-records?appointmentId={appointmentId}"
+            );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content.ReadFromJsonAsync<
+                    HttpResponseData<MedicalRecordDTO>>();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                MedicalRecordErrorMessage =
+                    responseData?.Message ?? "Không thể tải bệnh án.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // EMPTY CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                MedicalRecordErrorMessage =
+                    "Không tìm thấy bệnh án.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            MedicalRecord = responseData.Content;
+
+            return true;
+        }
+        catch
+        {
+            MedicalRecordErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoadingMedicalRecord = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
+    // CLEAR MEDICAL RECORD
+    // =====================================================
+
+    public void ClearMedicalRecord()
+    {
+        MedicalRecord = null;
+
+        MedicalRecordAppointmentId = null;
+
+        MedicalRecordErrorMessage = string.Empty;
+
+        IsLoadingMedicalRecord = false;
+
+        StateHasChanged();
+    }
 
 
     // =====================================================
@@ -540,6 +653,18 @@ public class PatientAppointmentStateService
         RescheduleSlots.Clear();
 
         IsLoadingRescheduleSlots = false;
+
+        // =================================================
+        // MEDICAL RECORD
+        // =================================================
+
+        MedicalRecord = null;
+
+        MedicalRecordAppointmentId = null;
+
+        IsLoadingMedicalRecord = false;
+
+        MedicalRecordErrorMessage = string.Empty;
 
 
         StateHasChanged();
