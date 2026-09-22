@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.Enums;
+using ClinicManagementSystem.Application.DTOs.Appointment;
 
 
 namespace ClinicManagementSystem.Web.Services;
@@ -48,6 +49,10 @@ public class PatientAppointmentStateService
     // CURRENT FILTER
     public MyAppointmentFilter CurrentFilter { get; private set; } = MyAppointmentFilter.All;
 
+    // RESCHEDULE SLOT STATE
+    public List<SlotDTO> RescheduleSlots { get; private set; } = new();
+
+    public bool IsLoadingRescheduleSlots { get; private set; }
 
 
     // =====================================================
@@ -66,6 +71,57 @@ public class PatientAppointmentStateService
     // =====================================================
 
     public Action? OnChange { get; set; }
+
+
+    // =====================================================
+    // LOAD RESCHEDULE SLOTS
+    // =====================================================
+
+    public async Task LoadRescheduleSlotsAsync(int doctorId, DateOnly date)
+    {
+        RescheduleSlots.Clear();
+
+        RescheduleErrorMessage = string.Empty;
+
+        IsLoadingRescheduleSlots = true;
+
+        StateHasChanged();
+
+        try
+        {
+            var response = await _authorizedApiService.GetAsync(
+                $"/api/doctors/{doctorId}/available-slots?date={date:yyyy-MM-dd}"
+            );
+
+            var responseData =
+                await response.Content.ReadFromJsonAsync<
+                    HttpResponseData<List<SlotDTO>>>();
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                RescheduleErrorMessage =
+                    responseData?.Message ?? "Không thể tải khung giờ khám.";
+
+                return;
+            }
+
+            RescheduleSlots = responseData.Content ?? new List<SlotDTO>();
+        }
+        catch
+        {
+            RescheduleErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsLoadingRescheduleSlots = false;
+
+            StateHasChanged();
+        }
+    }
 
     // =====================================================
     // RESCHEDULE APPOINTMENT
@@ -480,6 +536,10 @@ public class PatientAppointmentStateService
         ReschedulingAppointmentId = null;
 
         RescheduleErrorMessage = string.Empty;
+
+        RescheduleSlots.Clear();
+
+        IsLoadingRescheduleSlots = false;
 
 
         StateHasChanged();

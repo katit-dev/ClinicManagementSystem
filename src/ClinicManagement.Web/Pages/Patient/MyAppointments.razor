@@ -509,7 +509,8 @@
                                         </label>
 
                                         <input id="reschedule-date-@appointment.Id" type="date" class="appointment-reschedule-date"
-                                               min="@GetRescheduleMinimumDate()" @onchange="HandleRescheduleDateChanged" />
+                                               min="@GetRescheduleMinimumDate()"
+                                               @onchange="@(e => HandleRescheduleDateChanged(e, appointment))" />
 
                                     </div>
 
@@ -980,19 +981,21 @@
     // HANDLE RESCHEDULE DATE CHANGED
     // =====================================================
 
-    private void HandleRescheduleDateChanged(ChangeEventArgs e)
+    private async Task HandleRescheduleDateChanged(
+        ChangeEventArgs e,
+        MyAppointmentDTO appointment)
     {
         var value = e.Value?.ToString();
 
+        _rescheduleDate = null;
+
         if (string.IsNullOrWhiteSpace(value))
         {
-            _rescheduleDate = null;
             return;
         }
 
         if (!DateOnly.TryParse(value, out var selectedDate))
         {
-            _rescheduleDate = null;
             return;
         }
 
@@ -1000,13 +1003,18 @@
 
         if (selectedDate < today)
         {
-            _rescheduleDate = null;
             return;
         }
 
         _rescheduleDate = selectedDate;
+
+        await _appointmentStateService.LoadRescheduleSlotsAsync(
+            appointment.DoctorId,
+            selectedDate
+        );
     }
 
+   
     // =====================================================
     // Helper: GET RESCHEDULE MINIMUM DATE
     // =====================================================
