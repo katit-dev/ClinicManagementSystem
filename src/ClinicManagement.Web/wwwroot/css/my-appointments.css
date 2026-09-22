@@ -1183,3 +1183,36 @@
 .appointment-reschedule-selected-slot i {
     color: #16a34a;
 }
+
+/* =====================================================
+   RESCHEDULE CONFIRM BUTTON
+   ===================================================== */
+
+.appointment-reschedule-confirm-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #0284c7;
+    border-radius: 8px;
+
+    background-color: #0284c7;
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.appointment-reschedule-confirm-button:hover:not(:disabled) {
+    background-color: #0369a1;
+}
+
+.appointment-reschedule-confirm-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}

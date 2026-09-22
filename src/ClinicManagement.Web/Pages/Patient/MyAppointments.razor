@@ -622,12 +622,42 @@
                                     ACTIONS
                                     ============================= *@
 
+                                    @* =============================
+   ACTIONS
+   ============================= *@
+
                                     <div class="appointment-reschedule-form-actions">
 
                                         <button type="button" class="appointment-reschedule-close-button"
+                                                disabled="@_appointmentStateService.IsRescheduling"
                                                 @onclick="CloseRescheduleAppointment">
 
                                             Đóng
+
+                                        </button>
+
+
+                                        <button type="button" class="appointment-reschedule-confirm-button"
+                                                disabled="@(_selectedRescheduleSlot == null || _appointmentStateService.IsRescheduling)"
+                                                @onclick="() => ConfirmRescheduleAppointmentAsync(appointment.Id)">
+
+                                            @if (_appointmentStateService.IsRescheduling &&
+                                                 _appointmentStateService.ReschedulingAppointmentId == appointment.Id)
+                                            {
+                                                <i class="fas fa-spinner fa-spin"></i>
+
+                                                <span>
+                                                    Đang đổi lịch...
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-calendar-check"></i>
+
+                                                <span>
+                                                    Xác nhận đổi lịch
+                                                </span>
+                                            }
 
                                         </button>
 
@@ -1082,6 +1112,55 @@
         await _appointmentStateService.LoadRescheduleSlotsAsync(
             appointment.DoctorId,
             selectedDate
+        );
+    }
+    // =====================================================
+    // CONFIRM RESCHEDULE APPOINTMENT
+    // =====================================================
+
+    private async Task ConfirmRescheduleAppointmentAsync(int appointmentId)
+    {
+        if (_selectedRescheduleSlot == null)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // RESCHEDULE APPOINTMENT
+        // =================================================
+
+        var success = await _appointmentStateService.RescheduleAppointmentAsync(
+            appointmentId,
+            _selectedRescheduleSlot.StartTime
+        );
+
+
+        // =================================================
+        // FAILED
+        // =================================================
+
+        if (!success)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // CLOSE RESCHEDULE FORM
+        // =================================================
+
+        _rescheduleAppointmentId = null;
+        _rescheduleDate = null;
+        _selectedRescheduleSlot = null;
+
+
+        // =================================================
+        // RELOAD CURRENT FILTER
+        // =================================================
+
+        await _appointmentStateService.LoadAppointmentsAsync(
+            _appointmentStateService.CurrentFilter
         );
     }
 
