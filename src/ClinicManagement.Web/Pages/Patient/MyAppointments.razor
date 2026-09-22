@@ -535,6 +535,69 @@
                                         </div>
                                     }
 
+                                    @* =============================
+                                    AVAILABLE SLOTS
+                                    ============================= *@
+
+                                    @if (_rescheduleDate.HasValue)
+                                    {
+                                        <div class="appointment-reschedule-slots">
+
+                                            <label>
+                                                Khung giờ mới
+                                            </label>
+
+
+                                            @if (_appointmentStateService.IsLoadingRescheduleSlots)
+                                            {
+                                                <div class="appointment-reschedule-slots-loading">
+
+                                                    <i class="fas fa-spinner fa-spin"></i>
+
+                                                    <span>
+                                                        Đang tải khung giờ...
+                                                    </span>
+
+                                                </div>
+                                            }
+                                            else if (!_appointmentStateService.RescheduleSlots.Any(x => x.IsAvailable))
+                                            {
+                                                <div class="appointment-reschedule-slots-empty">
+
+                                                    <i class="far fa-calendar-times"></i>
+
+                                                    <span>
+                                                        Không còn khung giờ trống trong ngày này.
+                                                    </span>
+
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="appointment-reschedule-slot-list">
+
+                                                    @foreach (var slot in
+                                                        _appointmentStateService.RescheduleSlots
+                                                            .Where(x => x.IsAvailable))
+                                                    {
+                                                        <button type="button" class="appointment-reschedule-slot @GetRescheduleSlotClass(slot)"
+                                                                @onclick="() => SelectRescheduleSlot(slot)">
+
+                                                            @(slot.StartTime.ToString("HH:mm"))
+
+                                                            -
+
+                                                            @(slot.EndTime.ToString("HH:mm"))
+
+                                                        </button>
+                                                    }
+
+                                                </div>
+                                            }
+
+                                        </div>
+                                    }
+
 
                                     @* =============================
                                     ERROR
@@ -715,6 +778,8 @@
 
     private DateOnly? _rescheduleDate;
 
+    private SlotDTO? _selectedRescheduleSlot;
+
 
     // =====================================================
     // INITIALIZE
@@ -774,6 +839,7 @@
 
         _rescheduleAppointmentId = null;
         _rescheduleDate = null;
+        _selectedRescheduleSlot = null;
 
 
         // =================================================
@@ -952,7 +1018,6 @@
     // =====================================================
     // OPEN RESCHEDULE APPOINTMENT
     // =====================================================
-
     private void OpenRescheduleAppointment(int appointmentId)
     {
         _appointmentStateService.ClearRescheduleError();
@@ -963,8 +1028,12 @@
 
         _rescheduleAppointmentId = appointmentId;
         _rescheduleDate = null;
+        _selectedRescheduleSlot = null;
     }
 
+    // =====================================================
+    // CLOSE RESCHEDULE APPOINTMENT
+    // =====================================================
     // =====================================================
     // CLOSE RESCHEDULE APPOINTMENT
     // =====================================================
@@ -975,6 +1044,7 @@
 
         _rescheduleAppointmentId = null;
         _rescheduleDate = null;
+        _selectedRescheduleSlot = null;
     }
 
     // =====================================================
@@ -988,6 +1058,7 @@
         var value = e.Value?.ToString();
 
         _rescheduleDate = null;
+        _selectedRescheduleSlot = null;
 
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -1014,24 +1085,38 @@
         );
     }
 
-   
     // =====================================================
-    // Helper: GET RESCHEDULE MINIMUM DATE
+    // Helper
     // =====================================================
 
+    // Helper: GET RESCHEDULE MINIMUM DATE
     private string GetRescheduleMinimumDate()
     {
         return DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd");
     }
 
-    // =====================================================
-    // OPEN CANCEL APPOINTMENT
-    // =====================================================
+    // SELECT RESCHEDULE SLOT
+    private void SelectRescheduleSlot(SlotDTO slot)
+    {
+        if (!slot.IsAvailable)
+        {
+            return;
+        }
 
-    // =====================================================
-    // OPEN CANCEL APPOINTMENT
-    // =====================================================
+        _appointmentStateService.ClearRescheduleError();
 
+        _selectedRescheduleSlot = slot;
+    }
+
+    // GET RESCHEDULE SLOT CLASS
+    private string GetRescheduleSlotClass(SlotDTO slot)
+    {
+        return _selectedRescheduleSlot?.StartTime == slot.StartTime
+            ? "selected"
+            : string.Empty;
+    }
+
+    // OPEN CANCEL APPOINTMENT
     private void OpenCancelAppointment(int appointmentId)
     {
         _appointmentStateService.ClearCancelError();
@@ -1039,15 +1124,14 @@
 
         _rescheduleAppointmentId = null;
         _rescheduleDate = null;
+        _selectedRescheduleSlot = null;
 
         _cancelAppointmentId = appointmentId;
         _cancelReason = string.Empty;
     }
 
 
-    // =====================================================
     // CLOSE CANCEL APPOINTMENT
-    // =====================================================
 
     private void CloseCancelAppointment()
     {

@@ -1111,3 +1111,75 @@
 
     cursor: pointer;
 }
+
+/* =====================================================
+   RESCHEDULE SLOTS
+   ===================================================== */
+
+.appointment-reschedule-slots {
+    margin-top: 14px;
+}
+
+.appointment-reschedule-slots > label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.appointment-reschedule-slot-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.appointment-reschedule-slot {
+    padding: 8px 12px;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #0369a1;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.appointment-reschedule-slot:hover {
+    border-color: #38bdf8;
+    background-color: #f0f9ff;
+}
+
+.appointment-reschedule-slot.selected {
+    border-color: #0284c7;
+    background-color: #e0f2fe;
+    color: #075985;
+}
+
+.appointment-reschedule-slots-loading,
+.appointment-reschedule-slots-empty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.appointment-reschedule-selected-slot {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    padding: 9px 11px;
+    border-radius: 8px;
+    background-color: #f0fdf4;
+    color: #475569;
+    font-size: 12px;
+}
+
+.appointment-reschedule-selected-slot i {
+    color: #16a34a;
+}
