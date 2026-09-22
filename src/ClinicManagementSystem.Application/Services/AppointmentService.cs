@@ -793,6 +793,8 @@ public class AppointmentService : IAppointmentService
                                 AppointmentCode =
                                     a.AppointmentCode,
 
+                                DoctorId = a.DoctorId,
+
                                 DoctorName =
                                     a.Doctor.FullName,
 
