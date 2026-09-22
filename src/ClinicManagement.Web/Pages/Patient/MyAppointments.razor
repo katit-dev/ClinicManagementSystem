@@ -475,6 +475,232 @@
                             }
 
                             @* =================================
+                            MEDICAL RECORD
+                            ================================= *@
+
+                            @if (_appointmentStateService.MedicalRecordAppointmentId == appointment.Id)
+                            {
+                                <div class="appointment-medical-record">
+
+                                    @* =============================
+                                    HEADER
+                                    ============================= *@
+
+                                    <div class="appointment-medical-record-header">
+
+                                        <div>
+
+                                            <div class="appointment-medical-record-title">
+
+                                                <i class="fas fa-file-medical-alt"></i>
+
+                                                <h4>
+                                                    Bệnh án
+                                                </h4>
+
+                                            </div>
+
+                                            <p>
+                                                Thông tin khám và điều trị của lịch hẹn này.
+                                            </p>
+
+                                        </div>
+
+
+                                        <button type="button" class="appointment-medical-record-close"
+                                                @onclick="CloseMedicalRecord">
+
+                                            <i class="fas fa-times"></i>
+
+                                        </button>
+
+                                    </div>
+
+
+                                    @* =============================
+                                    LOADING
+                                    ============================= *@
+
+                                    @if (_appointmentStateService.IsLoadingMedicalRecord)
+                                    {
+                                        <div class="appointment-medical-record-loading">
+
+                                            <i class="fas fa-spinner fa-spin"></i>
+
+                                            <span>
+                                                Đang tải bệnh án...
+                                            </span>
+
+                                        </div>
+                                    }
+
+
+                                    @* =============================
+                                    ERROR
+                                    ============================= *@
+
+                                    else if (!string.IsNullOrWhiteSpace(
+                                        _appointmentStateService.MedicalRecordErrorMessage))
+                                    {
+                                        <div class="appointment-medical-record-error">
+
+                                            <i class="fas fa-exclamation-circle"></i>
+
+                                            <span>
+                                                @_appointmentStateService.MedicalRecordErrorMessage
+                                            </span>
+
+                                        </div>
+                                    }
+
+
+                                    @* =============================
+                                    CONTENT
+                                    ============================= *@
+
+                                    else if (_appointmentStateService.MedicalRecord != null)
+                                    {
+                                        var record = _appointmentStateService.MedicalRecord;
+
+
+                                        @* =============================
+                                        DOCTOR
+                                        ============================= *@
+
+                                        <div class="appointment-medical-record-doctor">
+
+                                            <i class="fas fa-user-md"></i>
+
+                                            <div>
+
+                                                <span>
+                                                    Bác sĩ phụ trách
+                                                </span>
+
+                                                <strong>
+                                                    @record.DoctorName
+                                                </strong>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        @* =============================
+                                        CLINICAL INFORMATION
+                                        ============================= *@
+
+                                        <div class="appointment-medical-record-grid">
+
+                                            <div class="appointment-medical-record-item">
+
+                                                <span>
+                                                    Triệu chứng
+                                                </span>
+
+                                                <p>
+                                                    @GetMedicalRecordText(record.Symptoms)
+                                                </p>
+
+                                            </div>
+
+
+                                            <div class="appointment-medical-record-item">
+
+                                                <span>
+                                                    Chẩn đoán
+                                                </span>
+
+                                                <p>
+                                                    @GetMedicalRecordText(record.Diagnosis)
+                                                </p>
+
+                                            </div>
+
+
+                                            <div class="appointment-medical-record-item">
+
+                                                <span>
+                                                    Mã ICD-10
+                                                </span>
+
+                                                <p>
+                                                    @GetMedicalRecordText(record.Icd10Code)
+                                                </p>
+
+                                            </div>
+
+
+                                            <div class="appointment-medical-record-item">
+
+                                                <span>
+                                                    Kế hoạch điều trị
+                                                </span>
+
+                                                <p>
+                                                    @GetMedicalRecordText(record.TreatmentPlan)
+                                                </p>
+
+                                            </div>
+
+
+                                            <div class="appointment-medical-record-item appointment-medical-record-item-full">
+
+                                                <span>
+                                                    Ghi chú
+                                                </span>
+
+                                                <p>
+                                                    @GetMedicalRecordText(record.Note)
+                                                </p>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        @* =============================
+                                        FOLLOW UP
+                                        ============================= *@
+
+                                        <div class="appointment-medical-record-footer">
+
+                                            <div>
+
+                                                <span>
+                                                    Ngày tái khám
+                                                </span>
+
+                                                <strong>
+                                                    @(record.FollowUpDate.HasValue
+                                                        ? record.FollowUpDate.Value.ToString("dd/MM/yyyy")
+                                                        : "Không có")
+                                                </strong>
+
+                                            </div>
+
+
+                                            <div>
+
+                                                <span>
+                                                    Hoàn tất lúc
+                                                </span>
+
+                                                <strong>
+                                                    @(record.FinalizedAt.HasValue
+                                                        ? record.FinalizedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                        : "Không có")
+                                                </strong>
+
+                                            </div>
+
+                                        </div>
+                                    }
+
+                                </div>
+                            }
+
+                            @* =================================
                             RESCHEDULE FORM
                             ================================= *@
 
@@ -913,6 +1139,15 @@
         await _appointmentStateService.LoadMedicalRecordAsync(appointmentId);
     }
 
+    // =====================================================
+    // CLOSE MEDICAL RECORD
+    // =====================================================
+
+    private void CloseMedicalRecord()
+    {
+        _appointmentStateService.ClearMedicalRecord();
+    }
+
 
     // =====================================================
     // CHANGE FILTER
@@ -1127,6 +1362,8 @@
     {
         _appointmentStateService.ClearRescheduleError();
         _appointmentStateService.ClearCancelError();
+        _appointmentStateService.ClearMedicalRecord();
+
 
         _cancelAppointmentId = null;
         _cancelReason = string.Empty;
@@ -1136,9 +1373,6 @@
         _selectedRescheduleSlot = null;
     }
 
-    // =====================================================
-    // CLOSE RESCHEDULE APPOINTMENT
-    // =====================================================
     // =====================================================
     // CLOSE RESCHEDULE APPOINTMENT
     // =====================================================
@@ -1242,6 +1476,16 @@
     // =====================================================
     // Helper
     // =====================================================
+    // =====================================================
+    // GET MEDICAL RECORD TEXT
+    // =====================================================
+
+    private string GetMedicalRecordText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "Không có thông tin"
+            : value;
+    }
 
     // Helper: GET RESCHEDULE MINIMUM DATE
     private string GetRescheduleMinimumDate()

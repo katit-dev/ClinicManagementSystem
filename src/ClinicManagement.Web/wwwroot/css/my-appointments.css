@@ -1251,3 +1251,249 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* =====================================================
+   MEDICAL RECORD
+   ===================================================== */
+
+.appointment-medical-record {
+    margin-top: 14px;
+    padding: 16px;
+
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+
+    background-color: #f8fffa;
+}
+
+
+/* =====================================================
+   MEDICAL RECORD HEADER
+   ===================================================== */
+
+.appointment-medical-record-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.appointment-medical-record-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.appointment-medical-record-title i {
+    color: #16a34a;
+}
+
+.appointment-medical-record-title h4 {
+    margin: 0;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #166534;
+}
+
+.appointment-medical-record-header p {
+    margin: 4px 0 0;
+
+    font-size: 12px;
+
+    color: #64748b;
+}
+
+.appointment-medical-record-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 30px;
+    height: 30px;
+
+    border: none;
+    border-radius: 8px;
+
+    background-color: transparent;
+
+    color: #64748b;
+
+    cursor: pointer;
+}
+
+.appointment-medical-record-close:hover {
+    background-color: #f1f5f9;
+}
+
+
+/* =====================================================
+   MEDICAL RECORD DOCTOR
+   ===================================================== */
+
+.appointment-medical-record-doctor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-top: 14px;
+    padding: 11px 12px;
+
+    border-radius: 9px;
+
+    background-color: #ffffff;
+}
+
+.appointment-medical-record-doctor > i {
+    color: #16a34a;
+}
+
+.appointment-medical-record-doctor div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.appointment-medical-record-doctor span {
+    font-size: 10px;
+
+    color: #94a3b8;
+}
+
+.appointment-medical-record-doctor strong {
+    font-size: 12px;
+
+    color: #334155;
+}
+
+
+/* =====================================================
+   MEDICAL RECORD GRID
+   ===================================================== */
+
+.appointment-medical-record-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+
+    margin-top: 12px;
+}
+
+.appointment-medical-record-item {
+    padding: 12px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+
+    background-color: #ffffff;
+}
+
+.appointment-medical-record-item-full {
+    grid-column: 1 / -1;
+}
+
+.appointment-medical-record-item span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    color: #94a3b8;
+}
+
+.appointment-medical-record-item p {
+    margin: 0;
+
+    white-space: pre-wrap;
+
+    font-size: 12px;
+
+    color: #334155;
+
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   MEDICAL RECORD FOOTER
+   ===================================================== */
+
+.appointment-medical-record-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+
+    margin-top: 12px;
+    padding-top: 12px;
+
+    border-top: 1px solid #dcfce7;
+}
+
+.appointment-medical-record-footer div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.appointment-medical-record-footer span {
+    font-size: 10px;
+
+    color: #94a3b8;
+}
+
+.appointment-medical-record-footer strong {
+    font-size: 12px;
+
+    color: #334155;
+}
+
+
+/* =====================================================
+   MEDICAL RECORD LOADING / ERROR
+   ===================================================== */
+
+.appointment-medical-record-loading,
+.appointment-medical-record-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-top: 14px;
+    padding: 11px 12px;
+
+    border-radius: 8px;
+
+    font-size: 12px;
+}
+
+.appointment-medical-record-loading {
+    background-color: #f8fafc;
+
+    color: #64748b;
+}
+
+.appointment-medical-record-error {
+    border: 1px solid #fecaca;
+
+    background-color: #fef2f2;
+
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   RESPONSIVE MEDICAL RECORD
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .appointment-medical-record-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .appointment-medical-record-item-full {
+        grid-column: auto;
+    }
+}
