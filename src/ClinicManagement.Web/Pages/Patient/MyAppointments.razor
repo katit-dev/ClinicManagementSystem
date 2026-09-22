@@ -62,7 +62,8 @@
 
     <div class="appointments-filter">
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.All)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.All)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.All)">
 
             <i class="fas fa-list"></i>
@@ -72,7 +73,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Upcoming)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Upcoming)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Upcoming)">
 
             <i class="far fa-clock"></i>
@@ -82,7 +84,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Completed)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Completed)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Completed)">
 
             <i class="fas fa-check-circle"></i>
@@ -92,7 +95,8 @@
         </button>
 
 
-        <button type="button" class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Cancelled)"
+        <button type="button"
+                class="appointments-filter-button @GetFilterClass(MyAppointmentFilter.Cancelled)"
                 @onclick="() => ChangeFilterAsync(MyAppointmentFilter.Cancelled)">
 
             <i class="fas fa-times-circle"></i>
@@ -187,7 +191,9 @@
                 </p>
 
 
-                <button type="button" class="appointments-retry-button" @onclick="RetryAppointmentsAsync">
+                <button type="button"
+                        class="appointments-retry-button"
+                        @onclick="RetryAppointmentsAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -250,8 +256,7 @@
 
                             <span class="appointment-date-day">
 
-                                @(appointment.StartTime
-                                    .ToString("dd"))
+                                @(appointment.StartTime.ToString("dd"))
 
                             </span>
 
@@ -259,16 +264,14 @@
                             <span class="appointment-date-month">
 
                                 Tháng
-                                @(appointment.StartTime
-                                    .ToString("MM"))
+                                @(appointment.StartTime.ToString("MM"))
 
                             </span>
 
 
                             <span class="appointment-date-year">
 
-                                @(appointment.StartTime
-                                    .ToString("yyyy"))
+                                @(appointment.StartTime.ToString("yyyy"))
 
                             </span>
 
@@ -313,8 +316,7 @@
 
                                 <span class="appointment-status @GetStatusClass(appointment.Status)">
 
-                                    @GetStatusText(
-                                        appointment.Status)
+                                    @GetStatusText(appointment.Status)
 
                                 </span>
 
@@ -346,13 +348,11 @@
 
                                         <strong>
 
-                                            @(appointment.StartTime
-                                                .ToString("HH:mm"))
+                                            @(appointment.StartTime.ToString("HH:mm"))
 
                                             -
 
-                                            @(appointment.EndTime
-                                                .ToString("HH:mm"))
+                                            @(appointment.EndTime.ToString("HH:mm"))
 
                                         </strong>
 
@@ -379,8 +379,7 @@
 
                                         <strong>
 
-                                            @(appointment.StartTime
-                                                .ToString("dd/MM/yyyy"))
+                                            @(appointment.StartTime.ToString("dd/MM/yyyy"))
 
                                         </strong>
 
@@ -423,12 +422,23 @@
                                ACTIONS
                                ================================= *@
 
-                            @if (CanManageAppointment(
-                                appointment))
+                            @if (CanManageAppointment(appointment))
                             {
                                 <div class="appointment-actions">
 
-                                    <button type="button" class="appointment-cancel-button"
+                                    <button type="button"
+                                            class="appointment-reschedule-button"
+                                            @onclick="() => OpenRescheduleAppointment(appointment.Id)">
+
+                                        <i class="fas fa-calendar-alt"></i>
+
+                                        Đổi lịch
+
+                                    </button>
+
+
+                                    <button type="button"
+                                            class="appointment-cancel-button"
                                             @onclick="() => OpenCancelAppointment(appointment.Id)">
 
                                         <i class="fas fa-times"></i>
@@ -445,8 +455,7 @@
                                CANCEL FORM
                                ================================= *@
 
-                            @if (_cancelAppointmentId ==
-                                appointment.Id)
+                            @if (_cancelAppointmentId == appointment.Id)
                             {
                                 <div class="appointment-cancel-form">
 
@@ -477,8 +486,11 @@
                                        REASON
                                        ============================= *@
 
-                                    <textarea class="appointment-cancel-reason" rows="3" maxlength="500"
-                                              placeholder="Ví dụ: Tôi có việc đột xuất..." value="@_cancelReason"
+                                    <textarea class="appointment-cancel-reason"
+                                              rows="3"
+                                              maxlength="500"
+                                              placeholder="Ví dụ: Tôi có việc đột xuất..."
+                                              value="@_cancelReason"
                                               @oninput="HandleCancelReasonChanged"></textarea>
 
 
@@ -514,34 +526,47 @@
 
 
                                     @* =============================
-                                       ACTIONS
+                                       CANCEL FORM ACTIONS
                                        ============================= *@
 
-                                    @if (CanManageAppointment(appointment))
-                                    {
-                                        <div class="appointment-actions">
+                                    <div class="appointment-cancel-form-actions">
 
-                                            <button type="button" class="appointment-reschedule-button"
-                                                    @onclick="() => OpenRescheduleAppointment(appointment.Id)">
+                                        <button type="button"
+                                                class="appointment-cancel-close-button"
+                                                disabled="@_appointmentStateService.IsCancelling"
+                                                @onclick="CloseCancelAppointment">
 
-                                                <i class="fas fa-calendar-alt"></i>
+                                            Đóng
 
-                                                Đổi lịch
-
-                                            </button>
+                                        </button>
 
 
-                                            <button type="button" class="appointment-cancel-button"
-                                                    @onclick="() => OpenCancelAppointment(appointment.Id)">
+                                        <button type="button"
+                                                class="appointment-cancel-confirm-button"
+                                                disabled="@_appointmentStateService.IsCancelling"
+                                                @onclick="() => ConfirmCancelAppointmentAsync(appointment.Id)">
 
-                                                <i class="fas fa-times"></i>
+                                            @if (_appointmentStateService.IsCancelling &&
+                                                 _appointmentStateService.CancellingAppointmentId == appointment.Id)
+                                            {
+                                                <i class="fas fa-spinner fa-spin"></i>
 
-                                                Hủy lịch
+                                                <span>
+                                                    Đang hủy...
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle"></i>
 
-                                            </button>
+                                                <span>
+                                                    Xác nhận hủy
+                                                </span>
+                                            }
 
-                                        </div>
-                                    }
+                                        </button>
+
+                                    </div>
 
                                 </div>
                             }
@@ -569,8 +594,13 @@
 
     private string _cancelReason = string.Empty;
 
-    // RESCHEDULE UI STATE
+
+    // =====================================================
+    // RESCHEDULE APPOINTMENT UI STATE
+    // =====================================================
+
     private int? _rescheduleAppointmentId;
+
 
     // =====================================================
     // INITIALIZE
@@ -597,8 +627,7 @@
         // LOAD ALL APPOINTMENTS
         // =================================================
 
-        await _appointmentStateService
-            .LoadAppointmentsAsync();
+        await _appointmentStateService.LoadAppointmentsAsync();
     }
 
 
@@ -606,8 +635,7 @@
     // CHANGE FILTER
     // =====================================================
 
-    private async Task ChangeFilterAsync(
-        MyAppointmentFilter filter)
+    private async Task ChangeFilterAsync(MyAppointmentFilter filter)
     {
         // =================================================
         // SAME FILTER
@@ -621,28 +649,30 @@
 
 
         // =================================================
-        // CLOSE CANCEL FORM
+        // CLOSE ACTION FORMS
         // =================================================
 
-        _cancelAppointmentId =
-            null;
+        _cancelAppointmentId = null;
 
-        _cancelReason =
-            string.Empty;
+        _cancelReason = string.Empty;
+
+        _rescheduleAppointmentId = null;
 
 
-        _appointmentStateService
-            .ClearCancelError();
+        // =================================================
+        // CLEAR ACTION ERRORS
+        // =================================================
+
+        _appointmentStateService.ClearCancelError();
+
+        _appointmentStateService.ClearRescheduleError();
 
 
         // =================================================
         // LOAD FILTER
         // =================================================
 
-        await _appointmentStateService
-            .LoadAppointmentsAsync(
-                filter
-            );
+        await _appointmentStateService.LoadAppointmentsAsync(filter);
     }
 
 
@@ -663,8 +693,7 @@
     // GET FILTER CLASS
     // =====================================================
 
-    private string GetFilterClass(
-        MyAppointmentFilter filter)
+    private string GetFilterClass(MyAppointmentFilter filter)
     {
         return _appointmentStateService.CurrentFilter == filter
             ? "active"
@@ -728,8 +757,7 @@
     // GET APPOINTMENT STATUS TEXT
     // =====================================================
 
-    private string GetStatusText(
-        byte status)
+    private string GetStatusText(byte status)
     {
         return status switch
         {
@@ -761,8 +789,7 @@
     // GET APPOINTMENT STATUS CLASS
     // =====================================================
 
-    private string GetStatusClass(
-        byte status)
+    private string GetStatusClass(byte status)
     {
         return status switch
         {
@@ -796,12 +823,14 @@
 
     private bool CanManageAppointment(MyAppointmentDTO appointment)
     {
-        var validStatus = appointment.Status == 0 || appointment.Status == 1;
+        var validStatus = appointment.Status == 0 ||
+                          appointment.Status == 1;
 
         var isFuture = appointment.StartTime > DateTime.Now;
 
         return validStatus && isFuture;
     }
+
 
     // =====================================================
     // OPEN RESCHEDULE APPOINTMENT
@@ -809,10 +838,27 @@
 
     private void OpenRescheduleAppointment(int appointmentId)
     {
+        // =================================================
+        // CLEAR PREVIOUS ERRORS
+        // =================================================
+
         _appointmentStateService.ClearRescheduleError();
 
+        _appointmentStateService.ClearCancelError();
+
+
+        // =================================================
+        // CLOSE CANCEL FORM
+        // =================================================
+
         _cancelAppointmentId = null;
+
         _cancelReason = string.Empty;
+
+
+        // =================================================
+        // SELECT RESCHEDULE APPOINTMENT
+        // =================================================
 
         _rescheduleAppointmentId = appointmentId;
     }
@@ -824,11 +870,28 @@
 
     private void OpenCancelAppointment(int appointmentId)
     {
+        // =================================================
+        // CLEAR PREVIOUS ERRORS
+        // =================================================
+
         _appointmentStateService.ClearCancelError();
+
+        _appointmentStateService.ClearRescheduleError();
+
+
+        // =================================================
+        // CLOSE RESCHEDULE FORM
+        // =================================================
 
         _rescheduleAppointmentId = null;
 
+
+        // =================================================
+        // OPEN CANCEL FORM
+        // =================================================
+
         _cancelAppointmentId = appointmentId;
+
         _cancelReason = string.Empty;
     }
 
@@ -843,19 +906,16 @@
         // CLEAR ERROR
         // =================================================
 
-        _appointmentStateService
-            .ClearCancelError();
+        _appointmentStateService.ClearCancelError();
 
 
         // =================================================
         // RESET CANCEL FORM
         // =================================================
 
-        _cancelAppointmentId =
-            null;
+        _cancelAppointmentId = null;
 
-        _cancelReason =
-            string.Empty;
+        _cancelReason = string.Empty;
     }
 
 
@@ -863,12 +923,9 @@
     // HANDLE CANCEL REASON CHANGED
     // =====================================================
 
-    private void HandleCancelReasonChanged(
-        ChangeEventArgs e)
+    private void HandleCancelReasonChanged(ChangeEventArgs e)
     {
-        _cancelReason =
-            e.Value?.ToString()
-            ?? string.Empty;
+        _cancelReason = e.Value?.ToString() ?? string.Empty;
     }
 
 
@@ -876,8 +933,7 @@
     // CONFIRM CANCEL APPOINTMENT
     // =====================================================
 
-    private async Task ConfirmCancelAppointmentAsync(
-        int appointmentId)
+    private async Task ConfirmCancelAppointmentAsync(int appointmentId)
     {
         // =================================================
         // CANCEL APPOINTMENT
@@ -905,11 +961,9 @@
         // CLOSE FORM
         // =================================================
 
-        _cancelAppointmentId =
-            null;
+        _cancelAppointmentId = null;
 
-        _cancelReason =
-            string.Empty;
+        _cancelReason = string.Empty;
 
 
         // =================================================
@@ -929,9 +983,7 @@
 
     private void HandleAppointmentStateChanged()
     {
-        _ = InvokeAsync(
-            StateHasChanged
-        );
+        _ = InvokeAsync(StateHasChanged);
     }
 
 
