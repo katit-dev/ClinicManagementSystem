@@ -120,6 +120,32 @@ public class PatientInvoiceService : IPatientInvoiceService
                     })
                     .ToList();
 
+                // =========================================
+                // GET PAYMENTS
+                // =========================================
+
+                var payments = await _unitOfWork.PaymentRepository
+                    .WhereSql(payment => payment.InvoiceId == invoice.Id)
+                    .OrderByDescending(payment => payment.PaidAt)
+                    .ToListAsync();
+
+
+                // =========================================
+                // MAP PAYMENTS
+                // =========================================
+
+                var paymentDtos = payments
+                    .Select(payment => new PatientPaymentDTO
+                    {
+                        Id = payment.Id,
+                        Amount = payment.Amount,
+                        Method = payment.Method,
+                        PaidAt = payment.PaidAt,
+                        ReferenceCode = payment.ReferenceCode,
+                        Note = payment.Note,
+                        IsRefund = payment.IsRefund
+                    })
+                    .ToList();
 
                 // =========================================
                 // MAP INVOICE
@@ -147,7 +173,8 @@ public class PatientInvoiceService : IPatientInvoiceService
                     CancelledAt = invoice.CancelledAt,
                     CancelReason = invoice.CancelReason,
 
-                    Items = itemDtos
+                    Items = itemDtos,
+                    Payments = paymentDtos
                 });
             }
             // =============================================
