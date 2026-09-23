@@ -129,6 +129,31 @@
 
                         </div>
 
+                        @* =================================================
+   ACTION
+   ================================================= *@
+
+                        <div class="patient-invoice-actions">
+                            <button type="button" class="patient-invoice-detail-button"
+                                    @onclick="() => ToggleInvoiceDetail(invoice.Id)">
+                                @(IsInvoiceExpanded(invoice.Id)
+                                    ? "Thu gọn"
+                                    : "Xem chi tiết")
+                            </button>
+                        </div>
+
+
+                        @* =================================================
+   DETAIL
+   ================================================= *@
+
+                        @if (IsInvoiceExpanded(invoice.Id))
+                        {
+                            <div class="patient-invoice-detail">
+                                Chi tiết hóa đơn sẽ hiển thị ở đây.
+                            </div>
+                        }
+
                     </div>
                 }
 
@@ -142,19 +167,48 @@
 
 @code {
 
+    // State
+    private int? _expandedInvoiceId;
+
+
     // =====================================================
     // INITIALIZE
     // =====================================================
 
     protected override async Task OnInitializedAsync()
     {
+        _expandedInvoiceId = null;
+
         InvoiceState.OnChange = HandleStateChanged;
 
         await InvoiceState.LoadInvoicesAsync();
     }
+
+
+
+
     
+    // =====================================================
+    // TOGGLE INVOICE DETAIL
+    // =====================================================
+
+    private void ToggleInvoiceDetail(int invoiceId)
+    {
+        _expandedInvoiceId =
+            _expandedInvoiceId == invoiceId
+                ? null
+                : invoiceId;
+    }
 
 
+    // =====================================================
+    // CHECK EXPANDED
+    // =====================================================
+
+    private bool IsInvoiceExpanded(int invoiceId)
+    {
+        return _expandedInvoiceId == invoiceId;
+    }
 
     // INVOICE STATUS
     private string GetInvoiceStatusText(byte status)
@@ -200,9 +254,10 @@
     // =====================================================
     // RETRY
     // =====================================================
-
     private async Task RetryAsync()
     {
+        _expandedInvoiceId = null;
+
         await InvoiceState.LoadInvoicesAsync();
     }
 
