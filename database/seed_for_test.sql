@@ -628,3 +628,43 @@ VALUES
     'application/pdf',
     NULL
 );
+
+
+-- =====================================================
+-- CHECK INVOICE CONSTRAINTS
+-- =====================================================
+
+USE ClinicManagementSystem;
+GO
+
+SELECT
+    cc.name AS constraint_name,
+    cc.definition
+FROM sys.check_constraints cc
+INNER JOIN sys.tables t
+    ON cc.parent_object_id = t.object_id
+INNER JOIN sys.schemas s
+    ON t.schema_id = s.schema_id
+WHERE t.name = 'invoices';
+
+-- =====================================================
+-- CHECK PAYMENT CONSTRAINTS
+-- =====================================================
+
+SELECT
+    cc.name AS constraint_name,
+    cc.definition
+FROM sys.check_constraints cc
+INNER JOIN sys.tables t
+    ON cc.parent_object_id = t.object_id
+INNER JOIN sys.schemas s
+    ON t.schema_id = s.schema_id
+WHERE t.name = 'payments';
+
+SELECT DISTINCT status
+FROM billing.invoices
+ORDER BY status;
+
+SELECT DISTINCT method
+FROM billing.payments
+ORDER BY method;
