@@ -668,3 +668,209 @@ ORDER BY status;
 SELECT DISTINCT method
 FROM billing.payments
 ORDER BY method;
+
+USE ClinicManagementSystem;
+GO
+
+-- =====================================================
+-- TEST DATA - PATIENT INVOICE
+-- =====================================================
+
+DECLARE @PatientId INT = 5;
+DECLARE @AppointmentId INT = 2;
+DECLARE @MedicalRecordId INT = 1;
+
+DECLARE @MedicineId INT = 1;
+DECLARE @MedicalRecordServiceId INT = 1;
+
+DECLARE @InvoiceId INT;
+DECLARE @InvoiceNo VARCHAR(30) = 'INV-TEST-0001';
+
+DECLARE @PatientName NVARCHAR(255);
+
+SELECT @PatientName = full_name
+FROM scheduling.patients
+WHERE id = @PatientId;
+
+
+-- =====================================================
+-- CREATE INVOICE
+-- =====================================================
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.invoices
+    WHERE invoice_no = @InvoiceNo
+)
+BEGIN
+    INSERT INTO billing.invoices
+    (
+        patient_id,
+        appointment_id,
+        medical_record_id,
+        patient_name,
+        total_amount,
+        status,
+        created_by,
+        created_at,
+        invoice_no,
+        discount_amount,
+        tax_amount,
+        paid_amount,
+        insurance_amount
+    )
+    VALUES
+    (
+        @PatientId,
+        @AppointmentId,
+        @MedicalRecordId,
+        @PatientName,
+        190000,
+        1,              -- PartiallyPaid
+        NULL,
+        SYSUTCDATETIME(),
+        @InvoiceNo,
+        0,
+        0,
+        100000,
+        0
+    );
+END;
+
+
+-- =====================================================
+-- GET INVOICE ID
+-- =====================================================
+
+SELECT @InvoiceId = id
+FROM billing.invoices
+WHERE invoice_no = @InvoiceNo;
+
+
+-- =====================================================
+-- CREATE SERVICE INVOICE ITEM
+-- =====================================================
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.invoice_items
+    WHERE invoice_id = @InvoiceId
+      AND medical_record_service_id = @MedicalRecordServiceId
+)
+BEGIN
+    INSERT INTO billing.invoice_items
+    (
+        invoice_id,
+        medicine_id,
+        description,
+        quantity,
+        unit_price,
+        amount,
+        medical_record_service_id,
+        discount_amount
+    )
+    VALUES
+    (
+        @InvoiceId,
+        NULL,
+        N'Xét nghiệm công thức máu',
+        1,
+        150000,
+        150000,
+        @MedicalRecordServiceId,
+        0
+    );
+END;
+
+
+-- =====================================================
+-- CREATE MEDICINE INVOICE ITEM
+-- =====================================================
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.invoice_items
+    WHERE invoice_id = @InvoiceId
+      AND medicine_id = @MedicineId
+)
+BEGIN
+    INSERT INTO billing.invoice_items
+    (
+        invoice_id,
+        medicine_id,
+        description,
+        quantity,
+        unit_price,
+        amount,
+        medical_record_service_id,
+        discount_amount
+    )
+    VALUES
+    (
+        @InvoiceId,
+        @MedicineId,
+        N'Paracetamol 500mg',
+        20,
+        2000,
+        40000,
+        NULL,
+        0
+    );
+END;
+
+
+-- =====================================================
+-- CREATE PAYMENT
+-- =====================================================
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.payments
+    WHERE invoice_id = @InvoiceId
+      AND reference_code = 'BANK-TEST-001'
+)
+BEGIN
+    INSERT INTO billing.payments
+    (
+        invoice_id,
+        amount,
+        method,
+        paid_at,
+        note,
+        reference_code,
+        received_by,
+        is_refund
+    )
+    VALUES
+    (
+        @InvoiceId,
+        100000,
+        2,              -- BankTransfer
+        SYSUTCDATETIME(),
+        N'Thanh toán thử nghiệm',
+        'BANK-TEST-001',
+        NULL,
+        0
+    );
+END;
+
+
+-- =====================================================
+-- CHECK RESULT
+-- =====================================================
+
+SELECT *
+FROM billing.invoices
+WHERE id = @InvoiceId;
+
+SELECT *
+FROM billing.invoice_items
+WHERE invoice_id = @InvoiceId;
+
+SELECT *
+FROM billing.payments
+WHERE invoice_id = @InvoiceId;
