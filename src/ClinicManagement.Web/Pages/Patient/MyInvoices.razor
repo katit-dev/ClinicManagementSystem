@@ -152,8 +152,8 @@
                             <div class="patient-invoice-detail">
 
                                 @* =================================================
-           INVOICE ITEMS
-           ================================================= *@
+                                INVOICE ITEMS
+                                ================================================= *@
 
                                 <div class="patient-invoice-section">
 
@@ -217,6 +217,79 @@
 
                                 </div>
 
+                                @* =================================================
+   PAYMENTS
+   ================================================= *@
+
+                                <div class="patient-invoice-section">
+
+                                    <div class="patient-invoice-section-header">
+                                        <h5>Lịch sử thanh toán</h5>
+                                    </div>
+
+                                    @if (invoice.Payments.Count == 0)
+                                    {
+                                        <div class="patient-invoice-section-empty">
+                                            Hóa đơn chưa có giao dịch thanh toán.
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="patient-invoice-payments">
+
+                                            @foreach (var payment in invoice.Payments)
+                                            {
+                                                <div class="patient-invoice-payment-item">
+
+                                                    <div class="patient-invoice-payment-main">
+
+                                                        <div class="patient-invoice-payment-method">
+                                                            @GetPaymentMethodText(payment.Method)
+                                                        </div>
+
+                                                        <div class="patient-invoice-payment-date">
+                                                            @payment.PaidAt.ToString("dd/MM/yyyy HH:mm")
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="patient-invoice-payment-info">
+
+                                                        <strong>
+                                                            @FormatMoney(payment.Amount)
+                                                        </strong>
+
+                                                        @if (payment.IsRefund)
+                                                        {
+                                                            <span class="patient-invoice-refund-badge">
+                                                                Hoàn tiền
+                                                            </span>
+                                                        }
+
+                                                    </div>
+
+                                                    @if (!string.IsNullOrWhiteSpace(payment.ReferenceCode))
+                                                    {
+                                                        <div class="patient-invoice-payment-reference">
+                                                            Mã tham chiếu: @payment.ReferenceCode
+                                                        </div>
+                                                    }
+
+                                                    @if (!string.IsNullOrWhiteSpace(payment.Note))
+                                                    {
+                                                        <div class="patient-invoice-payment-note">
+                                                            @payment.Note
+                                                        </div>
+                                                    }
+
+                                                </div>
+                                            }
+
+                                        </div>
+                                    }
+
+                                </div>
+
                             </div>
                         }
 
@@ -252,7 +325,21 @@
 
 
 
+    // =====================================================
+    // PAYMENT METHOD
+    // =====================================================
 
+    private string GetPaymentMethodText(byte method)
+    {
+        return method switch
+        {
+            0 => "Tiền mặt",
+            1 => "Thẻ",
+            2 => "Chuyển khoản",
+            3 => "Ví điện tử",
+            _ => "Không xác định"
+        };
+    }
     
     // =====================================================
     // TOGGLE INVOICE DETAIL

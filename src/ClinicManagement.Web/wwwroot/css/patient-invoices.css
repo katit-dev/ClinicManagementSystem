@@ -279,3 +279,63 @@
 .patient-invoice-items-table tbody tr:last-child td {
     border-bottom: none;
 }
+
+/* =====================================================
+   PAYMENTS
+   ===================================================== */
+
+.patient-invoice-payments {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.patient-invoice-payment-item {
+    padding: 12px;
+    border: 1px solid #f1f3f5;
+    border-radius: 10px;
+    background: #f8f9fa;
+}
+
+.patient-invoice-payment-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.patient-invoice-payment-method {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.patient-invoice-payment-date {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.patient-invoice-payment-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.patient-invoice-payment-info strong {
+    font-size: 15px;
+}
+
+.patient-invoice-refund-badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.patient-invoice-payment-reference,
+.patient-invoice-payment-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6c757d;
+}
