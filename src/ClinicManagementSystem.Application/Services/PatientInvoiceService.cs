@@ -93,14 +93,72 @@ public class PatientInvoiceService : IPatientInvoiceService
 
 
             // =============================================
-            // TEMPORARY RESPONSE
+            // MAP INVOICES
+            // =============================================
+
+            var invoiceDtos = new List<PatientInvoiceDTO>();
+
+            foreach (var invoice in invoices)
+            {
+                // GET INVOICE ITEMS
+                var invoiceItems = await _unitOfWork.InvoiceItemRepository
+                    .WhereSql(item => item.InvoiceId == invoice.Id)
+                    .ToListAsync();
+
+                // MAP INVOICE ITEMS
+                var itemDtos = invoiceItems
+                    .Select(item => new PatientInvoiceItemDTO
+                    {
+                        Id = item.Id,
+                        Description = item.Description,
+                        MedicineId = item.MedicineId,
+                        MedicalRecordServiceId = item.MedicalRecordServiceId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        DiscountAmount = item.DiscountAmount,
+                        Amount = item.Amount
+                    })
+                    .ToList();
+
+
+                // =========================================
+                // MAP INVOICE
+                // =========================================
+
+                invoiceDtos.Add(new PatientInvoiceDTO
+                {
+                    Id = invoice.Id,
+                    InvoiceNo = invoice.InvoiceNo,
+                    AppointmentId = invoice.AppointmentId,
+                    MedicalRecordId = invoice.MedicalRecordId,
+                    PatientName = invoice.PatientName,
+
+                    TotalAmount = invoice.TotalAmount,
+                    DiscountAmount = invoice.DiscountAmount,
+                    TaxAmount = invoice.TaxAmount,
+                    InsuranceAmount = invoice.InsuranceAmount,
+                    PaidAmount = invoice.PaidAmount,
+
+                    Status = invoice.Status,
+
+                    CreatedAt = invoice.CreatedAt,
+                    UpdatedAt = invoice.UpdatedAt,
+
+                    CancelledAt = invoice.CancelledAt,
+                    CancelReason = invoice.CancelReason,
+
+                    Items = itemDtos
+                });
+            }
+            // =============================================
+            // RESPONSE
             // =============================================
 
             return new HttpResponseData<List<PatientInvoiceDTO>>
             {
                 StatusCode = 200,
-                Message = $"Tìm thấy {invoices.Count} hóa đơn.",
-                Content = new List<PatientInvoiceDTO>()
+                Message = "Lấy danh sách hóa đơn thành công.",
+                Content = invoiceDtos
             };
         }
         catch (Exception ex)
