@@ -37,4 +37,8 @@ public class PatientInvoiceDTO
     public DateTime? CancelledAt { get; set; }
 
     public string? CancelReason { get; set; }
+
+    public List<PatientInvoiceItemDTO> Items { get; set; } = new();
+
+    public List<PatientPaymentDTO> Payments { get; set; } = new();
 }
