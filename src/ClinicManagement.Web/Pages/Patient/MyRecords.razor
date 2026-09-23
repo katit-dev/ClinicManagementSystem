@@ -127,9 +127,7 @@
                 </p>
 
 
-                <button type="button"
-                        class="patient-records-retry-button"
-                        @onclick="RetryRecordsAsync">
+                <button type="button" class="patient-records-retry-button" @onclick="RetryRecordsAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -291,8 +289,7 @@
 
                         <div class="patient-record-actions">
 
-                            <button type="button"
-                                    class="patient-record-detail-button"
+                            <button type="button" class="patient-record-detail-button"
                                     @onclick="() => ToggleRecordDetail(record.Id)">
 
                                 @if (IsRecordExpanded(record.Id))
@@ -344,14 +341,160 @@
                                 </div>
 
 
-                                <div class="patient-record-detail-placeholder">
+                                @* =================================
+   PRESCRIPTION
+   ================================= *@
 
-                                    <i class="fas fa-info-circle"></i>
+                                <div class="patient-record-section">
+
+                                    <div class="patient-record-section-header">
+
+                                        <div>
+
+                                            <h5>
+                                                <i class="fas fa-prescription-bottle-alt"></i>
+
+                                                Đơn thuốc
+                                            </h5>
+
+                                            <p>
+                                                Thuốc được kê trong lần khám này.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
 
 
-                                    <span>
-                                        Nội dung chi tiết sẽ được hiển thị ở các bước tiếp theo.
-                                    </span>
+                                    @if (record.Prescription == null)
+                                    {
+                                        <div class="patient-record-section-empty">
+
+                                            <i class="fas fa-info-circle"></i>
+
+                                            <span>
+                                                Lần khám này không có đơn thuốc.
+                                            </span>
+
+                                        </div>
+                                    }
+                                    else if (record.Prescription.Items.Count == 0)
+                                    {
+                                        <div class="patient-record-section-empty">
+
+                                            <i class="fas fa-info-circle"></i>
+
+                                            <span>
+                                                Đơn thuốc chưa có thuốc.
+                                            </span>
+
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="patient-record-prescription-table-wrapper">
+
+                                            <table class="patient-record-prescription-table">
+
+                                                <thead>
+
+                                                    <tr>
+
+                                                        <th>
+                                                            Thuốc
+                                                        </th>
+
+                                                        <th>
+                                                            SL
+                                                        </th>
+
+                                                        <th>
+                                                            Liều dùng
+                                                        </th>
+
+                                                        <th>
+                                                            Tần suất
+                                                        </th>
+
+                                                        <th>
+                                                            Số ngày
+                                                        </th>
+
+                                                        <th>
+                                                            Hướng dẫn
+                                                        </th>
+
+                                                    </tr>
+
+                                                </thead>
+
+
+                                                <tbody>
+
+                                                    @foreach (var item in record.Prescription.Items)
+                                                    {
+                                                        <tr>
+
+                                                            <td>
+
+                                                                <strong>
+                                                                    @item.MedicineName
+                                                                </strong>
+
+                                                            </td>
+
+
+                                                            <td>
+                                                                @item.Quantity
+                                                            </td>
+
+
+                                                            <td>
+                                                                @GetRecordText(item.Dosage)
+                                                            </td>
+
+
+                                                            <td>
+                                                                @GetRecordText(item.Frequency)
+                                                            </td>
+
+
+                                                            <td>
+                                                                @(item.DurationDays.HasValue
+                                                                    ? $"{item.DurationDays.Value} ngày"
+                                                                    : "Không có")
+                                                            </td>
+
+
+                                                            <td>
+                                                                @GetRecordText(item.Instruction)
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+
+                                                </tbody>
+
+                                            </table>
+
+                                        </div>
+
+
+                                        @if (!string.IsNullOrWhiteSpace(record.Prescription.Note))
+                                        {
+                                            <div class="patient-record-prescription-note">
+
+                                                <span>
+                                                    Ghi chú đơn thuốc
+                                                </span>
+
+                                                <p>
+                                                    @record.Prescription.Note
+                                                </p>
+
+                                            </div>
+                                        }
+                                    }
 
                                 </div>
 
