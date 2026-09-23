@@ -29,17 +29,6 @@
 
         <div>
 
-            <div class="patient-records-header-label">
-
-                <i class="fas fa-notes-medical"></i>
-
-                <span>
-                    VC-05
-                </span>
-
-            </div>
-
-
             <h1 class="patient-records-title">
                 Lịch sử khám & đơn thuốc
             </h1>
@@ -137,9 +126,7 @@
                 </p>
 
 
-                <button type="button"
-                        class="patient-records-retry-button"
-                        @onclick="RetryRecordsAsync">
+                <button type="button" class="patient-records-retry-button" @onclick="RetryRecordsAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -185,17 +172,113 @@
 
         else
         {
-            <div class="patient-records-loaded">
+            <div class="patient-record-list">
 
-                <i class="fas fa-check-circle"></i>
+                @foreach (var record in _recordStateService.Records)
+                {
+                    <article class="patient-record-card">
 
-                <span>
-                    Đã tải
-                    <strong>
-                        @_recordStateService.Records.Count
-                    </strong>
-                    bệnh án.
-                </span>
+                        @* =====================================
+                   RECORD HEADER
+                   ===================================== *@
+
+                        <div class="patient-record-card-header">
+
+                            <div>
+
+                                <div class="patient-record-date">
+
+                                    <i class="far fa-calendar-alt"></i>
+
+                                    <span>
+                                        @(record.FinalizedAt?.ToString("dd/MM/yyyy")
+                                            ?? record.CreatedAt.ToString("dd/MM/yyyy"))
+                                    </span>
+
+                                </div>
+
+
+                                <h3 class="patient-record-diagnosis">
+
+                                    @GetRecordDiagnosis(record)
+
+                                </h3>
+
+
+                                <div class="patient-record-doctor">
+
+                                    <i class="fas fa-user-md"></i>
+
+                                    <span>
+                                        @record.DoctorName
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <span class="patient-record-status">
+
+                                <i class="fas fa-check-circle"></i>
+
+                                Đã hoàn tất
+
+                            </span>
+
+                        </div>
+
+
+                        @* =====================================
+                   RECORD INFORMATION
+                   ===================================== *@
+
+                        <div class="patient-record-info">
+
+                            <div class="patient-record-info-item">
+
+                                <span>
+                                    Mã ICD-10
+                                </span>
+
+                                <strong>
+                                    @GetRecordText(record.Icd10Code)
+                                </strong>
+
+                            </div>
+
+
+                            <div class="patient-record-info-item">
+
+                                <span>
+                                    Ngày tái khám
+                                </span>
+
+                                <strong>
+                                    @(record.FollowUpDate.HasValue
+                                        ? record.FollowUpDate.Value.ToString("dd/MM/yyyy")
+                                        : "Không có")
+                                </strong>
+
+                            </div>
+
+
+                            <div class="patient-record-info-item">
+
+                                <span>
+                                    Mã bệnh án
+                                </span>
+
+                                <strong>
+                                    #@record.Id
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </article>
+                }
 
             </div>
         }
@@ -242,6 +325,36 @@
     private async Task RetryRecordsAsync()
     {
         await _recordStateService.LoadRecordsAsync();
+    }
+    
+
+    // =====================================================
+    // Helper
+    // =====================================================
+
+    // GET RECORD DIAGNOSIS
+
+    private string GetRecordDiagnosis(PatientRecordDTO record)
+    {
+        if (string.IsNullOrWhiteSpace(record.Diagnosis))
+        {
+            return "Chưa có chẩn đoán";
+        }
+
+        if (string.IsNullOrWhiteSpace(record.Icd10Code))
+        {
+            return record.Diagnosis;
+        }
+
+        return $"{record.Diagnosis} ({record.Icd10Code})";
+    }
+
+    // GET RECORD TEXT
+    private string GetRecordText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "Không có thông tin"
+            : value;
     }
 
 
