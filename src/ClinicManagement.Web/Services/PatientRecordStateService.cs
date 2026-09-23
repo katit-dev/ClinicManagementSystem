@@ -37,6 +37,49 @@ public class PatientRecordStateService
         _authorizedApiService = authorizedApiService;
     }
 
+    // =====================================================
+    // DOWNLOAD ATTACHMENT
+    // =====================================================
+
+    public async Task<(byte[] FileBytes, string FileName, string ContentType)?> DownloadAttachmentAsync(
+        int attachmentId)
+    {
+        try
+        {
+            var response = await _authorizedApiService.GetAsync(
+                $"/api/attachments/{attachmentId}/download"
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+
+            var fileName =
+                response.Content.Headers.ContentDisposition?.FileNameStar
+                ?? response.Content.Headers.ContentDisposition?.FileName
+                ?? $"attachment-{attachmentId}";
+
+            fileName = fileName.Trim('"');
+
+            var contentType =
+                response.Content.Headers.ContentType?.MediaType
+                ?? "application/octet-stream";
+
+            return (
+                fileBytes,
+                fileName,
+                contentType
+            );
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
 
     // =====================================================
     // LOAD PATIENT RECORDS

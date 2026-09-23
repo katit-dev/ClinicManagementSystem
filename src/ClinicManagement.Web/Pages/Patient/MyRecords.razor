@@ -5,6 +5,7 @@
 @attribute [Authorize(Roles = "Patient")]
 
 @inject PatientRecordStateService _recordStateService
+@inject IJSRuntime JS
 
 @implements IDisposable
 
@@ -627,6 +628,95 @@
 
                                 </div>
 
+                                @* =================================
+                                ATTACHMENTS
+                                ================================= *@
+
+                                <div class="patient-record-section">
+
+                                    <div class="patient-record-section-header">
+
+                                        <div>
+
+                                            <h5>
+                                                <i class="fas fa-paperclip"></i>
+
+                                                File đính kèm
+                                            </h5>
+
+                                            <p>
+                                                Tài liệu và kết quả được đính kèm trong bệnh án.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    @if (record.Attachments.Count == 0)
+                                    {
+                                        <div class="patient-record-section-empty">
+
+                                            <i class="fas fa-info-circle"></i>
+
+                                            <span>
+                                                Lần khám này không có file đính kèm.
+                                            </span>
+
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="patient-record-attachment-list">
+
+                                            @foreach (var attachment in record.Attachments)
+                                            {
+                                                <div class="patient-record-attachment-item">
+
+                                                    <div class="patient-record-attachment-info">
+
+                                                        <div class="patient-record-attachment-icon">
+
+                                                            <i class="@GetAttachmentIcon(attachment.FileType)"></i>
+
+                                                        </div>
+
+
+                                                        <div>
+
+                                                            <strong>
+                                                                @GetAttachmentName(attachment)
+                                                            </strong>
+
+
+                                                            <span>
+                                                                @GetAttachmentTypeText(attachment.FileType)
+                                                                ·
+                                                                @attachment.UploadedAt.ToString("dd/MM/yyyy HH:mm")
+                                                            </span>
+
+                                                        </div>
+
+                                                    </div>
+
+
+                                                    <button type="button" class="patient-record-download-button"
+                                                            @onclick="() => DownloadAttachmentAsync(attachment.Id)">
+
+                                                        <i class="fas fa-download"></i>
+
+                                                        Tải file
+
+                                                    </button>
+
+                                                </div>
+                                            }
+
+                                        </div>
+                                    }
+
+                                </div>
+
                             </div>
                         }
 
@@ -744,7 +834,96 @@
             ? "Không có thông tin"
             : value;
     }
+    
+    // =====================================================
+    // DOWNLOAD ATTACHMENT
+    // =====================================================
 
+    private async Task DownloadAttachmentAsync(int attachmentId)
+    {
+        var result =
+            await _recordStateService.DownloadAttachmentAsync(
+                attachmentId
+            );
+
+        if (result == null)
+        {
+            return;
+        }
+
+        var base64 =
+            Convert.ToBase64String(
+                result.Value.FileBytes
+            );
+
+        await JS.InvokeVoidAsync(
+            "downloadFileFromBase64",
+            result.Value.FileName,
+            result.Value.ContentType,
+            base64
+        );
+    }
+
+
+    // =====================================================
+    // GET ATTACHMENT ICON
+    // =====================================================
+
+    private string GetAttachmentIcon(string? fileType)
+    {
+        if (string.IsNullOrWhiteSpace(fileType))
+        {
+            return "fas fa-file";
+        }
+
+        if (fileType.Contains("pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return "fas fa-file-pdf";
+        }
+
+        if (fileType.Contains("image", StringComparison.OrdinalIgnoreCase))
+        {
+            return "fas fa-file-image";
+        }
+
+        return "fas fa-file";
+    }
+
+
+    // =====================================================
+    // GET ATTACHMENT TYPE TEXT
+    // =====================================================
+
+    private string GetAttachmentTypeText(string? fileType)
+    {
+        if (string.IsNullOrWhiteSpace(fileType))
+        {
+            return "File";
+        }
+
+        if (fileType.Contains("pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return "PDF";
+        }
+
+        if (fileType.Contains("image", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Hình ảnh";
+        }
+
+        return fileType;
+    }
+
+
+    // =====================================================
+    // GET ATTACHMENT NAME
+    // =====================================================
+
+    private string GetAttachmentName(
+        PatientRecordAttachmentDTO attachment)
+    {
+        return $"Tệp đính kèm #{attachment.Id}";
+    }
 
     // =====================================================
     // HANDLE STATE CHANGED
