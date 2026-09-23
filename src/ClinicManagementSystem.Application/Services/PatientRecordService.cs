@@ -196,9 +196,31 @@ public class PatientRecordService : IPatientRecordService
                         ResultedAt = labResult.ResultedAt,
                     };
 
-
                     labResultDtos.Add(labResultDto);
                 }
+
+                // =================================================
+                // GET ATTACHMENTS
+                // =================================================
+
+                var attachments = await _unitOfWork.AttachmentRepository
+                    .WhereSql(a => a.MedicalRecordId == medicalRecord.Id)
+                    .OrderByDescending(a => a.UploadedAt)
+                    .ToListAsync();
+
+
+                // =================================================
+                // MAP ATTACHMENTS
+                // =================================================
+
+                var attachmentDtos = attachments
+                    .Select(a => new PatientRecordAttachmentDTO
+                    {
+                        Id = a.Id,
+                        FileType = a.FileType,
+                        UploadedAt = a.UploadedAt
+                    })
+                    .ToList();
 
                 // MAP MEDICAL RECORD
                 var recordDto = new PatientRecordDTO
@@ -213,7 +235,8 @@ public class PatientRecordService : IPatientRecordService
                     FinalizedAt = medicalRecord.FinalizedAt,
                     CreatedAt = medicalRecord.CreatedAt,
                     Prescription = prescriptionDto,
-                    LabResults = labResultDtos
+                    LabResults = labResultDtos,
+                    Attachments = attachmentDtos
                 };
 
                 result.Add(recordDto);
