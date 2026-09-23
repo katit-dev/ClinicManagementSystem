@@ -121,11 +121,7 @@ public class PatientRecordService : IPatientRecordService
                         .OrderBy(i => i.Id)
                         .ToListAsync();
 
-
-                    // =================================================
                     // MAP PRESCRIPTION ITEMS
-                    // =================================================
-
                     var itemDtos = prescriptionItems
                         .Select(i => new PatientRecordPrescriptionItemDTO
                         {
@@ -151,6 +147,59 @@ public class PatientRecordService : IPatientRecordService
                     };
                 }
 
+                // GET MEDICAL RECORD SERVICES
+                var medicalRecordServices = await _unitOfWork.MedicalRecordServiceRepository
+                    .WhereSql(s => s.MedicalRecordId == medicalRecord.Id)
+                    .OrderBy(s => s.Id)
+                    .ToListAsync();
+
+
+                // MAP LAB RESULTS
+                var labResultDtos = new List<PatientRecordLabResultDTO>();
+
+
+                foreach (var medicalRecordService in medicalRecordServices)
+                {
+                    // GET LAB RESULT
+                    var labResult = await _unitOfWork.LabResultRepository
+                        .WhereSql(l =>
+                            l.MedicalRecordServiceId == medicalRecordService.Id
+                        )
+                        .FirstOrDefaultAsync();
+
+
+                    // NO LAB RESULT
+                    if (labResult == null)
+                    {
+                        continue;
+                    }
+
+
+                    // GET SERVICE
+                    var service = await _unitOfWork.ServiceRepository
+                        .WhereSql(s =>
+                            s.Id == medicalRecordService.ServiceId
+                        )
+                        .FirstOrDefaultAsync();
+
+                    // MAP LAB RESULT
+                    var labResultDto = new PatientRecordLabResultDTO
+                    {
+                        Id = labResult.Id,
+                        MedicalRecordServiceId = medicalRecordService.Id,
+                        ServiceId = medicalRecordService.ServiceId,
+                        ServiceName = service?.Name ?? string.Empty,
+                        ServiceCode = service?.Code,
+                        ResultValue = labResult.ResultValue,
+                        ReferenceRange = labResult.ReferenceRange,
+                        Conclusion = labResult.Conclusion,
+                        ResultedAt = labResult.ResultedAt,
+                    };
+
+
+                    labResultDtos.Add(labResultDto);
+                }
+
                 // MAP MEDICAL RECORD
                 var recordDto = new PatientRecordDTO
                 {
@@ -163,7 +212,8 @@ public class PatientRecordService : IPatientRecordService
                     Status = medicalRecord.Status,
                     FinalizedAt = medicalRecord.FinalizedAt,
                     CreatedAt = medicalRecord.CreatedAt,
-                    Prescription = prescriptionDto
+                    Prescription = prescriptionDto,
+                    LabResults = labResultDtos
                 };
 
                 result.Add(recordDto);
