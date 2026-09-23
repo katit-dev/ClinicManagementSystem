@@ -63,12 +63,10 @@ public class PatientRecordService : IPatientRecordService
             // PATIENT NOT FOUND
             if (patient == null)
             {
-                return new HttpResponseData<List<PatientRecordDTO>>
-                {
-                    StatusCode = 404,
-                    Message = "Không tìm thấy bệnh nhân.",
-                    Content = null
-                };
+                return Response(
+                    404,
+                    "Không tìm thấy bệnh nhân."
+                );
             }
 
 
@@ -85,12 +83,11 @@ public class PatientRecordService : IPatientRecordService
             // NO MEDICAL RECORDS
             if (medicalRecords.Count == 0)
             {
-                return new HttpResponseData<List<PatientRecordDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "Chưa có lịch sử khám.",
-                    Content = new List<PatientRecordDTO>()
-                };
+                return Response(
+                    200,
+                    "Chưa có lịch sử khám.",
+                    new List<PatientRecordDTO>()
+                );
             }
 
 
@@ -222,12 +219,17 @@ public class PatientRecordService : IPatientRecordService
                     })
                     .ToList();
 
+                // GET DOCTOR
+                var doctor = await _unitOfWork.DoctorRepository
+                    .WhereSql(d => d.Id == medicalRecord.DoctorId)
+                    .FirstOrDefaultAsync();
+
                 // MAP MEDICAL RECORD
                 var recordDto = new PatientRecordDTO
                 {
                     Id = medicalRecord.Id,
                     AppointmentId = medicalRecord.AppointmentId,
-                    DoctorName = string.Empty,
+                    DoctorName = doctor?.FullName ?? string.Empty,
                     Diagnosis = medicalRecord.Diagnosis,
                     Icd10Code = medicalRecord.Icd10Code,
                     FollowUpDate = medicalRecord.FollowUpDate,
@@ -244,31 +246,43 @@ public class PatientRecordService : IPatientRecordService
 
 
             // SUCCESS
-            return new HttpResponseData<List<PatientRecordDTO>>
-            {
-                StatusCode = 200,
-                Message = "Lấy lịch sử khám thành công.",
-                Content = result
-            };
+            return Response(200, "Lấy lịch sử khám thành công.", result);
 
         }
         catch (Exception ex)
         {
+            // =================================================
             // LOG ERROR
+            // =================================================
 
             _logger.LogError(
                 ex,
-                "Failed to get current patient for record history. UserId: {UserId}",
+                "Failed to get patient record history. UserId: {UserId}",
                 currentUserId
             );
 
-
-            return new HttpResponseData<List<PatientRecordDTO>>
-            {
-                StatusCode = 500,
-                Message = "Lấy lịch sử khám thất bại.",
-                Content = null
-            };
+            return Response(
+                500,
+                "Lấy lịch sử khám thất bại."
+            );
         }
+    }
+
+
+    // =====================================================
+    // RESPONSE
+    // =====================================================
+
+    private static HttpResponseData<List<PatientRecordDTO>> Response(
+        int statusCode,
+        string message,
+        List<PatientRecordDTO>? content = null)
+    {
+        return new HttpResponseData<List<PatientRecordDTO>>
+        {
+            StatusCode = statusCode,
+            Message = message,
+            Content = content
+        };
     }
 }
