@@ -19,3 +19,4 @@ public class PatientRecordPrescriptionDTO
 
     public List<PatientRecordPrescriptionItemDTO> Items { get; set; } = new();
 }
+
