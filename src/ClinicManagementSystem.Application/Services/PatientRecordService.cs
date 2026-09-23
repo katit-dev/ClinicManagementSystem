@@ -1,5 +1,6 @@
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.PatientRecord;
+using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -47,8 +48,7 @@ public class PatientRecordService : IPatientRecordService
     // GET PATIENT RECORDS
     // =====================================================
 
-    public async Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsAsync(
-        int currentUserId)
+    public async Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsAsync(int currentUserId)
     {
         try
         {
@@ -72,18 +72,53 @@ public class PatientRecordService : IPatientRecordService
             }
 
 
-            // =================================================
-            // TEMPORARY RESULT
-            //
-            // Bước tiếp theo mới query MedicalRecord.
-            // =================================================
+            // GET FINALIZED MEDICAL RECORDS
+            var medicalRecords = await _unitOfWork.MedicalRecordRepository
+                .WhereSql(m =>
+                    m.PatientId == patient.Id &&
+                    m.Status == (byte)MedicalRecordStatus.Finalized
+                )
+                .OrderByDescending(m => m.FinalizedAt)
+                .ToListAsync();
 
+
+            // NO MEDICAL RECORDS
+            if (medicalRecords.Count == 0)
+            {
+                return new HttpResponseData<List<PatientRecordDTO>>
+                {
+                    StatusCode = 200,
+                    Message = "Chưa có lịch sử khám.",
+                    Content = new List<PatientRecordDTO>()
+                };
+            }
+
+
+            // MAP BASIC MEDICAL RECORD INFORMATION
+            var result = medicalRecords
+                .Select(m => new PatientRecordDTO
+                {
+                    Id = m.Id,
+                    AppointmentId = m.AppointmentId,
+                    DoctorName = string.Empty,
+                    Diagnosis = m.Diagnosis,
+                    Icd10Code = m.Icd10Code,
+                    FollowUpDate = m.FollowUpDate,
+                    Status = m.Status,
+                    FinalizedAt = m.FinalizedAt,
+                    CreatedAt = m.CreatedAt
+                })
+                .ToList();
+
+
+            // SUCCESS
             return new HttpResponseData<List<PatientRecordDTO>>
             {
                 StatusCode = 200,
-                Message = "Đã xác định bệnh nhân hiện tại.",
-                Content = new List<PatientRecordDTO>()
+                Message = "Lấy lịch sử khám thành công.",
+                Content = result
             };
+
         }
         catch (Exception ex)
         {
