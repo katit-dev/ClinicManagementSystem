@@ -94,21 +94,80 @@ public class PatientRecordService : IPatientRecordService
             }
 
 
-            // MAP BASIC MEDICAL RECORD INFORMATION
-            var result = medicalRecords
-                .Select(m => new PatientRecordDTO
+            // =================================================
+            // MAP MEDICAL RECORDS
+            // =================================================
+
+            var result = new List<PatientRecordDTO>();
+
+
+            foreach (var medicalRecord in medicalRecords)
+            {
+                // GET PRESCRIPTION
+                var prescription = await _unitOfWork.PrescriptionRepository
+                    .WhereSql(p => p.MedicalRecordId == medicalRecord.Id).FirstOrDefaultAsync();
+
+                // PRESCRIPTION DTO
+                PatientRecordPrescriptionDTO? prescriptionDto = null;
+
+
+                if (prescription != null)
                 {
-                    Id = m.Id,
-                    AppointmentId = m.AppointmentId,
+                    // GET PRESCRIPTION ITEMS
+                    var prescriptionItems = await _unitOfWork.PrescriptionItemRepository
+                        .WhereSql(i =>
+                            i.PrescriptionId == prescription.Id
+                        )
+                        .OrderBy(i => i.Id)
+                        .ToListAsync();
+
+
+                    // =================================================
+                    // MAP PRESCRIPTION ITEMS
+                    // =================================================
+
+                    var itemDtos = prescriptionItems
+                        .Select(i => new PatientRecordPrescriptionItemDTO
+                        {
+                            Id = i.Id,
+                            MedicineName = i.MedicineNameSnapshot,
+                            Quantity = i.Quantity,
+                            Dosage = i.Dosage,
+                            Instruction = i.Instruction,
+                            DurationDays = i.DurationDays,
+                            Frequency = i.Frequency
+                        })
+                        .ToList();
+
+                    // MAP PRESCRIPTION
+                    prescriptionDto = new PatientRecordPrescriptionDTO
+                    {
+                        Id = prescription.Id,
+                        Note = prescription.Note,
+                        Status = prescription.Status,
+                        CreatedAt = prescription.CreatedAt,
+                        DispensedAt = prescription.DispensedAt,
+                        Items = itemDtos
+                    };
+                }
+
+                // MAP MEDICAL RECORD
+                var recordDto = new PatientRecordDTO
+                {
+                    Id = medicalRecord.Id,
+                    AppointmentId = medicalRecord.AppointmentId,
                     DoctorName = string.Empty,
-                    Diagnosis = m.Diagnosis,
-                    Icd10Code = m.Icd10Code,
-                    FollowUpDate = m.FollowUpDate,
-                    Status = m.Status,
-                    FinalizedAt = m.FinalizedAt,
-                    CreatedAt = m.CreatedAt
-                })
-                .ToList();
+                    Diagnosis = medicalRecord.Diagnosis,
+                    Icd10Code = medicalRecord.Icd10Code,
+                    FollowUpDate = medicalRecord.FollowUpDate,
+                    Status = medicalRecord.Status,
+                    FinalizedAt = medicalRecord.FinalizedAt,
+                    CreatedAt = medicalRecord.CreatedAt,
+                    Prescription = prescriptionDto
+                };
+
+                result.Add(recordDto);
+            }
 
 
             // SUCCESS
