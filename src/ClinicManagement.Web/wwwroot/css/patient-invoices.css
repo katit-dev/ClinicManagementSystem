@@ -421,3 +421,148 @@
     margin-bottom: 6px;
     font-weight: 700;
 }
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 992px) {
+
+    .patient-invoice-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .patient-invoice-card-header {
+        gap: 12px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .patient-invoices-page {
+        padding: 16px;
+    }
+
+    .patient-invoices-header h1 {
+        font-size: 24px;
+    }
+
+    .patient-invoices-header p {
+        font-size: 13px;
+    }
+
+    .patient-invoices-content {
+        padding: 14px;
+    }
+
+    .patient-invoice-card {
+        padding: 14px;
+    }
+
+    .patient-invoice-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .patient-invoice-status {
+        align-self: flex-start;
+    }
+
+    .patient-invoice-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-invoice-reference {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .patient-invoice-actions {
+        justify-content: stretch;
+    }
+
+    .patient-invoice-detail-button {
+        width: 100%;
+    }
+
+    .patient-invoice-detail {
+        margin-top: 12px;
+        padding-top: 12px;
+    }
+
+    .patient-invoice-section {
+        padding: 12px;
+    }
+
+    .patient-invoice-items-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .patient-invoice-payment-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .patient-invoice-payment-info {
+        flex-wrap: wrap;
+    }
+
+    .patient-invoice-breakdown-row {
+        align-items: flex-start;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - SMALL MOBILE
+   ===================================================== */
+
+@media (max-width: 480px) {
+
+    .patient-invoices-page {
+        padding: 12px;
+    }
+
+    .patient-invoices-content {
+        padding: 12px;
+    }
+
+    .patient-invoice-card {
+        padding: 12px;
+    }
+
+    .patient-invoice-number {
+        font-size: 15px;
+    }
+
+    .patient-invoice-summary-item {
+        padding: 10px;
+    }
+
+    .patient-invoice-section {
+        padding: 10px;
+    }
+
+    .patient-invoice-section-header h5 {
+        font-size: 13px;
+    }
+
+    .patient-invoice-payment-item {
+        padding: 10px;
+    }
+
+    .patient-invoice-breakdown-row {
+        gap: 10px;
+    }
+
+    .patient-invoice-breakdown-row strong {
+        text-align: right;
+    }
+}
