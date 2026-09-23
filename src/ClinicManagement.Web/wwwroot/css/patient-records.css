@@ -1,0 +1,211 @@
+/* =====================================================
+   PATIENT RECORDS PAGE
+   ===================================================== */
+
+.patient-records-page {
+    padding: 24px;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.patient-records-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    margin-bottom: 20px;
+}
+
+.patient-records-header-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    margin-bottom: 8px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    color: #64748b;
+}
+
+.patient-records-title {
+    margin: 0;
+
+    font-size: 28px;
+    font-weight: 700;
+
+    color: #0f172a;
+}
+
+.patient-records-description {
+    margin: 8px 0 0;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   CONTENT
+   ===================================================== */
+
+.patient-records-content {
+    padding: 20px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+
+    background-color: #ffffff;
+}
+
+.patient-records-content-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    padding-bottom: 14px;
+
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.patient-records-content-header h2 {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    color: #1e293b;
+}
+
+.patient-records-content-header p {
+    margin: 4px 0 0;
+
+    font-size: 12px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+   ===================================================== */
+
+.patient-records-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 260px;
+
+    padding: 30px;
+
+    text-align: center;
+}
+
+.patient-records-placeholder-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 46px;
+    height: 46px;
+
+    margin-bottom: 12px;
+
+    border-radius: 50%;
+
+    background-color: #f1f5f9;
+
+    color: #0284c7;
+
+    font-size: 18px;
+}
+
+.patient-records-placeholder h3 {
+    margin: 0;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    color: #334155;
+}
+
+.patient-records-placeholder p {
+    margin: 6px 0 0;
+
+    font-size: 12px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   ERROR
+   ===================================================== */
+
+.patient-records-error .patient-records-placeholder-icon {
+    background-color: #fef2f2;
+
+    color: #dc2626;
+}
+
+.patient-records-retry-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    margin-top: 14px;
+
+    padding: 8px 12px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+
+    color: #475569;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.patient-records-retry-button:hover {
+    background-color: #f8fafc;
+}
+
+
+/* =====================================================
+   LOADED
+   ===================================================== */
+
+.patient-records-loaded {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-top: 18px;
+    padding: 12px;
+
+    border: 1px solid #bbf7d0;
+    border-radius: 9px;
+
+    background-color: #f0fdf4;
+
+    color: #166534;
+
+    font-size: 12px;
+}
+
+.patient-records-loaded i {
+    color: #16a34a;
+}
