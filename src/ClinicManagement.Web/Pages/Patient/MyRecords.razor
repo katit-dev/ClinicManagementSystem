@@ -277,6 +277,84 @@
 
                         </div>
 
+                        @* =====================================
+   RECORD DETAIL
+   ===================================== *@
+
+                        @if (IsRecordExpanded(record.Id))
+                        {
+                            <div class="patient-record-detail">
+
+                                <div class="patient-record-detail-header">
+
+                                    <div>
+
+                                        <h4>
+                                            Chi tiết lần khám
+                                        </h4>
+
+                                        <p>
+                                            Thông tin đơn thuốc, kết quả cận lâm sàng
+                                            và file đính kèm.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="patient-record-detail-placeholder">
+
+                                    <i class="fas fa-info-circle"></i>
+
+                                    <span>
+                                        Nội dung chi tiết sẽ được hiển thị ở các bước tiếp theo.
+                                    </span>
+
+                                </div>
+
+                            </div>
+                        }
+
+                        @* =====================================
+   RECORD DETAIL
+   ===================================== *@
+
+                        @if (IsRecordExpanded(record.Id))
+                        {
+                            <div class="patient-record-detail">
+
+                                <div class="patient-record-detail-header">
+
+                                    <div>
+
+                                        <h4>
+                                            Chi tiết lần khám
+                                        </h4>
+
+                                        <p>
+                                            Thông tin đơn thuốc, kết quả cận lâm sàng
+                                            và file đính kèm.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="patient-record-detail-placeholder">
+
+                                    <i class="fas fa-info-circle"></i>
+
+                                    <span>
+                                        Nội dung chi tiết sẽ được hiển thị ở các bước tiếp theo.
+                                    </span>
+
+                                </div>
+
+                            </div>
+                        }
+
                     </article>
                 }
 
@@ -291,30 +369,45 @@
 @code
 {
     // =====================================================
+    // RECORD DETAIL STATE
+    // =====================================================
+    private int? _expandedRecordId;
+
+    // =====================================================
     // INITIALIZE
     // =====================================================
 
     protected override async Task OnInitializedAsync()
     {
-        // =================================================
         // SUBSCRIBE STATE CHANGE
-        // =================================================
-
         _recordStateService.OnChange += HandleRecordStateChanged;
 
-
-        // =================================================
         // RESET STATE
-        // =================================================
-
         _recordStateService.Reset();
 
-
-        // =================================================
         // LOAD RECORDS
-        // =================================================
-
         await _recordStateService.LoadRecordsAsync();
+    }
+
+    // =====================================================
+    // TOGGLE RECORD DETAIL
+    // =====================================================
+
+    private void ToggleRecordDetail(int recordId)
+    {
+        _expandedRecordId = _expandedRecordId == recordId
+            ? null
+            : recordId;
+    }
+
+
+    // =====================================================
+    // IS RECORD EXPANDED
+    // =====================================================
+
+    private bool IsRecordExpanded(int recordId)
+    {
+        return _expandedRecordId == recordId;
     }
 
 
@@ -326,7 +419,7 @@
     {
         await _recordStateService.LoadRecordsAsync();
     }
-    
+
 
     // =====================================================
     // Helper
