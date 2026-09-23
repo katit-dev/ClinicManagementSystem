@@ -395,3 +395,20 @@ WHERE a.id = @AppointmentId
     created_at
 FROM clinical.medical_records
 WHERE appointment_id = 3;
+
+
+-- =====================================================
+-- TEST MEDICAL RECORD FOR VC-05
+-- =====================================================
+USE ClinicManagementSystem;
+GO
+
+SELECT *
+FROM scheduling.appointments
+WHERE status = 3
+ORDER BY start_time DESC;
+
+-- CHECK EXISTING MEDICAL RECORD
+SELECT *
+FROM clinical.medical_records
+WHERE appointment_id = 2;
