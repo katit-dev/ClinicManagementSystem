@@ -13,7 +13,7 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IPatientInvoiceService
 {
-    Task<HttpResponseData<List<PatientInvoiceDTO>>> GetPatientInvoicesAsync(int currentUserId );
+    Task<HttpResponseData<List<PatientInvoiceDTO>>> GetPatientInvoicesAsync(int currentUserId);
 }
 
 // =====================================================
@@ -68,13 +68,38 @@ public class PatientInvoiceService : IPatientInvoiceService
 
 
             // =============================================
+            // GET PATIENT INVOICES
+            // =============================================
+
+            var invoices = await _unitOfWork.InvoiceRepository
+                .WhereSql(i => i.PatientId == patient.Id)
+                .OrderByDescending(i => i.CreatedAt)
+                .ToListAsync();
+
+
+            // =============================================
+            // NO INVOICES
+            // =============================================
+
+            if (invoices.Count == 0)
+            {
+                return new HttpResponseData<List<PatientInvoiceDTO>>
+                {
+                    StatusCode = 200,
+                    Message = "Bệnh nhân chưa có hóa đơn.",
+                    Content = new List<PatientInvoiceDTO>()
+                };
+            }
+
+
+            // =============================================
             // TEMPORARY RESPONSE
             // =============================================
 
             return new HttpResponseData<List<PatientInvoiceDTO>>
             {
                 StatusCode = 200,
-                Message = "Đã xác định bệnh nhân.",
+                Message = $"Tìm thấy {invoices.Count} hóa đơn.",
                 Content = new List<PatientInvoiceDTO>()
             };
         }
