@@ -41,3 +41,5 @@ docs/~WRL*.tmp
 # Application logs
 logs/
 Logs/
+
+src/ClinicManagementSystem.Api/test-files/
