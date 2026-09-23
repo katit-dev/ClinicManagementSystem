@@ -58,12 +58,10 @@ public class PatientInvoiceService : IPatientInvoiceService
 
             if (patient == null)
             {
-                return new HttpResponseData<List<PatientInvoiceDTO>>
-                {
-                    StatusCode = 404,
-                    Message = "Không tìm thấy thông tin bệnh nhân.",
-                    Content = new List<PatientInvoiceDTO>()
-                };
+                return Response(
+                    404,
+                    "Không tìm thấy thông tin bệnh nhân."
+                );
             }
 
 
@@ -83,12 +81,10 @@ public class PatientInvoiceService : IPatientInvoiceService
 
             if (invoices.Count == 0)
             {
-                return new HttpResponseData<List<PatientInvoiceDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "Bệnh nhân chưa có hóa đơn.",
-                    Content = new List<PatientInvoiceDTO>()
-                };
+                return Response(
+                    200,
+                    "Bệnh nhân chưa có hóa đơn."
+                );
             }
 
 
@@ -181,12 +177,11 @@ public class PatientInvoiceService : IPatientInvoiceService
             // RESPONSE
             // =============================================
 
-            return new HttpResponseData<List<PatientInvoiceDTO>>
-            {
-                StatusCode = 200,
-                Message = "Lấy danh sách hóa đơn thành công.",
-                Content = invoiceDtos
-            };
+            return Response(
+    200,
+    "Lấy danh sách hóa đơn thành công.",
+    invoiceDtos
+);
         }
         catch (Exception ex)
         {
@@ -196,12 +191,27 @@ public class PatientInvoiceService : IPatientInvoiceService
                 currentUserId
             );
 
-            return new HttpResponseData<List<PatientInvoiceDTO>>
-            {
-                StatusCode = 500,
-                Message = "Đã xảy ra lỗi khi lấy hóa đơn.",
-                Content = new List<PatientInvoiceDTO>()
-            };
+            return Response(
+                500,
+                "Đã xảy ra lỗi khi lấy hóa đơn."
+            );
         }
+    }
+
+    // =====================================================
+    // RESPONSE HELPER
+    // =====================================================
+
+    private static HttpResponseData<List<PatientInvoiceDTO>> Response(
+        int statusCode,
+        string message,
+        List<PatientInvoiceDTO>? content = null)
+    {
+        return new HttpResponseData<List<PatientInvoiceDTO>>
+        {
+            StatusCode = statusCode,
+            Message = message,
+            Content = content ?? new List<PatientInvoiceDTO>()
+        };
     }
 }
