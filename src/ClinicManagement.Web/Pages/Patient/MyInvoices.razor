@@ -4,6 +4,7 @@
 @implements IDisposable
 
 @using Microsoft.AspNetCore.Authorization
+@using ClinicManagementSystem.Application.DTOs.Invoice
 @inject PatientInvoiceStateService InvoiceState
 
 <PageTitle>Hóa đơn của tôi</PageTitle>
@@ -38,8 +39,7 @@
             <div class="patient-invoices-error">
                 <p>@InvoiceState.ErrorMessage</p>
 
-                <button type="button"
-                        @onclick="RetryAsync">
+                <button type="button" @onclick="RetryAsync">
                     Thử lại
                 </button>
             </div>
@@ -54,10 +54,84 @@
         }
         else
         {
-            @* Invoice cards sẽ làm ở bước 4.12 *@
+            <div class="patient-invoice-list">
 
-            <div class="patient-invoices-placeholder">
-                Đã tải @InvoiceState.Invoices.Count hóa đơn.
+                @foreach (var invoice in InvoiceState.Invoices)
+                {
+                    <div class="patient-invoice-card">
+
+                        @* =================================================
+                   HEADER
+                   ================================================= *@
+
+                        <div class="patient-invoice-card-header">
+
+                            <div>
+                                <div class="patient-invoice-number">
+                                    @invoice.InvoiceNo
+                                </div>
+
+                                <div class="patient-invoice-date">
+                                    @invoice.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </div>
+
+                            <span class="patient-invoice-status">
+                                @GetInvoiceStatusText(invoice.Status)
+                            </span>
+
+                        </div>
+
+
+                        @* =================================================
+                   AMOUNTS
+                   ================================================= *@
+
+                        <div class="patient-invoice-summary">
+
+                            <div class="patient-invoice-summary-item">
+                                <span>Tổng hóa đơn</span>
+                                <strong>@FormatMoney(GetPayableAmount(invoice))</strong>
+                            </div>
+
+                            <div class="patient-invoice-summary-item">
+                                <span>Đã thanh toán</span>
+                                <strong>@FormatMoney(invoice.PaidAmount)</strong>
+                            </div>
+
+                            <div class="patient-invoice-summary-item">
+                                <span>Còn lại</span>
+                                <strong>@FormatMoney(GetRemainingAmount(invoice))</strong>
+                            </div>
+
+                        </div>
+
+
+                        @* =================================================
+                   REFERENCE
+                   ================================================= *@
+
+                        <div class="patient-invoice-reference">
+
+                            @if (invoice.AppointmentId.HasValue)
+                            {
+                                <span>
+                                    Lịch hẹn #@invoice.AppointmentId
+                                </span>
+                            }
+
+                            @if (invoice.MedicalRecordId.HasValue)
+                            {
+                                <span>
+                                    Bệnh án #@invoice.MedicalRecordId
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
             </div>
         }
 
@@ -78,9 +152,49 @@
 
         await InvoiceState.LoadInvoicesAsync();
     }
-
-
     
+
+
+
+    // INVOICE STATUS
+    private string GetInvoiceStatusText(byte status)
+    {
+        return status switch
+        {
+            0 => "Chưa thanh toán",
+            1 => "Thanh toán một phần",
+            2 => "Đã thanh toán",
+            3 => "Đã hủy",
+            _ => "Không xác định"
+        };
+    }
+
+    // PAYABLE AMOUNT
+    private decimal GetPayableAmount(PatientInvoiceDTO invoice)
+    {
+        return invoice.TotalAmount
+            + invoice.TaxAmount
+            - invoice.DiscountAmount
+            - invoice.InsuranceAmount;
+    }
+
+
+    // REMAINING AMOUNT
+    private decimal GetRemainingAmount(PatientInvoiceDTO invoice)
+    {
+        var remaining = GetPayableAmount(invoice) - invoice.PaidAmount;
+
+        return remaining < 0
+            ? 0
+            : remaining;
+    }
+
+
+    // FORMAT MONEY
+    private string FormatMoney(decimal amount)
+    {
+        return $"{amount:N0} đ";
+    }
 
 
     // =====================================================
