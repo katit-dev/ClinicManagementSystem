@@ -528,3 +528,103 @@ VALUES
 SELECT *
 FROM clinical.prescription_items
 WHERE prescription_id = 1;
+
+
+-- =====================================================
+-- CREATE TEST LAB SERVICE
+-- =====================================================
+
+USE ClinicManagementSystem;
+GO
+
+INSERT INTO billing.services
+(
+    name,
+    description,
+    price,
+    is_active,
+    code,
+    specialty_id,
+    duration_minutes
+)
+VALUES
+(
+    N'Xét nghiệm công thức máu',
+    N'Dịch vụ xét nghiệm dùng để test VC-05.',
+    150000,
+    1,
+    'LAB-CBC',
+    NULL,
+    30
+);
+
+-- =====================================================
+-- CHECK CREATED SERVICE
+-- =====================================================
+
+SELECT *
+FROM billing.services
+WHERE code = 'LAB-CBC';
+
+-- =====================================================
+-- CREATE TEST MEDICAL RECORD SERVICE
+-- =====================================================
+
+INSERT INTO clinical.medical_record_services
+(
+    medical_record_id,
+    service_id,
+    unit_price_snapshot
+)
+VALUES
+(
+    1,
+    1,
+    150000
+);
+
+
+-- =====================================================
+-- CREATE TEST LAB RESULT
+-- =====================================================
+
+INSERT INTO clinical.lab_results
+(
+    medical_record_service_id,
+    result_value,
+    reference_range,
+    conclusion,
+    resulted_at,
+    recorded_by
+)
+VALUES
+(
+    1,
+    N'HGB 13.2 g/dL',
+    N'12 - 16 g/dL',
+    N'Kết quả trong giới hạn bình thường.',
+    SYSDATETIME(),
+    NULL
+);
+
+-- =====================================================
+-- CREATE TEST ATTACHMENT
+-- =====================================================
+
+USE ClinicManagementSystem;
+GO
+
+INSERT INTO clinical.attachments
+(
+    medical_record_id,
+    file_url,
+    file_type,
+    uploaded_by
+)
+VALUES
+(
+    1,
+    N'test-files/lab-result-cbc.pdf',
+    'application/pdf',
+    NULL
+);
