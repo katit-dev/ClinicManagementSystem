@@ -4,108 +4,263 @@
 
 @attribute [Authorize(Roles = "Patient")]
 
+@inject PatientRecordStateService _recordStateService
 
-<PageTitle>Lịch sử khám</PageTitle>
+@implements IDisposable
+
+@using ClinicManagementSystem.Application.DTOs.PatientRecord
+
+
+<PageTitle>Lịch sử khám & đơn thuốc</PageTitle>
 
 
 @* =====================================================
-   MEDICAL RECORDS PAGE
+   PATIENT RECORDS PAGE
    ===================================================== *@
 
-<div>
+<div class="patient-records-page">
 
 
     @* =================================================
-       HEADER
+       PAGE HEADER
        ================================================= *@
 
-    <div class="mb-4">
+    <div class="patient-records-header">
 
-        <h2 class="fw-bold mb-2">
-            Lịch sử khám & đơn thuốc
-        </h2>
+        <div>
 
-        <p class="text-secondary mb-0">
-            Xem lại thông tin các lần khám,
-            chẩn đoán và đơn thuốc đã được kê.
-        </p>
+            <div class="patient-records-header-label">
+
+                <i class="fas fa-notes-medical"></i>
+
+                <span>
+                    VC-05
+                </span>
+
+            </div>
+
+
+            <h1 class="patient-records-title">
+                Lịch sử khám & đơn thuốc
+            </h1>
+
+
+            <p class="patient-records-description">
+                Xem lại chẩn đoán, đơn thuốc và kết quả
+                cận lâm sàng của các lần khám.
+            </p>
+
+        </div>
 
     </div>
 
 
     @* =================================================
-       SUMMARY
+       CONTENT
        ================================================= *@
 
-    <div class="row g-4 mb-4">
+    <section class="patient-records-content">
 
-        <div class="col-12 col-md-6">
 
-            <div class="card h-100 shadow-sm border-0">
+        @* =================================================
+           CONTENT HEADER
+           ================================================= *@
 
-                <div class="card-body p-4">
+        <div class="patient-records-content-header">
 
-                    <h5 class="fw-bold">
-                        Lịch sử khám
-                    </h5>
+            <div>
 
-                    <p class="text-secondary mb-0">
-                        Thông tin các lần khám trước
-                        sẽ được hiển thị tại đây.
-                    </p>
+                <h2>
+                    Lịch sử khám
+                </h2>
+
+                <p>
+                    Các bệnh án đã được hoàn tất.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           LOADING
+           ================================================= *@
+
+        @if (_recordStateService.IsLoading)
+        {
+            <div class="patient-records-placeholder">
+
+                <div class="patient-records-placeholder-icon">
+
+                    <i class="fas fa-spinner fa-spin"></i>
 
                 </div>
 
+
+                <h3>
+                    Đang tải lịch sử khám
+                </h3>
+
+
+                <p>
+                    Vui lòng chờ trong giây lát.
+                </p>
+
             </div>
+        }
 
-        </div>
 
+        @* =================================================
+           ERROR
+           ================================================= *@
 
-        <div class="col-12 col-md-6">
+        else if (!string.IsNullOrWhiteSpace(
+            _recordStateService.ErrorMessage))
+        {
+            <div class="patient-records-placeholder patient-records-error">
 
-            <div class="card h-100 shadow-sm border-0">
+                <div class="patient-records-placeholder-icon">
 
-                <div class="card-body p-4">
-
-                    <h5 class="fw-bold">
-                        Đơn thuốc
-                    </h5>
-
-                    <p class="text-secondary mb-0">
-                        Các đơn thuốc của bệnh nhân
-                        sẽ được hiển thị tại đây.
-                    </p>
+                    <i class="fas fa-exclamation-circle"></i>
 
                 </div>
 
-            </div>
 
-        </div>
+                <h3>
+                    Không thể tải lịch sử khám
+                </h3>
 
-    </div>
+
+                <p>
+                    @_recordStateService.ErrorMessage
+                </p>
 
 
-    @* =================================================
-       RECORD LIST
-       ================================================= *@
+                <button type="button"
+                        class="patient-records-retry-button"
+                        @onclick="RetryRecordsAsync">
 
-    <div class="card shadow-sm border-0">
+                    <i class="fas fa-redo-alt"></i>
 
-        <div class="card-body p-4">
+                    Thử lại
 
-            <h5 class="fw-bold mb-3">
-                Hồ sơ khám bệnh
-            </h5>
-
-            <div class="alert alert-info mb-0">
-
-                Dữ liệu hồ sơ khám bệnh sẽ được tải
-                từ hệ thống sau khi kết nối API.
+                </button>
 
             </div>
+        }
 
-        </div>
 
-    </div>
+        @* =================================================
+           EMPTY
+           ================================================= *@
+
+        else if (_recordStateService.Records.Count == 0)
+        {
+            <div class="patient-records-placeholder">
+
+                <div class="patient-records-placeholder-icon">
+
+                    <i class="fas fa-file-medical"></i>
+
+                </div>
+
+
+                <h3>
+                    Chưa có lịch sử khám
+                </h3>
+
+
+                <p>
+                    Bạn chưa có bệnh án nào đã được hoàn tất.
+                </p>
+
+            </div>
+        }
+
+
+        @* =================================================
+           RECORD LIST PLACEHOLDER
+           ================================================= *@
+
+        else
+        {
+            <div class="patient-records-loaded">
+
+                <i class="fas fa-check-circle"></i>
+
+                <span>
+                    Đã tải
+                    <strong>
+                        @_recordStateService.Records.Count
+                    </strong>
+                    bệnh án.
+                </span>
+
+            </div>
+        }
+
+    </section>
 
 </div>
+
+
+@code
+{
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        // =================================================
+        // SUBSCRIBE STATE CHANGE
+        // =================================================
+
+        _recordStateService.OnChange += HandleRecordStateChanged;
+
+
+        // =================================================
+        // RESET STATE
+        // =================================================
+
+        _recordStateService.Reset();
+
+
+        // =================================================
+        // LOAD RECORDS
+        // =================================================
+
+        await _recordStateService.LoadRecordsAsync();
+    }
+
+
+    // =====================================================
+    // RETRY RECORDS
+    // =====================================================
+
+    private async Task RetryRecordsAsync()
+    {
+        await _recordStateService.LoadRecordsAsync();
+    }
+
+
+    // =====================================================
+    // HANDLE STATE CHANGED
+    // =====================================================
+
+    private void HandleRecordStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        _recordStateService.OnChange -= HandleRecordStateChanged;
+    }
+}
