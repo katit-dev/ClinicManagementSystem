@@ -63,6 +63,7 @@
                     Lịch sử khám
                 </h2>
 
+
                 <p>
                     Các bệnh án đã được hoàn tất.
                 </p>
@@ -126,7 +127,9 @@
                 </p>
 
 
-                <button type="button" class="patient-records-retry-button" @onclick="RetryRecordsAsync">
+                <button type="button"
+                        class="patient-records-retry-button"
+                        @onclick="RetryRecordsAsync">
 
                     <i class="fas fa-redo-alt"></i>
 
@@ -167,7 +170,7 @@
 
 
         @* =================================================
-           RECORD LIST PLACEHOLDER
+           RECORD LIST
            ================================================= *@
 
         else
@@ -178,9 +181,10 @@
                 {
                     <article class="patient-record-card">
 
+
                         @* =====================================
-                   RECORD HEADER
-                   ===================================== *@
+                           RECORD HEADER
+                           ===================================== *@
 
                         <div class="patient-record-card-header">
 
@@ -189,6 +193,7 @@
                                 <div class="patient-record-date">
 
                                     <i class="far fa-calendar-alt"></i>
+
 
                                     <span>
                                         @(record.FinalizedAt?.ToString("dd/MM/yyyy")
@@ -199,15 +204,14 @@
 
 
                                 <h3 class="patient-record-diagnosis">
-
                                     @GetRecordDiagnosis(record)
-
                                 </h3>
 
 
                                 <div class="patient-record-doctor">
 
                                     <i class="fas fa-user-md"></i>
+
 
                                     <span>
                                         @record.DoctorName
@@ -230,8 +234,8 @@
 
 
                         @* =====================================
-                   RECORD INFORMATION
-                   ===================================== *@
+                           RECORD INFORMATION
+                           ===================================== *@
 
                         <div class="patient-record-info">
 
@@ -240,6 +244,7 @@
                                 <span>
                                     Mã ICD-10
                                 </span>
+
 
                                 <strong>
                                     @GetRecordText(record.Icd10Code)
@@ -253,6 +258,7 @@
                                 <span>
                                     Ngày tái khám
                                 </span>
+
 
                                 <strong>
                                     @(record.FollowUpDate.HasValue
@@ -269,6 +275,7 @@
                                     Mã bệnh án
                                 </span>
 
+
                                 <strong>
                                     #@record.Id
                                 </strong>
@@ -277,48 +284,42 @@
 
                         </div>
 
+
                         @* =====================================
-   RECORD DETAIL
-   ===================================== *@
+                           RECORD ACTION
+                           ===================================== *@
 
-                        @if (IsRecordExpanded(record.Id))
-                        {
-                            <div class="patient-record-detail">
+                        <div class="patient-record-actions">
 
-                                <div class="patient-record-detail-header">
+                            <button type="button"
+                                    class="patient-record-detail-button"
+                                    @onclick="() => ToggleRecordDetail(record.Id)">
 
-                                    <div>
-
-                                        <h4>
-                                            Chi tiết lần khám
-                                        </h4>
-
-                                        <p>
-                                            Thông tin đơn thuốc, kết quả cận lâm sàng
-                                            và file đính kèm.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
-                                <div class="patient-record-detail-placeholder">
-
-                                    <i class="fas fa-info-circle"></i>
+                                @if (IsRecordExpanded(record.Id))
+                                {
+                                    <i class="fas fa-chevron-up"></i>
 
                                     <span>
-                                        Nội dung chi tiết sẽ được hiển thị ở các bước tiếp theo.
+                                        Thu gọn
                                     </span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-chevron-down"></i>
 
-                                </div>
+                                    <span>
+                                        Xem chi tiết
+                                    </span>
+                                }
 
-                            </div>
-                        }
+                            </button>
+
+                        </div>
+
 
                         @* =====================================
-   RECORD DETAIL
-   ===================================== *@
+                           RECORD DETAIL
+                           ===================================== *@
 
                         @if (IsRecordExpanded(record.Id))
                         {
@@ -331,6 +332,7 @@
                                         <h4>
                                             Chi tiết lần khám
                                         </h4>
+
 
                                         <p>
                                             Thông tin đơn thuốc, kết quả cận lâm sàng
@@ -345,6 +347,7 @@
                                 <div class="patient-record-detail-placeholder">
 
                                     <i class="fas fa-info-circle"></i>
+
 
                                     <span>
                                         Nội dung chi tiết sẽ được hiển thị ở các bước tiếp theo.
@@ -371,7 +374,9 @@
     // =====================================================
     // RECORD DETAIL STATE
     // =====================================================
+
     private int? _expandedRecordId;
+
 
     // =====================================================
     // INITIALIZE
@@ -379,15 +384,29 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // =================================================
         // SUBSCRIBE STATE CHANGE
+        // =================================================
+
         _recordStateService.OnChange += HandleRecordStateChanged;
 
+
+        // =================================================
         // RESET STATE
+        // =================================================
+
         _recordStateService.Reset();
 
+        _expandedRecordId = null;
+
+
+        // =================================================
         // LOAD RECORDS
+        // =================================================
+
         await _recordStateService.LoadRecordsAsync();
     }
+
 
     // =====================================================
     // TOGGLE RECORD DETAIL
@@ -417,15 +436,15 @@
 
     private async Task RetryRecordsAsync()
     {
+        _expandedRecordId = null;
+
         await _recordStateService.LoadRecordsAsync();
     }
 
 
     // =====================================================
-    // Helper
-    // =====================================================
-
     // GET RECORD DIAGNOSIS
+    // =====================================================
 
     private string GetRecordDiagnosis(PatientRecordDTO record)
     {
@@ -442,7 +461,11 @@
         return $"{record.Diagnosis} ({record.Icd10Code})";
     }
 
+
+    // =====================================================
     // GET RECORD TEXT
+    // =====================================================
+
     private string GetRecordText(string? value)
     {
         return string.IsNullOrWhiteSpace(value)
