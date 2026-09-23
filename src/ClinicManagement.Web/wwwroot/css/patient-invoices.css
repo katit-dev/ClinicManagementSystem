@@ -339,3 +339,85 @@
     font-size: 12px;
     color: #6c757d;
 }
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.patient-invoice-status-unpaid {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.patient-invoice-status-partial {
+    background: #cff4fc;
+    color: #055160;
+}
+
+.patient-invoice-status-paid {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.patient-invoice-status-cancelled {
+    background: #f8d7da;
+    color: #842029;
+}
+
+
+/* =====================================================
+   INVOICE BREAKDOWN
+   ===================================================== */
+
+.patient-invoice-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.patient-invoice-breakdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+}
+
+.patient-invoice-breakdown-row span {
+    color: #6c757d;
+}
+
+.patient-invoice-breakdown-total {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid #e9ecef;
+    font-size: 14px;
+}
+
+.patient-invoice-breakdown-total span,
+.patient-invoice-breakdown-total strong {
+    color: #212529;
+}
+
+.patient-invoice-breakdown-remaining {
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   CANCELLED INVOICE
+   ===================================================== */
+
+.patient-invoice-cancelled {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #fff5f5;
+    font-size: 13px;
+    color: #842029;
+}
+
+.patient-invoice-cancelled-title {
+    margin-bottom: 6px;
+    font-weight: 700;
+}

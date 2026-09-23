@@ -76,7 +76,7 @@
                                 </div>
                             </div>
 
-                            <span class="patient-invoice-status">
+                            <span class="patient-invoice-status @GetInvoiceStatusClass(invoice.Status)">
                                 @GetInvoiceStatusText(invoice.Status)
                             </span>
 
@@ -218,8 +218,86 @@
                                 </div>
 
                                 @* =================================================
-   PAYMENTS
+   PAYMENT SUMMARY
    ================================================= *@
+
+                                <div class="patient-invoice-section">
+
+                                    <div class="patient-invoice-section-header">
+                                        <h5>Tổng kết hóa đơn</h5>
+                                    </div>
+
+                                    <div class="patient-invoice-breakdown">
+
+                                        <div class="patient-invoice-breakdown-row">
+                                            <span>Tạm tính</span>
+                                            <strong>@FormatMoney(invoice.TotalAmount)</strong>
+                                        </div>
+
+                                        <div class="patient-invoice-breakdown-row">
+                                            <span>Thuế</span>
+                                            <strong>@FormatMoney(invoice.TaxAmount)</strong>
+                                        </div>
+
+                                        <div class="patient-invoice-breakdown-row">
+                                            <span>Giảm giá</span>
+                                            <strong>- @FormatMoney(invoice.DiscountAmount)</strong>
+                                        </div>
+
+                                        <div class="patient-invoice-breakdown-row">
+                                            <span>Bảo hiểm hỗ trợ</span>
+                                            <strong>- @FormatMoney(invoice.InsuranceAmount)</strong>
+                                        </div>
+
+                                        <div class="patient-invoice-breakdown-row patient-invoice-breakdown-total">
+                                            <span>Phải thanh toán</span>
+                                            <strong>@FormatMoney(GetPayableAmount(invoice))</strong>
+                                        </div>
+
+                                        <div class="patient-invoice-breakdown-row">
+                                            <span>Đã thanh toán</span>
+                                            <strong>@FormatMoney(invoice.PaidAmount)</strong>
+                                        </div>
+
+                                        <div class="patient-invoice-breakdown-row patient-invoice-breakdown-remaining">
+                                            <span>Còn lại</span>
+                                            <strong>@FormatMoney(GetRemainingAmount(invoice))</strong>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                @if (invoice.Status == 3)
+                                {
+                                    <div class="patient-invoice-cancelled">
+
+                                        <div class="patient-invoice-cancelled-title">
+                                            Hóa đơn đã bị hủy
+                                        </div>
+
+                                        @if (invoice.CancelledAt.HasValue)
+                                        {
+                                            <div>
+                                                Thời gian hủy:
+                                                @invoice.CancelledAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(invoice.CancelReason))
+                                        {
+                                            <div>
+                                                Lý do:
+                                                @invoice.CancelReason
+                                            </div>
+                                        }
+
+                                    </div>
+                                }
+
+                                @* =================================================
+                                PAYMENTS
+                                ================================================= *@
 
                                 <div class="patient-invoice-section">
 
@@ -424,6 +502,22 @@
         return string.IsNullOrWhiteSpace(description)
             ? "Không có mô tả"
             : description;
+    }
+
+    // =====================================================
+    // INVOICE STATUS CLASS
+    // =====================================================
+
+    private string GetInvoiceStatusClass(byte status)
+    {
+        return status switch
+        {
+            0 => "patient-invoice-status-unpaid",
+            1 => "patient-invoice-status-partial",
+            2 => "patient-invoice-status-paid",
+            3 => "patient-invoice-status-cancelled",
+            _ => string.Empty
+        };
     }
 
 
