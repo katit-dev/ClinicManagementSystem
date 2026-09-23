@@ -412,3 +412,119 @@ ORDER BY start_time DESC;
 SELECT *
 FROM clinical.medical_records
 WHERE appointment_id = 2;
+
+-- =====================================================
+-- CREATE TEST PRESCRIPTION
+-- =====================================================
+
+INSERT INTO clinical.prescriptions
+(
+    medical_record_id,
+    note,
+    created_at,
+    doctor_id,
+    status,
+    dispensed_at,
+    dispensed_by
+)
+VALUES
+(
+    1,
+    N'Đơn thuốc dùng để test VC-05.',
+    SYSDATETIME(),
+    5,
+    0,
+    NULL,
+    NULL
+);
+
+
+SELECT *
+FROM clinical.prescriptions
+WHERE medical_record_id = 1;
+
+-- =====================================================
+-- FIND MEDICINE TABLE
+-- =====================================================
+
+USE ClinicManagementSystem;
+GO
+
+SELECT
+    TABLE_SCHEMA,
+    TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_NAME LIKE '%medicine%';
+
+-- =====================================================
+-- CREATE TEST MEDICINE
+-- =====================================================
+
+INSERT INTO clinical.medicines
+(
+    name,
+    unit,
+    price,
+    stock_quantity,
+    description,
+    is_active,
+    code,
+    active_ingredient,
+    concentration,
+    cost_price,
+    min_stock
+)
+VALUES
+(
+    N'Paracetamol 500mg',
+    N'Viên',
+    2000,
+    100,
+    N'Thuốc giảm đau, hạ sốt dùng để test VC-05.',
+    1,
+    'MED-PARA-500',
+    N'Paracetamol',
+    N'500mg',
+    1000,
+    10
+);
+
+-- =====================================================
+-- CREATE TEST PRESCRIPTION ITEM
+-- =====================================================
+
+USE ClinicManagementSystem;
+GO
+
+INSERT INTO clinical.prescription_items
+(
+    prescription_id,
+    medicine_id,
+    quantity,
+    dosage,
+    instruction,
+    medicine_name_snapshot,
+    unit_price_snapshot,
+    duration_days,
+    frequency
+)
+VALUES
+(
+    1,
+    1,
+    20,
+    N'1 viên/lần',
+    N'Uống sau ăn.',
+    N'Paracetamol 500mg',
+    2000,
+    10,
+    N'2 lần/ngày'
+);
+
+-- =====================================================
+-- CHECK PRESCRIPTION ITEM
+-- =====================================================
+
+SELECT *
+FROM clinical.prescription_items
+WHERE prescription_id = 1;
