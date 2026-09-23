@@ -61,8 +61,8 @@
                     <div class="patient-invoice-card">
 
                         @* =================================================
-                   HEADER
-                   ================================================= *@
+                        HEADER
+                        ================================================= *@
 
                         <div class="patient-invoice-card-header">
 
@@ -84,8 +84,8 @@
 
 
                         @* =================================================
-                   AMOUNTS
-                   ================================================= *@
+                        AMOUNTS
+                        ================================================= *@
 
                         <div class="patient-invoice-summary">
 
@@ -108,8 +108,8 @@
 
 
                         @* =================================================
-                   REFERENCE
-                   ================================================= *@
+                        REFERENCE
+                        ================================================= *@
 
                         <div class="patient-invoice-reference">
 
@@ -130,8 +130,8 @@
                         </div>
 
                         @* =================================================
-   ACTION
-   ================================================= *@
+                        ACTION
+                        ================================================= *@
 
                         <div class="patient-invoice-actions">
                             <button type="button" class="patient-invoice-detail-button"
@@ -144,13 +144,79 @@
 
 
                         @* =================================================
-   DETAIL
-   ================================================= *@
+                        DETAIL
+                        ================================================= *@
 
                         @if (IsInvoiceExpanded(invoice.Id))
                         {
                             <div class="patient-invoice-detail">
-                                Chi tiết hóa đơn sẽ hiển thị ở đây.
+
+                                @* =================================================
+           INVOICE ITEMS
+           ================================================= *@
+
+                                <div class="patient-invoice-section">
+
+                                    <div class="patient-invoice-section-header">
+                                        <h5>Chi tiết hóa đơn</h5>
+                                    </div>
+
+                                    @if (invoice.Items.Count == 0)
+                                    {
+                                        <div class="patient-invoice-section-empty">
+                                            Hóa đơn chưa có chi tiết.
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="patient-invoice-items-table-wrapper">
+
+                                            <table class="patient-invoice-items-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nội dung</th>
+                                                        <th>SL</th>
+                                                        <th>Đơn giá</th>
+                                                        <th>Giảm giá</th>
+                                                        <th>Thành tiền</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                    @foreach (var item in invoice.Items)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                @GetInvoiceItemDescription(item.Description)
+                                                            </td>
+
+                                                            <td>
+                                                                @item.Quantity
+                                                            </td>
+
+                                                            <td>
+                                                                @FormatMoney(item.UnitPrice)
+                                                            </td>
+
+                                                            <td>
+                                                                @FormatMoney(item.DiscountAmount)
+                                                            </td>
+
+                                                            <td>
+                                                                <strong>
+                                                                    @FormatMoney(item.Amount)
+                                                                </strong>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+
+                                        </div>
+                                    }
+
+                                </div>
+
                             </div>
                         }
 
@@ -259,6 +325,18 @@
         _expandedInvoiceId = null;
 
         await InvoiceState.LoadInvoicesAsync();
+    }
+
+    // =====================================================
+    // Helper
+    // =====================================================
+
+    // INVOICE ITEM DESCRIPTION
+    private string GetInvoiceItemDescription(string? description)
+    {
+        return string.IsNullOrWhiteSpace(description)
+            ? "Không có mô tả"
+            : description;
     }
 
 

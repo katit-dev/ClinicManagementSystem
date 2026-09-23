@@ -216,3 +216,66 @@
     padding-top: 16px;
     border-top: 1px solid #e9ecef;
 }
+
+/* =====================================================
+   DETAIL SECTION
+   ===================================================== */
+
+.patient-invoice-section {
+    padding: 14px;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.patient-invoice-section-header {
+    margin-bottom: 12px;
+}
+
+.patient-invoice-section-header h5 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.patient-invoice-section-empty {
+    padding: 12px 0;
+    font-size: 13px;
+    color: #6c757d;
+}
+
+
+/* =====================================================
+   INVOICE ITEMS TABLE
+   ===================================================== */
+
+.patient-invoice-items-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.patient-invoice-items-table {
+    width: 100%;
+    min-width: 650px;
+    border-collapse: collapse;
+}
+
+.patient-invoice-items-table th,
+.patient-invoice-items-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f3f5;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+.patient-invoice-items-table th {
+    background: #f8f9fa;
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.patient-invoice-items-table tbody tr:last-child td {
+    border-bottom: none;
+}
