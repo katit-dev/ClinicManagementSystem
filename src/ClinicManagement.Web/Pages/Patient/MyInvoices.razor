@@ -1,106 +1,114 @@
 @page "/patient/invoices"
-
 @layout HomePageMaster
-
 @attribute [Authorize(Roles = "Patient")]
+@implements IDisposable
 
+@using Microsoft.AspNetCore.Authorization
+@inject PatientInvoiceStateService InvoiceState
 
 <PageTitle>Hóa đơn của tôi</PageTitle>
 
 
-@* =====================================================
-   MY INVOICES PAGE
-   ===================================================== *@
+<div class="patient-invoices-page">
 
-<div>
+    @* =====================================================
+       PAGE HEADER
+       ===================================================== *@
 
-
-    @* =================================================
-       HEADER
-       ================================================= *@
-
-    <div class="mb-4">
-
-        <h2 class="fw-bold mb-2">
-            Hóa đơn của tôi
-        </h2>
-
-        <p class="text-secondary mb-0">
-            Theo dõi các hóa đơn khám bệnh
-            và trạng thái thanh toán.
-        </p>
-
+    <div class="patient-invoices-header">
+        <h1>Hóa đơn của tôi</h1>
+        <p>Theo dõi chi phí khám, thanh toán và lịch sử hóa đơn.</p>
     </div>
 
 
-    @* =================================================
-       FILTER
-       ================================================= *@
+    @* =====================================================
+       CONTENT
+       ===================================================== *@
 
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="patient-invoices-content">
 
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-12 col-md-6">
-
-                    <label class="form-label fw-semibold">
-                        Trạng thái thanh toán
-                    </label>
-
-                    <select class="form-select"
-                            disabled>
-
-                        <option>
-                            Tất cả trạng thái
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="col-12 col-md-6">
-
-                    <label class="form-label fw-semibold">
-                        Ngày lập hóa đơn
-                    </label>
-
-                    <input type="date"
-                           class="form-control"
-                           disabled />
-
-                </div>
-
+        @if (InvoiceState.IsLoading)
+        {
+            <div class="patient-invoices-loading">
+                Đang tải danh sách hóa đơn...
             </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(InvoiceState.ErrorMessage))
+        {
+            <div class="patient-invoices-error">
+                <p>@InvoiceState.ErrorMessage</p>
 
-        </div>
-
-    </div>
-
-
-    @* =================================================
-       INVOICE LIST
-       ================================================= *@
-
-    <div class="card shadow-sm border-0">
-
-        <div class="card-body p-4">
-
-            <h5 class="fw-bold mb-3">
-                Danh sách hóa đơn
-            </h5>
-
-            <div class="alert alert-info mb-0">
-
-                Dữ liệu hóa đơn sẽ được tải
-                từ hệ thống sau khi kết nối API.
-
+                <button type="button"
+                        @onclick="RetryAsync">
+                    Thử lại
+                </button>
             </div>
+        }
+        else if (InvoiceState.Invoices.Count == 0)
+        {
+            <div class="patient-invoices-empty">
+                <i class="fas fa-file-invoice"></i>
+                <h3>Chưa có hóa đơn</h3>
+                <p>Bạn chưa có hóa đơn nào trong hệ thống.</p>
+            </div>
+        }
+        else
+        {
+            @* Invoice cards sẽ làm ở bước 4.12 *@
 
-        </div>
+            <div class="patient-invoices-placeholder">
+                Đã tải @InvoiceState.Invoices.Count hóa đơn.
+            </div>
+        }
 
     </div>
 
 </div>
+
+
+@code {
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        InvoiceState.OnChange = HandleStateChanged;
+
+        await InvoiceState.LoadInvoicesAsync();
+    }
+
+
+    
+
+
+    // =====================================================
+    // RETRY
+    // =====================================================
+
+    private async Task RetryAsync()
+    {
+        await InvoiceState.LoadInvoicesAsync();
+    }
+
+
+    // =====================================================
+    // STATE CHANGED
+    // =====================================================
+
+    private void HandleStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        InvoiceState.OnChange = null;
+    }
+}
