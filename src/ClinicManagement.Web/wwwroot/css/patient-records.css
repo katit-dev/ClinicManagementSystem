@@ -745,3 +745,171 @@
 
     background-color: #f0f9ff;
 }
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 992px) {
+
+    .patient-record-info {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .patient-record-card-header {
+        gap: 12px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    /* =================================================
+       PAGE
+       ================================================= */
+
+    .patient-records-page {
+        padding: 16px;
+    }
+
+
+    /* =================================================
+       HEADER
+       ================================================= */
+
+    .patient-records-title {
+        font-size: 24px;
+    }
+
+    .patient-records-description {
+        font-size: 13px;
+    }
+
+
+    /* =================================================
+       CONTENT
+       ================================================= */
+
+    .patient-records-content {
+        padding: 14px;
+    }
+
+
+    /* =================================================
+       RECORD CARD
+       ================================================= */
+
+    .patient-record-card {
+        padding: 14px;
+    }
+
+    .patient-record-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .patient-record-status {
+        align-self: flex-start;
+    }
+
+
+    /* =================================================
+       RECORD INFO
+       ================================================= */
+
+    .patient-record-info {
+        grid-template-columns: 1fr;
+    }
+
+
+    /* =================================================
+       RECORD ACTION
+       ================================================= */
+
+    .patient-record-actions {
+        justify-content: stretch;
+    }
+
+    .patient-record-detail-button {
+        width: 100%;
+    }
+
+
+    /* =================================================
+       DETAIL
+       ================================================= */
+
+    .patient-record-detail {
+        margin-top: 12px;
+        padding-top: 12px;
+    }
+
+    .patient-record-section {
+        padding: 12px;
+    }
+
+
+    /* =================================================
+       TABLES
+       ================================================= */
+
+    .patient-record-prescription-table-wrapper,
+    .patient-record-lab-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+
+    /* =================================================
+       ATTACHMENT
+       ================================================= */
+
+    .patient-record-attachment-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .patient-record-download-button {
+        width: 100%;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - SMALL MOBILE
+   ===================================================== */
+
+@media (max-width: 480px) {
+
+    .patient-records-page {
+        padding: 12px;
+    }
+
+    .patient-records-content {
+        padding: 12px;
+    }
+
+    .patient-record-card {
+        padding: 12px;
+    }
+
+    .patient-record-diagnosis {
+        font-size: 15px;
+    }
+
+    .patient-record-section {
+        padding: 10px;
+    }
+
+    .patient-record-section-header h5 {
+        font-size: 12px;
+    }
+
+    .patient-record-attachment-info {
+        align-items: flex-start;
+    }
+}
