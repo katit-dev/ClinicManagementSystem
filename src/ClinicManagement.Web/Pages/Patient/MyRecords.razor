@@ -342,8 +342,8 @@
 
 
                                 @* =================================
-   PRESCRIPTION
-   ================================= *@
+                                 PRESCRIPTION
+                                ================================= *@
 
                                 <div class="patient-record-section">
 
@@ -494,6 +494,135 @@
 
                                             </div>
                                         }
+                                    }
+
+                                </div>
+
+                                @* =================================
+                                LAB RESULTS
+                                 ================================= *@
+
+                                <div class="patient-record-section">
+
+                                    <div class="patient-record-section-header">
+
+                                        <div>
+
+                                            <h5>
+                                                <i class="fas fa-vials"></i>
+
+                                                Kết quả cận lâm sàng
+                                            </h5>
+
+                                            <p>
+                                                Kết quả xét nghiệm và dịch vụ cận lâm sàng.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    @if (record.LabResults.Count == 0)
+                                    {
+                                        <div class="patient-record-section-empty">
+
+                                            <i class="fas fa-info-circle"></i>
+
+                                            <span>
+                                                Lần khám này chưa có kết quả cận lâm sàng.
+                                            </span>
+
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="patient-record-lab-table-wrapper">
+
+                                            <table class="patient-record-lab-table">
+
+                                                <thead>
+
+                                                    <tr>
+
+                                                        <th>
+                                                            Dịch vụ
+                                                        </th>
+
+                                                        <th>
+                                                            Mã
+                                                        </th>
+
+                                                        <th>
+                                                            Kết quả
+                                                        </th>
+
+                                                        <th>
+                                                            Khoảng tham chiếu
+                                                        </th>
+
+                                                        <th>
+                                                            Kết luận
+                                                        </th>
+
+                                                        <th>
+                                                            Ngày kết quả
+                                                        </th>
+
+                                                    </tr>
+
+                                                </thead>
+
+
+                                                <tbody>
+
+                                                    @foreach (var labResult in record.LabResults)
+                                                    {
+                                                        <tr>
+
+                                                            <td>
+
+                                                                <strong>
+                                                                    @labResult.ServiceName
+                                                                </strong>
+
+                                                            </td>
+
+
+                                                            <td>
+                                                                @GetRecordText(labResult.ServiceCode)
+                                                            </td>
+
+
+                                                            <td>
+                                                                @GetRecordText(labResult.ResultValue)
+                                                            </td>
+
+
+                                                            <td>
+                                                                @GetRecordText(labResult.ReferenceRange)
+                                                            </td>
+
+
+                                                            <td>
+                                                                @GetRecordText(labResult.Conclusion)
+                                                            </td>
+
+
+                                                            <td>
+                                                                @(labResult.ResultedAt.HasValue
+                                                                    ? labResult.ResultedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                                    : "Không có")
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+
+                                                </tbody>
+
+                                            </table>
+
+                                        </div>
                                     }
 
                                 </div>
