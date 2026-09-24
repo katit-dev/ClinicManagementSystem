@@ -226,6 +226,22 @@
             <h3>Lịch hẹn</h3>
         </div>
 
+        @if (!string.IsNullOrWhiteSpace(
+    ReceptionAppointmentStateService.ActionErrorMessage))
+        {
+            <div class="reception-action-message reception-action-error">
+                @ReceptionAppointmentStateService.ActionErrorMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(
+            ReceptionAppointmentStateService.ActionMessage))
+        {
+            <div class="reception-action-message reception-action-success">
+                @ReceptionAppointmentStateService.ActionMessage
+            </div>
+        }
+
 
         @* =================================================
            LOADING
@@ -321,11 +337,22 @@
 
                                 <td>
 
-                                    @if (appointment.QueueNumber.HasValue)
+                                    @if (CanCheckIn(appointment.Status))
                                     {
-                                        <span class="reception-queue-number">
-                                            #@appointment.QueueNumber
-                                        </span>
+                                        <button type="button" class="reception-checkin-button"
+                                                disabled="@IsProcessingAppointment(appointment.Id)"
+                                                @onclick="() => HandleCheckIn(appointment.Id)">
+
+                                            @if (IsProcessingAppointment(appointment.Id))
+                                            {
+                                                <span>Đang xử lý...</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Check-in</span>
+                                            }
+
+                                        </button>
                                     }
                                     else
                                     {
@@ -672,6 +699,43 @@
                 ? ((byte)ReceptionAppointmentStateService.SelectedStatus.Value)
                     .ToString()
                 : string.Empty;
+    }
+
+    // =====================================================
+    // CAN CHECK IN
+    // =====================================================
+
+    private static bool CanCheckIn(byte status)
+    {
+        return
+            status == (byte)AppointmentStatus.Pending ||
+            status == (byte)AppointmentStatus.Confirmed;
+    }
+
+
+    // =====================================================
+    // PROCESSING APPOINTMENT
+    // =====================================================
+
+    private bool IsProcessingAppointment(int appointmentId)
+    {
+        return
+            ReceptionAppointmentStateService.IsSubmitting &&
+            ReceptionAppointmentStateService.ProcessingAppointmentId ==
+                appointmentId;
+    }
+
+
+    // =====================================================
+    // CHECK IN
+    // =====================================================
+
+    private async Task HandleCheckIn(int appointmentId)
+    {
+        await ReceptionAppointmentStateService
+            .CheckInAppointmentAsync(
+                appointmentId
+            );
     }
 
 

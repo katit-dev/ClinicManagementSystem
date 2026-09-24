@@ -37,6 +37,15 @@ public class ReceptionAppointmentStateService
 
     public List<DoctorDTO> Doctors { get; private set; } = new();
 
+    // ACTION STATE
+    public bool IsSubmitting { get; private set; }
+
+    public int? ProcessingAppointmentId { get; private set; }
+
+    public string ActionMessage { get; private set; } = string.Empty;
+
+    public string ActionErrorMessage { get; private set; } = string.Empty;
+
 
 
     // =====================================================
@@ -473,6 +482,118 @@ public class ReceptionAppointmentStateService
         Doctors.Clear();
 
         StateHasChanged();
+    }
+
+    // =====================================================
+    // CHECK IN APPOINTMENT
+    // =====================================================
+
+    public async Task<bool> CheckInAppointmentAsync(int appointmentId)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+        ProcessingAppointmentId = appointmentId;
+
+        ActionMessage = string.Empty;
+        ActionErrorMessage = string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            //
+            // PATCH:
+            // /api/appointments/{id}/check-in
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PatchAsync(
+                        $"/api/appointments/{appointmentId}/check-in",
+                        new StringContent(string.Empty)
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            ReceptionAppointmentDTO>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể check-in bệnh nhân.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+
+            // =================================================
+            // RELOAD APPOINTMENTS
+            //
+            // Backend vừa thay:
+            // Status
+            // QueueNumber
+            // CheckedInAt
+            // =================================================
+
+            await LoadAppointmentsAsync();
+
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+            ProcessingAppointmentId = null;
+
+            StateHasChanged();
+        }
     }
 
 

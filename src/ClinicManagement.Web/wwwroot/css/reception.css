@@ -366,3 +366,58 @@
 .reception-muted {
     color: #94a3b8;
 }
+
+/* =====================================================
+   CHECK IN ACTION
+   ===================================================== */
+
+.reception-checkin-button {
+    min-height: 36px;
+    padding: 7px 14px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #0ea5e9;
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.reception-checkin-button:hover:not(:disabled) {
+    background: #0284c7;
+}
+
+.reception-checkin-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   ACTION MESSAGE
+   ===================================================== */
+
+.reception-action-message {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.reception-action-success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.reception-action-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
