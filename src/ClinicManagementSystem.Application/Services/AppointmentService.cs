@@ -65,6 +65,8 @@ public class AppointmentService : IAppointmentService
         NoShowAppointmentRequestDTO request,
         int currentUserId)
     {
+        bool transactionStarted = false;
+
         try
         {
             // =================================================
@@ -119,9 +121,6 @@ public class AppointmentService : IAppointmentService
 
             // =================================================
             // CHECK APPOINTMENT DATE
-            //
-            // Reception chỉ xử lý NoShow
-            // cho lịch hẹn trong ngày hôm nay.
             // =================================================
 
             var now = DateTime.Now;
@@ -142,8 +141,7 @@ public class AppointmentService : IAppointmentService
             // =================================================
             // CHECK APPOINTMENT TIME
             //
-            // Không được đánh dấu NoShow
-            // khi giờ hẹn vẫn chưa tới.
+            // Không được NoShow trước giờ hẹn.
             // =================================================
 
             if (appointment.StartTime > now)
@@ -158,27 +156,157 @@ public class AppointmentService : IAppointmentService
 
 
             // =================================================
-            // VALIDATION SUCCESS
-            //
-            // Update status + history sẽ làm bước tiếp theo.
+            // CURRENT STATUS
+            // =================================================
+
+            var fromStatus = appointment.Status;
+
+
+            // =================================================
+            // PREPARE NOTE
+            // =================================================
+
+            var reason =
+                string.IsNullOrWhiteSpace(request.Note)
+                    ? null
+                    : request.Note.Trim();
+
+
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork.BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
+            // UPDATE APPOINTMENT
+            // =================================================
+
+            appointment.Status = (byte)AppointmentStatus.NoShow;
+            appointment.UpdatedAt = now;
+
+
+            // =================================================
+            // CREATE STATUS HISTORY
+            // =================================================
+
+            var statusHistory =
+                new AppointmentStatusHistory
+                {
+                    AppointmentId = appointment.Id,
+                    FromStatus = fromStatus,
+                    ToStatus = (byte)AppointmentStatus.NoShow,
+                    ChangedBy = currentUserId,
+                    Reason = reason,
+                    ChangedAt = now
+                };
+
+
+            // =================================================
+            // ADD STATUS HISTORY
+            // =================================================
+
+            await _unitOfWork
+                .AppointmentStatusHistoryRepository
+                .AddAsync(statusHistory);
+
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT TRANSACTION
+            // =================================================
+
+            await _unitOfWork.CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // GET UPDATED APPOINTMENT
+            // =================================================
+
+            var result =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(a => a.Id == appointment.Id)
+                    .Select(
+                        a =>
+                            new ReceptionAppointmentDTO
+                            {
+                                Id = a.Id,
+                                AppointmentCode = a.AppointmentCode,
+
+                                StartTime = a.StartTime,
+                                EndTime = a.EndTime,
+
+                                Status = a.Status,
+                                QueueNumber = a.QueueNumber,
+                                CheckedInAt = a.CheckedInAt,
+                                Reason = a.Reason,
+
+                                PatientId = a.PatientId,
+                                PatientCode = a.Patient.PatientCode,
+                                PatientName = a.Patient.FullName,
+
+                                DoctorId = a.DoctorId,
+                                DoctorName = a.Doctor.FullName,
+
+                                SpecialtyId = a.Doctor.SpecialtyId,
+                                SpecialtyName = a.Doctor.Specialty.Name
+                            }
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // SUCCESS
             // =================================================
 
             return new HttpResponseData<ReceptionAppointmentDTO>
             {
-                StatusCode = 501,
-                Message = "Lịch hẹn hợp lệ để đánh dấu không đến.",
-                Content = null
+                StatusCode = 200,
+                Message = "Đã đánh dấu bệnh nhân không đến.",
+                Content = result
             };
         }
         catch (Exception ex)
         {
+            // =================================================
+            // ROLLBACK TRANSACTION
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback appointment no-show."
+                    );
+                }
+            }
+
+
             // =================================================
             // LOG ERROR
             // =================================================
 
             _logger.LogError(
                 ex,
-                "Failed to validate appointment no-show. " +
+                "Failed to mark appointment as no-show. " +
                 "AppointmentId: {AppointmentId}, UserId: {UserId}",
                 appointmentId,
                 currentUserId
@@ -192,7 +320,7 @@ public class AppointmentService : IAppointmentService
             return new HttpResponseData<ReceptionAppointmentDTO>
             {
                 StatusCode = 500,
-                Message = "Không thể kiểm tra lịch hẹn.",
+                Message = "Không thể đánh dấu bệnh nhân không đến.",
                 Content = null
             };
         }
