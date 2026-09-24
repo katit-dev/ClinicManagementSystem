@@ -37,17 +37,143 @@ public class PatientService : IPatientService
     // UPDATE PATIENT
     // =====================================================
 
-    public Task<HttpResponseData<PatientDTO>> UpdatePatientAsync(
+    public async Task<HttpResponseData<PatientDTO>> UpdatePatientAsync(
         int patientId,
         PatientRequestDTO request)
     {
-        return Task.FromResult(
-            new HttpResponseData<PatientDTO>
+        try
+        {
+            // =================================================
+            // FIND PATIENT
+            // =================================================
+
+            var patient = await _unitOfWork.PatientRepository
+                .WhereSql(p => p.Id == patientId && p.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (patient == null)
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Không tìm thấy hồ sơ bệnh nhân."
+                };
+            }
+
+
+            // =================================================
+            // NORMALIZE INPUT
+            // =================================================
+
+            var fullName = request.FullName.Trim();
+            var phone = request.Phone.Trim();
+
+            var email = string.IsNullOrWhiteSpace(request.Email)
+                ? null
+                : request.Email.Trim();
+
+            var address = string.IsNullOrWhiteSpace(request.Address)
+                ? null
+                : request.Address.Trim();
+
+            var nationalId = string.IsNullOrWhiteSpace(request.NationalId)
+                ? null
+                : request.NationalId.Trim();
+
+            var insuranceNumber = string.IsNullOrWhiteSpace(request.InsuranceNumber)
+                ? null
+                : request.InsuranceNumber.Trim();
+
+            var bloodType = string.IsNullOrWhiteSpace(request.BloodType)
+                ? null
+                : request.BloodType.Trim();
+
+
+            // =================================================
+            // VALIDATE REQUIRED DATA
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Họ tên bệnh nhân không được để trống."
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Số điện thoại không được để trống."
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE DATE OF BIRTH
+            // =================================================
+
+            if (request.DateOfBirth.HasValue &&
+                request.DateOfBirth.Value > DateOnly.FromDateTime(DateTime.Today))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Ngày sinh không thể lớn hơn ngày hiện tại."
+                };
+            }
+
+
+            // =================================================
+            // CHECK DUPLICATE PHONE
+            //
+            // Chỉ conflict nếu phone thuộc Patient KHÁC.
+            // =================================================
+
+            var duplicatePhone = await _unitOfWork.PatientRepository
+                .WhereSql(p =>
+                    p.Phone == phone &&
+                    p.Id != patientId)
+                .FirstOrDefaultAsync();
+
+            if (duplicatePhone != null)
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 409,
+                    Message = "Số điện thoại đã tồn tại trong hồ sơ bệnh nhân khác."
+                };
+            }
+
+
+            // =================================================
+            // UPDATE
+            //
+            // Sẽ thực hiện ở bước 6.6.3.
+            // =================================================
+
+            return new HttpResponseData<PatientDTO>
             {
                 StatusCode = 501,
-                Message = "Chức năng cập nhật bệnh nhân đang được triển khai."
-            }
-        );
+                Message = "Dữ liệu hợp lệ. Chức năng cập nhật đang được triển khai."
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to validate patient update. PatientId: {PatientId}",
+                patientId);
+
+            return new HttpResponseData<PatientDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể xử lý thông tin bệnh nhân."
+            };
+        }
     }
 
     // =====================================================
