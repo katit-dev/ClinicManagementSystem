@@ -11,7 +11,7 @@ namespace ClinicManagementSystem.Api.Controllers;
 // =====================================================
 
 [ApiController]
-[Route("api/patients/me/records")]
+[Route("api/patients")]
 public class PatientRecordController : ControllerBase
 {
     private readonly IPatientRecordService _patientRecordService;
@@ -29,25 +29,65 @@ public class PatientRecordController : ControllerBase
 
 
     // =====================================================
-    // GET PATIENT RECORD HISTORY
+    // GET CURRENT PATIENT RECORD HISTORY
     //
     // GET:
     // /api/patients/me/records
     // =====================================================
 
-    [HttpGet]
+    [HttpGet("me/records")]
     [Authorize(Roles = "Patient")]
     public async Task<IActionResult> GetPatientRecords()
     {
-        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (!int.TryParse(userIdValue, out var currentUserId))
         {
             return Unauthorized();
         }
 
-        var result = await _patientRecordService.GetPatientRecordsAsync(currentUserId);
+        var result =
+            await _patientRecordService
+                .GetPatientRecordsAsync(currentUserId);
 
-        return StatusCode(result.StatusCode, result);
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
+
+    // =====================================================
+    // GET PATIENT RECORD HISTORY FOR RECEPTION
+    //
+    // GET:
+    // /api/patients/{id}/records
+    // =====================================================
+
+    [HttpGet("{id:int}/records")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> GetPatientRecordsForReception(
+        int id)
+    {
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result =
+            await _patientRecordService
+                .GetPatientRecordsByPatientIdAsync(
+                    id,
+                    currentUserId
+                );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
     }
 }
