@@ -33,17 +33,119 @@ public class PatientService : IPatientService
     // CREATE PATIENT
     // =====================================================
 
-    public Task<HttpResponseData<PatientDTO>> CreatePatientAsync(
+    public async Task<HttpResponseData<PatientDTO>> CreatePatientAsync(
         PatientRequestDTO request)
     {
-        return Task.FromResult(
-            new HttpResponseData<PatientDTO>
+        try
+        {
+            // =================================================
+            // NORMALIZE INPUT
+            // =================================================
+
+            var fullName = request.FullName.Trim();
+            var phone = request.Phone.Trim();
+
+            var email = string.IsNullOrWhiteSpace(request.Email)
+                ? null
+                : request.Email.Trim();
+
+            var address = string.IsNullOrWhiteSpace(request.Address)
+                ? null
+                : request.Address.Trim();
+
+            var nationalId = string.IsNullOrWhiteSpace(request.NationalId)
+                ? null
+                : request.NationalId.Trim();
+
+            var insuranceNumber = string.IsNullOrWhiteSpace(request.InsuranceNumber)
+                ? null
+                : request.InsuranceNumber.Trim();
+
+            var bloodType = string.IsNullOrWhiteSpace(request.BloodType)
+                ? null
+                : request.BloodType.Trim();
+
+
+            // =================================================
+            // VALIDATE REQUIRED DATA
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Họ tên bệnh nhân không được để trống."
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Số điện thoại không được để trống."
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE DATE OF BIRTH
+            // =================================================
+
+            if (request.DateOfBirth.HasValue &&
+                request.DateOfBirth.Value > DateOnly.FromDateTime(DateTime.Today))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Ngày sinh không thể lớn hơn ngày hiện tại."
+                };
+            }
+
+
+            // =================================================
+            // CHECK DUPLICATE PHONE
+            // =================================================
+
+            var existingPatient = await _unitOfWork.PatientRepository
+                .WhereSql(p => p.Phone == phone)
+                .FirstOrDefaultAsync();
+
+            if (existingPatient != null)
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 409,
+                    Message = "Số điện thoại đã tồn tại trong hồ sơ bệnh nhân."
+                };
+            }
+
+
+            // =================================================
+            // CREATE PATIENT
+            //
+            // Sẽ thực hiện ở bước 6.5.3 - 6.5.4.
+            // =================================================
+
+            return new HttpResponseData<PatientDTO>
             {
                 StatusCode = 501,
-                Message = "Chức năng tạo bệnh nhân đang được triển khai.",
-                Content = null
-            }
-        );
+                Message = "Dữ liệu hợp lệ. Chức năng tạo bệnh nhân đang được triển khai."
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to validate patient creation request.");
+
+            return new HttpResponseData<PatientDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể xử lý thông tin bệnh nhân."
+            };
+        }
     }
 
     // =====================================================
