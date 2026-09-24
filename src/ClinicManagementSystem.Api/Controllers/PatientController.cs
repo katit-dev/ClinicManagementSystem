@@ -43,5 +43,22 @@ public class PatientController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+// CREATE PATIENT
+//
+// POST:
+// /api/patients
+// =====================================================
+
+[HttpPost]
+[Authorize(Roles = "Receptionist")]
+public async Task<IActionResult> CreatePatient(
+    [FromBody] PatientRequestDTO request)
+{
+    var result = await _patientService.CreatePatientAsync(request);
+
+    return StatusCode(result.StatusCode, result);
+}
+
 
 }
