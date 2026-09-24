@@ -55,28 +55,129 @@ public class AppointmentService : IAppointmentService
     }
 
     // =====================================================
-    // CHECK IN APPOINTMENT
-    // =====================================================
+// CHECK IN APPOINTMENT
+// =====================================================
 
-    public Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(
-        int appointmentId,
-        int currentUserId)
+public async Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(
+    int appointmentId,
+    int currentUserId)
+{
+    try
     {
         // =================================================
-        // IMPLEMENTATION
-        //
-        // Logic check-in sẽ được bổ sung ở bước tiếp theo.
+        // GET APPOINTMENT
         // =================================================
 
-        return Task.FromResult(
-            new HttpResponseData<ReceptionAppointmentDTO>
+        var appointment =
+            await _unitOfWork
+                .AppointmentRepository
+                .WhereSql(a => a.Id == appointmentId)
+                .FirstOrDefaultAsync();
+
+
+        // =================================================
+        // APPOINTMENT NOT FOUND
+        // =================================================
+
+        if (appointment == null)
+        {
+            return new HttpResponseData<ReceptionAppointmentDTO>
             {
-                StatusCode = 501,
-                Message = "Chức năng check-in đang được triển khai.",
+                StatusCode = 404,
+                Message = "Không tìm thấy lịch hẹn.",
                 Content = null
-            }
-        );
+            };
+        }
+
+
+        // =================================================
+        // CHECK STATUS
+        //
+        // Chỉ cho check-in khi lịch đang:
+        //
+        // Pending
+        // Confirmed
+        // =================================================
+
+        var canCheckIn =
+            appointment.Status == (byte)AppointmentStatus.Pending ||
+            appointment.Status == (byte)AppointmentStatus.Confirmed;
+
+        if (!canCheckIn)
+        {
+            return new HttpResponseData<ReceptionAppointmentDTO>
+            {
+                StatusCode = 400,
+                Message = "Trạng thái lịch hẹn không cho phép check-in.",
+                Content = null
+            };
+        }
+
+
+        // =================================================
+        // CHECK APPOINTMENT DATE
+        //
+        // Reception chỉ check-in lịch của ngày hiện tại.
+        // =================================================
+
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        var appointmentDate =
+            DateOnly.FromDateTime(
+                appointment.StartTime
+            );
+
+        if (appointmentDate != today)
+        {
+            return new HttpResponseData<ReceptionAppointmentDTO>
+            {
+                StatusCode = 400,
+                Message = "Chỉ có thể check-in lịch hẹn trong ngày hôm nay.",
+                Content = null
+            };
+        }
+
+
+        // =================================================
+        // VALIDATION SUCCESS
+        //
+        // Queue number + update status sẽ làm bước sau.
+        // =================================================
+
+        return new HttpResponseData<ReceptionAppointmentDTO>
+        {
+            StatusCode = 501,
+            Message = "Lịch hẹn hợp lệ để check-in.",
+            Content = null
+        };
     }
+    catch (Exception ex)
+    {
+        // =================================================
+        // LOG ERROR
+        // =================================================
+
+        _logger.LogError(
+            ex,
+            "Failed to validate appointment check-in. " +
+            "AppointmentId: {AppointmentId}, UserId: {UserId}",
+            appointmentId,
+            currentUserId
+        );
+
+
+        // =================================================
+        // ERROR RESPONSE
+        // =================================================
+
+        return new HttpResponseData<ReceptionAppointmentDTO>
+        {
+            StatusCode = 500,
+            Message = "Không thể kiểm tra lịch hẹn để check-in.",
+            Content = null
+        };
+    }
+}
 
     // =====================================================
     // GET RECEPTION APPOINTMENTS
