@@ -25,6 +25,8 @@ public interface IAppointmentService
     // =====================================================
     Task<HttpResponseData<List<ReceptionAppointmentDTO>>> GetReceptionAppointmentsAsync(DateOnly date, int? doctorId, int? specialtyId, AppointmentStatus? status);
 
+    Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(int appointmentId, int currentUserId);
+
 
 
 }
