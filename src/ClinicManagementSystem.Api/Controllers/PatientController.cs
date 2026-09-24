@@ -44,21 +44,39 @@ public class PatientController : ControllerBase
     }
 
     // =====================================================
-// CREATE PATIENT
-//
-// POST:
-// /api/patients
-// =====================================================
+    // CREATE PATIENT
+    //
+    // POST:
+    // /api/patients
+    // =====================================================
 
-[HttpPost]
-[Authorize(Roles = "Receptionist")]
-public async Task<IActionResult> CreatePatient(
-    [FromBody] PatientRequestDTO request)
-{
-    var result = await _patientService.CreatePatientAsync(request);
+    [HttpPost]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> CreatePatient(
+        [FromBody] PatientRequestDTO request)
+    {
+        var result = await _patientService.CreatePatientAsync(request);
 
-    return StatusCode(result.StatusCode, result);
-}
+        return StatusCode(result.StatusCode, result);
+    }
+
+    // =====================================================
+    // UPDATE PATIENT
+    //
+    // PUT:
+    // /api/patients/{id}
+    // =====================================================
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> UpdatePatient(
+        int id,
+        [FromBody] PatientRequestDTO request)
+    {
+        var result = await _patientService.UpdatePatientAsync(id, request);
+
+        return StatusCode(result.StatusCode, result);
+    }
 
 
 }
