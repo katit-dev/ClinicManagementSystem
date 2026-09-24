@@ -3,6 +3,8 @@ using ClinicManagementSystem.Application.DTOs.Patient;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ClinicManagementSystem.Application.Helpers;
+using ClinicManagementSystem.Infrastructure.Models;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -123,27 +125,105 @@ public class PatientService : IPatientService
 
 
             // =================================================
-            // CREATE PATIENT
+            // CREATE ENTITY
             //
-            // Sẽ thực hiện ở bước 6.5.3 - 6.5.4.
+            // Bệnh nhân do Reception tạo là bệnh nhân vãng lai,
+            // chưa có tài khoản nên UserId = null.
+            // =================================================
+
+            var now = DateTime.UtcNow;
+
+            var patient = new Patient
+            {
+                UserId = null,
+
+                FullName = fullName,
+                Gender = request.Gender,
+                DateOfBirth = request.DateOfBirth,
+
+                Phone = phone,
+                Email = email,
+                Address = address,
+
+                NationalId = nationalId,
+                InsuranceNumber = insuranceNumber,
+                BloodType = bloodType,
+
+                PatientCode = PatientCodeHelper.Generate(),
+
+                IsActive = true,
+                CreatedAt = now
+            };
+
+
+            // =================================================
+            // ADD PATIENT
+            // =================================================
+
+            await _unitOfWork.PatientRepository.AddAsync(patient);
+
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result = new PatientDTO
+            {
+                Id = patient.Id,
+                PatientCode = patient.PatientCode,
+
+                FullName = patient.FullName,
+                Gender = patient.Gender,
+                DateOfBirth = patient.DateOfBirth,
+
+                Phone = patient.Phone!,
+                Email = patient.Email,
+                Address = patient.Address,
+
+                NationalId = patient.NationalId,
+                InsuranceNumber = patient.InsuranceNumber,
+
+                BloodType = patient.BloodType
+            };
+
+
+            // =================================================
+            // SUCCESS
             // =================================================
 
             return new HttpResponseData<PatientDTO>
             {
-                StatusCode = 501,
-                Message = "Dữ liệu hợp lệ. Chức năng tạo bệnh nhân đang được triển khai."
+                StatusCode = 201,
+                Message = "Tạo hồ sơ bệnh nhân thành công.",
+                Content = result
             };
         }
         catch (Exception ex)
         {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
             _logger.LogError(
                 ex,
-                "Failed to validate patient creation request.");
+                "Failed to create patient.");
+
+
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
 
             return new HttpResponseData<PatientDTO>
             {
                 StatusCode = 500,
-                Message = "Không thể xử lý thông tin bệnh nhân."
+                Message = "Không thể tạo hồ sơ bệnh nhân."
             };
         }
     }
