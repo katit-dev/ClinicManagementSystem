@@ -186,6 +186,10 @@ public class AppointmentService : IAppointmentService
             // =================================================
 
             appointment.Status = (byte)AppointmentStatus.NoShow;
+
+            appointment.QueueNumber = null;
+            appointment.CheckedInAt = null;
+
             appointment.UpdatedAt = now;
 
 
