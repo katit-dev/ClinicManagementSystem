@@ -62,6 +62,8 @@ public class AppointmentService : IAppointmentService
         int appointmentId,
         int currentUserId)
     {
+        bool transactionStarted = false;
+
         try
         {
             // =================================================
@@ -93,8 +95,7 @@ public class AppointmentService : IAppointmentService
             // =================================================
             // CHECK STATUS
             //
-            // Chỉ cho check-in khi lịch đang:
-            //
+            // Chỉ cho check-in khi:
             // Pending
             // Confirmed
             // =================================================
@@ -116,16 +117,10 @@ public class AppointmentService : IAppointmentService
 
             // =================================================
             // CHECK APPOINTMENT DATE
-            //
-            // Reception chỉ check-in lịch của ngày hiện tại.
             // =================================================
 
             var today = DateOnly.FromDateTime(DateTime.Now);
-
-            var appointmentDate =
-                DateOnly.FromDateTime(
-                    appointment.StartTime
-                );
+            var appointmentDate = DateOnly.FromDateTime(appointment.StartTime);
 
             if (appointmentDate != today)
             {
@@ -137,20 +132,33 @@ public class AppointmentService : IAppointmentService
                 };
             }
 
+
             // =================================================
-            // QUEUE DATE RANGE
+            // DATE RANGE
             // =================================================
 
-            var startOfDay =
-                today.ToDateTime(
-                    TimeOnly.MinValue
-                );
-
-            var endOfDay =
-                startOfDay.AddDays(1);
+            var startOfDay = today.ToDateTime(TimeOnly.MinValue);
+            var endOfDay = startOfDay.AddDays(1);
 
 
+            // =================================================
+            // BEGIN TRANSACTION
+            //
+            // Việc lấy queue và update appointment
+            // phải nằm trong cùng transaction.
+            // =================================================
+
+            await _unitOfWork.BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
             // GET LAST QUEUE NUMBER
+            //
+            // Queue được đánh riêng theo bác sĩ + ngày.
+            // =================================================
+
             var lastQueueNumber =
                 await _unitOfWork
                     .AppointmentRepository
@@ -161,9 +169,7 @@ public class AppointmentService : IAppointmentService
                             a.StartTime < endOfDay &&
                             a.QueueNumber.HasValue
                     )
-                    .MaxAsync(
-                        a => a.QueueNumber
-                    )
+                    .MaxAsync(a => a.QueueNumber)
                 ?? 0;
 
 
@@ -171,32 +177,146 @@ public class AppointmentService : IAppointmentService
             // NEXT QUEUE NUMBER
             // =================================================
 
-            var nextQueueNumber =
-                lastQueueNumber + 1;
+            var nextQueueNumber = lastQueueNumber + 1;
 
 
             // =================================================
-            // QUEUE NUMBER GENERATED
-            //
-            // Chưa lưu xuống database.
+            // CURRENT STATUS
+            // =================================================
+
+            var fromStatus = appointment.Status;
+
+            var now = DateTime.Now;
+
+
+            // =================================================
+            // UPDATE APPOINTMENT
+            // =================================================
+
+            appointment.Status = (byte)AppointmentStatus.CheckedIn;
+            appointment.QueueNumber = nextQueueNumber;
+            appointment.CheckedInAt = now;
+            appointment.UpdatedAt = now;
+
+
+            // =================================================
+            // CREATE STATUS HISTORY
+            // =================================================
+
+            var statusHistory =
+                new AppointmentStatusHistory
+                {
+                    AppointmentId = appointment.Id,
+                    FromStatus = fromStatus,
+                    ToStatus = (byte)AppointmentStatus.CheckedIn,
+                    ChangedBy = currentUserId,
+                    Reason = null,
+                    ChangedAt = now
+                };
+
+
+            // =================================================
+            // ADD STATUS HISTORY
+            // =================================================
+
+            await _unitOfWork
+                .AppointmentStatusHistoryRepository
+                .AddAsync(statusHistory);
+
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT TRANSACTION
+            // =================================================
+
+            await _unitOfWork.CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // GET UPDATED APPOINTMENT
+            // =================================================
+
+            var result =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(a => a.Id == appointment.Id)
+                    .Select(
+                        a =>
+                            new ReceptionAppointmentDTO
+                            {
+                                Id = a.Id,
+                                AppointmentCode = a.AppointmentCode,
+
+                                StartTime = a.StartTime,
+                                EndTime = a.EndTime,
+
+                                Status = a.Status,
+                                QueueNumber = a.QueueNumber,
+                                CheckedInAt = a.CheckedInAt,
+                                Reason = a.Reason,
+
+                                PatientId = a.PatientId,
+                                PatientCode = a.Patient.PatientCode,
+                                PatientName = a.Patient.FullName,
+
+                                DoctorId = a.DoctorId,
+                                DoctorName = a.Doctor.FullName,
+
+                                SpecialtyId = a.Doctor.SpecialtyId,
+                                SpecialtyName = a.Doctor.Specialty.Name
+                            }
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // SUCCESS
             // =================================================
 
             return new HttpResponseData<ReceptionAppointmentDTO>
             {
-                StatusCode = 501,
-                Message = $"Số thứ tự tiếp theo là {nextQueueNumber}.",
-                Content = null
+                StatusCode = 200,
+                Message = $"Check-in thành công. Số thứ tự: {nextQueueNumber}.",
+                Content = result
             };
         }
         catch (Exception ex)
         {
+            // =================================================
+            // ROLLBACK TRANSACTION
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback appointment check-in."
+                    );
+                }
+            }
+
+
             // =================================================
             // LOG ERROR
             // =================================================
 
             _logger.LogError(
                 ex,
-                "Failed to validate appointment check-in. " +
+                "Failed to check in appointment. " +
                 "AppointmentId: {AppointmentId}, UserId: {UserId}",
                 appointmentId,
                 currentUserId
@@ -210,7 +330,7 @@ public class AppointmentService : IAppointmentService
             return new HttpResponseData<ReceptionAppointmentDTO>
             {
                 StatusCode = 500,
-                Message = "Không thể kiểm tra lịch hẹn để check-in.",
+                Message = "Không thể check-in lịch hẹn.",
                 Content = null
             };
         }
