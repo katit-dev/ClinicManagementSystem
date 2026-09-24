@@ -68,13 +68,8 @@ public class AppointmentService : IAppointmentService
             // DATE RANGE
             // =================================================
 
-            var startOfDay =
-                date.ToDateTime(
-                    TimeOnly.MinValue
-                );
-
-            var endOfDay =
-                startOfDay.AddDays(1);
+            var startOfDay = date.ToDateTime(TimeOnly.MinValue);
+            var endOfDay = startOfDay.AddDays(1);
 
 
             // =================================================
@@ -97,11 +92,7 @@ public class AppointmentService : IAppointmentService
 
             if (doctorId.HasValue)
             {
-                query =
-                    query.Where(
-                        a =>
-                            a.DoctorId == doctorId.Value
-                    );
+                query = query.Where(a => a.DoctorId == doctorId.Value);
             }
 
 
@@ -111,11 +102,7 @@ public class AppointmentService : IAppointmentService
 
             if (specialtyId.HasValue)
             {
-                query =
-                    query.Where(
-                        a =>
-                            a.Doctor.SpecialtyId == specialtyId.Value
-                    );
+                query = query.Where(a => a.Doctor.SpecialtyId == specialtyId.Value);
             }
 
 
@@ -125,41 +112,55 @@ public class AppointmentService : IAppointmentService
 
             if (status.HasValue)
             {
-                query =
-                    query.Where(
-                        a =>
-                            a.Status == (byte)status.Value
-                    );
+                query = query.Where(a => a.Status == (byte)status.Value);
             }
 
 
             // =================================================
-            // EXECUTE QUERY
+            // QUERY + MAP DTO
             // =================================================
 
             var appointments =
                 await query
-                    .OrderBy(
-                        a => a.StartTime
+                    .OrderBy(a => a.StartTime)
+                    .Select(
+                        a =>
+                            new ReceptionAppointmentDTO
+                            {
+                                Id = a.Id,
+                                AppointmentCode = a.AppointmentCode,
+
+                                StartTime = a.StartTime,
+                                EndTime = a.EndTime,
+
+                                Status = a.Status,
+                                QueueNumber = a.QueueNumber,
+                                CheckedInAt = a.CheckedInAt,
+                                Reason = a.Reason,
+
+                                PatientId = a.PatientId,
+                                PatientCode = a.Patient.PatientCode,
+                                PatientName = a.Patient.FullName,
+
+                                DoctorId = a.DoctorId,
+                                DoctorName = a.Doctor.FullName,
+
+                                SpecialtyId = a.Doctor.SpecialtyId,
+                                SpecialtyName = a.Doctor.Specialty.Name
+                            }
                     )
                     .ToListAsync();
 
 
             // =================================================
             // SUCCESS
-            //
-            // Chưa map ReceptionAppointmentDTO ở bước này.
             // =================================================
 
             return new HttpResponseData<List<ReceptionAppointmentDTO>>
             {
                 StatusCode = 200,
-
-                Message =
-                    $"Tìm thấy {appointments.Count} lịch hẹn trong ngày.",
-
-                Content =
-                    new List<ReceptionAppointmentDTO>()
+                Message = "Lấy danh sách lịch hẹn thành công.",
+                Content = appointments
             };
         }
         catch (Exception ex)
@@ -171,10 +172,8 @@ public class AppointmentService : IAppointmentService
             _logger.LogError(
                 ex,
                 "Failed to get reception appointments. " +
-                "Date: {Date}, " +
-                "DoctorId: {DoctorId}, " +
-                "SpecialtyId: {SpecialtyId}, " +
-                "Status: {Status}",
+                "Date: {Date}, DoctorId: {DoctorId}, " +
+                "SpecialtyId: {SpecialtyId}, Status: {Status}",
                 date,
                 doctorId,
                 specialtyId,
@@ -189,15 +188,13 @@ public class AppointmentService : IAppointmentService
             return new HttpResponseData<List<ReceptionAppointmentDTO>>
             {
                 StatusCode = 500,
-
-                Message =
-                    "Không thể lấy danh sách lịch hẹn.",
-
-                Content =
-                    new List<ReceptionAppointmentDTO>()
+                Message = "Không thể lấy danh sách lịch hẹn.",
+                Content = new List<ReceptionAppointmentDTO>()
             };
         }
     }
+
+
     // =====================================================
     // RESCHEDULE APPOINTMENT
     // =====================================================
