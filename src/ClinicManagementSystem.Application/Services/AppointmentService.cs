@@ -19,6 +19,14 @@ public interface IAppointmentService
     Task<HttpResponseData<List<MyAppointmentDTO>>> GetMyAppointmentsAsync(int currentUserId, MyAppointmentFilter filter);
     Task<HttpResponseData<AppointmentDTO>> CancelAppointmentAsync(int appointmentId, CancelAppointmentRequestDTO request, int currentUserId);
     Task<HttpResponseData<AppointmentDTO>> RescheduleAppointmentAsync(int appointmentId, RescheduleAppointmentRequestDTO request, int currentUserId);
+
+    // =====================================================
+    // RECEPTION APPOINTMENTS
+    // =====================================================
+    Task<HttpResponseData<List<ReceptionAppointmentDTO>>> GetReceptionAppointmentsAsync(DateOnly date, int? doctorId, int? specialtyId, AppointmentStatus? status);
+
+
+
 }
 
 
