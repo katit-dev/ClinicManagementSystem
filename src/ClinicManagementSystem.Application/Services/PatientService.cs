@@ -8,8 +8,10 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IPatientService
 {
-    Task<HttpResponseData<PatientLookupDTO?>> LookupByPhoneAsync(
-        string phone);
+    Task<HttpResponseData<PatientLookupDTO?>> LookupByPhoneAsync(string phone);
+
+    Task<HttpResponseData<PagedResult<PatientDTO>>> SearchPatientsAsync(string? keyword, int page);
+
 }
 
 public class PatientService : IPatientService
@@ -23,6 +25,22 @@ public class PatientService : IPatientService
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+    }
+
+    // =====================================================
+    // SEARCH PATIENTS
+    // =====================================================
+
+    public Task<HttpResponseData<PagedResult<PatientDTO>>> SearchPatientsAsync(string? keyword, int page)
+    {
+        return Task.FromResult(
+            new HttpResponseData<PagedResult<PatientDTO>>
+            {
+                StatusCode = 501,
+                Message = "Chức năng tìm kiếm bệnh nhân đang được triển khai.",
+                Content = new PagedResult<PatientDTO>()
+            }
+        );
     }
 
     public async Task<HttpResponseData<PatientLookupDTO?>> LookupByPhoneAsync(
