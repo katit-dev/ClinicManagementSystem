@@ -844,3 +844,23 @@
         font-size: 24px;
     }
 }
+
+/* =====================================================
+   AUTH LONG FORM
+   ===================================================== */
+
+.auth-page {
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+
+    .auth-page {
+        align-items: flex-start;
+    }
+
+    .auth-shell {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+}
