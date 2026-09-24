@@ -5,9 +5,12 @@
 @attribute [Authorize(Roles = "Receptionist")]
 
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@using ClinicManagementSystem.Application.DTOs.Appointment
 @using ClinicManagementSystem.Application.Enums
 
 @inject ReceptionAppointmentStateService ReceptionAppointmentStateService
+@inject IJSRuntime JSRuntime
 
 @implements IDisposable
 
@@ -57,7 +60,8 @@
 
                 <label>Ngày</label>
 
-                <input type="date" class="reception-filter-control"
+                <input type="date"
+                       class="reception-filter-control"
                        value="@ReceptionAppointmentStateService.SelectedDate.ToString("yyyy-MM-dd")"
                        @onchange="HandleDateChanged" />
 
@@ -72,12 +76,11 @@
 
                 <label>Chuyên khoa</label>
 
-                <select class="reception-filter-control" value="@GetSelectedSpecialtyValue()"
+                <select class="reception-filter-control"
+                        value="@GetSelectedSpecialtyValue()"
                         @onchange="HandleSpecialtyChanged">
 
-                    <option value="">
-                        Tất cả
-                    </option>
+                    <option value="">Tất cả</option>
 
                     @foreach (var specialty in ReceptionAppointmentStateService.Specialties)
                     {
@@ -99,13 +102,12 @@
 
                 <label>Bác sĩ</label>
 
-                <select class="reception-filter-control" value="@GetSelectedDoctorValue()"
+                <select class="reception-filter-control"
+                        value="@GetSelectedDoctorValue()"
                         @onchange="HandleDoctorChanged"
                         disabled="@(!ReceptionAppointmentStateService.SelectedSpecialtyId.HasValue)">
 
-                    <option value="">
-                        Tất cả
-                    </option>
+                    <option value="">Tất cả</option>
 
                     @foreach (var doctor in ReceptionAppointmentStateService.Doctors)
                     {
@@ -127,12 +129,11 @@
 
                 <label>Trạng thái</label>
 
-                <select class="reception-filter-control" value="@GetSelectedStatusValue()"
+                <select class="reception-filter-control"
+                        value="@GetSelectedStatusValue()"
                         @onchange="HandleStatusChanged">
 
-                    <option value="">
-                        Tất cả
-                    </option>
+                    <option value="">Tất cả</option>
 
                     <option value="@((byte)AppointmentStatus.Pending)">
                         Chờ xác nhận
@@ -171,7 +172,9 @@
 
                 <label>&nbsp;</label>
 
-                <button type="button" class="reception-filter-reset" @onclick="HandleResetFilters">
+                <button type="button"
+                        class="reception-filter-reset"
+                        @onclick="HandleResetFilters">
                     Đặt lại
                 </button>
 
@@ -226,13 +229,23 @@
             <h3>Lịch hẹn</h3>
         </div>
 
+
+        @* =================================================
+           ACTION ERROR
+           ================================================= *@
+
         @if (!string.IsNullOrWhiteSpace(
-    ReceptionAppointmentStateService.ActionErrorMessage))
+            ReceptionAppointmentStateService.ActionErrorMessage))
         {
             <div class="reception-action-message reception-action-error">
                 @ReceptionAppointmentStateService.ActionErrorMessage
             </div>
         }
+
+
+        @* =================================================
+           ACTION SUCCESS
+           ================================================= *@
 
         @if (!string.IsNullOrWhiteSpace(
             ReceptionAppointmentStateService.ActionMessage))
@@ -254,6 +267,7 @@
             </div>
         }
 
+
         @* =================================================
            ERROR
            ================================================= *@
@@ -266,6 +280,7 @@
             </div>
         }
 
+
         @* =================================================
            EMPTY
            ================================================= *@
@@ -277,9 +292,10 @@
             </div>
         }
 
+
         @* =================================================
-   APPOINTMENT TABLE
-   ================================================= *@
+           APPOINTMENT TABLE
+           ================================================= *@
 
         else
         {
@@ -311,8 +327,8 @@
                             <tr>
 
                                 @* =====================================
-                           TIME
-                           ===================================== *@
+                                   TIME
+                                   ===================================== *@
 
                                 <td>
 
@@ -332,27 +348,16 @@
 
 
                                 @* =====================================
-                           QUEUE NUMBER
-                           ===================================== *@
+                                   QUEUE NUMBER
+                                   ===================================== *@
 
                                 <td>
 
-                                    @if (CanCheckIn(appointment.Status))
+                                    @if (appointment.QueueNumber.HasValue)
                                     {
-                                        <button type="button" class="reception-checkin-button"
-                                                disabled="@IsProcessingAppointment(appointment.Id)"
-                                                @onclick="() => HandleCheckIn(appointment.Id)">
-
-                                            @if (IsProcessingAppointment(appointment.Id))
-                                            {
-                                                <span>Đang xử lý...</span>
-                                            }
-                                            else
-                                            {
-                                                <span>Check-in</span>
-                                            }
-
-                                        </button>
+                                        <span class="reception-queue-number">
+                                            #@appointment.QueueNumber
+                                        </span>
                                     }
                                     else
                                     {
@@ -365,8 +370,8 @@
 
 
                                 @* =====================================
-                           PATIENT
-                           ===================================== *@
+                                   PATIENT
+                                   ===================================== *@
 
                                 <td>
 
@@ -386,8 +391,8 @@
 
 
                                 @* =====================================
-                           PATIENT CODE
-                           ===================================== *@
+                                   PATIENT CODE
+                                   ===================================== *@
 
                                 <td>
                                     @appointment.PatientCode
@@ -395,8 +400,8 @@
 
 
                                 @* =====================================
-                           DOCTOR
-                           ===================================== *@
+                                   DOCTOR
+                                   ===================================== *@
 
                                 <td>
                                     @appointment.DoctorName
@@ -404,8 +409,8 @@
 
 
                                 @* =====================================
-                           SPECIALTY
-                           ===================================== *@
+                                   SPECIALTY
+                                   ===================================== *@
 
                                 <td>
                                     @appointment.SpecialtyName
@@ -413,8 +418,8 @@
 
 
                                 @* =====================================
-                           STATUS
-                           ===================================== *@
+                                   STATUS
+                                   ===================================== *@
 
                                 <td>
 
@@ -426,16 +431,65 @@
 
 
                                 @* =====================================
-                           ACTIONS
-                           //
-                           Sẽ làm ở bước 5.8.7 và 5.8.8.
-                           ===================================== *@
+                                   ACTIONS
+                                   ===================================== *@
 
                                 <td>
 
-                                    <span class="reception-muted">
-                                        —
-                                    </span>
+                                    <div class="reception-row-actions">
+
+                                        @* =================================
+                                           CHECK IN
+                                           ================================= *@
+
+                                        @if (CanCheckIn(appointment))
+                                        {
+                                            <button type="button"
+                                                    class="reception-checkin-button"
+                                                    disabled="@IsProcessingAppointment(appointment.Id)"
+                                                    @onclick="() => HandleCheckIn(appointment.Id)">
+
+                                                @if (IsProcessingAppointment(appointment.Id))
+                                                {
+                                                    <span>Đang xử lý...</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>Check-in</span>
+                                                }
+
+                                            </button>
+                                        }
+
+
+                                        @* =================================
+                                           NO SHOW
+                                           ================================= *@
+
+                                        @if (CanMarkNoShow(appointment))
+                                        {
+                                            <button type="button"
+                                                    class="reception-noshow-button"
+                                                    disabled="@IsProcessingAppointment(appointment.Id)"
+                                                    @onclick="() => HandleNoShow(appointment.Id)">
+                                                Không đến
+                                            </button>
+                                        }
+
+
+                                        @* =================================
+                                           NO ACTION
+                                           ================================= *@
+
+                                        @if (!CanCheckIn(appointment) &&
+                                             !CanMarkNoShow(appointment))
+                                        {
+                                            <span class="reception-muted">
+                                                —
+                                            </span>
+                                        }
+
+                                    </div>
 
                                 </td>
 
@@ -458,11 +512,13 @@
 
     <div class="reception-actions">
 
-        <a href="/reception/booking" class="reception-action-button">
+        <a href="/reception/booking"
+           class="reception-action-button">
             Đặt lịch hộ
         </a>
 
-        <a href="/reception/patients/new" class="reception-action-button">
+        <a href="/reception/patients/new"
+           class="reception-action-button">
             Tạo bệnh nhân mới
         </a>
 
@@ -509,14 +565,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ReceptionAppointmentStateService.OnChange +=
-            HandleStateChanged;
+        ReceptionAppointmentStateService.OnChange += HandleStateChanged;
 
-        await ReceptionAppointmentStateService
-            .LoadSpecialtiesAsync();
+        await ReceptionAppointmentStateService.LoadSpecialtiesAsync();
 
-        await ReceptionAppointmentStateService
-            .LoadAppointmentsAsync();
+        await ReceptionAppointmentStateService.LoadAppointmentsAsync();
     }
 
 
@@ -535,8 +588,7 @@
 
         ReceptionAppointmentStateService.SetDate(date);
 
-        await ReceptionAppointmentStateService
-            .LoadAppointmentsAsync();
+        await ReceptionAppointmentStateService.LoadAppointmentsAsync();
     }
 
 
@@ -553,24 +605,21 @@
                 ? parsedId
                 : null;
 
-        ReceptionAppointmentStateService
-            .SetSpecialty(specialtyId);
+        ReceptionAppointmentStateService.SetSpecialty(specialtyId);
 
 
         // =================================================
         // LOAD DOCTORS
         // =================================================
 
-        await ReceptionAppointmentStateService
-            .LoadDoctorsAsync();
+        await ReceptionAppointmentStateService.LoadDoctorsAsync();
 
 
         // =================================================
         // RELOAD APPOINTMENTS
         // =================================================
 
-        await ReceptionAppointmentStateService
-            .LoadAppointmentsAsync();
+        await ReceptionAppointmentStateService.LoadAppointmentsAsync();
     }
 
 
@@ -587,11 +636,66 @@
                 ? parsedId
                 : null;
 
-        ReceptionAppointmentStateService
-            .SetDoctor(doctorId);
+        ReceptionAppointmentStateService.SetDoctor(doctorId);
 
-        await ReceptionAppointmentStateService
-            .LoadAppointmentsAsync();
+        await ReceptionAppointmentStateService.LoadAppointmentsAsync();
+    }
+
+
+    // =====================================================
+    // STATUS CHANGED
+    // =====================================================
+
+    private async Task HandleStatusChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+
+        AppointmentStatus? status = null;
+
+        if (byte.TryParse(value, out var parsedStatus))
+        {
+            status = (AppointmentStatus)parsedStatus;
+        }
+
+        ReceptionAppointmentStateService.SetStatus(status);
+
+        await ReceptionAppointmentStateService.LoadAppointmentsAsync();
+    }
+
+
+    // =====================================================
+    // RESET FILTERS
+    // =====================================================
+
+    private async Task HandleResetFilters()
+    {
+        ReceptionAppointmentStateService.ResetFilters();
+
+        await ReceptionAppointmentStateService.LoadAppointmentsAsync();
+    }
+
+
+    // =====================================================
+    // SELECTED VALUES
+    // =====================================================
+
+    private string GetSelectedSpecialtyValue()
+    {
+        return ReceptionAppointmentStateService.SelectedSpecialtyId?.ToString()
+            ?? string.Empty;
+    }
+
+    private string GetSelectedDoctorValue()
+    {
+        return ReceptionAppointmentStateService.SelectedDoctorId?.ToString()
+            ?? string.Empty;
+    }
+
+    private string GetSelectedStatusValue()
+    {
+        return ReceptionAppointmentStateService.SelectedStatus.HasValue
+            ? ((byte)ReceptionAppointmentStateService.SelectedStatus.Value).ToString()
+            : string.Empty;
     }
 
 
@@ -609,7 +713,6 @@
             (byte)AppointmentStatus.Completed => "Đã khám xong",
             (byte)AppointmentStatus.Cancelled => "Đã hủy",
             (byte)AppointmentStatus.NoShow => "Không đến",
-
             _ => "Không xác định"
         };
     }
@@ -629,87 +732,65 @@
             (byte)AppointmentStatus.Completed => "status-completed",
             (byte)AppointmentStatus.Cancelled => "status-cancelled",
             (byte)AppointmentStatus.NoShow => "status-no-show",
-
             _ => string.Empty
         };
     }
 
-    // =====================================================
-    // STATUS CHANGED
-    // =====================================================
-
-    private async Task HandleStatusChanged(ChangeEventArgs e)
-    {
-        var value = e.Value?.ToString();
-
-        AppointmentStatus? status = null;
-
-        if (byte.TryParse(value, out var parsedStatus))
-        {
-            status =
-                (AppointmentStatus)parsedStatus;
-        }
-
-        ReceptionAppointmentStateService
-            .SetStatus(status);
-
-        await ReceptionAppointmentStateService
-            .LoadAppointmentsAsync();
-    }
-
-
-    // =====================================================
-    // RESET FILTERS
-    // =====================================================
-
-    private async Task HandleResetFilters()
-    {
-        ReceptionAppointmentStateService
-            .ResetFilters();
-
-        await ReceptionAppointmentStateService
-            .LoadAppointmentsAsync();
-    }
-
-
-    // =====================================================
-    // SELECTED VALUES
-    // =====================================================
-
-    private string GetSelectedSpecialtyValue()
-    {
-        return ReceptionAppointmentStateService
-            .SelectedSpecialtyId?
-            .ToString()
-            ?? string.Empty;
-    }
-
-    private string GetSelectedDoctorValue()
-    {
-        return ReceptionAppointmentStateService
-            .SelectedDoctorId?
-            .ToString()
-            ?? string.Empty;
-    }
-
-    private string GetSelectedStatusValue()
-    {
-        return ReceptionAppointmentStateService
-            .SelectedStatus.HasValue
-                ? ((byte)ReceptionAppointmentStateService.SelectedStatus.Value)
-                    .ToString()
-                : string.Empty;
-    }
 
     // =====================================================
     // CAN CHECK IN
     // =====================================================
 
-    private static bool CanCheckIn(byte status)
+    private static bool CanCheckIn(
+        ReceptionAppointmentDTO appointment)
     {
+        var validStatus =
+            appointment.Status == (byte)AppointmentStatus.Pending ||
+            appointment.Status == (byte)AppointmentStatus.Confirmed;
+
+        var appointmentDate =
+            DateOnly.FromDateTime(
+                appointment.StartTime
+            );
+
+        var today =
+            DateOnly.FromDateTime(
+                DateTime.Now
+            );
+
         return
-            status == (byte)AppointmentStatus.Pending ||
-            status == (byte)AppointmentStatus.Confirmed;
+            validStatus &&
+            appointmentDate == today;
+    }
+
+
+    // =====================================================
+    // CAN MARK NO SHOW
+    // =====================================================
+
+    private static bool CanMarkNoShow(
+        ReceptionAppointmentDTO appointment)
+    {
+        var validStatus =
+            appointment.Status == (byte)AppointmentStatus.Pending ||
+            appointment.Status == (byte)AppointmentStatus.Confirmed;
+
+        var now = DateTime.Now;
+
+        var appointmentDate =
+            DateOnly.FromDateTime(
+                appointment.StartTime
+            );
+
+        var today =
+            DateOnly.FromDateTime(
+                now
+            );
+
+        return
+            validStatus &&
+            appointmentDate == today &&
+            appointment.StartTime <= now;
     }
 
 
@@ -717,7 +798,8 @@
     // PROCESSING APPOINTMENT
     // =====================================================
 
-    private bool IsProcessingAppointment(int appointmentId)
+    private bool IsProcessingAppointment(
+        int appointmentId)
     {
         return
             ReceptionAppointmentStateService.IsSubmitting &&
@@ -730,11 +812,38 @@
     // CHECK IN
     // =====================================================
 
-    private async Task HandleCheckIn(int appointmentId)
+    private async Task HandleCheckIn(
+        int appointmentId)
     {
         await ReceptionAppointmentStateService
             .CheckInAppointmentAsync(
                 appointmentId
+            );
+    }
+
+
+    // =====================================================
+    // MARK NO SHOW
+    // =====================================================
+
+    private async Task HandleNoShow(
+        int appointmentId)
+    {
+        var confirmed =
+            await JSRuntime.InvokeAsync<bool>(
+                "confirm",
+                "Xác nhận bệnh nhân không đến?"
+            );
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await ReceptionAppointmentStateService
+            .MarkNoShowAsync(
+                appointmentId,
+                "Bệnh nhân không đến."
             );
     }
 
@@ -755,7 +864,6 @@
 
     public void Dispose()
     {
-        ReceptionAppointmentStateService.OnChange -=
-            HandleStateChanged;
+        ReceptionAppointmentStateService.OnChange -= HandleStateChanged;
     }
 }

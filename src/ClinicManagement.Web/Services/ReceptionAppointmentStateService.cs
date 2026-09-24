@@ -596,6 +596,139 @@ public class ReceptionAppointmentStateService
         }
     }
 
+    // =====================================================
+    // MARK APPOINTMENT AS NO SHOW
+    // =====================================================
+
+    public async Task<bool> MarkNoShowAsync(
+        int appointmentId,
+        string? note = null)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+        ProcessingAppointmentId = appointmentId;
+
+        ActionMessage = string.Empty;
+        ActionErrorMessage = string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CREATE REQUEST
+            // =================================================
+
+            var request =
+                new NoShowAppointmentRequestDTO
+                {
+                    Note =
+                        string.IsNullOrWhiteSpace(note)
+                            ? null
+                            : note.Trim()
+                };
+
+
+            // =================================================
+            // CREATE HTTP CONTENT
+            // =================================================
+
+            var content =
+                JsonContent.Create(
+                    request
+                );
+
+
+            // =================================================
+            // CALL API
+            //
+            // PATCH:
+            // /api/appointments/{id}/no-show
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PatchAsync(
+                        $"/api/appointments/{appointmentId}/no-show",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            ReceptionAppointmentDTO>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể đánh dấu bệnh nhân không đến.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+
+            // =================================================
+            // RELOAD APPOINTMENTS
+            // =================================================
+
+            await LoadAppointmentsAsync();
+
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+            ProcessingAppointmentId = null;
+
+            StateHasChanged();
+        }
+    }
+
 
     // =====================================================
     // RESET
