@@ -874,3 +874,121 @@ WHERE invoice_id = @InvoiceId;
 SELECT *
 FROM billing.payments
 WHERE invoice_id = @InvoiceId;
+
+
+SELECT
+    u.id,
+    u.username,
+    u.full_name,
+    r.name AS role_name
+FROM auth.users u
+LEFT JOIN auth.user_roles ur
+    ON ur.user_id = u.id
+LEFT JOIN auth.roles r
+    ON r.id = ur.role_id
+ORDER BY u.id;
+
+---------------------------
+-- test checkin appointment
+---------------------------
+DECLARE @UserId INT = 1;
+
+DECLARE @ReceptionistRoleId INT =
+(
+    SELECT id
+    FROM auth.roles
+    WHERE name = 'Receptionist'
+);
+
+IF @ReceptionistRoleId IS NULL
+BEGIN
+    THROW 50000, 'Receptionist role not found.', 1;
+END;
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM auth.user_roles
+    WHERE user_id = @UserId
+      AND role_id = @ReceptionistRoleId
+)
+BEGIN
+    INSERT INTO auth.user_roles
+    (
+        user_id,
+        role_id,
+        assigned_at
+    )
+    VALUES
+    (
+        @UserId,
+        @ReceptionistRoleId,
+        SYSUTCDATETIME()
+    );
+END;
+
+-- kiem tra sau khi doi user 1 từ patient --> receptionist
+SELECT
+    u.id,
+    u.username,
+    r.name AS role_name
+FROM auth.users u
+JOIN auth.user_roles ur
+    ON ur.user_id = u.id
+JOIN auth.roles r
+    ON r.id = ur.role_id
+WHERE u.id = 1;
+
+
+-- user dang co 2 role: patient va receptionist, xoa role patient
+DECLARE @UserId INT = 1;
+
+DECLARE @PatientRoleId INT =
+(
+    SELECT id
+    FROM auth.roles
+    WHERE name = 'Patient'
+);
+
+DECLARE @ReceptionistRoleId INT =
+(
+    SELECT id
+    FROM auth.roles
+    WHERE name = 'Receptionist'
+);
+
+
+-- =====================================================
+-- REMOVE PATIENT ROLE
+-- =====================================================
+
+DELETE FROM auth.user_roles
+WHERE user_id = @UserId
+  AND role_id = @PatientRoleId;
+
+
+-- =====================================================
+-- ADD RECEPTIONIST ROLE
+-- =====================================================
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM auth.user_roles
+    WHERE user_id = @UserId
+      AND role_id = @ReceptionistRoleId
+)
+BEGIN
+    INSERT INTO auth.user_roles
+    (
+        user_id,
+        role_id,
+        assigned_at
+    )
+    VALUES
+    (
+        @UserId,
+        @ReceptionistRoleId,
+        SYSUTCDATETIME()
+    );
+END;
