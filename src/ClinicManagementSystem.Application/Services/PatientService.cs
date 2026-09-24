@@ -12,6 +12,8 @@ public interface IPatientService
 
     Task<HttpResponseData<PagedResult<PatientDTO>>> SearchPatientsAsync(string? keyword, int page);
 
+    Task<HttpResponseData<PatientDTO>> CreatePatientAsync(PatientRequestDTO request);
+
 }
 
 public class PatientService : IPatientService
@@ -25,6 +27,23 @@ public class PatientService : IPatientService
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+    }
+
+    // =====================================================
+    // CREATE PATIENT
+    // =====================================================
+
+    public Task<HttpResponseData<PatientDTO>> CreatePatientAsync(
+        PatientRequestDTO request)
+    {
+        return Task.FromResult(
+            new HttpResponseData<PatientDTO>
+            {
+                StatusCode = 501,
+                Message = "Chức năng tạo bệnh nhân đang được triển khai.",
+                Content = null
+            }
+        );
     }
 
     // =====================================================
