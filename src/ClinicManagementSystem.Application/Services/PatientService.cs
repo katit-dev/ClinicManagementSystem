@@ -28,167 +28,187 @@ public class PatientService : IPatientService
     }
 
     // =====================================================
-// SEARCH PATIENTS
-// =====================================================
+    // SEARCH PATIENTS
+    // =====================================================
 
-public async Task<HttpResponseData<PagedResult<PatientDTO>>> SearchPatientsAsync(
-    string? keyword,
-    int page)
-{
-    try
+    public async Task<HttpResponseData<PagedResult<PatientDTO>>> SearchPatientsAsync(
+        string? keyword,
+        int page)
     {
-        // =================================================
-        // NORMALIZE PAGE
-        // =================================================
-
-        if (page < 1)
+        try
         {
-            page = 1;
-        }
+            // =================================================
+            // NORMALIZE PAGE
+            // =================================================
 
-
-        // =================================================
-        // NORMALIZE KEYWORD
-        // =================================================
-
-        keyword =
-            string.IsNullOrWhiteSpace(keyword)
-                ? null
-                : keyword.Trim();
-
-
-        // =================================================
-        // BASE QUERY
-        //
-        // Chỉ lấy bệnh nhân đang hoạt động.
-        // =================================================
-
-        var query =
-            _unitOfWork
-                .PatientRepository
-                .WhereSql(
-                    p => p.IsActive
-                );
-
-
-        // =================================================
-        // SEARCH
-        //
-        // Tìm theo:
-        // - Họ tên
-        // - Số điện thoại
-        // - Mã bệnh nhân
-        // =================================================
-
-        if (keyword != null)
-        {
-            query =
-                query.Where(
-                    p =>
-                        p.FullName.Contains(keyword) ||
-                        p.Phone.Contains(keyword) ||
-                        p.PatientCode.Contains(keyword)
-                );
-        }
-
-
-        // =================================================
-        // QUERY + MAP DTO
-        //
-        // Pagination sẽ làm ở bước tiếp theo.
-        // =================================================
-
-        var patients =
-            await query
-                .OrderBy(
-                    p => p.FullName
-                )
-                .Select(
-                    p =>
-                        new PatientDTO
-                        {
-                            Id = p.Id,
-                            PatientCode = p.PatientCode,
-
-                            FullName = p.FullName,
-                            Gender = p.Gender,
-                            DateOfBirth = p.DateOfBirth,
-
-                            Phone = p.Phone,
-                            Email = p.Email,
-                            Address = p.Address,
-
-                            NationalId = p.NationalId,
-                            InsuranceNumber = p.InsuranceNumber,
-
-                            BloodType = p.BloodType
-                        }
-                )
-                .ToListAsync();
-
-
-        // =================================================
-        // TEMPORARY PAGED RESULT
-        //
-        // Hiện tại chưa Skip / Take.
-        // Bước 6.4.4 sẽ thay phần này.
-        // =================================================
-
-        var result =
-            new PagedResult<PatientDTO>
+            if (page < 1)
             {
-                Items = patients,
+                page = 1;
+            }
 
-                Page = page,
 
-                PageSize = patients.Count,
+            // =================================================
+            // NORMALIZE KEYWORD
+            // =================================================
 
-                TotalItems = patients.Count,
+            keyword =
+                string.IsNullOrWhiteSpace(keyword)
+                    ? null
+                    : keyword.Trim();
 
-                TotalPages =
-                    patients.Count == 0
-                        ? 0
-                        : 1
+
+            // =================================================
+            // BASE QUERY
+            //
+            // Chỉ lấy bệnh nhân đang hoạt động.
+            // =================================================
+
+            var query =
+                _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p => p.IsActive
+                    );
+
+
+            // =================================================
+            // SEARCH
+            //
+            // Tìm theo:
+            // - Họ tên
+            // - Số điện thoại
+            // - Mã bệnh nhân
+            // =================================================
+
+            if (keyword != null)
+            {
+                query =
+                    query.Where(
+                        p =>
+                            p.FullName.Contains(keyword) ||
+                            p.Phone.Contains(keyword) ||
+                            p.PatientCode.Contains(keyword)
+                    );
+            }
+
+
+            // =================================================
+            // PAGE SIZE
+            // =================================================
+
+            const int pageSize = 10;
+
+
+            // =================================================
+            // TOTAL ITEMS
+            // =================================================
+
+            var totalItems =
+                await query.CountAsync();
+
+
+            // =================================================
+            // TOTAL PAGES
+            // =================================================
+
+            var totalPages =
+                totalItems == 0
+                    ? 0
+                    : (int)Math.Ceiling(
+                        totalItems / (double)pageSize
+                    );
+
+
+            // =================================================
+            // QUERY + PAGINATION + MAP DTO
+            // =================================================
+
+            var patients =
+                await query
+                    .OrderBy(p => p.FullName)
+                    .ThenBy(p => p.Id)
+                    .Skip(
+                        (page - 1) * pageSize
+                    )
+                    .Take(
+                        pageSize
+                    )
+                    .Select(
+                        p =>
+                            new PatientDTO
+                            {
+                                Id = p.Id,
+                                PatientCode = p.PatientCode,
+
+                                FullName = p.FullName,
+                                Gender = p.Gender,
+                                DateOfBirth = p.DateOfBirth,
+
+                                Phone = p.Phone,
+                                Email = p.Email,
+                                Address = p.Address,
+
+                                NationalId = p.NationalId,
+                                InsuranceNumber = p.InsuranceNumber,
+
+                                BloodType = p.BloodType
+                            }
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // PAGED RESULT
+            // =================================================
+
+            var result =
+                new PagedResult<PatientDTO>
+                {
+                    Items = patients,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalItems = totalItems,
+                    TotalPages = totalPages
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<PagedResult<PatientDTO>>
+            {
+                StatusCode = 200,
+                Message = "Lấy danh sách bệnh nhân thành công.",
+                Content = result
             };
-
-
-        // =================================================
-        // SUCCESS
-        // =================================================
-
-        return new HttpResponseData<PagedResult<PatientDTO>>
+        }
+        catch (Exception ex)
         {
-            StatusCode = 200,
-            Message = "Lấy danh sách bệnh nhân thành công.",
-            Content = result
-        };
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to search patients. Keyword: {Keyword}, Page: {Page}",
+                keyword,
+                page
+            );
+
+
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
+
+            return new HttpResponseData<PagedResult<PatientDTO>>
+            {
+                StatusCode = 500,
+                Message = "Không thể lấy danh sách bệnh nhân.",
+                Content = new PagedResult<PatientDTO>()
+            };
+        }
     }
-    catch (Exception ex)
-    {
-        // =================================================
-        // LOG ERROR
-        // =================================================
-
-        _logger.LogError(
-            ex,
-            "Failed to search patients. Keyword: {Keyword}, Page: {Page}",
-            keyword,
-            page
-        );
-
-
-        // =================================================
-        // ERROR RESPONSE
-        // =================================================
-
-        return new HttpResponseData<PagedResult<PatientDTO>>
-        {
-            StatusCode = 500,
-            Message = "Không thể lấy danh sách bệnh nhân.",
-            Content = new PagedResult<PatientDTO>()
-        };
-    }
-}
 
     public async Task<HttpResponseData<PatientLookupDTO?>> LookupByPhoneAsync(
         string phone)
