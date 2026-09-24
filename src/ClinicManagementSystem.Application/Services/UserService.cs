@@ -542,11 +542,7 @@ public class UserService : IUserService
                             request.DateOfBirth.Value)
                         : null,
 
-                    PatientCode =
-                        "BN" +
-                        Guid.NewGuid()
-                            .ToString("N")[..18]
-                            .ToUpperInvariant(),
+                    PatientCode = PatientCodeHelper.Generate(),
 
                     IsActive = true,
                     CreatedAt = now
