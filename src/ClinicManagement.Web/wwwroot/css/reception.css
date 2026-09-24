@@ -132,3 +132,69 @@
     text-decoration: none;
     font-weight: 600;
 }
+
+/* =====================================================
+   FILTERS
+   ===================================================== */
+
+.reception-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.reception-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+}
+
+.reception-filter-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.reception-filter-control {
+    min-height: 40px;
+    padding: 8px 12px;
+
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #16324f;
+
+    font-size: 14px;
+    outline: none;
+}
+
+.reception-filter-control:focus {
+    border-color: #38bdf8;
+}
+
+.reception-filter-control:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.reception-filter-reset {
+    min-height: 40px;
+    padding: 8px 16px;
+
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #16324f;
+
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reception-filter-reset:hover {
+    background: #f1f5f9;
+}
