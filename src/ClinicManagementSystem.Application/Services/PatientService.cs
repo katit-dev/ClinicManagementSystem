@@ -18,6 +18,8 @@ public interface IPatientService
 
     Task<HttpResponseData<PatientDTO>> UpdatePatientAsync(int patientId, PatientRequestDTO request);
 
+    Task<HttpResponseData<PatientAllergyDTO>> AddPatientAllergyAsync(int patientId, PatientAllergyRequestDTO request);
+
 }
 
 public class PatientService : IPatientService
@@ -31,6 +33,23 @@ public class PatientService : IPatientService
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+    }
+
+    // =====================================================
+    // ADD PATIENT ALLERGY
+    // =====================================================
+
+    public Task<HttpResponseData<PatientAllergyDTO>> AddPatientAllergyAsync(
+        int patientId,
+        PatientAllergyRequestDTO request)
+    {
+        return Task.FromResult(
+            new HttpResponseData<PatientAllergyDTO>
+            {
+                StatusCode = 501,
+                Message = "Chức năng thêm dị ứng bệnh nhân đang được triển khai."
+            }
+        );
     }
 
     // =====================================================
