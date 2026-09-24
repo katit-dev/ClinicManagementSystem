@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ClinicManagementSystem.Application.Helpers;
 using ClinicManagementSystem.Infrastructure.Models;
+using ClinicManagementSystem.Application.DTOs.PatientRecord;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -20,6 +21,8 @@ public interface IPatientService
 
     Task<HttpResponseData<PatientAllergyDTO>> AddPatientAllergyAsync(int patientId, PatientAllergyRequestDTO request);
 
+    Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(int patientId, int currentUserId);
+
 }
 
 public class PatientService : IPatientService
@@ -34,6 +37,8 @@ public class PatientService : IPatientService
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
+
+    
 
     // =====================================================
     // ADD PATIENT ALLERGY
