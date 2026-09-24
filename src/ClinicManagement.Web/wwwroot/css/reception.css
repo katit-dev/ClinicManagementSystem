@@ -788,3 +788,223 @@
 .reception-view-button:hover {
     background: #f1f5f9;
 }
+
+/* =====================================================
+   APPOINTMENT DETAIL MODAL
+   ===================================================== */
+
+.reception-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.reception-modal {
+    width: 100%;
+    max-width: 620px;
+
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+
+    padding: 24px;
+
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+}
+
+
+/* =====================================================
+   MODAL HEADER
+   ===================================================== */
+
+.reception-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 18px;
+}
+
+.reception-modal-header span {
+    color: #64748b;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+}
+
+.reception-modal-header h3 {
+    margin: 4px 0 0;
+
+    color: #16324f;
+
+    font-size: 20px;
+}
+
+.reception-modal-close {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #f1f5f9;
+    color: #64748b;
+
+    font-size: 22px;
+
+    cursor: pointer;
+}
+
+.reception-modal-close:hover {
+    background: #e2e8f0;
+}
+
+
+/* =====================================================
+   MODAL STATUS
+   ===================================================== */
+
+.reception-modal-status {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+}
+
+
+/* =====================================================
+   DETAIL GRID
+   ===================================================== */
+
+.reception-detail-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+.reception-detail-item {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    padding: 14px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+
+    background: #f8fafc;
+}
+
+.reception-detail-item span {
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+.reception-detail-item strong {
+    color: #16324f;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   DETAIL REASON
+   ===================================================== */
+
+.reception-detail-reason {
+    margin-top: 16px;
+
+    padding: 14px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.reception-detail-reason span {
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.reception-detail-reason p {
+    margin: 6px 0 0;
+
+    color: #334155;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   MODAL FOOTER
+   ===================================================== */
+
+.reception-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-top: 20px;
+}
+
+.reception-modal-close-button {
+    min-height: 38px;
+
+    padding: 8px 18px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #16324f;
+    color: #ffffff;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.reception-modal-close-button:hover {
+    background: #0f2438;
+}
+
+
+/* =====================================================
+   MODAL RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 600px) {
+
+    .reception-modal-backdrop {
+        padding: 12px;
+    }
+
+    .reception-modal {
+        padding: 18px;
+    }
+
+    .reception-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -519,8 +519,155 @@
 
 </div>
 
+@* =====================================================
+   APPOINTMENT DETAIL MODAL
+   ===================================================== *@
+
+@if (SelectedAppointment != null)
+{
+    <div class="reception-modal-backdrop" @onclick="CloseAppointmentDetails">
+
+        <div class="reception-modal" @onclick:stopPropagation="true">
+
+            @* =================================================
+               HEADER
+               ================================================= *@
+
+            <div class="reception-modal-header">
+
+                <div>
+
+                    <span>CHI TIẾT LỊCH HẸN</span>
+
+                    <h3>
+                        @SelectedAppointment.AppointmentCode
+                    </h3>
+
+                </div>
+
+                <button type="button" class="reception-modal-close" @onclick="CloseAppointmentDetails">
+                    ×
+                </button>
+
+            </div>
+
+
+            @* =================================================
+               STATUS
+               ================================================= *@
+
+            <div class="reception-modal-status">
+
+                <span class="reception-status @GetStatusClass(SelectedAppointment.Status)">
+                    @GetStatusText(SelectedAppointment.Status)
+                </span>
+
+                @if (SelectedAppointment.QueueNumber.HasValue)
+                {
+                    <span class="reception-queue-number">
+                        #@SelectedAppointment.QueueNumber
+                    </span>
+                }
+
+            </div>
+
+
+            @* =================================================
+               INFORMATION
+               ================================================= *@
+
+            <div class="reception-detail-grid">
+
+                <div class="reception-detail-item">
+                    <span>Bệnh nhân</span>
+                    <strong>@SelectedAppointment.PatientName</strong>
+                </div>
+
+                <div class="reception-detail-item">
+                    <span>Mã bệnh nhân</span>
+                    <strong>@SelectedAppointment.PatientCode</strong>
+                </div>
+
+                <div class="reception-detail-item">
+                    <span>Bác sĩ</span>
+                    <strong>@SelectedAppointment.DoctorName</strong>
+                </div>
+
+                <div class="reception-detail-item">
+                    <span>Chuyên khoa</span>
+                    <strong>@SelectedAppointment.SpecialtyName</strong>
+                </div>
+
+                <div class="reception-detail-item">
+                    <span>Ngày khám</span>
+                    <strong>
+                        @SelectedAppointment.StartTime.ToString("dd/MM/yyyy")
+                    </strong>
+                </div>
+
+                <div class="reception-detail-item">
+                    <span>Giờ khám</span>
+                    <strong>
+                        @SelectedAppointment.StartTime.ToString("HH:mm")
+                        -
+                        @SelectedAppointment.EndTime.ToString("HH:mm")
+                    </strong>
+                </div>
+
+                @if (SelectedAppointment.CheckedInAt.HasValue)
+                {
+                    <div class="reception-detail-item">
+                        <span>Check-in lúc</span>
+                        <strong>
+                            @SelectedAppointment.CheckedInAt.Value.ToString("HH:mm dd/MM/yyyy")
+                        </strong>
+                    </div>
+                }
+
+            </div>
+
+
+            @* =================================================
+               REASON
+               ================================================= *@
+
+            <div class="reception-detail-reason">
+
+                <span>Lý do khám</span>
+
+                <p>
+                    @(string.IsNullOrWhiteSpace(SelectedAppointment.Reason)
+                        ? "Không có thông tin."
+                        : SelectedAppointment.Reason)
+                </p>
+
+            </div>
+
+
+            @* =================================================
+               FOOTER
+               ================================================= *@
+
+            <div class="reception-modal-footer">
+
+                <button type="button" class="reception-modal-close-button" @onclick="CloseAppointmentDetails">
+                    Đóng
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
 
 @code {
+
+    // =====================================================
+    // SELECTED APPOINTMENT
+    // =====================================================
+    private ReceptionAppointmentDTO? SelectedAppointment { get; set; }
 
     // =====================================================
     // SUMMARY
@@ -584,7 +731,21 @@
 
     private void HandleViewAppointment(int appointmentId)
     {
-        // Sẽ nối trang chi tiết ở bước tiếp theo.
+        SelectedAppointment =
+            ReceptionAppointmentStateService
+                .Appointments
+                .FirstOrDefault(
+                    a => a.Id == appointmentId
+                );
+    }
+
+    // =====================================================
+    // CLOSE APPOINTMENT DETAILS
+    // =====================================================
+
+    private void CloseAppointmentDetails()
+    {
+        SelectedAppointment = null;
     }
 
 
