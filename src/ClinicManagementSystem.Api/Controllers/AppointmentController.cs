@@ -159,4 +159,32 @@ public class AppointmentController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+    // CHECK IN APPOINTMENT
+    //
+    // PATCH:
+    // /api/appointments/{id}/check-in
+    // =====================================================
+
+    [HttpPatch("{id}/check-in")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> CheckInAppointment(int id)
+    {
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _appointmentService.CheckInAppointmentAsync(id, currentUserId);
+
+        return StatusCode(result.StatusCode, result);
+    }
+
 }
