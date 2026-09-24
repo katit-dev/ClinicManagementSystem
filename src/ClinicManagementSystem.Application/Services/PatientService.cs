@@ -39,17 +39,120 @@ public class PatientService : IPatientService
     // ADD PATIENT ALLERGY
     // =====================================================
 
-    public Task<HttpResponseData<PatientAllergyDTO>> AddPatientAllergyAsync(
+    public async Task<HttpResponseData<PatientAllergyDTO>> AddPatientAllergyAsync(
         int patientId,
         PatientAllergyRequestDTO request)
     {
-        return Task.FromResult(
-            new HttpResponseData<PatientAllergyDTO>
+        try
+        {
+            // =================================================
+            // FIND PATIENT
+            // =================================================
+
+            var patient = await _unitOfWork.PatientRepository
+                .WhereSql(p => p.Id == patientId && p.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (patient == null)
             {
-                StatusCode = 501,
-                Message = "Chức năng thêm dị ứng bệnh nhân đang được triển khai."
+                return new HttpResponseData<PatientAllergyDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Không tìm thấy hồ sơ bệnh nhân."
+                };
             }
-        );
+
+
+            // =================================================
+            // NORMALIZE INPUT
+            // =================================================
+
+            var allergen = request.Allergen.Trim();
+
+            var note = string.IsNullOrWhiteSpace(request.Note)
+                ? null
+                : request.Note.Trim();
+
+
+            // =================================================
+            // VALIDATE ALLERGEN
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(allergen))
+            {
+                return new HttpResponseData<PatientAllergyDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Tên chất gây dị ứng không được để trống."
+                };
+            }
+
+
+            // =================================================
+            // CREATE ALLERGY
+            // =================================================
+
+            var allergy = new PatientAllergy
+            {
+                PatientId = patientId,
+                Allergen = allergen,
+                Severity = request.Severity,
+                Note = note
+            };
+
+
+            // =================================================
+            // ADD ALLERGY
+            // =================================================
+
+            await _unitOfWork.PatientAllergyRepository.AddAsync(allergy);
+
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result = new PatientAllergyDTO
+            {
+                Id = allergy.Id,
+                PatientId = allergy.PatientId,
+                Allergen = allergy.Allergen,
+                Severity = allergy.Severity,
+                Note = allergy.Note
+            };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<PatientAllergyDTO>
+            {
+                StatusCode = 201,
+                Message = "Thêm dị ứng cho bệnh nhân thành công.",
+                Content = result
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to add patient allergy. PatientId: {PatientId}",
+                patientId);
+
+            return new HttpResponseData<PatientAllergyDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể thêm thông tin dị ứng."
+            };
+        }
     }
 
     // =====================================================
