@@ -16,7 +16,6 @@ public interface IPatientRecordService
 {
     Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsAsync(int currentUserId);
     Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(int patientId, int currentUserId);
-
 }
 
 
@@ -44,39 +43,24 @@ public class PatientRecordService : IPatientRecordService
     }
 
     // =====================================================
-    // GET PATIENT RECORDS FOR RECEPTION
-    // =====================================================
-
-    public Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(
-        int patientId,
-        int currentUserId)
-    {
-        return Task.FromResult(
-            Response(
-                501,
-                "Chức năng xem lịch sử khám của bệnh nhân đang được triển khai."
-            )
-        );
-    }
-
-
-    // =====================================================
     // GET PATIENT RECORDS
     // =====================================================
 
-    public async Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsAsync(int currentUserId)
+    public async Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsAsync(
+        int currentUserId)
     {
         try
         {
+            // =================================================
             // GET CURRENT PATIENT
+            // =================================================
+
             var patient = await _unitOfWork.PatientRepository
                 .WhereSql(p =>
                     p.UserId == currentUserId &&
-                    p.IsActive
-                )
+                    p.IsActive)
                 .FirstOrDefaultAsync();
 
-            // PATIENT NOT FOUND
             if (patient == null)
             {
                 return Response(
@@ -86,70 +70,114 @@ public class PatientRecordService : IPatientRecordService
             }
 
 
-            // GET FINALIZED MEDICAL RECORDS
-            var medicalRecords = await _unitOfWork.MedicalRecordRepository
-                .WhereSql(m =>
-                    m.PatientId == patient.Id &&
-                    m.Status == (byte)MedicalRecordStatus.Finalized
-                )
-                .OrderByDescending(m => m.FinalizedAt)
-                .ToListAsync();
+            // =================================================
+            // GET RECORDS
+            // =================================================
+
+            var records =
+                await GetRecordsByPatientIdAsync(patient.Id);
 
 
-            // NO MEDICAL RECORDS
-            if (medicalRecords.Count == 0)
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            if (records.Count == 0)
             {
                 return Response(
                     200,
                     "Chưa có lịch sử khám.",
-                    new List<PatientRecordDTO>()
+                    records
                 );
             }
 
+            return Response(
+                200,
+                "Lấy lịch sử khám thành công.",
+                records
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to get patient record history. UserId: {UserId}",
+                currentUserId);
 
+            return Response(
+                500,
+                "Lấy lịch sử khám thất bại."
+            );
+        }
+    }
+
+    // =====================================================
+    // GET RECORDS BY PATIENT ID
+    // =====================================================
+
+    private async Task<List<PatientRecordDTO>> GetRecordsByPatientIdAsync(
+        int patientId)
+    {
+        // =================================================
+        // GET FINALIZED MEDICAL RECORDS
+        // =================================================
+
+        var medicalRecords = await _unitOfWork.MedicalRecordRepository
+            .WhereSql(m =>
+                m.PatientId == patientId &&
+                m.Status == (byte)MedicalRecordStatus.Finalized)
+            .OrderByDescending(m => m.FinalizedAt)
+            .ToListAsync();
+
+
+        // =================================================
+        // RESULT
+        // =================================================
+
+        var result = new List<PatientRecordDTO>();
+
+
+        // =================================================
+        // MAP RECORDS
+        // =================================================
+
+        foreach (var medicalRecord in medicalRecords)
+        {
             // =================================================
-            // MAP MEDICAL RECORDS
+            // PRESCRIPTION
             // =================================================
 
-            var result = new List<PatientRecordDTO>();
+            var prescription = await _unitOfWork.PrescriptionRepository
+                .WhereSql(p =>
+                    p.MedicalRecordId == medicalRecord.Id)
+                .FirstOrDefaultAsync();
 
+            PatientRecordPrescriptionDTO? prescriptionDto = null;
 
-            foreach (var medicalRecord in medicalRecords)
+            if (prescription != null)
             {
-                // GET PRESCRIPTION
-                var prescription = await _unitOfWork.PrescriptionRepository
-                    .WhereSql(p => p.MedicalRecordId == medicalRecord.Id).FirstOrDefaultAsync();
-
-                // PRESCRIPTION DTO
-                PatientRecordPrescriptionDTO? prescriptionDto = null;
-
-
-                if (prescription != null)
-                {
-                    // GET PRESCRIPTION ITEMS
-                    var prescriptionItems = await _unitOfWork.PrescriptionItemRepository
+                var prescriptionItems =
+                    await _unitOfWork.PrescriptionItemRepository
                         .WhereSql(i =>
-                            i.PrescriptionId == prescription.Id
-                        )
+                            i.PrescriptionId == prescription.Id)
                         .OrderBy(i => i.Id)
                         .ToListAsync();
 
-                    // MAP PRESCRIPTION ITEMS
-                    var itemDtos = prescriptionItems
-                        .Select(i => new PatientRecordPrescriptionItemDTO
-                        {
-                            Id = i.Id,
-                            MedicineName = i.MedicineNameSnapshot,
-                            Quantity = i.Quantity,
-                            Dosage = i.Dosage,
-                            Instruction = i.Instruction,
-                            DurationDays = i.DurationDays,
-                            Frequency = i.Frequency
-                        })
-                        .ToList();
+                var itemDtos = prescriptionItems
+                    .Select(i => new PatientRecordPrescriptionItemDTO
+                    {
+                        Id = i.Id,
+                        MedicineName = i.MedicineNameSnapshot,
+                        Quantity = i.Quantity,
+                        Dosage = i.Dosage,
+                        Instruction = i.Instruction,
+                        DurationDays = i.DurationDays,
+                        Frequency = i.Frequency
+                    })
+                    .ToList();
 
-                    // MAP PRESCRIPTION
-                    prescriptionDto = new PatientRecordPrescriptionDTO
+                prescriptionDto =
+                    new PatientRecordPrescriptionDTO
                     {
                         Id = prescription.Id,
                         Note = prescription.Note,
@@ -158,45 +186,50 @@ public class PatientRecordService : IPatientRecordService
                         DispensedAt = prescription.DispensedAt,
                         Items = itemDtos
                     };
-                }
+            }
 
-                // GET MEDICAL RECORD SERVICES
-                var medicalRecordServices = await _unitOfWork.MedicalRecordServiceRepository
-                    .WhereSql(s => s.MedicalRecordId == medicalRecord.Id)
+
+            // =================================================
+            // MEDICAL RECORD SERVICES
+            // =================================================
+
+            var medicalRecordServices =
+                await _unitOfWork.MedicalRecordServiceRepository
+                    .WhereSql(s =>
+                        s.MedicalRecordId == medicalRecord.Id)
                     .OrderBy(s => s.Id)
                     .ToListAsync();
 
 
-                // MAP LAB RESULTS
-                var labResultDtos = new List<PatientRecordLabResultDTO>();
+            // =================================================
+            // LAB RESULTS
+            // =================================================
 
+            var labResultDtos =
+                new List<PatientRecordLabResultDTO>();
 
-                foreach (var medicalRecordService in medicalRecordServices)
-                {
-                    // GET LAB RESULT
-                    var labResult = await _unitOfWork.LabResultRepository
+            foreach (var medicalRecordService in medicalRecordServices)
+            {
+                var labResult =
+                    await _unitOfWork.LabResultRepository
                         .WhereSql(l =>
-                            l.MedicalRecordServiceId == medicalRecordService.Id
-                        )
+                            l.MedicalRecordServiceId ==
+                            medicalRecordService.Id)
                         .FirstOrDefaultAsync();
 
+                if (labResult == null)
+                {
+                    continue;
+                }
 
-                    // NO LAB RESULT
-                    if (labResult == null)
-                    {
-                        continue;
-                    }
-
-
-                    // GET SERVICE
-                    var service = await _unitOfWork.ServiceRepository
+                var service =
+                    await _unitOfWork.ServiceRepository
                         .WhereSql(s =>
-                            s.Id == medicalRecordService.ServiceId
-                        )
+                            s.Id == medicalRecordService.ServiceId)
                         .FirstOrDefaultAsync();
 
-                    // MAP LAB RESULT
-                    var labResultDto = new PatientRecordLabResultDTO
+                labResultDtos.Add(
+                    new PatientRecordLabResultDTO
                     {
                         Id = labResult.Id,
                         MedicalRecordServiceId = medicalRecordService.Id,
@@ -206,42 +239,49 @@ public class PatientRecordService : IPatientRecordService
                         ResultValue = labResult.ResultValue,
                         ReferenceRange = labResult.ReferenceRange,
                         Conclusion = labResult.Conclusion,
-                        ResultedAt = labResult.ResultedAt,
-                    };
+                        ResultedAt = labResult.ResultedAt
+                    }
+                );
+            }
 
-                    labResultDtos.Add(labResultDto);
-                }
 
-                // =================================================
-                // GET ATTACHMENTS
-                // =================================================
+            // =================================================
+            // ATTACHMENTS
+            // =================================================
 
-                var attachments = await _unitOfWork.AttachmentRepository
-                    .WhereSql(a => a.MedicalRecordId == medicalRecord.Id)
+            var attachments =
+                await _unitOfWork.AttachmentRepository
+                    .WhereSql(a =>
+                        a.MedicalRecordId == medicalRecord.Id)
                     .OrderByDescending(a => a.UploadedAt)
                     .ToListAsync();
 
+            var attachmentDtos = attachments
+                .Select(a => new PatientRecordAttachmentDTO
+                {
+                    Id = a.Id,
+                    FileType = a.FileType,
+                    UploadedAt = a.UploadedAt
+                })
+                .ToList();
 
-                // =================================================
-                // MAP ATTACHMENTS
-                // =================================================
 
-                var attachmentDtos = attachments
-                    .Select(a => new PatientRecordAttachmentDTO
-                    {
-                        Id = a.Id,
-                        FileType = a.FileType,
-                        UploadedAt = a.UploadedAt
-                    })
-                    .ToList();
+            // =================================================
+            // DOCTOR
+            // =================================================
 
-                // GET DOCTOR
-                var doctor = await _unitOfWork.DoctorRepository
-                    .WhereSql(d => d.Id == medicalRecord.DoctorId)
-                    .FirstOrDefaultAsync();
+            var doctor = await _unitOfWork.DoctorRepository
+                .WhereSql(d =>
+                    d.Id == medicalRecord.DoctorId)
+                .FirstOrDefaultAsync();
 
-                // MAP MEDICAL RECORD
-                var recordDto = new PatientRecordDTO
+
+            // =================================================
+            // MAP MEDICAL RECORD
+            // =================================================
+
+            result.Add(
+                new PatientRecordDTO
                 {
                     Id = medicalRecord.Id,
                     AppointmentId = medicalRecord.AppointmentId,
@@ -255,35 +295,12 @@ public class PatientRecordService : IPatientRecordService
                     Prescription = prescriptionDto,
                     LabResults = labResultDtos,
                     Attachments = attachmentDtos
-                };
-
-                result.Add(recordDto);
-            }
-
-
-            // SUCCESS
-            return Response(200, "Lấy lịch sử khám thành công.", result);
-
-        }
-        catch (Exception ex)
-        {
-            // =================================================
-            // LOG ERROR
-            // =================================================
-
-            _logger.LogError(
-                ex,
-                "Failed to get patient record history. UserId: {UserId}",
-                currentUserId
-            );
-
-            return Response(
-                500,
-                "Lấy lịch sử khám thất bại."
+                }
             );
         }
+
+        return result;
     }
-
 
     // =====================================================
     // RESPONSE
@@ -300,5 +317,21 @@ public class PatientRecordService : IPatientRecordService
             Message = message,
             Content = content
         };
+    }
+
+    // =====================================================
+    // GET PATIENT RECORDS FOR RECEPTION
+    // =====================================================
+
+    public Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(
+        int patientId,
+        int currentUserId)
+    {
+        return Task.FromResult(
+            Response(
+                501,
+                "Chức năng xem lịch sử khám của bệnh nhân đang được triển khai."
+            )
+        );
     }
 }
