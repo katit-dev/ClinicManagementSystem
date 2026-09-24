@@ -1,8 +1,14 @@
 @page "/reception"
+
 @layout HomePageMaster
+
 @attribute [Authorize(Roles = "Receptionist")]
 
 @using Microsoft.AspNetCore.Authorization
+
+@inject ReceptionAppointmentStateService ReceptionAppointmentStateService
+
+@implements IDisposable
 
 <PageTitle>Bàn tiếp đón</PageTitle>
 
@@ -14,10 +20,17 @@
        ===================================================== *@
 
     <div class="reception-header">
+
         <div>
+
             <h1>Bàn tiếp đón</h1>
-            <p>Theo dõi lịch hẹn trong ngày và trạng thái từng bệnh nhân.</p>
+
+            <p>
+                Theo dõi lịch hẹn trong ngày và trạng thái từng bệnh nhân.
+            </p>
+
         </div>
+
     </div>
 
 
@@ -28,11 +41,18 @@
     <div class="reception-today">
 
         <div>
+
             <span>BÀN TIẾP ĐÓN</span>
-            <strong>@DateTime.Today.ToString("dd/MM/yyyy")</strong>
+
+            <strong>
+                @ReceptionAppointmentStateService.SelectedDate.ToString("dd/MM/yyyy")
+            </strong>
+
         </div>
 
+
         <div class="reception-filters">
+
             <button type="button">
                 Chuyên khoa: Tất cả
             </button>
@@ -40,6 +60,7 @@
             <button type="button">
                 Bác sĩ: Tất cả
             </button>
+
         </div>
 
     </div>
@@ -86,12 +107,62 @@
     <div class="reception-appointments">
 
         <div class="reception-section-header">
+
             <h3>Lịch hẹn hôm nay</h3>
+
         </div>
 
-        <div class="reception-empty">
-            Dữ liệu lịch hẹn sẽ được kết nối sau khi hoàn thành backend VC-07.
-        </div>
+
+        @* =================================================
+           LOADING
+           ================================================= *@
+
+        @if (ReceptionAppointmentStateService.IsLoading)
+        {
+            <div class="reception-empty">
+                Đang tải danh sách lịch hẹn...
+            </div>
+        }
+
+        @* =================================================
+           ERROR
+           ================================================= *@
+
+        else if (!string.IsNullOrWhiteSpace(
+            ReceptionAppointmentStateService.ErrorMessage))
+        {
+            <div class="reception-empty">
+                @ReceptionAppointmentStateService.ErrorMessage
+            </div>
+        }
+
+        @* =================================================
+           EMPTY
+           ================================================= *@
+
+        else if (ReceptionAppointmentStateService.Appointments.Count == 0)
+        {
+            <div class="reception-empty">
+                Không có lịch hẹn trong ngày.
+            </div>
+        }
+
+        @* =================================================
+           LOADED
+           ================================================= *@
+
+        else
+        {
+            <div class="reception-empty">
+
+                Đã tải
+                <strong>
+                    @ReceptionAppointmentStateService.Appointments.Count
+                </strong>
+                lịch hẹn.
+
+            </div>
+        }
 
     </div>
 
@@ -115,3 +186,41 @@
     </div>
 
 </div>
+
+
+@code {
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReceptionAppointmentStateService.OnChange +=
+            HandleStateChanged;
+
+        await ReceptionAppointmentStateService
+            .LoadAppointmentsAsync();
+    }
+
+
+    // =====================================================
+    // STATE CHANGED
+    // =====================================================
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        ReceptionAppointmentStateService.OnChange -=
+            HandleStateChanged;
+    }
+}
