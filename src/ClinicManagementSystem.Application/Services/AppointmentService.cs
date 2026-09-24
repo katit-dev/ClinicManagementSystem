@@ -64,7 +64,10 @@ public class AppointmentService : IAppointmentService
     {
         try
         {
+            // =================================================
             // DATE RANGE
+            // =================================================
+
             var startOfDay =
                 date.ToDateTime(
                     TimeOnly.MinValue
@@ -73,15 +76,69 @@ public class AppointmentService : IAppointmentService
             var endOfDay =
                 startOfDay.AddDays(1);
 
-            // QUERY APPOINTMENTS BY DATE
-            var appointments =
-                await _unitOfWork
+
+            // =================================================
+            // BASE QUERY
+            // =================================================
+
+            var query =
+                _unitOfWork
                     .AppointmentRepository
                     .WhereSql(
                         a =>
                             a.StartTime >= startOfDay &&
                             a.StartTime < endOfDay
-                    )
+                    );
+
+
+            // =================================================
+            // FILTER BY DOCTOR
+            // =================================================
+
+            if (doctorId.HasValue)
+            {
+                query =
+                    query.Where(
+                        a =>
+                            a.DoctorId == doctorId.Value
+                    );
+            }
+
+
+            // =================================================
+            // FILTER BY SPECIALTY
+            // =================================================
+
+            if (specialtyId.HasValue)
+            {
+                query =
+                    query.Where(
+                        a =>
+                            a.Doctor.SpecialtyId == specialtyId.Value
+                    );
+            }
+
+
+            // =================================================
+            // FILTER BY STATUS
+            // =================================================
+
+            if (status.HasValue)
+            {
+                query =
+                    query.Where(
+                        a =>
+                            a.Status == (byte)status.Value
+                    );
+            }
+
+
+            // =================================================
+            // EXECUTE QUERY
+            // =================================================
+
+            var appointments =
+                await query
                     .OrderBy(
                         a => a.StartTime
                     )
@@ -89,7 +146,9 @@ public class AppointmentService : IAppointmentService
 
 
             // =================================================
-            // TEMPORARY RESPONSE
+            // SUCCESS
+            //
+            // Chưa map ReceptionAppointmentDTO ở bước này.
             // =================================================
 
             return new HttpResponseData<List<ReceptionAppointmentDTO>>
@@ -111,9 +170,21 @@ public class AppointmentService : IAppointmentService
 
             _logger.LogError(
                 ex,
-                "Failed to get reception appointments. Date: {Date}",
-                date
+                "Failed to get reception appointments. " +
+                "Date: {Date}, " +
+                "DoctorId: {DoctorId}, " +
+                "SpecialtyId: {SpecialtyId}, " +
+                "Status: {Status}",
+                date,
+                doctorId,
+                specialtyId,
+                status
             );
+
+
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
 
             return new HttpResponseData<List<ReceptionAppointmentDTO>>
             {
@@ -127,7 +198,6 @@ public class AppointmentService : IAppointmentService
             };
         }
     }
-
     // =====================================================
     // RESCHEDULE APPOINTMENT
     // =====================================================
