@@ -562,7 +562,9 @@
                     @GetStatusText(SelectedAppointment.Status)
                 </span>
 
-                @if (SelectedAppointment.QueueNumber.HasValue)
+                @if (SelectedAppointment.QueueNumber.HasValue &&
+     (SelectedAppointment.Status == (byte)AppointmentStatus.CheckedIn ||
+      SelectedAppointment.Status == (byte)AppointmentStatus.Completed))
                 {
                     <span class="reception-queue-number">
                         #@SelectedAppointment.QueueNumber
@@ -614,13 +616,18 @@
                     </strong>
                 </div>
 
-                @if (SelectedAppointment.CheckedInAt.HasValue)
+                @if (SelectedAppointment.CheckedInAt.HasValue &&
+     (SelectedAppointment.Status == (byte)AppointmentStatus.CheckedIn ||
+      SelectedAppointment.Status == (byte)AppointmentStatus.Completed))
                 {
                     <div class="reception-detail-item">
+
                         <span>Check-in lúc</span>
+
                         <strong>
                             @SelectedAppointment.CheckedInAt.Value.ToString("HH:mm dd/MM/yyyy")
                         </strong>
+
                     </div>
                 }
 
