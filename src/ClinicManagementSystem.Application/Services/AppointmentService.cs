@@ -53,6 +53,82 @@ public class AppointmentService : IAppointmentService
     }
 
     // =====================================================
+    // GET RECEPTION APPOINTMENTS
+    // =====================================================
+
+    public async Task<HttpResponseData<List<ReceptionAppointmentDTO>>> GetReceptionAppointmentsAsync(
+        DateOnly date,
+        int? doctorId,
+        int? specialtyId,
+        AppointmentStatus? status)
+    {
+        try
+        {
+            // DATE RANGE
+            var startOfDay =
+                date.ToDateTime(
+                    TimeOnly.MinValue
+                );
+
+            var endOfDay =
+                startOfDay.AddDays(1);
+
+            // QUERY APPOINTMENTS BY DATE
+            var appointments =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.StartTime >= startOfDay &&
+                            a.StartTime < endOfDay
+                    )
+                    .OrderBy(
+                        a => a.StartTime
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // TEMPORARY RESPONSE
+            // =================================================
+
+            return new HttpResponseData<List<ReceptionAppointmentDTO>>
+            {
+                StatusCode = 200,
+
+                Message =
+                    $"Tìm thấy {appointments.Count} lịch hẹn trong ngày.",
+
+                Content =
+                    new List<ReceptionAppointmentDTO>()
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to get reception appointments. Date: {Date}",
+                date
+            );
+
+            return new HttpResponseData<List<ReceptionAppointmentDTO>>
+            {
+                StatusCode = 500,
+
+                Message =
+                    "Không thể lấy danh sách lịch hẹn.",
+
+                Content =
+                    new List<ReceptionAppointmentDTO>()
+            };
+        }
+    }
+
+    // =====================================================
     // RESCHEDULE APPOINTMENT
     // =====================================================
 
