@@ -187,4 +187,34 @@ public class AppointmentController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+// MARK APPOINTMENT AS NO SHOW
+//
+// PATCH:
+// /api/appointments/{id}/no-show
+// =====================================================
+
+[HttpPatch("{id}/no-show")]
+[Authorize(Roles = "Receptionist")]
+public async Task<IActionResult> MarkNoShow(
+    int id,
+    [FromBody] NoShowAppointmentRequestDTO request)
+{
+    var userIdValue =
+        User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
+
+    if (!int.TryParse(
+        userIdValue,
+        out var currentUserId))
+    {
+        return Unauthorized();
+    }
+
+    var result = await _appointmentService.MarkNoShowAsync(id, request, currentUserId);
+
+    return StatusCode(result.StatusCode, result);
+}
+
 }
