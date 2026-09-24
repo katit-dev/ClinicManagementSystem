@@ -1,6 +1,6 @@
 @page "/register"
 
-@layout HomePageMaster
+@layout LandingPageMaster
 
 @using System.ComponentModel.DataAnnotations
 @using ClinicManagementSystem.Application.DTOs.Auth
@@ -10,7 +10,6 @@
 @inject PatientStateService _patientStateService
 @inject NavigationManager _navigationManager
 
-
 <PageTitle>Đăng ký tài khoản</PageTitle>
 
 
@@ -18,366 +17,526 @@
    REGISTER PAGE
    ===================================================== *@
 
-<div class="row justify-content-center">
+<section class="auth-page">
 
-    <div class="col-12 col-md-9 col-lg-7">
+    @* =================================================
+       BACKGROUND OVERLAY
+       ================================================= *@
 
-        <div class="card shadow-sm border-0">
-
-            <div class="card-body p-4 p-md-5">
-
-
-                @* =================================================
-                   HEADER
-                   ================================================= *@
-
-                <div class="text-center mb-4">
-
-                    <h2 class="fw-bold">
-                        Đăng ký tài khoản bệnh nhân
-                    </h2>
-
-                    <p class="text-secondary mb-0">
-                        Bệnh nhân tự tạo tài khoản.
-                        Nếu đã từng khám, hệ thống sẽ liên kết
-                        tài khoản với hồ sơ bệnh nhân hiện có.
-                    </p>
-
-                </div>
+    <div class="auth-overlay"></div>
 
 
-                @* =================================================
-                   REGISTER FORM
-                   ================================================= *@
+    @* =================================================
+       AUTH SHELL
+       ================================================= *@
 
-                <EditForm Model="@registerRequest" OnValidSubmit="HandleRegister">
+    <div class="auth-shell">
 
-                    <DataAnnotationsValidator />
+        @* =================================================
+           BRAND PANEL
+           ================================================= *@
+
+        <div class="auth-brand-panel">
+
+            <div class="auth-brand">
+                Clinic Management System
+            </div>
+
+            <h1 class="auth-brand-title">
+                Bắt đầu hành trình
+                <span>chăm sóc sức khỏe</span>
+            </h1>
+
+            <p class="auth-brand-description">
+                Tạo tài khoản bệnh nhân để đặt lịch,
+                quản lý lịch hẹn và theo dõi thông tin
+                sức khỏe thuận tiện hơn.
+            </p>
 
 
-                    @* =================================================
-                       FULL NAME
-                       ================================================= *@
+            @* =================================================
+               BENEFITS
+               ================================================= *@
 
-                    <div class="mb-3">
+            <div class="auth-benefits">
 
-                        <label class="form-label">
-                            Họ và tên
-                        </label>
-
-                        <InputText class="form-control" @bind-Value="registerRequest.FullName"
-                                   placeholder="Nhập họ và tên" />
-
-                        <ValidationMessage For="@(() => registerRequest.FullName)" class="text-danger" />
-
+                <div class="auth-benefit">
+                    <div class="auth-benefit-icon">
+                        <i class="fas fa-calendar-plus"></i>
                     </div>
 
-
-                    @* =================================================
-                       PHONE
-                       ================================================= *@
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-                            Số điện thoại
-                        </label>
-
-                        <InputText class="form-control" @bind-Value="registerRequest.Phone" @onblur="HandlePhoneBlur"
-                                   placeholder="Ví dụ: 0901234567" />
-
-                        <ValidationMessage For="@(() => registerRequest.Phone)" class="text-danger" />
-
-
-                        @if (isCheckingPhone)
-                        {
-                            <div class="text-secondary small mt-2">
-
-                                <span class="spinner-border
-                                    spinner-border-sm
-                                    me-1">
-                                </span>
-
-                                Đang kiểm tra hồ sơ bệnh nhân...
-
-                            </div>
-                        }
-
-                    </div>
-
-
-                    @* =================================================
-                       PATIENT LOOKUP ERROR
-                       ================================================= *@
-
-                    @if (hasLookupError &&
-                         !string.IsNullOrWhiteSpace(
-                             _patientStateService.ErrorMessage))
-                    {
-                        <div class="alert alert-danger">
-
-                            @_patientStateService.ErrorMessage
-
-                        </div>
-                    }
-
-
-                    @* =================================================
-                       PATIENT LOOKUP RESULT
-                       ================================================= *@
-
-                    @if (hasCheckedPhone)
-                    {
-                        var patient =
-                            _patientStateService.LookupPatient;
-
-
-                        @* =============================================
-                           CASE 1:
-                           CHƯA CÓ HỒ SƠ PATIENT (no patient no account)
-                           ============================================= *@
-
-                        if (patient == null)
-                        {
-                            <div class="alert alert-info">
-
-                                <div class="fw-semibold mb-1">
-                                    Chưa tìm thấy hồ sơ bệnh nhân.
-                                </div>
-
-                                <div>
-                                    Bạn có thể tiếp tục đăng ký.
-                                    Hệ thống sẽ tạo hồ sơ bệnh nhân mới.
-                                </div>
-
-                            </div>
-                        }
-
-
-                        @* =============================================
-                           CASE 2:
-                           PATIENT ĐÃ CÓ ACCOUNT (is patient has account)
-                           ============================================= *@
-
-                        else if (patient.HasAccount)
-                        {
-                            <div class="alert alert-warning">
-
-                                <div class="fw-semibold mb-1">
-                                    Hồ sơ bệnh nhân này đã có tài khoản.
-                                </div>
-
-                                <div class="mb-2">
-                                    Vui lòng đăng nhập hoặc sử dụng
-                                    chức năng quên mật khẩu.
-                                </div>
-
-                                <a href="/login" class="alert-link me-3">
-                                    Đăng nhập
-                                </a>
-
-                                <a href="/forgot-password" class="alert-link">
-                                    Quên mật khẩu
-                                </a>
-
-                            </div>
-                        }
-
-
-                        @* =============================================
-                           CASE 3:
-                           PATIENT VÃNG LAI - CHƯA CÓ ACCOUNT (is patient no account)
-                           ============================================= *@
-
-                        else
-                        {
-                            <div class="alert alert-success">
-
-                                <div class="fw-semibold mb-2">
-
-                                    Đã tìm thấy hồ sơ bệnh nhân.
-
-                                </div>
-
-
-                                <div>
-
-                                    Họ tên:
-
-                                    <strong>
-                                        @patient.FullName
-                                    </strong>
-
-                                </div>
-
-
-                                <div>
-
-                                    Ngày sinh:
-
-                                    <strong>
-
-                                        @(patient.DateOfBirth.HasValue
-                                            ? patient.DateOfBirth.Value
-                                                .ToString("dd/MM/yyyy")
-                                            : "Chưa cập nhật")
-
-                                    </strong>
-
-                                </div>
-
-
-                                <div class="mt-2">
-
-                                    Tài khoản mới sẽ được liên kết
-                                    với hồ sơ bệnh nhân hiện có.
-
-                                </div>
-
-                            </div>
-                        }
-                    }
-
-
-                    @* =================================================
-                       EMAIL
-                       ================================================= *@
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-                            Email
-                        </label>
-
-                        <InputText class="form-control" type="email" @bind-Value="registerRequest.Email"
-                                   placeholder="Nhập email" />
-
-                        <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />
-
-                    </div>
-
-
-                    @* =================================================
-                       DATE OF BIRTH
-                       ================================================= *@
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-                            Ngày sinh
-                        </label>
-
-                        <InputDate TValue="DateTime?" class="form-control" @bind-Value="registerRequest.DateOfBirth" />
-
-                        <ValidationMessage For="@(() => registerRequest.DateOfBirth)" class="text-danger" />
-
-                    </div>
-
-
-                    @* =================================================
-                       PASSWORD
-                       ================================================= *@
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-                            Mật khẩu
-                        </label>
-
-                        <InputText class="form-control" type="password" @bind-Value="registerRequest.Password"
-                                   placeholder="Nhập mật khẩu" />
-
-                        <ValidationMessage For="@(() => registerRequest.Password)" class="text-danger" />
-
-                    </div>
-
-
-                    @* =================================================
-                       CONFIRM PASSWORD
-                       ================================================= *@
-
-                    <div class="mb-3">
-
-                        <label class="form-label">
-                            Xác nhận mật khẩu
-                        </label>
-
-                        <InputText class="form-control" type="password" @bind-Value="registerRequest.ConfirmPassword"
-                                   placeholder="Nhập lại mật khẩu" />
-
-                        <ValidationMessage For="@(() => registerRequest.ConfirmPassword)" class="text-danger" />
-
-                    </div>
-
-
-                    @* =================================================
-                       REGISTER ERROR
-                       ================================================= *@
-
-                    @if (registerAttempted &&
-                         !string.IsNullOrWhiteSpace(
-                             _userStateService.ErrorMessage))
-                    {
-                        <div class="alert alert-danger">
-
-                            @_userStateService.ErrorMessage
-
-                        </div>
-                    }
-
-
-                    @* =================================================
-                       SUBMIT
-                       ================================================= *@
-
-                    <div class="d-grid mt-4">
-
-                        <button type="submit" class="btn btn-primary" disabled="@IsRegisterDisabled">
-
-                            @if (isSubmitting)
-                            {
-                                <span>
-
-                                    <span class="spinner-border
-                                        spinner-border-sm
-                                        me-1">
-                                    </span>
-
-                                    Đang đăng ký...
-
-                                </span>
-                            }
-                            else
-                            {
-                                <span>
-                                    Đăng ký
-                                </span>
-                            }
-
-                        </button>
-
-                    </div>
-
-                </EditForm>
-
-
-                @* =================================================
-                   LOGIN LINK
-                   ================================================= *@
-
-                <div class="text-center mt-4">
-
-                    <span class="text-secondary">
-                        Đã có tài khoản?
+                    <span>
+                        Đặt lịch khám trực tuyến
                     </span>
+                </div>
 
-                    <a href="/login" class="text-decoration-none ms-1">
+                <div class="auth-benefit">
+                    <div class="auth-benefit-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
 
-                        Đăng nhập
+                    <span>
+                        Liên kết hồ sơ bệnh nhân hiện có
+                    </span>
+                </div>
 
-                    </a>
+                <div class="auth-benefit">
+                    <div class="auth-benefit-icon">
+                        <i class="fas fa-file-medical-alt"></i>
+                    </div>
+
+                    <span>
+                        Theo dõi lịch sử khám và hóa đơn
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           REGISTER FORM PANEL
+           ================================================= *@
+
+        <div class="auth-form-panel">
+
+            @* =================================================
+               FORM HEADER
+               ================================================= *@
+
+            <div class="auth-form-header">
+
+                <div class="auth-form-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+
+                <h2 class="auth-form-title">
+                    Đăng ký tài khoản
+                </h2>
+
+                <p class="auth-form-description">
+                    Dành cho bệnh nhân đăng ký tài khoản mới.
+                    Nếu đã từng khám, hệ thống sẽ tự động kiểm tra
+                    và liên kết hồ sơ hiện có.
+                </p>
+
+            </div>
+
+
+            @* =================================================
+               REGISTER FORM
+               ================================================= *@
+
+            <EditForm Model="@registerRequest"
+                      OnValidSubmit="HandleRegister">
+
+                <DataAnnotationsValidator />
+
+
+                @* =================================================
+                   FULL NAME
+                   ================================================= *@
+
+                <div class="auth-field">
+
+                    <label class="auth-label">
+                        Họ và tên
+                    </label>
+
+                    <div class="auth-input-group">
+
+                        <span class="auth-input-icon">
+                            <i class="fas fa-user"></i>
+                        </span>
+
+                        <InputText class="auth-input"
+                                   @bind-Value="registerRequest.FullName"
+                                   placeholder="Nhập họ và tên"
+                                   autocomplete="name" />
+
+                    </div>
+
+                    <ValidationMessage
+                        For="@(() => registerRequest.FullName)"
+                        class="auth-validation" />
 
                 </div>
+
+
+                @* =================================================
+                   PHONE
+                   ================================================= *@
+
+                <div class="auth-field">
+
+                    <label class="auth-label">
+                        Số điện thoại
+                    </label>
+
+                    <div class="auth-input-group">
+
+                        <span class="auth-input-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </span>
+
+                        <InputText class="auth-input"
+                                   @bind-Value="registerRequest.Phone"
+                                   @onblur="HandlePhoneBlur"
+                                   placeholder="Ví dụ: 0901234567"
+                                   autocomplete="tel" />
+
+                    </div>
+
+                    <ValidationMessage
+                        For="@(() => registerRequest.Phone)"
+                        class="auth-validation" />
+
+                    @if (isCheckingPhone)
+                    {
+                        <div class="auth-helper">
+
+                            <span class="spinner-border spinner-border-sm me-1">
+                            </span>
+
+                            Đang kiểm tra hồ sơ bệnh nhân...
+
+                        </div>
+                    }
+
+                </div>
+
+
+                @* =================================================
+                   PATIENT LOOKUP ERROR
+                   ================================================= *@
+
+                @if (hasLookupError &&
+                     !string.IsNullOrWhiteSpace(
+                         _patientStateService.ErrorMessage))
+                {
+                    <div class="auth-alert auth-alert-danger">
+
+                        <i class="fas fa-exclamation-circle me-1"></i>
+
+                        @_patientStateService.ErrorMessage
+
+                    </div>
+                }
+
+
+                @* =================================================
+                   PATIENT LOOKUP RESULT
+                   ================================================= *@
+
+                @if (hasCheckedPhone)
+                {
+                    var patient =
+                        _patientStateService.LookupPatient;
+
+
+                    @* =============================================
+                       CASE 1 - PATIENT DOES NOT EXIST
+                       ============================================= *@
+
+                    if (patient == null)
+                    {
+                        <div class="auth-alert auth-alert-info">
+
+                            <div class="fw-semibold mb-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Chưa tìm thấy hồ sơ bệnh nhân
+                            </div>
+
+                            <div>
+                                Bạn có thể tiếp tục đăng ký.
+                                Hệ thống sẽ tạo hồ sơ bệnh nhân mới.
+                            </div>
+
+                        </div>
+                    }
+
+
+                    @* =============================================
+                       CASE 2 - PATIENT ALREADY HAS ACCOUNT
+                       ============================================= *@
+
+                    else if (patient.HasAccount)
+                    {
+                        <div class="auth-alert auth-alert-warning">
+
+                            <div class="fw-semibold mb-1">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Hồ sơ này đã có tài khoản
+                            </div>
+
+                            <div class="mb-2">
+                                Vui lòng đăng nhập hoặc sử dụng
+                                chức năng quên mật khẩu.
+                            </div>
+
+                            <a href="/login"
+                               class="auth-link me-3">
+                                Đăng nhập
+                            </a>
+
+                            <a href="/forgot-password"
+                               class="auth-link">
+                                Quên mật khẩu
+                            </a>
+
+                        </div>
+                    }
+
+
+                    @* =============================================
+                       CASE 3 - EXISTING PATIENT WITHOUT ACCOUNT
+                       ============================================= *@
+
+                    else
+                    {
+                        <div class="auth-alert auth-alert-success">
+
+                            <div class="fw-semibold mb-2">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Đã tìm thấy hồ sơ bệnh nhân
+                            </div>
+
+                            <div>
+                                Họ tên:
+                                <strong>
+                                    @patient.FullName
+                                </strong>
+                            </div>
+
+                            <div>
+                                Ngày sinh:
+                                <strong>
+                                    @(patient.DateOfBirth.HasValue
+                                        ? patient.DateOfBirth.Value
+                                            .ToString("dd/MM/yyyy")
+                                        : "Chưa cập nhật")
+                                </strong>
+                            </div>
+
+                            <div class="mt-2">
+                                Tài khoản mới sẽ được liên kết
+                                với hồ sơ bệnh nhân hiện có.
+                            </div>
+
+                        </div>
+                    }
+                }
+
+
+                @* =================================================
+                   EMAIL
+                   ================================================= *@
+
+                <div class="auth-field">
+
+                    <label class="auth-label">
+                        Email
+                    </label>
+
+                    <div class="auth-input-group">
+
+                        <span class="auth-input-icon">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+
+                        <InputText class="auth-input"
+                                   type="email"
+                                   @bind-Value="registerRequest.Email"
+                                   placeholder="Nhập email"
+                                   autocomplete="email" />
+
+                    </div>
+
+                    <ValidationMessage
+                        For="@(() => registerRequest.Email)"
+                        class="auth-validation" />
+
+                </div>
+
+
+                @* =================================================
+                   DATE OF BIRTH
+                   ================================================= *@
+
+                <div class="auth-field">
+
+                    <label class="auth-label">
+                        Ngày sinh
+                    </label>
+
+                    <div class="auth-input-group">
+
+                        <span class="auth-input-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </span>
+
+                        <InputDate TValue="DateTime?"
+                                   class="auth-input"
+                                   @bind-Value="registerRequest.DateOfBirth" />
+
+                    </div>
+
+                    <ValidationMessage
+                        For="@(() => registerRequest.DateOfBirth)"
+                        class="auth-validation" />
+
+                </div>
+
+
+                @* =================================================
+                   PASSWORD
+                   ================================================= *@
+
+                <div class="auth-field">
+
+                    <label class="auth-label">
+                        Mật khẩu
+                    </label>
+
+                    <div class="auth-input-group">
+
+                        <span class="auth-input-icon">
+                            <i class="fas fa-lock"></i>
+                        </span>
+
+                        <InputText class="auth-input"
+                                   type="password"
+                                   @bind-Value="registerRequest.Password"
+                                   placeholder="Nhập mật khẩu"
+                                   autocomplete="new-password" />
+
+                    </div>
+
+                    <ValidationMessage
+                        For="@(() => registerRequest.Password)"
+                        class="auth-validation" />
+
+                </div>
+
+
+                @* =================================================
+                   CONFIRM PASSWORD
+                   ================================================= *@
+
+                <div class="auth-field">
+
+                    <label class="auth-label">
+                        Xác nhận mật khẩu
+                    </label>
+
+                    <div class="auth-input-group">
+
+                        <span class="auth-input-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </span>
+
+                        <InputText class="auth-input"
+                                   type="password"
+                                   @bind-Value="registerRequest.ConfirmPassword"
+                                   placeholder="Nhập lại mật khẩu"
+                                   autocomplete="new-password" />
+
+                    </div>
+
+                    <ValidationMessage
+                        For="@(() => registerRequest.ConfirmPassword)"
+                        class="auth-validation" />
+
+                </div>
+
+
+                @* =================================================
+                   REGISTER ERROR
+                   ================================================= *@
+
+                @if (registerAttempted &&
+                     !string.IsNullOrWhiteSpace(
+                         _userStateService.ErrorMessage))
+                {
+                    <div class="auth-alert auth-alert-danger">
+
+                        <i class="fas fa-exclamation-circle me-1"></i>
+
+                        @_userStateService.ErrorMessage
+
+                    </div>
+                }
+
+
+                @* =================================================
+                   SUBMIT
+                   ================================================= *@
+
+                <button type="submit"
+                        class="auth-submit"
+                        disabled="@IsRegisterDisabled">
+
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner-border spinner-border-sm"
+                              role="status">
+                        </span>
+
+                        <span>
+                            Đang đăng ký...
+                        </span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-user-plus"></i>
+
+                        <span>
+                            Đăng ký
+                        </span>
+                    }
+
+                </button>
+
+            </EditForm>
+
+
+            @* =================================================
+               LOGIN
+               ================================================= *@
+
+            <div class="auth-divider">
+                hoặc
+            </div>
+
+            <div class="auth-footer">
+
+                <span>
+                    Đã có tài khoản?
+                </span>
+
+                <a href="/login"
+                   class="auth-link">
+                    Đăng nhập
+                </a>
+
+            </div>
+
+
+            @* =================================================
+               HOME
+               ================================================= *@
+
+            <div class="auth-footer mt-3">
+
+                <a href="/"
+                   class="auth-link">
+
+                    <i class="fas fa-arrow-left me-1"></i>
+
+                    Quay lại trang chủ
+
+                </a>
 
             </div>
 
@@ -385,7 +544,7 @@
 
     </div>
 
-</div>
+</section>
 
 
 @code {
@@ -402,11 +561,8 @@
     // =====================================================
 
     private bool isCheckingPhone;
-
     private bool hasCheckedPhone;
-
     private bool hasLookupError;
-
     private string checkedPhone = string.Empty;
 
 
@@ -415,17 +571,11 @@
     // =====================================================
 
     private bool isSubmitting;
-
     private bool registerAttempted;
 
 
     // =====================================================
     // DISABLE REGISTER BUTTON
-    //
-    // Không cho submit khi:
-    // - đang register
-    // - đang lookup
-    // - Patient đã có account
     // =====================================================
 
     private bool IsRegisterDisabled =>
@@ -439,11 +589,6 @@
 
     // =====================================================
     // PHONE BLUR
-    //
-    // Khi user nhập xong SĐT và rời khỏi input:
-    //
-    // 1. Validate bằng PatientLookupRequestDTO
-    // 2. Nếu hợp lệ mới gọi API lookup
     // =====================================================
 
     private async Task HandlePhoneBlur()
@@ -453,7 +598,7 @@
 
 
         // =================================================
-        // TẠO LOOKUP REQUEST
+        // CREATE LOOKUP REQUEST
         // =================================================
 
         var lookupRequest =
@@ -464,9 +609,7 @@
 
 
         // =================================================
-        // VALIDATE BẰNG DATA ANNOTATION TRONG DTO
-        //
-        // Không viết lại Regex ở frontend
+        // VALIDATE WITH DTO DATA ANNOTATIONS
         // =================================================
 
         var validationResults =
@@ -474,7 +617,6 @@
 
         var validationContext =
             new ValidationContext(lookupRequest);
-
 
         var isValid =
             Validator.TryValidateObject(
@@ -486,24 +628,21 @@
 
 
         // =================================================
-        // PHONE KHÔNG HỢP LỆ
+        // INVALID PHONE
         // =================================================
 
         if (!isValid)
         {
-            hasCheckedPhone = false; // chua duoc look up thanh cong
-            hasLookupError = false; // sai validation
-
-            checkedPhone = string.Empty; // xoa phone da look up truoc do
+            hasCheckedPhone = false;
+            hasLookupError = false;
+            checkedPhone = string.Empty;
 
             return;
         }
 
 
         // =================================================
-        // SĐT NÀY ĐÃ LOOKUP RỒI
-        //
-        // Không gọi API lại nếu user không đổi SĐT
+        // PHONE ALREADY CHECKED
         // =================================================
 
         if (hasCheckedPhone &&
@@ -518,10 +657,8 @@
         // =================================================
 
         isCheckingPhone = true;
-
         hasCheckedPhone = false;
-        hasLookupError = false; // xoa trang thai loi cua lan lookup cu
-
+        hasLookupError = false;
 
         try
         {
@@ -531,7 +668,7 @@
 
 
             // =================================================
-            // API LOOKUP FAILED
+            // LOOKUP FAILED
             // =================================================
 
             if (!lookupSucceeded)
@@ -547,25 +684,21 @@
             // =================================================
 
             checkedPhone = phone;
-
             hasCheckedPhone = true;
-
-
-            // =================================================
-            // NẾU TÌM THẤY PATIENT VÃNG LAI
-            // THÌ ĐIỀN THÔNG TIN CŨ VÀO FORM
-            // =================================================
 
             var patient =
                 _patientStateService.LookupPatient;
 
+
+            // =================================================
+            // EXISTING PATIENT WITHOUT ACCOUNT
+            // =================================================
 
             if (patient != null &&
                 !patient.HasAccount)
             {
                 registerRequest.FullName =
                     patient.FullName;
-
 
                 if (patient.DateOfBirth.HasValue)
                 {
@@ -595,19 +728,14 @@
             return;
         }
 
-
         registerAttempted = false;
-
 
         var currentPhone =
             registerRequest.Phone.Trim();
 
 
         // =================================================
-        // PHONE CHƯA LOOKUP
-        // HOẶC USER ĐÃ ĐỔI PHONE SAU KHI LOOKUP
-        //
-        // → Lookup lại trước khi Register
+        // LOOKUP PHONE BEFORE REGISTER
         // =================================================
 
         if (!hasCheckedPhone ||
@@ -615,8 +743,6 @@
         {
             await HandlePhoneBlur();
 
-
-            // Lookup không thành công
             if (!hasCheckedPhone)
             {
                 return;
@@ -625,9 +751,7 @@
 
 
         // =================================================
-        // PATIENT ĐÃ CÓ ACCOUNT
-        //
-        // Không cho đăng ký account thứ hai
+        // PATIENT ALREADY HAS ACCOUNT
         // =================================================
 
         if (_patientStateService
@@ -643,9 +767,7 @@
         // =================================================
 
         isSubmitting = true;
-
         registerAttempted = true;
-
 
         try
         {
@@ -671,5 +793,4 @@
             isSubmitting = false;
         }
     }
-
 }
