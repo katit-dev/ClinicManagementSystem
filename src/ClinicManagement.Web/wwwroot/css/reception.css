@@ -764,3 +764,27 @@
         width: 100%;
     }
 }
+/* =====================================================
+   VIEW ACTION
+   ===================================================== */
+
+.reception-view-button {
+    min-height: 36px;
+    padding: 7px 14px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #16324f;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.reception-view-button:hover {
+    background: #f1f5f9;
+}

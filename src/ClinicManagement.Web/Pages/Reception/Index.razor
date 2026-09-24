@@ -60,8 +60,7 @@
 
                 <label>Ngày</label>
 
-                <input type="date"
-                       class="reception-filter-control"
+                <input type="date" class="reception-filter-control"
                        value="@ReceptionAppointmentStateService.SelectedDate.ToString("yyyy-MM-dd")"
                        @onchange="HandleDateChanged" />
 
@@ -76,8 +75,7 @@
 
                 <label>Chuyên khoa</label>
 
-                <select class="reception-filter-control"
-                        value="@GetSelectedSpecialtyValue()"
+                <select class="reception-filter-control" value="@GetSelectedSpecialtyValue()"
                         @onchange="HandleSpecialtyChanged">
 
                     <option value="">Tất cả</option>
@@ -102,8 +100,7 @@
 
                 <label>Bác sĩ</label>
 
-                <select class="reception-filter-control"
-                        value="@GetSelectedDoctorValue()"
+                <select class="reception-filter-control" value="@GetSelectedDoctorValue()"
                         @onchange="HandleDoctorChanged"
                         disabled="@(!ReceptionAppointmentStateService.SelectedSpecialtyId.HasValue)">
 
@@ -129,8 +126,7 @@
 
                 <label>Trạng thái</label>
 
-                <select class="reception-filter-control"
-                        value="@GetSelectedStatusValue()"
+                <select class="reception-filter-control" value="@GetSelectedStatusValue()"
                         @onchange="HandleStatusChanged">
 
                     <option value="">Tất cả</option>
@@ -172,9 +168,7 @@
 
                 <label>&nbsp;</label>
 
-                <button type="button"
-                        class="reception-filter-reset"
-                        @onclick="HandleResetFilters">
+                <button type="button" class="reception-filter-reset" @onclick="HandleResetFilters">
                     Đặt lại
                 </button>
 
@@ -431,21 +425,20 @@
 
 
                                 @* =====================================
-                                   ACTIONS
-                                   ===================================== *@
+                                 ACTIONS
+                                ===================================== *@
 
                                 <td>
 
                                     <div class="reception-row-actions">
 
                                         @* =================================
-                                           CHECK IN
-                                           ================================= *@
+                                        CHECK IN
+                                        ================================= *@
 
                                         @if (CanCheckIn(appointment))
                                         {
-                                            <button type="button"
-                                                    class="reception-checkin-button"
+                                            <button type="button" class="reception-checkin-button"
                                                     disabled="@IsProcessingAppointment(appointment.Id)"
                                                     @onclick="() => HandleCheckIn(appointment.Id)">
 
@@ -463,36 +456,38 @@
 
 
                                         @* =================================
-                                           NO SHOW
-                                           ================================= *@
+                                         NO SHOW
+                                        ================================= *@
 
                                         @if (CanMarkNoShow(appointment))
                                         {
-                                            <button type="button"
-                                                    class="reception-noshow-button"
+                                            <button type="button" class="reception-noshow-button"
                                                     disabled="@IsProcessingAppointment(appointment.Id)"
                                                     @onclick="() => HandleNoShow(appointment.Id)">
+
                                                 Không đến
+
                                             </button>
                                         }
 
 
                                         @* =================================
-                                           NO ACTION
-                                           ================================= *@
+                                        VIEW
+                                        ================================= *@
 
-                                        @if (!CanCheckIn(appointment) &&
-                                             !CanMarkNoShow(appointment))
+                                        @if (CanViewAppointment(appointment.Status))
                                         {
-                                            <span class="reception-muted">
-                                                —
-                                            </span>
+                                            <button type="button" class="reception-view-button"
+                                                    @onclick="() => HandleViewAppointment(appointment.Id)">
+
+                                                Xem
+
+                                            </button>
                                         }
 
                                     </div>
 
                                 </td>
-
                             </tr>
                         }
 
@@ -512,13 +507,11 @@
 
     <div class="reception-actions">
 
-        <a href="/reception/booking"
-           class="reception-action-button">
+        <a href="/reception/booking" class="reception-action-button">
             Đặt lịch hộ
         </a>
 
-        <a href="/reception/patients/new"
-           class="reception-action-button">
+        <a href="/reception/patients/new" class="reception-action-button">
             Tạo bệnh nhân mới
         </a>
 
@@ -570,6 +563,28 @@
         await ReceptionAppointmentStateService.LoadSpecialtiesAsync();
 
         await ReceptionAppointmentStateService.LoadAppointmentsAsync();
+    }
+
+    // =====================================================
+    // CAN VIEW APPOINTMENT
+    // =====================================================
+
+    private static bool CanViewAppointment(byte status)
+    {
+        return
+            status == (byte)AppointmentStatus.CheckedIn ||
+            status == (byte)AppointmentStatus.Completed ||
+            status == (byte)AppointmentStatus.Cancelled ||
+            status == (byte)AppointmentStatus.NoShow;
+    }
+
+    // =====================================================
+    // VIEW APPOINTMENT
+    // =====================================================
+
+    private void HandleViewAppointment(int appointmentId)
+    {
+        // Sẽ nối trang chi tiết ở bước tiếp theo.
     }
 
 
