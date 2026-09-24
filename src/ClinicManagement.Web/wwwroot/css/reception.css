@@ -14,11 +14,12 @@
     margin: 0 0 6px;
     font-size: 28px;
     font-weight: 700;
+    color: #16324f;
 }
 
 .reception-header p {
     margin: 0;
-    color: #6c757d;
+    color: #64748b;
 }
 
 
@@ -30,108 +31,41 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 20px;
+
     padding: 18px;
     margin-bottom: 16px;
-    border: 1px solid #e9ecef;
+
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    background: #f8f9fa;
+
+    background: #f8fafc;
 }
 
-.reception-today span {
-    margin-right: 8px;
+.reception-today-title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    flex-shrink: 0;
+}
+
+.reception-today-title span {
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+}
+
+.reception-today-title strong {
+    color: #16324f;
+
+    font-size: 18px;
     font-weight: 700;
 }
 
-.reception-filters {
-    display: flex;
-    gap: 10px;
-}
-
-.reception-filters button {
-    padding: 8px 14px;
-    border: 1px solid #dee2e6;
-    border-radius: 999px;
-    background: #ffffff;
-    cursor: pointer;
-}
-
-
-/* =====================================================
-   SUMMARY
-   ===================================================== */
-
-.reception-summary {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.reception-summary-card {
-    padding: 18px;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    background: #ffffff;
-}
-
-.reception-summary-card strong {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 22px;
-}
-
-.reception-summary-card span {
-    font-size: 13px;
-    color: #6c757d;
-}
-
-
-/* =====================================================
-   APPOINTMENTS
-   ===================================================== */
-
-.reception-appointments {
-    padding: 18px;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    background: #ffffff;
-}
-
-.reception-section-header {
-    margin-bottom: 16px;
-}
-
-.reception-section-header h3 {
-    margin: 0;
-    font-size: 16px;
-}
-
-.reception-empty {
-    padding: 30px;
-    text-align: center;
-    color: #6c757d;
-}
-
-
-/* =====================================================
-   ACTIONS
-   ===================================================== */
-
-.reception-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 16px;
-}
-
-.reception-action-button {
-    padding: 10px 16px;
-    border-radius: 8px;
-    background: #212529;
-    color: #ffffff;
-    text-decoration: none;
-    font-weight: 600;
-}
 
 /* =====================================================
    FILTERS
@@ -140,6 +74,8 @@
 .reception-filters {
     display: flex;
     align-items: flex-end;
+    justify-content: flex-end;
+
     gap: 12px;
     flex-wrap: wrap;
 }
@@ -147,18 +83,22 @@
 .reception-filter-group {
     display: flex;
     flex-direction: column;
+
     gap: 6px;
+
     min-width: 150px;
 }
 
 .reception-filter-group label {
+    color: #64748b;
+
     font-size: 12px;
     font-weight: 600;
-    color: #64748b;
 }
 
 .reception-filter-control {
     min-height: 40px;
+
     padding: 8px 12px;
 
     border: 1px solid #dbe3ec;
@@ -168,21 +108,31 @@
     color: #16324f;
 
     font-size: 14px;
+
     outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .reception-filter-control:focus {
     border-color: #38bdf8;
+
+    box-shadow:
+        0 0 0 3px rgba(56, 189, 248, 0.12);
 }
 
 .reception-filter-control:disabled {
     background: #f1f5f9;
     color: #94a3b8;
+
     cursor: not-allowed;
 }
 
 .reception-filter-reset {
     min-height: 40px;
+
     padding: 8px 16px;
 
     border: 1px solid #dbe3ec;
@@ -191,13 +141,98 @@
     background: #ffffff;
     color: #16324f;
 
+    font-size: 14px;
     font-weight: 600;
+
     cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .reception-filter-reset:hover {
+    border-color: #cbd5e1;
     background: #f1f5f9;
 }
+
+
+/* =====================================================
+   SUMMARY
+   ===================================================== */
+
+.reception-summary {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.reception-summary-card {
+    padding: 18px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    background: #ffffff;
+}
+
+.reception-summary-card strong {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #16324f;
+
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.reception-summary-card span {
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   APPOINTMENTS
+   ===================================================== */
+
+.reception-appointments {
+    padding: 18px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    background: #ffffff;
+}
+
+.reception-section-header {
+    margin-bottom: 16px;
+}
+
+.reception-section-header h3 {
+    margin: 0;
+
+    color: #16324f;
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.reception-empty {
+    padding: 30px;
+
+    color: #64748b;
+
+    text-align: center;
+}
+
 
 /* =====================================================
    APPOINTMENT TABLE
@@ -205,13 +240,18 @@
 
 .reception-table-wrapper {
     width: 100%;
+
     overflow-x: auto;
+
+    -webkit-overflow-scrolling: touch;
 }
 
 .reception-table {
     width: 100%;
+
+    min-width: 1180px;
+
     border-collapse: collapse;
-    min-width: 980px;
 }
 
 .reception-table th {
@@ -224,7 +264,9 @@
 
     font-size: 12px;
     font-weight: 700;
+
     text-align: left;
+
     white-space: nowrap;
 }
 
@@ -236,6 +278,7 @@
     color: #334155;
 
     font-size: 14px;
+
     vertical-align: middle;
 }
 
@@ -249,22 +292,36 @@
 
 
 /* =====================================================
+   ACTION COLUMN
+   ===================================================== */
+
+.reception-table th:last-child,
+.reception-table td:last-child {
+    min-width: 210px;
+}
+
+
+/* =====================================================
    TIME
    ===================================================== */
 
 .reception-time {
     display: flex;
     flex-direction: column;
+
     gap: 2px;
 }
 
 .reception-time strong {
     color: #16324f;
+
     font-size: 15px;
+    font-weight: 700;
 }
 
 .reception-time span {
     color: #94a3b8;
+
     font-size: 12px;
 }
 
@@ -276,15 +333,19 @@
 .reception-patient {
     display: flex;
     flex-direction: column;
+
     gap: 3px;
 }
 
 .reception-patient strong {
     color: #16324f;
+
+    font-weight: 600;
 }
 
 .reception-patient span {
     color: #94a3b8;
+
     font-size: 12px;
 }
 
@@ -295,10 +356,12 @@
 
 .reception-queue-number {
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
     min-width: 38px;
+
     padding: 6px 9px;
 
     border-radius: 8px;
@@ -316,6 +379,7 @@
 
 .reception-status {
     display: inline-flex;
+
     align-items: center;
 
     padding: 6px 10px;
@@ -367,12 +431,31 @@
     color: #94a3b8;
 }
 
+
+/* =====================================================
+   ROW ACTIONS
+   ===================================================== */
+
+.reception-row-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    flex-wrap: nowrap;
+
+    min-width: 190px;
+}
+
+
 /* =====================================================
    CHECK IN ACTION
    ===================================================== */
 
 .reception-checkin-button {
     min-height: 36px;
+
     padding: 7px 14px;
 
     border: none;
@@ -385,7 +468,10 @@
     font-weight: 700;
 
     cursor: pointer;
+
     white-space: nowrap;
+
+    transition: background 0.2s ease;
 }
 
 .reception-checkin-button:hover:not(:disabled) {
@@ -394,6 +480,47 @@
 
 .reception-checkin-button:disabled {
     opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   NO SHOW ACTION
+   ===================================================== */
+
+.reception-noshow-button {
+    min-height: 36px;
+
+    padding: 7px 14px;
+
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+
+    background: #fff1f2;
+    color: #b91c1c;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.reception-noshow-button:hover:not(:disabled) {
+    border-color: #fca5a5;
+
+    background: #fee2e2;
+}
+
+.reception-noshow-button:disabled {
+    opacity: 0.6;
+
     cursor: not-allowed;
 }
 
@@ -404,6 +531,7 @@
 
 .reception-action-message {
     margin-bottom: 16px;
+
     padding: 12px 14px;
 
     border-radius: 10px;
@@ -422,14 +550,56 @@
     color: #b91c1c;
 }
 
+
+/* =====================================================
+   QUICK ACTIONS
+   ===================================================== */
+
+.reception-actions {
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: 16px;
+}
+
+.reception-action-button {
+    padding: 10px 16px;
+
+    border-radius: 8px;
+
+    background: #16324f;
+    color: #ffffff;
+
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition: background 0.2s ease;
+}
+
+.reception-action-button:hover {
+    background: #0f2438;
+
+    color: #ffffff;
+}
+
+
 /* =====================================================
    RESPONSIVE - TABLET
    ===================================================== */
 
 @media (max-width: 1200px) {
 
+    .reception-today {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
     .reception-filters {
         width: 100%;
+
+        justify-content: flex-start;
     }
 
     .reception-filter-group {
@@ -437,7 +607,8 @@
     }
 
     .reception-summary {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -467,13 +638,18 @@
 
     .reception-today {
         flex-direction: column;
+
         align-items: stretch;
+
         gap: 20px;
     }
 
     .reception-filters {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+
+        grid-template-columns:
+            1fr 1fr;
+
         gap: 12px;
     }
 
@@ -492,7 +668,9 @@
        ================================================= */
 
     .reception-summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
         gap: 12px;
     }
 
@@ -507,16 +685,17 @@
 
     .reception-table-wrapper {
         overflow-x: auto;
+
         -webkit-overflow-scrolling: touch;
     }
 
     .reception-table {
-        min-width: 980px;
+        min-width: 1180px;
     }
 
 
     /* =================================================
-       ACTIONS
+       QUICK ACTIONS
        ================================================= */
 
     .reception-actions {
@@ -525,6 +704,7 @@
 
     .reception-action-button {
         width: 100%;
+
         text-align: center;
     }
 }
@@ -540,9 +720,19 @@
         padding: 12px;
     }
 
+
+    /* =================================================
+       FILTERS
+       ================================================= */
+
     .reception-filters {
         grid-template-columns: 1fr;
     }
+
+
+    /* =================================================
+       SUMMARY
+       ================================================= */
 
     .reception-summary {
         grid-template-columns: 1fr;
@@ -556,9 +746,17 @@
         font-size: 24px;
     }
 
+
+    /* =================================================
+       ROW ACTIONS
+       ================================================= */
+
     .reception-row-actions {
         flex-direction: column;
+
         align-items: stretch;
+
+        min-width: 140px;
     }
 
     .reception-checkin-button,
