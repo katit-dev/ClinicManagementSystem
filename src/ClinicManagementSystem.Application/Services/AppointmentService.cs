@@ -55,6 +55,30 @@ public class AppointmentService : IAppointmentService
     }
 
     // =====================================================
+    // CHECK IN APPOINTMENT
+    // =====================================================
+
+    public Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(
+        int appointmentId,
+        int currentUserId)
+    {
+        // =================================================
+        // IMPLEMENTATION
+        //
+        // Logic check-in sẽ được bổ sung ở bước tiếp theo.
+        // =================================================
+
+        return Task.FromResult(
+            new HttpResponseData<ReceptionAppointmentDTO>
+            {
+                StatusCode = 501,
+                Message = "Chức năng check-in đang được triển khai.",
+                Content = null
+            }
+        );
+    }
+
+    // =====================================================
     // GET RECEPTION APPOINTMENTS
     // =====================================================
 
