@@ -14,9 +14,9 @@ namespace ClinicManagementSystem.Application.Services;
 
 public interface IPatientRecordService
 {
-    Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsAsync(
-        int currentUserId
-    );
+    Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsAsync(int currentUserId);
+    Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(int patientId, int currentUserId);
+
 }
 
 
@@ -41,6 +41,22 @@ public class PatientRecordService : IPatientRecordService
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+    }
+
+    // =====================================================
+    // GET PATIENT RECORDS FOR RECEPTION
+    // =====================================================
+
+    public Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(
+        int patientId,
+        int currentUserId)
+    {
+        return Task.FromResult(
+            Response(
+                501,
+                "Chức năng xem lịch sử khám của bệnh nhân đang được triển khai."
+            )
+        );
     }
 
 
