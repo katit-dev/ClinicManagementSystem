@@ -2,6 +2,7 @@ using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Application.DTOs.Specialty;
+using ClinicManagementSystem.Application.DTOs.Doctor;
 
 namespace ClinicManagementSystem.Web.Services;
 
@@ -33,6 +34,8 @@ public class ReceptionAppointmentStateService
     public string ErrorMessage { get; private set; } = string.Empty;
 
     public List<SpecialtyDTO> Specialties { get; private set; } = new();
+
+    public List<DoctorDTO> Doctors { get; private set; } = new();
 
 
 
@@ -122,6 +125,119 @@ public class ReceptionAppointmentStateService
             Specialties =
                 responseData.Content
                 ?? new List<SpecialtyDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
+    // LOAD DOCTORS
+    // =====================================================
+
+    public async Task<bool> LoadDoctorsAsync()
+    {
+        // =================================================
+        // VALIDATE SPECIALTY
+        // =================================================
+
+        if (!SelectedSpecialtyId.HasValue)
+        {
+            Doctors.Clear();
+            SelectedDoctorId = null;
+
+            StateHasChanged();
+
+            return true;
+        }
+
+
+        // =================================================
+        // START LOADING
+        // =================================================
+
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+
+        Doctors.Clear();
+        SelectedDoctorId = null;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/doctors?specialtyId={SelectedSpecialtyId.Value}"
+                    );
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ErrorMessage =
+                    "Không thể tải danh sách bác sĩ.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<DoctorDTO>>>();
+
+
+            // =================================================
+            // INVALID RESPONSE
+            // =================================================
+
+            if (responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không nhận được dữ liệu bác sĩ.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE STATE
+            // =================================================
+
+            Doctors =
+                responseData.Content
+                ?? new List<DoctorDTO>();
 
 
             return true;
@@ -314,6 +430,15 @@ public class ReceptionAppointmentStateService
     {
         SelectedSpecialtyId = specialtyId;
 
+        // =================================================
+        // SPECIALTY CHANGED
+        //
+        // Doctor cũ không còn đáng tin cậy.
+        // =================================================
+
+        SelectedDoctorId = null;
+        Doctors.Clear();
+
         StateHasChanged();
     }
 
@@ -345,6 +470,8 @@ public class ReceptionAppointmentStateService
         SelectedSpecialtyId = null;
         SelectedStatus = null;
 
+        Doctors.Clear();
+
         StateHasChanged();
     }
 
@@ -356,6 +483,7 @@ public class ReceptionAppointmentStateService
     {
         Appointments.Clear();
         Specialties.Clear();
+        Doctors.Clear();
 
         SelectedDate =
             DateOnly.FromDateTime(
