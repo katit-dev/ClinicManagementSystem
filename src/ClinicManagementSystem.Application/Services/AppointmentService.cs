@@ -26,6 +26,7 @@ public interface IAppointmentService
     Task<HttpResponseData<List<ReceptionAppointmentDTO>>> GetReceptionAppointmentsAsync(DateOnly date, int? doctorId, int? specialtyId, AppointmentStatus? status);
 
     Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(int appointmentId, int currentUserId);
+    Task<HttpResponseData<ReceptionAppointmentDTO>> MarkNoShowAsync(int appointmentId, NoShowAppointmentRequestDTO request, int currentUserId);
 
 
 
@@ -54,10 +55,35 @@ public class AppointmentService : IAppointmentService
         _logger = logger;
     }
 
+    
+
+    // =====================================================
+    // MARK APPOINTMENT AS NO SHOW
+    // =====================================================
+    public Task<HttpResponseData<ReceptionAppointmentDTO>> MarkNoShowAsync(
+        int appointmentId,
+        NoShowAppointmentRequestDTO request,
+        int currentUserId)
+    {
+        // =================================================
+        // IMPLEMENTATION
+        //
+        // Validation + update status sẽ làm bước tiếp theo.
+        // =================================================
+
+        return Task.FromResult(
+            new HttpResponseData<ReceptionAppointmentDTO>
+            {
+                StatusCode = 501,
+                Message = "Chức năng đánh dấu không đến đang được triển khai.",
+                Content = null
+            }
+        );
+    }
+
     // =====================================================
     // CHECK IN APPOINTMENT
     // =====================================================
-
     public async Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(
         int appointmentId,
         int currentUserId)
