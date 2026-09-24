@@ -78,5 +78,23 @@ public class PatientController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+// ADD PATIENT ALLERGY
+//
+// POST:
+// /api/patients/{id}/allergies
+// =====================================================
+
+[HttpPost("{id}/allergies")]
+[Authorize(Roles = "Receptionist")]
+public async Task<IActionResult> AddPatientAllergy(
+    int id,
+    [FromBody] PatientAllergyRequestDTO request)
+{
+    var result = await _patientService.AddPatientAllergyAsync(id, request);
+
+    return StatusCode(result.StatusCode, result);
+}
+
 
 }
