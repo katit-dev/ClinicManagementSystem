@@ -1,236 +1,305 @@
 @page "/login"
 
-@layout HomePageMaster
+@layout LandingPageMaster
 
+@using ClinicManagementSystem.Application.DTOs.Auth
 
 @inject UserStateService _userStateService
 
 @implements IDisposable
+
+<PageTitle>Đăng nhập</PageTitle>
 
 
 @* =====================================================
    LOGIN PAGE
    ===================================================== *@
 
-<div class="row justify-content-center py-5">
+<section class="auth-page">
 
-    <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+    @* =================================================
+       BACKGROUND OVERLAY
+       ================================================= *@
 
-        <div class="card shadow-sm border-0">
+    <div class="auth-overlay"></div>
 
-            <div class="card-body p-4">
+
+    @* =================================================
+       AUTH SHELL
+       ================================================= *@
+
+    <div class="auth-shell">
+
+        @* =================================================
+           BRAND PANEL
+           ================================================= *@
+
+        <div class="auth-brand-panel">
+
+            <div class="auth-brand">
+                Clinic Management System
+            </div>
+
+            <h1 class="auth-brand-title">
+                Chăm sóc sức khỏe
+                <span>dễ dàng hơn</span>
+            </h1>
+
+            <p class="auth-brand-description">
+                Quản lý lịch khám, theo dõi hồ sơ sức khỏe
+                và kết nối với phòng khám trên một hệ thống
+                thuận tiện và an toàn.
+            </p>
+
+
+            @* =================================================
+               BENEFITS
+               ================================================= *@
+
+            <div class="auth-benefits">
+
+                <div class="auth-benefit">
+                    <div class="auth-benefit-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+
+                    <span>
+                        Đặt lịch khám nhanh chóng
+                    </span>
+                </div>
+
+                <div class="auth-benefit">
+                    <div class="auth-benefit-icon">
+                        <i class="fas fa-notes-medical"></i>
+                    </div>
+
+                    <span>
+                        Theo dõi lịch sử khám bệnh
+                    </span>
+                </div>
+
+                <div class="auth-benefit">
+                    <div class="auth-benefit-icon">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+
+                    <span>
+                        Quản lý hồ sơ sức khỏe thuận tiện
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* =================================================
+           LOGIN FORM PANEL
+           ================================================= *@
+
+        <div class="auth-form-panel">
+
+            @* =================================================
+               FORM HEADER
+               ================================================= *@
+
+            <div class="auth-form-header">
+
+                <div class="auth-form-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+
+                <h2 class="auth-form-title">
+                    Đăng nhập
+                </h2>
+
+                <p class="auth-form-description">
+                    Chào mừng bạn quay trở lại.
+                    Vui lòng đăng nhập để tiếp tục.
+                </p>
+
+            </div>
+
+
+            @* =================================================
+               LOGIN FORM
+               ================================================= *@
+
+            <EditForm Model="@loginRequest"
+                      OnValidSubmit="HandleLogin">
+
+                <DataAnnotationsValidator />
+
 
                 @* =================================================
-                   TITLE
+                   USERNAME
                    ================================================= *@
 
-                <div class="text-center mb-4">
+                <div class="auth-field">
 
-                    <i class="fas fa-clinic-medical fa-3x text-primary mb-3"></i>
+                    <label for="username"
+                           class="auth-label">
+                        Tên đăng nhập hoặc Email
+                    </label>
 
-                    <h4 class="fw-bold">
-                        Đăng nhập
-                    </h4>
+                    <div class="auth-input-group">
 
-                    <p class="text-secondary small mb-0">
-                        Hệ thống quản lý phòng khám
-                    </p>
+                        <span class="auth-input-icon">
+                            <i class="fas fa-user"></i>
+                        </span>
+
+                        <InputText id="username"
+                                   class="auth-input"
+                                   @bind-Value="loginRequest.Username"
+                                   placeholder="Nhập tên đăng nhập hoặc email"
+                                   autocomplete="username" />
+
+                    </div>
+
+                    <ValidationMessage
+                        For="@(() => loginRequest.Username)"
+                        class="auth-validation" />
 
                 </div>
 
 
                 @* =================================================
-                   LOGIN FORM
+                   PASSWORD
                    ================================================= *@
 
-                <EditForm Model="@loginRequest"
-                          OnValidSubmit="HandleLogin">
+                <div class="auth-field">
 
-                    @* Sử dụng Data Annotation từ LoginRequestDTO *@
-                    <DataAnnotationsValidator />
+                    <label for="password"
+                           class="auth-label">
+                        Mật khẩu
+                    </label>
 
+                    <div class="auth-input-group">
 
-                    @* =================================================
-                       USERNAME
-                       ================================================= *@
+                        <span class="auth-input-icon">
+                            <i class="fas fa-lock"></i>
+                        </span>
 
-                    <div class="mb-3">
-
-                        <label for="username"
-                               class="form-label">
-
-                            Tên đăng nhập hoặc Email
-
-                        </label>
-
-
-                        <div class="input-group">
-
-                            <span class="input-group-text bg-white">
-
-                                <i class="fas fa-user text-secondary"></i>
-
-                            </span>
-
-
-                            <InputText id="username"
-                                       class="form-control"
-                                       @bind-Value="loginRequest.Username"
-                                       placeholder="Nhập tên đăng nhập hoặc email" />
-
-                        </div>
-
-
-                        <ValidationMessage For="@(() => loginRequest.Username)"
-                                           class="text-danger small" />
+                        <InputText id="password"
+                                   type="password"
+                                   class="auth-input"
+                                   @bind-Value="loginRequest.Password"
+                                   placeholder="Nhập mật khẩu"
+                                   autocomplete="current-password" />
 
                     </div>
 
+                    <ValidationMessage
+                        For="@(() => loginRequest.Password)"
+                        class="auth-validation" />
 
-                    @* =================================================
-                       PASSWORD
-                       ================================================= *@
-
-                    <div class="mb-3">
-
-                        <label for="password"
-                               class="form-label">
-
-                            Mật khẩu
-
-                        </label>
-
-
-                        <div class="input-group">
-
-                            <span class="input-group-text bg-white">
-
-                                <i class="fas fa-lock text-secondary"></i>
-
-                            </span>
-
-
-                            <InputText id="password"
-                                       type="password"
-                                       class="form-control"
-                                       @bind-Value="loginRequest.Password"
-                                       placeholder="Nhập mật khẩu" />
-
-                        </div>
-
-
-                        <ValidationMessage For="@(() => loginRequest.Password)"
-                                           class="text-danger small" />
-
-                    </div>
-
-
-                    @* =================================================
-                       REMEMBER + FORGOT PASSWORD
-                       ================================================= *@
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3 small">
-
-                        <div class="form-check">
-
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   id="remember" />
-
-                            <label class="form-check-label"
-                                   for="remember">
-
-                                Ghi nhớ đăng nhập
-
-                            </label>
-
-                        </div>
-
-
-                        <a href="/forgot-password"
-                           class="text-primary text-decoration-none">
-
-                            Quên mật khẩu?
-
-                        </a>
-
-                    </div>
-
-
-                    @* =================================================
-                       ERROR MESSAGE TỪ BACKEND
-                       ================================================= *@
-
-                    @if (!string.IsNullOrWhiteSpace(
-                        _userStateService.ErrorMessage))
-                    {
-                        <div class="alert alert-danger py-2"
-                             role="alert">
-
-                            @_userStateService.ErrorMessage
-
-                        </div>
-                    }
-
-
-                    @* =================================================
-                       LOGIN BUTTON
-                       ================================================= *@
-
-                    <div class="d-grid mb-3">
-
-                        <button type="submit"
-                                class="btn btn-primary"
-                                disabled="@isSubmitting">
-
-                            @if (isSubmitting)
-                            {
-                                <span class="spinner-border
-                                             spinner-border-sm
-                                             me-2"
-                                      role="status">
-                                </span>
-
-                                <span>
-                                    Đang đăng nhập...
-                                </span>
-                            }
-                            else
-                            {
-                                <span>
-                                    ĐĂNG NHẬP
-                                </span>
-                            }
-
-                        </button>
-
-                    </div>
-
-                </EditForm>
+                </div>
 
 
                 @* =================================================
-                   REGISTER
+                   OPTIONS
                    ================================================= *@
 
-                <hr class="my-3" />
+                <div class="auth-options">
 
+                    <label class="auth-remember">
+                        <input type="checkbox" />
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
 
-                <p class="text-center small text-secondary mb-0">
-
-                    Chưa có tài khoản?
-
-                    <a href="/register"
-                       class="text-primary
-                              text-decoration-none
-                              fw-semibold">
-
-                        Đăng ký
-
+                    <a href="/forgot-password"
+                       class="auth-link">
+                        Quên mật khẩu?
                     </a>
 
-                </p>
+                </div>
+
+
+                @* =================================================
+                   ERROR MESSAGE
+                   ================================================= *@
+
+                @if (!string.IsNullOrWhiteSpace(
+                    _userStateService.ErrorMessage))
+                {
+                    <div class="auth-alert auth-alert-danger">
+
+                        <i class="fas fa-exclamation-circle me-1"></i>
+
+                        @_userStateService.ErrorMessage
+
+                    </div>
+                }
+
+
+                @* =================================================
+                   LOGIN BUTTON
+                   ================================================= *@
+
+                <button type="submit"
+                        class="auth-submit"
+                        disabled="@isSubmitting">
+
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner-border spinner-border-sm"
+                              role="status">
+                        </span>
+
+                        <span>
+                            Đang đăng nhập...
+                        </span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-sign-in-alt"></i>
+
+                        <span>
+                            Đăng nhập
+                        </span>
+                    }
+
+                </button>
+
+            </EditForm>
+
+
+            @* =================================================
+               REGISTER
+               ================================================= *@
+
+            <div class="auth-divider">
+                hoặc
+            </div>
+
+            <div class="auth-footer">
+
+                <span>
+                    Chưa có tài khoản?
+                </span>
+
+                <a href="/register"
+                   class="auth-link">
+                    Đăng ký ngay
+                </a>
+
+            </div>
+
+
+            @* =================================================
+               BACK TO LANDING PAGE
+               ================================================= *@
+
+            <div class="auth-footer mt-3">
+
+                <a href="/"
+                   class="auth-link">
+
+                    <i class="fas fa-arrow-left me-1"></i>
+
+                    Quay lại trang chủ
+
+                </a>
 
             </div>
 
@@ -238,14 +307,28 @@
 
     </div>
 
-</div>
+</section>
 
 
 @code {
 
+    // =====================================================
+    // LOGIN MODEL
+    // =====================================================
+
     private LoginRequestDTO loginRequest = new();
+
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
     private bool isSubmitting;
 
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
 
     protected override void OnInitialized()
     {
@@ -259,10 +342,14 @@
 
     private async Task HandleLogin()
     {
+        if (isSubmitting)
+        {
+            return;
+        }
+
         try
         {
             isSubmitting = true;
-
 
             await _userStateService.LoginAsync(
                 loginRequest
@@ -275,9 +362,12 @@
     }
 
 
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
     public void Dispose()
     {
         _userStateService.OnChange -= StateHasChanged;
     }
-
 }
