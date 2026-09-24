@@ -1,5 +1,6 @@
 using ClinicManagementSystem.Application.DTOs.Patient;
 using ClinicManagementSystem.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicManagementSystem.Api.Controllers;
@@ -23,4 +24,24 @@ public class PatientController : ControllerBase
 
         return StatusCode(result.StatusCode, result);
     }
+
+    // =====================================================
+    // SEARCH PATIENTS
+    //
+    // GET:
+    // /api/patients?keyword=&page=
+    // =====================================================
+
+    [HttpGet]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> SearchPatients(
+        [FromQuery] string? keyword = null,
+        [FromQuery] int page = 1)
+    {
+        var result = await _patientService.SearchPatientsAsync(keyword, page);
+
+        return StatusCode(result.StatusCode, result);
+    }
+
+
 }
