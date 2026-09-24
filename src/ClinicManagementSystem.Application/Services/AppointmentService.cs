@@ -55,35 +55,153 @@ public class AppointmentService : IAppointmentService
         _logger = logger;
     }
 
-    
 
     // =====================================================
     // MARK APPOINTMENT AS NO SHOW
     // =====================================================
-    public Task<HttpResponseData<ReceptionAppointmentDTO>> MarkNoShowAsync(
+
+    public async Task<HttpResponseData<ReceptionAppointmentDTO>> MarkNoShowAsync(
         int appointmentId,
         NoShowAppointmentRequestDTO request,
         int currentUserId)
     {
-        // =================================================
-        // IMPLEMENTATION
-        //
-        // Validation + update status sẽ làm bước tiếp theo.
-        // =================================================
+        try
+        {
+            // =================================================
+            // GET APPOINTMENT
+            // =================================================
 
-        return Task.FromResult(
-            new HttpResponseData<ReceptionAppointmentDTO>
+            var appointment =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(a => a.Id == appointmentId)
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // APPOINTMENT NOT FOUND
+            // =================================================
+
+            if (appointment == null)
+            {
+                return new HttpResponseData<ReceptionAppointmentDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Không tìm thấy lịch hẹn.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK STATUS
+            //
+            // Chỉ cho đánh dấu NoShow khi:
+            //
+            // Pending
+            // Confirmed
+            // =================================================
+
+            var canMarkNoShow =
+                appointment.Status == (byte)AppointmentStatus.Pending ||
+                appointment.Status == (byte)AppointmentStatus.Confirmed;
+
+            if (!canMarkNoShow)
+            {
+                return new HttpResponseData<ReceptionAppointmentDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Trạng thái lịch hẹn không cho phép đánh dấu không đến.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK APPOINTMENT DATE
+            //
+            // Reception chỉ xử lý NoShow
+            // cho lịch hẹn trong ngày hôm nay.
+            // =================================================
+
+            var now = DateTime.Now;
+            var today = DateOnly.FromDateTime(now);
+            var appointmentDate = DateOnly.FromDateTime(appointment.StartTime);
+
+            if (appointmentDate != today)
+            {
+                return new HttpResponseData<ReceptionAppointmentDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Chỉ có thể đánh dấu không đến cho lịch hẹn trong ngày hôm nay.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK APPOINTMENT TIME
+            //
+            // Không được đánh dấu NoShow
+            // khi giờ hẹn vẫn chưa tới.
+            // =================================================
+
+            if (appointment.StartTime > now)
+            {
+                return new HttpResponseData<ReceptionAppointmentDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Chưa đến giờ hẹn nên chưa thể đánh dấu bệnh nhân không đến.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // VALIDATION SUCCESS
+            //
+            // Update status + history sẽ làm bước tiếp theo.
+            // =================================================
+
+            return new HttpResponseData<ReceptionAppointmentDTO>
             {
                 StatusCode = 501,
-                Message = "Chức năng đánh dấu không đến đang được triển khai.",
+                Message = "Lịch hẹn hợp lệ để đánh dấu không đến.",
                 Content = null
-            }
-        );
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to validate appointment no-show. " +
+                "AppointmentId: {AppointmentId}, UserId: {UserId}",
+                appointmentId,
+                currentUserId
+            );
+
+
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
+
+            return new HttpResponseData<ReceptionAppointmentDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể kiểm tra lịch hẹn.",
+                Content = null
+            };
+        }
     }
 
     // =====================================================
     // CHECK IN APPOINTMENT
     // =====================================================
+
     public async Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(
         int appointmentId,
         int currentUserId)
