@@ -4,6 +4,7 @@ using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ClinicManagementSystem.Infrastructure.Models;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -40,6 +41,111 @@ public class PatientRecordService : IPatientRecordService
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+    }
+
+    // =====================================================
+    // GET PATIENT RECORDS FOR RECEPTION
+    // =====================================================
+
+    public async Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(
+        int patientId,
+        int currentUserId)
+    {
+        try
+        {
+            // =================================================
+            // FIND PATIENT
+            // =================================================
+
+            var patient = await _unitOfWork.PatientRepository
+                .WhereSql(p =>
+                    p.Id == patientId &&
+                    p.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (patient == null)
+            {
+                return Response(
+                    404,
+                    "Không tìm thấy hồ sơ bệnh nhân."
+                );
+            }
+
+
+            // =================================================
+            // GET RECORDS
+            // =================================================
+
+            var records =
+                await GetRecordsByPatientIdAsync(patientId);
+
+
+            // =================================================
+            // CREATE AUDIT LOG
+            // =================================================
+
+            var auditLog = new AuditLog
+            {
+                UserId = currentUserId,
+
+                Action = "VIEW_PATIENT_RECORDS",
+
+                EntityName = "Patient",
+
+                EntityId = patientId,
+
+                Details =
+                    $"Receptionist viewed medical records of patient {patient.PatientCode}.",
+
+                Succeeded = true,
+
+                OccurredAt = DateTime.UtcNow
+            };
+
+
+            // =================================================
+            // SAVE AUDIT LOG
+            // =================================================
+
+            await _unitOfWork.AuditLogRepository
+                .AddAsync(auditLog);
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            if (records.Count == 0)
+            {
+                return Response(
+                    200,
+                    "Bệnh nhân chưa có lịch sử khám.",
+                    records
+                );
+            }
+
+            return Response(
+                200,
+                "Lấy lịch sử khám của bệnh nhân thành công.",
+                records
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to get patient records for reception. " +
+                "PatientId: {PatientId}, UserId: {UserId}",
+                patientId,
+                currentUserId);
+
+            return Response(
+                500,
+                "Lấy lịch sử khám của bệnh nhân thất bại."
+            );
+        }
     }
 
     // =====================================================
@@ -319,19 +425,4 @@ public class PatientRecordService : IPatientRecordService
         };
     }
 
-    // =====================================================
-    // GET PATIENT RECORDS FOR RECEPTION
-    // =====================================================
-
-    public Task<HttpResponseData<List<PatientRecordDTO>>> GetPatientRecordsByPatientIdAsync(
-        int patientId,
-        int currentUserId)
-    {
-        return Task.FromResult(
-            Response(
-                501,
-                "Chức năng xem lịch sử khám của bệnh nhân đang được triển khai."
-            )
-        );
-    }
 }
