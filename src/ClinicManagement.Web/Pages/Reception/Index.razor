@@ -1,0 +1,117 @@
+@page "/reception"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Receptionist")]
+
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Bàn tiếp đón</PageTitle>
+
+
+<div class="reception-page">
+
+    @* =====================================================
+       PAGE HEADER
+       ===================================================== *@
+
+    <div class="reception-header">
+        <div>
+            <h1>Bàn tiếp đón</h1>
+            <p>Theo dõi lịch hẹn trong ngày và trạng thái từng bệnh nhân.</p>
+        </div>
+    </div>
+
+
+    @* =====================================================
+       TODAY
+       ===================================================== *@
+
+    <div class="reception-today">
+
+        <div>
+            <span>BÀN TIẾP ĐÓN</span>
+            <strong>@DateTime.Today.ToString("dd/MM/yyyy")</strong>
+        </div>
+
+        <div class="reception-filters">
+            <button type="button">
+                Chuyên khoa: Tất cả
+            </button>
+
+            <button type="button">
+                Bác sĩ: Tất cả
+            </button>
+        </div>
+
+    </div>
+
+
+    @* =====================================================
+       SUMMARY
+       ===================================================== *@
+
+    <div class="reception-summary">
+
+        <div class="reception-summary-card">
+            <strong>0</strong>
+            <span>Tổng lịch hẹn</span>
+        </div>
+
+        <div class="reception-summary-card">
+            <strong>0</strong>
+            <span>Chờ đến</span>
+        </div>
+
+        <div class="reception-summary-card">
+            <strong>0</strong>
+            <span>Đã check-in</span>
+        </div>
+
+        <div class="reception-summary-card">
+            <strong>0</strong>
+            <span>Đã khám xong</span>
+        </div>
+
+        <div class="reception-summary-card">
+            <strong>0</strong>
+            <span>Không đến</span>
+        </div>
+
+    </div>
+
+
+    @* =====================================================
+       APPOINTMENTS
+       ===================================================== *@
+
+    <div class="reception-appointments">
+
+        <div class="reception-section-header">
+            <h3>Lịch hẹn hôm nay</h3>
+        </div>
+
+        <div class="reception-empty">
+            Dữ liệu lịch hẹn sẽ được kết nối sau khi hoàn thành backend VC-07.
+        </div>
+
+    </div>
+
+
+    @* =====================================================
+       QUICK ACTIONS
+       ===================================================== *@
+
+    <div class="reception-actions">
+
+        <a href="/reception/booking"
+           class="reception-action-button">
+            Đặt lịch hộ
+        </a>
+
+        <a href="/reception/patients/new"
+           class="reception-action-button">
+            Tạo bệnh nhân mới
+        </a>
+
+    </div>
+
+</div>
