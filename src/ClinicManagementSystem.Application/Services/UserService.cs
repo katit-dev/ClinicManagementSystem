@@ -150,7 +150,7 @@ public class UserService : IUserService
             if (user == null)
             {
                 return Response(
-                    200,
+                    404,
                     UserResponseMessageDTO.EmailNotFound);
             }
 
