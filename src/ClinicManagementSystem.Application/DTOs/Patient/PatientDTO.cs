@@ -24,8 +24,8 @@ public class PatientDTO
 
     public byte? Gender { get; set; }
 
-    public DateTime? DateOfBirth { get; set; }
-
+    public DateOnly? DateOfBirth { get; set; }
+    
     public string Phone { get; set; } = string.Empty;
 
     public string? Email { get; set; }

@@ -26,8 +26,8 @@ public class PatientRequestDTO
     [Range(0, 2)]
     public byte? Gender { get; set; }
 
-    public DateTime? DateOfBirth { get; set; }
-
+    public DateOnly? DateOfBirth { get; set; }
+    
     [Required]
     public string Phone { get; set; } = string.Empty;
 
