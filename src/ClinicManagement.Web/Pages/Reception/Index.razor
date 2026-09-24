@@ -57,8 +57,7 @@
 
                 <label>Ngày</label>
 
-                <input type="date"
-                       class="reception-filter-control"
+                <input type="date" class="reception-filter-control"
                        value="@ReceptionAppointmentStateService.SelectedDate.ToString("yyyy-MM-dd")"
                        @onchange="HandleDateChanged" />
 
@@ -73,8 +72,7 @@
 
                 <label>Chuyên khoa</label>
 
-                <select class="reception-filter-control"
-                        value="@GetSelectedSpecialtyValue()"
+                <select class="reception-filter-control" value="@GetSelectedSpecialtyValue()"
                         @onchange="HandleSpecialtyChanged">
 
                     <option value="">
@@ -101,8 +99,7 @@
 
                 <label>Bác sĩ</label>
 
-                <select class="reception-filter-control"
-                        value="@GetSelectedDoctorValue()"
+                <select class="reception-filter-control" value="@GetSelectedDoctorValue()"
                         @onchange="HandleDoctorChanged"
                         disabled="@(!ReceptionAppointmentStateService.SelectedSpecialtyId.HasValue)">
 
@@ -130,8 +127,7 @@
 
                 <label>Trạng thái</label>
 
-                <select class="reception-filter-control"
-                        value="@GetSelectedStatusValue()"
+                <select class="reception-filter-control" value="@GetSelectedStatusValue()"
                         @onchange="HandleStatusChanged">
 
                     <option value="">
@@ -175,9 +171,7 @@
 
                 <label>&nbsp;</label>
 
-                <button type="button"
-                        class="reception-filter-reset"
-                        @onclick="HandleResetFilters">
+                <button type="button" class="reception-filter-reset" @onclick="HandleResetFilters">
                     Đặt lại
                 </button>
 
@@ -268,18 +262,162 @@
         }
 
         @* =================================================
-           LOADED
-           ================================================= *@
+   APPOINTMENT TABLE
+   ================================================= *@
 
         else
         {
-            <div class="reception-empty">
+            <div class="reception-table-wrapper">
 
-                Đã tải
-                <strong>
-                    @ReceptionAppointmentStateService.Appointments.Count
-                </strong>
-                lịch hẹn.
+                <table class="reception-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Giờ</th>
+                            <th>STT</th>
+                            <th>Bệnh nhân</th>
+                            <th>Mã BN</th>
+                            <th>Bác sĩ</th>
+                            <th>Chuyên khoa</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var appointment in
+                            ReceptionAppointmentStateService.Appointments)
+                        {
+                            <tr>
+
+                                @* =====================================
+                           TIME
+                           ===================================== *@
+
+                                <td>
+
+                                    <div class="reception-time">
+
+                                        <strong>
+                                            @appointment.StartTime.ToString("HH:mm")
+                                        </strong>
+
+                                        <span>
+                                            @appointment.EndTime.ToString("HH:mm")
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+
+                                @* =====================================
+                           QUEUE NUMBER
+                           ===================================== *@
+
+                                <td>
+
+                                    @if (appointment.QueueNumber.HasValue)
+                                    {
+                                        <span class="reception-queue-number">
+                                            #@appointment.QueueNumber
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="reception-muted">
+                                            —
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                @* =====================================
+                           PATIENT
+                           ===================================== *@
+
+                                <td>
+
+                                    <div class="reception-patient">
+
+                                        <strong>
+                                            @appointment.PatientName
+                                        </strong>
+
+                                        <span>
+                                            @appointment.AppointmentCode
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+
+                                @* =====================================
+                           PATIENT CODE
+                           ===================================== *@
+
+                                <td>
+                                    @appointment.PatientCode
+                                </td>
+
+
+                                @* =====================================
+                           DOCTOR
+                           ===================================== *@
+
+                                <td>
+                                    @appointment.DoctorName
+                                </td>
+
+
+                                @* =====================================
+                           SPECIALTY
+                           ===================================== *@
+
+                                <td>
+                                    @appointment.SpecialtyName
+                                </td>
+
+
+                                @* =====================================
+                           STATUS
+                           ===================================== *@
+
+                                <td>
+
+                                    <span class="reception-status @GetStatusClass(appointment.Status)">
+                                        @GetStatusText(appointment.Status)
+                                    </span>
+
+                                </td>
+
+
+                                @* =====================================
+                           ACTIONS
+                           //
+                           Sẽ làm ở bước 5.8.7 và 5.8.8.
+                           ===================================== *@
+
+                                <td>
+
+                                    <span class="reception-muted">
+                                        —
+                                    </span>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
 
             </div>
         }
@@ -293,13 +431,11 @@
 
     <div class="reception-actions">
 
-        <a href="/reception/booking"
-           class="reception-action-button">
+        <a href="/reception/booking" class="reception-action-button">
             Đặt lịch hộ
         </a>
 
-        <a href="/reception/patients/new"
-           class="reception-action-button">
+        <a href="/reception/patients/new" class="reception-action-button">
             Tạo bệnh nhân mới
         </a>
 
@@ -431,6 +567,45 @@
             .LoadAppointmentsAsync();
     }
 
+
+    // =====================================================
+    // STATUS TEXT
+    // =====================================================
+
+    private static string GetStatusText(byte status)
+    {
+        return status switch
+        {
+            (byte)AppointmentStatus.Pending => "Chờ xác nhận",
+            (byte)AppointmentStatus.Confirmed => "Đã xác nhận",
+            (byte)AppointmentStatus.CheckedIn => "Đã check-in",
+            (byte)AppointmentStatus.Completed => "Đã khám xong",
+            (byte)AppointmentStatus.Cancelled => "Đã hủy",
+            (byte)AppointmentStatus.NoShow => "Không đến",
+
+            _ => "Không xác định"
+        };
+    }
+
+
+    // =====================================================
+    // STATUS CLASS
+    // =====================================================
+
+    private static string GetStatusClass(byte status)
+    {
+        return status switch
+        {
+            (byte)AppointmentStatus.Pending => "status-pending",
+            (byte)AppointmentStatus.Confirmed => "status-confirmed",
+            (byte)AppointmentStatus.CheckedIn => "status-checked-in",
+            (byte)AppointmentStatus.Completed => "status-completed",
+            (byte)AppointmentStatus.Cancelled => "status-cancelled",
+            (byte)AppointmentStatus.NoShow => "status-no-show",
+
+            _ => string.Empty
+        };
+    }
 
     // =====================================================
     // STATUS CHANGED

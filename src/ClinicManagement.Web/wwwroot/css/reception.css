@@ -198,3 +198,171 @@
 .reception-filter-reset:hover {
     background: #f1f5f9;
 }
+
+/* =====================================================
+   APPOINTMENT TABLE
+   ===================================================== */
+
+.reception-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.reception-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+}
+
+.reception-table th {
+    padding: 14px 16px;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    background: #f8fafc;
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.reception-table td {
+    padding: 16px;
+
+    border-bottom: 1px solid #eef2f6;
+
+    color: #334155;
+
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.reception-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.reception-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   TIME
+   ===================================================== */
+
+.reception-time {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.reception-time strong {
+    color: #16324f;
+    font-size: 15px;
+}
+
+.reception-time span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   PATIENT
+   ===================================================== */
+
+.reception-patient {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.reception-patient strong {
+    color: #16324f;
+}
+
+.reception-patient span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   QUEUE NUMBER
+   ===================================================== */
+
+.reception-queue-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 38px;
+    padding: 6px 9px;
+
+    border-radius: 8px;
+
+    background: #e0f2fe;
+    color: #0284c7;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.reception-status {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-confirmed {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-checked-in {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.status-completed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-cancelled {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.status-no-show {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   COMMON
+   ===================================================== */
+
+.reception-muted {
+    color: #94a3b8;
+}
