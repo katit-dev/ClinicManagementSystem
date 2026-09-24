@@ -124,4 +124,39 @@ public class AppointmentController : ControllerBase
     }
 
 
+    // =====================================================
+    // GET RECEPTION APPOINTMENTS
+    //
+    // GET:
+    // /api/appointments?date=2026-09-24
+    //
+    // Filters:
+    // doctorId
+    // specialtyId
+    // status
+    // =====================================================
+
+    [HttpGet]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> GetReceptionAppointments(
+        [FromQuery] DateOnly? date,
+        [FromQuery] int? doctorId = null,
+        [FromQuery] int? specialtyId = null,
+        [FromQuery] AppointmentStatus? status = null)
+    {
+        var selectedDate = date ?? DateOnly.FromDateTime(DateTime.Now);
+
+        var result =
+            await _appointmentService
+                .GetReceptionAppointmentsAsync(
+                    selectedDate,
+                    doctorId,
+                    specialtyId,
+                    status
+                );
+
+
+        return StatusCode(result.StatusCode, result);
+    }
+
 }
