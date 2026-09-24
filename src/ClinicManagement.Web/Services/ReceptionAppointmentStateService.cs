@@ -1,6 +1,7 @@
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Appointment;
 using ClinicManagementSystem.Application.Enums;
+using ClinicManagementSystem.Application.DTOs.Specialty;
 
 namespace ClinicManagementSystem.Web.Services;
 
@@ -31,6 +32,8 @@ public class ReceptionAppointmentStateService
 
     public string ErrorMessage { get; private set; } = string.Empty;
 
+    public List<SpecialtyDTO> Specialties { get; private set; } = new();
+
 
 
     // =====================================================
@@ -46,6 +49,96 @@ public class ReceptionAppointmentStateService
         AuthorizedApiService authorizedApiService)
     {
         _authorizedApiService = authorizedApiService;
+    }
+
+    // =====================================================
+    // LOAD SPECIALTIES
+    // =====================================================
+
+    public async Task<bool> LoadSpecialtiesAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+
+        StateHasChanged();
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        "/api/specialties?active=true"
+                    );
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ErrorMessage =
+                    "Không thể tải danh sách chuyên khoa.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<SpecialtyDTO>>>();
+
+
+            // =================================================
+            // INVALID RESPONSE
+            // =================================================
+
+            if (responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không nhận được dữ liệu chuyên khoa.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE STATE
+            // =================================================
+
+            Specialties =
+                responseData.Content
+                ?? new List<SpecialtyDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
     }
 
 
@@ -262,6 +355,7 @@ public class ReceptionAppointmentStateService
     public void Reset()
     {
         Appointments.Clear();
+        Specialties.Clear();
 
         SelectedDate =
             DateOnly.FromDateTime(

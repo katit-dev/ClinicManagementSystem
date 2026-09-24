@@ -274,6 +274,9 @@
             HandleStateChanged;
 
         await ReceptionAppointmentStateService
+            .LoadSpecialtiesAsync();
+
+        await ReceptionAppointmentStateService
             .LoadAppointmentsAsync();
     }
 
