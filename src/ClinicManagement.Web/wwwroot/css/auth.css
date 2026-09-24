@@ -715,6 +715,35 @@
     }
 }
 
+/* =====================================================
+   CHANGE EMAIL
+   ===================================================== */
+
+.auth-email-helper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.auth-change-email {
+    padding: 0;
+    border: none;
+    background: transparent;
+
+    color: #0ea5e9;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.auth-change-email:hover {
+    color: #0284c7;
+    text-decoration: underline;
+}
+
 
 /* =====================================================
    RESPONSIVE - MOBILE
