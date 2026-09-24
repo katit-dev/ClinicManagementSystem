@@ -421,3 +421,148 @@
     background: #fee2e2;
     color: #b91c1c;
 }
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 1200px) {
+
+    .reception-filters {
+        width: 100%;
+    }
+
+    .reception-filter-group {
+        flex: 1 1 180px;
+    }
+
+    .reception-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .reception-page {
+        padding: 16px;
+    }
+
+    .reception-header h1 {
+        font-size: 24px;
+    }
+
+    .reception-header p {
+        font-size: 14px;
+    }
+
+
+    /* =================================================
+       FILTERS
+       ================================================= */
+
+    .reception-today {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+
+    .reception-filters {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .reception-filter-group {
+        min-width: 0;
+    }
+
+    .reception-filter-control,
+    .reception-filter-reset {
+        width: 100%;
+    }
+
+
+    /* =================================================
+       SUMMARY
+       ================================================= */
+
+    .reception-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+
+    /* =================================================
+       TABLE
+       ================================================= */
+
+    .reception-appointments {
+        overflow: hidden;
+    }
+
+    .reception-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .reception-table {
+        min-width: 980px;
+    }
+
+
+    /* =================================================
+       ACTIONS
+       ================================================= */
+
+    .reception-actions {
+        flex-direction: column;
+    }
+
+    .reception-action-button {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - SMALL MOBILE
+   ===================================================== */
+
+@media (max-width: 480px) {
+
+    .reception-page {
+        padding: 12px;
+    }
+
+    .reception-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .reception-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .reception-summary-card {
+        padding: 16px;
+    }
+
+    .reception-summary-card strong {
+        font-size: 24px;
+    }
+
+    .reception-row-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .reception-checkin-button,
+    .reception-noshow-button {
+        width: 100%;
+    }
+}
