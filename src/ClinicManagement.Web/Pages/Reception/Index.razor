@@ -5,6 +5,7 @@
 @attribute [Authorize(Roles = "Receptionist")]
 
 @using Microsoft.AspNetCore.Authorization
+@using ClinicManagementSystem.Application.Enums
 
 @inject ReceptionAppointmentStateService ReceptionAppointmentStateService
 
@@ -67,34 +68,63 @@
 
 
     @* =====================================================
-       SUMMARY
-       ===================================================== *@
+   SUMMARY
+   ===================================================== *@
 
     <div class="reception-summary">
 
         <div class="reception-summary-card">
-            <strong>0</strong>
+
+            <strong>
+                @TotalAppointments
+            </strong>
+
             <span>Tổng lịch hẹn</span>
+
         </div>
 
+
         <div class="reception-summary-card">
-            <strong>0</strong>
+
+            <strong>
+                @WaitingAppointments
+            </strong>
+
             <span>Chờ đến</span>
+
         </div>
 
+
         <div class="reception-summary-card">
-            <strong>0</strong>
+
+            <strong>
+                @CheckedInAppointments
+            </strong>
+
             <span>Đã check-in</span>
+
         </div>
 
+
         <div class="reception-summary-card">
-            <strong>0</strong>
+
+            <strong>
+                @CompletedAppointments
+            </strong>
+
             <span>Đã khám xong</span>
+
         </div>
 
+
         <div class="reception-summary-card">
-            <strong>0</strong>
+
+            <strong>
+                @NoShowAppointments
+            </strong>
+
             <span>Không đến</span>
+
         </div>
 
     </div>
@@ -173,13 +203,11 @@
 
     <div class="reception-actions">
 
-        <a href="/reception/booking"
-           class="reception-action-button">
+        <a href="/reception/booking" class="reception-action-button">
             Đặt lịch hộ
         </a>
 
-        <a href="/reception/patients/new"
-           class="reception-action-button">
+        <a href="/reception/patients/new" class="reception-action-button">
             Tạo bệnh nhân mới
         </a>
 
@@ -189,6 +217,52 @@
 
 
 @code {
+
+    // =====================================================
+    // SUMMARY
+    // =====================================================
+
+    private int TotalAppointments =>
+        ReceptionAppointmentStateService
+            .Appointments
+            .Count;
+
+
+    private int WaitingAppointments =>
+        ReceptionAppointmentStateService
+            .Appointments
+            .Count(
+                a =>
+                    a.Status == (byte)AppointmentStatus.Pending ||
+                    a.Status == (byte)AppointmentStatus.Confirmed
+            );
+
+
+    private int CheckedInAppointments =>
+        ReceptionAppointmentStateService
+            .Appointments
+            .Count(
+                a =>
+                    a.Status == (byte)AppointmentStatus.CheckedIn
+            );
+
+
+    private int CompletedAppointments =>
+        ReceptionAppointmentStateService
+            .Appointments
+            .Count(
+                a =>
+                    a.Status == (byte)AppointmentStatus.Completed
+            );
+
+
+    private int NoShowAppointments =>
+        ReceptionAppointmentStateService
+            .Appointments
+            .Count(
+                a =>
+                    a.Status == (byte)AppointmentStatus.NoShow
+            );
 
     // =====================================================
     // INITIALIZE
