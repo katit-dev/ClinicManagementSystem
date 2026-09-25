@@ -113,5 +113,22 @@ public class PatientController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+    // DELETE PATIENT ALLERGY
+    //
+    // DELETE:
+    // /api/patients/allergies/{id}
+    // =====================================================
+
+    [HttpDelete("allergies/{id}")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> DeletePatientAllergy(
+        int id)
+    {
+        var result = await _patientService.DeletePatientAllergyAsync(id);
+
+        return StatusCode(result.StatusCode, result);
+    }
+
 
 }
