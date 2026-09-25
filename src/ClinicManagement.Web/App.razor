@@ -1,37 +1,104 @@
+@inject UserStateService UserStateService
+
+
 <CascadingAuthenticationState>
 
-    <Router AppAssembly="@typeof(App).Assembly">
+    @if (!_isAuthenticationReady)
+    {
+        @* =================================================
+           RESTORE AUTHENTICATION STATE
+           ================================================= *@
 
-        <Found Context="routeData">
-
-            <AuthorizeRouteView RouteData="@routeData">
-
-                <NotAuthorized>
-                    <div class="container mt-4">
-                        <div class="alert alert-warning">
-                            Bạn chưa được phép truy cập vào trang này.
-                            Vui lòng đăng nhập.
-                        </div>
-                    </div>
-                </NotAuthorized>
-
-            </AuthorizeRouteView>
-
-            <FocusOnNavigate RouteData="@routeData"
-                             Selector="h1" />
-
-        </Found>
-
-        <NotFound>
-
-            <div class="container mt-4">
-                <div class="alert alert-danger">
-                    Không tìm thấy trang.
-                </div>
+        <div class="container mt-4">
+            <div class="alert alert-info">
+                Đang khôi phục phiên đăng nhập...
             </div>
+        </div>
+    }
+    else
+    {
+        <Router AppAssembly="@typeof(App).Assembly">
 
-        </NotFound>
+            <Found Context="routeData">
 
-    </Router>
+                <AuthorizeRouteView RouteData="@routeData">
+
+                    <NotAuthorized>
+
+                        <div class="container mt-4">
+                            <div class="alert alert-warning">
+                                Bạn chưa được phép truy cập vào trang này.
+                                Vui lòng đăng nhập.
+                            </div>
+                        </div>
+
+                    </NotAuthorized>
+
+                </AuthorizeRouteView>
+
+
+                <FocusOnNavigate RouteData="@routeData"
+                                 Selector="h1" />
+
+            </Found>
+
+
+            <NotFound>
+
+                <div class="container mt-4">
+                    <div class="alert alert-danger">
+                        Không tìm thấy trang.
+                    </div>
+                </div>
+
+            </NotFound>
+
+        </Router>
+    }
 
 </CascadingAuthenticationState>
+
+
+@code {
+
+    // =====================================================
+    // AUTHENTICATION READY
+    // =====================================================
+
+    private bool _isAuthenticationReady;
+
+
+    // =====================================================
+    // AFTER FIRST RENDER
+    //
+    // LocalStorage cần JSInterop nên chỉ đọc sau khi
+    // component đã interactive.
+    // =====================================================
+
+    protected override async Task OnAfterRenderAsync(
+        bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // RESTORE USER STATE
+        // =================================================
+
+        await UserStateService.LoadUserStateAsync();
+
+
+        // =================================================
+        // AUTH READY
+        // =================================================
+
+        _isAuthenticationReady = true;
+
+        await InvokeAsync(
+            StateHasChanged
+        );
+    }
+}

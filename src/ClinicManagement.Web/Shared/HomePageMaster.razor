@@ -18,6 +18,7 @@
 
     <aside class="app-sidebar @(_isSidebarOpen ? "open" : "")">
 
+
         @* =============================================
            BRAND
            ============================================= *@
@@ -25,11 +26,8 @@
         <div class="sidebar-brand">
 
             <div class="sidebar-logo">
-
                 <i class="fas fa-clinic-medical"></i>
-
             </div>
-
 
             <div class="sidebar-brand-text">
 
@@ -47,17 +45,20 @@
 
 
         @* =============================================
-        NAVIGATION
-        ============================================= *@
+           NAVIGATION
+           ============================================= *@
 
         <nav class="sidebar-navigation">
 
 
             @* =========================================
-            DASHBOARD
-            ========================================= *@
+               DASHBOARD
+               ========================================= *@
 
-            <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+            <NavLink href="@GetDashboardUrl()"
+                     class="sidebar-link"
+                     ActiveClass="active"
+                     Match="NavLinkMatch.All"
                      @onclick="CloseSidebar">
 
                 <i class="fas fa-home"></i>
@@ -70,16 +71,45 @@
 
 
             @* =========================================
-            PATIENT MENU
-            ========================================= *@
+               RECEPTION MENU
+               ========================================= *@
+
+            @if (HasRole("Receptionist"))
+            {
+                @* =====================================
+                   PATIENT MANAGEMENT
+                   ===================================== *@
+
+                <NavLink href="/reception/patients"
+                         class="sidebar-link"
+                         ActiveClass="active"
+                         Match="NavLinkMatch.Prefix"
+                         @onclick="CloseSidebar">
+
+                    <i class="fas fa-user-injured"></i>
+
+                    <span>
+                        Hồ sơ bệnh nhân
+                    </span>
+
+                </NavLink>
+            }
+
+
+            @* =========================================
+               PATIENT MENU
+               ========================================= *@
 
             @if (HasRole("Patient"))
             {
-                @* =====================================================
-                BOOK APPOINTMENT
-                ===================================================== *@
+                @* =====================================
+                   BOOK APPOINTMENT
+                   ===================================== *@
 
-                <NavLink href="/patient/booking" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                <NavLink href="/patient/booking"
+                         class="sidebar-link"
+                         ActiveClass="active"
+                         Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-plus"></i>
@@ -91,11 +121,14 @@
                 </NavLink>
 
 
-                @* =====================================================
-                MY APPOINTMENTS
-                ===================================================== *@
+                @* =====================================
+                   MY APPOINTMENTS
+                   ===================================== *@
 
-                <NavLink href="/patient/appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                <NavLink href="/patient/appointments"
+                         class="sidebar-link"
+                         ActiveClass="active"
+                         Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-check"></i>
@@ -107,11 +140,14 @@
                 </NavLink>
 
 
-                @* =====================================================
-                MEDICAL RECORDS
-                ===================================================== *@
+                @* =====================================
+                   MEDICAL RECORDS
+                   ===================================== *@
 
-                <NavLink href="/patient/records" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                <NavLink href="/patient/records"
+                         class="sidebar-link"
+                         ActiveClass="active"
+                         Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-file-medical-alt"></i>
@@ -122,11 +158,15 @@
 
                 </NavLink>
 
-                @* =====================================================
-                MY INVOICES
-                ===================================================== *@
 
-                <NavLink href="/patient/invoices" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                @* =====================================
+                   MY INVOICES
+                   ===================================== *@
+
+                <NavLink href="/patient/invoices"
+                         class="sidebar-link"
+                         ActiveClass="active"
+                         Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-file-invoice-dollar"></i>
@@ -140,17 +180,17 @@
 
         </nav>
 
-        
-
     </aside>
 
+
     @* =================================================
-    MOBILE SIDEBAR OVERLAY
-    ================================================= *@
+       MOBILE SIDEBAR OVERLAY
+       ================================================= *@
 
     @if (_isSidebarOpen)
     {
-        <div class="sidebar-overlay" @onclick="CloseSidebar">
+        <div class="sidebar-overlay"
+             @onclick="CloseSidebar">
         </div>
     }
 
@@ -163,26 +203,27 @@
 
 
         @* =============================================
-           TEMPORARY HEADER
+           TOPBAR
            ============================================= *@
-
-        @* =============================================
-            TOPBAR
-            ============================================= *@
 
         <header class="app-header">
 
+
             @* =========================================
-            HEADER LEFT
-            ========================================= *@
+               HEADER LEFT
+               ========================================= *@
 
             <div class="header-left">
 
-                @* =====================================
-                MOBILE MENU
-                ===================================== *@
 
-                <button type="button" class="mobile-menu-button" aria-label="Mở menu" @onclick="ToggleSidebar">
+                @* =====================================
+                   MOBILE MENU
+                   ===================================== *@
+
+                <button type="button"
+                        class="mobile-menu-button"
+                        aria-label="Mở menu"
+                        @onclick="ToggleSidebar">
 
                     <i class="fas fa-bars"></i>
 
@@ -190,8 +231,8 @@
 
 
                 @* =====================================
-                PAGE INFORMATION
-                ===================================== *@
+                   PAGE INFORMATION
+                   ===================================== *@
 
                 <div class="header-information">
 
@@ -209,32 +250,29 @@
 
 
             @* =========================================
-            CURRENT USER
-            ========================================= *@
+               CURRENT USER
+               ========================================= *@
 
             @if (_userStateService.CurrentUser != null)
             {
                 <div class="header-user-area">
 
-                    @* =====================================
-                    USER PROFILE
-                    ===================================== *@
+
+                    @* =================================
+                       USER PROFILE
+                       ================================= *@
 
                     <div class="header-user">
 
                         <div class="header-avatar">
-
                             @GetUserInitials()
-
                         </div>
-
 
                         <div class="header-user-information">
 
                             <div class="header-user-name">
-                                @(_userStateService.CurrentUser.FullName)
+                                @_userStateService.CurrentUser.FullName
                             </div>
-
 
                             <div class="header-user-role">
                                 @string.Join(
@@ -248,11 +286,14 @@
                     </div>
 
 
-                    @* =====================================
-                    LOGOUT
-                    ===================================== *@
+                    @* =================================
+                       LOGOUT
+                       ================================= *@
 
-                    <button type="button" class="header-logout" title="Đăng xuất" @onclick="HandleLogout">
+                    <button type="button"
+                            class="header-logout"
+                            title="Đăng xuất"
+                            @onclick="HandleLogout">
 
                         <i class="fas fa-sign-out-alt"></i>
 
@@ -265,8 +306,8 @@
 
 
         @* =============================================
-        MAIN CONTENT
-        ============================================= *@
+           MAIN CONTENT
+           ============================================= *@
 
         <main class="app-main">
 
@@ -286,21 +327,24 @@
 @code {
 
     // =====================================================
+    // SIDEBAR STATE
+    // =====================================================
+
+    private bool _isSidebarOpen;
+
+
+    // =====================================================
     // CHECK ROLE
     // =====================================================
 
-    private bool HasRole(
-        string roleName)
+    private bool HasRole(string roleName)
     {
-        var user =
-            _userStateService.CurrentUser;
-
+        var user = _userStateService.CurrentUser;
 
         if (user == null)
         {
             return false;
         }
-
 
         return user.Roles.Any(
             role =>
@@ -318,39 +362,32 @@
 
     private string GetDashboardUrl()
     {
-        var user =
-            _userStateService.CurrentUser;
-
+        var user = _userStateService.CurrentUser;
 
         if (user == null)
         {
             return "/";
         }
 
-
         if (HasRole("Admin"))
         {
             return "/admin";
         }
-
 
         if (HasRole("Doctor"))
         {
             return "/doctor";
         }
 
-
         if (HasRole("Receptionist"))
         {
             return "/reception";
         }
 
-
         if (HasRole("Patient"))
         {
             return "/patient";
         }
-
 
         return "/";
     }
@@ -362,43 +399,28 @@
 
     private async Task HandleLogout()
     {
-        await _userStateService
-            .LogoutAsync();
+        await _userStateService.LogoutAsync();
     }
+
 
     // =====================================================
     // GET USER INITIALS
-    //
-    // Ví dụ:
-    //
-    // "Trần Nguyên Khánh Vy"
-    // → TV
-    //
-    // "Nguyễn An"
-    // → NA
     // =====================================================
 
     private string GetUserInitials()
     {
         var fullName =
-            _userStateService
-                .CurrentUser?
-                .FullName;
-
+            _userStateService.CurrentUser?.FullName;
 
         if (string.IsNullOrWhiteSpace(fullName))
         {
             return "U";
         }
 
-
-        var nameParts =
-            fullName
-                .Split(
-                    ' ',
-                    StringSplitOptions.RemoveEmptyEntries
-                );
-
+        var nameParts = fullName.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries
+        );
 
         if (nameParts.Length == 1)
         {
@@ -407,39 +429,24 @@
                 .ToUpper();
         }
 
-
-        var firstInitial =
-            nameParts[0][0];
-
-        var lastInitial =
-            nameParts[^1][0];
-
+        var firstInitial = nameParts[0][0];
+        var lastInitial = nameParts[^1][0];
 
         return $"{firstInitial}{lastInitial}"
             .ToUpper();
     }
 
+
     // =====================================================
     // COMPONENT INITIALIZATION
     // =====================================================
 
-    protected override async Task
-        OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        _userStateService.OnChange +=
-            StateHasChanged;
+        _userStateService.OnChange += StateHasChanged;
 
-
-        await _userStateService
-            .LoadUserStateAsync();
+    //    await _userStateService.LoadUserStateAsync();
     }
-
-
-    // =====================================================
-    // SIDEBAR STATE
-    // =====================================================
-
-    private bool _isSidebarOpen;
 
 
     // =====================================================
@@ -448,8 +455,7 @@
 
     private void ToggleSidebar()
     {
-        _isSidebarOpen =
-            !_isSidebarOpen;
+        _isSidebarOpen = !_isSidebarOpen;
     }
 
 
@@ -459,9 +465,9 @@
 
     private void CloseSidebar()
     {
-        _isSidebarOpen =
-            false;
+        _isSidebarOpen = false;
     }
+
 
     // =====================================================
     // DISPOSE
@@ -469,7 +475,6 @@
 
     public void Dispose()
     {
-        _userStateService.OnChange -=
-            StateHasChanged;
+        _userStateService.OnChange -= StateHasChanged;
     }
 }

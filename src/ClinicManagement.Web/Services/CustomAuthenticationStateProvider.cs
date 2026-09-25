@@ -1,72 +1,53 @@
 using System.Security.Claims;
-using System.Text.Json;
 using ClinicManagementSystem.Application.DTOs.Auth;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.JSInterop;
 
 namespace ClinicManagementSystem.Web.Services;
+
+
+// =====================================================
+// CUSTOM AUTHENTICATION STATE PROVIDER
+// =====================================================
 
 public class CustomAuthenticationStateProvider
     : AuthenticationStateProvider
 {
-    private readonly ILocalStorageService _localStorageService;
-
     private readonly ClaimsPrincipal _anonymous =
         new(new ClaimsIdentity());
 
+    private AuthenticationState _authenticationState;
 
-    public CustomAuthenticationStateProvider(
-        ILocalStorageService localStorageService)
+
+    // =====================================================
+    // CONSTRUCTOR
+    // =====================================================
+
+    public CustomAuthenticationStateProvider()
     {
-        _localStorageService = localStorageService;
+        _authenticationState =
+            new AuthenticationState(_anonymous);
     }
 
 
     // =====================================================
-    // LẤY TRẠNG THÁI ĐĂNG NHẬP HIỆN TẠI
+    // GET CURRENT AUTHENTICATION STATE
+    //
+    // Không đọc LocalStorage ở đây.
+    // App.razor sẽ khôi phục LocalStorage sau khi
+    // Blazor đã interactive.
     // =====================================================
 
-    public override async Task<AuthenticationState>
+    public override Task<AuthenticationState>
         GetAuthenticationStateAsync()
     {
-        var accessToken = await _localStorageService.GetItemAsync<string>("accessToken");
-        var currentUserJson = await _localStorageService.GetItemAsync<string>("currentUser");
-
-
-        if (string.IsNullOrWhiteSpace(accessToken) ||
-            string.IsNullOrWhiteSpace(currentUserJson))
-        {
-            return new AuthenticationState(_anonymous);
-        }
-
-
-        try
-        {
-            var user =
-                JsonSerializer.Deserialize<AuthUserDTO>(
-                    currentUserJson
-                );
-
-
-            if (user == null)
-            {
-                return new AuthenticationState(_anonymous);
-            }
-
-
-            var principal = CreateClaimsPrincipal(user);
-
-            return new AuthenticationState(principal);
-        }
-        catch
-        {
-            return new AuthenticationState(_anonymous);
-        }
+        return Task.FromResult(
+            _authenticationState
+        );
     }
 
 
     // =====================================================
-    // THÔNG BÁO USER ĐÃ LOGIN
+    // MARK USER AS AUTHENTICATED
     // =====================================================
 
     public void MarkUserAsAuthenticated(
@@ -75,31 +56,36 @@ public class CustomAuthenticationStateProvider
         var principal =
             CreateClaimsPrincipal(user);
 
+        _authenticationState =
+            new AuthenticationState(principal);
 
         NotifyAuthenticationStateChanged(
             Task.FromResult(
-                new AuthenticationState(principal)
+                _authenticationState
             )
         );
     }
 
 
     // =====================================================
-    // THÔNG BÁO USER ĐÃ LOGOUT
+    // MARK USER AS LOGGED OUT
     // =====================================================
 
     public void MarkUserAsLoggedOut()
     {
+        _authenticationState =
+            new AuthenticationState(_anonymous);
+
         NotifyAuthenticationStateChanged(
             Task.FromResult(
-                new AuthenticationState(_anonymous)
+                _authenticationState
             )
         );
     }
 
 
     // =====================================================
-    // TẠO CLAIMS PRINCIPAL
+    // CREATE CLAIMS PRINCIPAL
     // =====================================================
 
     private ClaimsPrincipal CreateClaimsPrincipal(
@@ -119,7 +105,10 @@ public class CustomAuthenticationStateProvider
         };
 
 
-        // Add Role Claims
+        // =================================================
+        // ROLES
+        // =================================================
+
         foreach (var role in user.Roles)
         {
             claims.Add(
@@ -131,7 +120,10 @@ public class CustomAuthenticationStateProvider
         }
 
 
-        // DoctorId nếu user là Doctor
+        // =================================================
+        // DOCTOR ID
+        // =================================================
+
         if (user.DoctorId.HasValue)
         {
             claims.Add(
@@ -143,7 +135,10 @@ public class CustomAuthenticationStateProvider
         }
 
 
-        // PatientId nếu user là Patient
+        // =================================================
+        // PATIENT ID
+        // =================================================
+
         if (user.PatientId.HasValue)
         {
             claims.Add(
@@ -154,6 +149,10 @@ public class CustomAuthenticationStateProvider
             );
         }
 
+
+        // =================================================
+        // IDENTITY
+        // =================================================
 
         var identity =
             new ClaimsIdentity(
