@@ -5,10 +5,6 @@
 
     @if (!_isAuthenticationReady)
     {
-        @* =================================================
-           RESTORE AUTHENTICATION STATE
-           ================================================= *@
-
         <div class="container mt-4">
             <div class="alert alert-info">
                 Đang khôi phục phiên đăng nhập...
@@ -36,7 +32,6 @@
 
                 </AuthorizeRouteView>
 
-
                 <FocusOnNavigate RouteData="@routeData"
                                  Selector="h1" />
 
@@ -62,7 +57,7 @@
 @code {
 
     // =====================================================
-    // AUTHENTICATION READY
+    // AUTHENTICATION STATE
     // =====================================================
 
     private bool _isAuthenticationReady;
@@ -70,9 +65,6 @@
 
     // =====================================================
     // AFTER FIRST RENDER
-    //
-    // LocalStorage cần JSInterop nên chỉ đọc sau khi
-    // component đã interactive.
     // =====================================================
 
     protected override async Task OnAfterRenderAsync(
@@ -83,22 +75,37 @@
             return;
         }
 
+        try
+        {
+            // =================================================
+            // RESTORE USER STATE
+            // =================================================
 
-        // =================================================
-        // RESTORE USER STATE
-        // =================================================
+            await UserStateService.LoadUserStateAsync();
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // DEBUG
+            //
+            // Không để exception làm chết Blazor circuit.
+            // =================================================
 
-        await UserStateService.LoadUserStateAsync();
+            Console.WriteLine(
+                $"Restore authentication failed: {ex}"
+            );
+        }
+        finally
+        {
+            // =================================================
+            // AUTHORIZATION CAN CONTINUE
+            // =================================================
 
+            _isAuthenticationReady = true;
 
-        // =================================================
-        // AUTH READY
-        // =================================================
-
-        _isAuthenticationReady = true;
-
-        await InvokeAsync(
-            StateHasChanged
-        );
+            await InvokeAsync(
+                StateHasChanged
+            );
+        }
     }
 }
