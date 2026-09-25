@@ -89,6 +89,7 @@ builder.Services.AddScoped<PatientAppointmentStateService>();
 builder.Services.AddScoped<PatientRecordStateService>();
 builder.Services.AddScoped<PatientInvoiceStateService>();
 builder.Services.AddScoped<ReceptionAppointmentStateService>();
+builder.Services.AddScoped<ReceptionPatientStateService>();
 
 
 var app = builder.Build();
