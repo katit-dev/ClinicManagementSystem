@@ -348,3 +348,187 @@
         width: 100%;
     }
 }
+
+/* =====================================================
+   HEADER ACTION
+   ===================================================== */
+
+.patients-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.patients-create-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   PATIENT FORM
+   ===================================================== */
+
+.patient-form-card {
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+}
+
+.patient-form-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.patient-form-header h2 {
+    margin: 0 0 5px;
+    font-size: 20px;
+}
+
+.patient-form-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.patient-form-close {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.patient-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 22px;
+}
+
+.patient-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.patient-form-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.patient-form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.patient-form-input:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+
+.patient-form-full {
+    grid-column: 1 / -1;
+}
+
+.patient-form-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+
+/* =====================================================
+   FORM ACTIONS
+   ===================================================== */
+
+.patient-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 20px;
+}
+
+.patient-form-cancel,
+.patient-form-save {
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.patient-form-cancel {
+    border: 1px solid #d1d5db;
+    background: white;
+}
+
+.patient-form-save {
+    border: none;
+    background: #2563eb;
+    color: white;
+}
+
+.patient-form-cancel:disabled,
+.patient-form-save:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.patients-success {
+    padding: 12px 14px;
+    margin-top: 18px;
+    border-radius: 8px;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+
+/* =====================================================
+   FORM RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .patients-header {
+        flex-direction: column;
+    }
+
+    .patients-create-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .patient-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-form-full {
+        grid-column: auto;
+    }
+
+    .patient-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .patient-form-cancel,
+    .patient-form-save {
+        width: 100%;
+    }
+}

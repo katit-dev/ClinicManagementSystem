@@ -19,12 +19,20 @@
     @* =====================================================
        HEADER
        ===================================================== *@
-
     <div class="patients-header">
+
         <div>
             <h1>Hồ sơ bệnh nhân</h1>
             <p>Tra cứu và quản lý hồ sơ bệnh nhân tại phòng khám.</p>
         </div>
+
+        <button type="button" class="patients-create-button" @onclick="OpenCreateForm">
+
+            <i class="fas fa-plus"></i>
+            Tạo bệnh nhân mới
+
+        </button>
+
     </div>
 
 
@@ -61,6 +69,199 @@
 
     </div>
 
+    @* =====================================================
+   CREATE PATIENT
+   ===================================================== *@
+
+    @if (_showCreateForm)
+    {
+        <div class="patient-form-card">
+
+            <div class="patient-form-header">
+
+                <div>
+                    <h2>Tạo hồ sơ bệnh nhân</h2>
+                    <p>Bệnh nhân được tạo tại quầy tiếp đón và chưa cần có tài khoản.</p>
+                </div>
+
+                <button type="button" class="patient-form-close" @onclick="CloseCreateForm">
+                    ✕
+                </button>
+
+            </div>
+
+
+            <EditForm Model="_createPatientRequest" OnValidSubmit="HandleCreatePatientAsync">
+
+                <DataAnnotationsValidator />
+
+
+                <div class="patient-form-grid">
+
+                    @* =================================================
+                   FULL NAME
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>Họ và tên *</label>
+
+                        <InputText class="patient-form-input" @bind-Value="_createPatientRequest.FullName" />
+
+                        <ValidationMessage For="@(() => _createPatientRequest.FullName)" />
+                    </div>
+
+
+                    @* =================================================
+                   PHONE
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>Số điện thoại *</label>
+
+                        <InputText class="patient-form-input" @bind-Value="_createPatientRequest.Phone" />
+
+                        <ValidationMessage For="@(() => _createPatientRequest.Phone)" />
+                    </div>
+
+
+                    @* =================================================
+                   GENDER
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>Giới tính</label>
+
+                        <InputSelect class="patient-form-input" @bind-Value="_createPatientRequest.Gender">
+
+                            <option value="">-- Chọn giới tính --</option>
+                            <option value="1">Nam</option>
+                            <option value="0">Nữ</option>
+                            <option value="2">Khác</option>
+
+                        </InputSelect>
+                    </div>
+
+
+                    @* =================================================
+                   DATE OF BIRTH
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>Ngày sinh</label>
+
+                        <InputDate class="patient-form-input" @bind-Value="_createPatientRequest.DateOfBirth" />
+                    </div>
+
+
+                    @* =================================================
+                   EMAIL
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>Email</label>
+
+                        <InputText class="patient-form-input" @bind-Value="_createPatientRequest.Email" />
+                    </div>
+
+
+                    @* =================================================
+                   NATIONAL ID
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>CCCD</label>
+
+                        <InputText class="patient-form-input" @bind-Value="_createPatientRequest.NationalId" />
+                    </div>
+
+
+                    @* =================================================
+                   INSURANCE
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>Số BHYT</label>
+
+                        <InputText class="patient-form-input" @bind-Value="_createPatientRequest.InsuranceNumber" />
+                    </div>
+
+
+                    @* =================================================
+                   BLOOD TYPE
+                   ================================================= *@
+
+                    <div class="patient-form-field">
+                        <label>Nhóm máu</label>
+
+                        <InputText class="patient-form-input" @bind-Value="_createPatientRequest.BloodType" />
+                    </div>
+
+
+                    @* =================================================
+                   ADDRESS
+                   ================================================= *@
+
+                    <div class="patient-form-field patient-form-full">
+                        <label>Địa chỉ</label>
+
+                        <InputTextArea class="patient-form-input patient-form-textarea"
+                                       @bind-Value="_createPatientRequest.Address" />
+                    </div>
+
+                </div>
+
+
+                @* =================================================
+               ACTION MESSAGE
+               ================================================= *@
+
+                @if (!string.IsNullOrWhiteSpace(PatientState.ActionErrorMessage))
+                {
+                    <div class="patients-error">
+                        @PatientState.ActionErrorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(PatientState.ActionMessage))
+                {
+                    <div class="patients-success">
+                        @PatientState.ActionMessage
+                    </div>
+                }
+
+
+                @* =================================================
+               ACTIONS
+               ================================================= *@
+
+                <div class="patient-form-actions">
+
+                    <button type="button" class="patient-form-cancel" disabled="@PatientState.IsSubmitting"
+                            @onclick="CloseCreateForm">
+
+                        Hủy
+
+                    </button>
+
+                    <button type="submit" class="patient-form-save" disabled="@PatientState.IsSubmitting">
+
+                        @if (PatientState.IsSubmitting)
+                        {
+                            <span>Đang lưu...</span>
+                        }
+                        else
+                        {
+                            <span>Lưu bệnh nhân</span>
+                        }
+
+                    </button>
+
+                </div>
+
+            </EditForm>
+
+        </div>
+    }
 
     @* =====================================================
        ERROR
@@ -313,6 +514,14 @@
 @code {
 
     // =====================================================
+    // CREATE PATIENT FORM - state
+    // =====================================================
+
+    private bool _showCreateForm;
+
+    private PatientRequestDTO _createPatientRequest = new();
+
+    // =====================================================
     // SEARCH
     // =====================================================
 
@@ -330,6 +539,57 @@
         SearchKeyword = PatientState.Keyword;
 
         await PatientState.LoadPatientsAsync();
+    }
+
+    // =====================================================
+    // OPEN CREATE FORM
+    // =====================================================
+
+    private void OpenCreateForm()
+    {
+        _createPatientRequest = new PatientRequestDTO();
+
+        _showCreateForm = true;
+    }
+
+
+    // =====================================================
+    // CLOSE CREATE FORM
+    // =====================================================
+
+    private void CloseCreateForm()
+    {
+        if (PatientState.IsSubmitting)
+        {
+            return;
+        }
+
+        _showCreateForm = false;
+
+        _createPatientRequest = new PatientRequestDTO();
+    }
+
+
+    // =====================================================
+    // CREATE PATIENT
+    // =====================================================
+
+    private async Task HandleCreatePatientAsync()
+    {
+        var success =
+            await PatientState.CreatePatientAsync(
+                _createPatientRequest
+            );
+
+        if (!success)
+        {
+            return;
+        }
+
+        _showCreateForm = false;
+
+        _createPatientRequest =
+            new PatientRequestDTO();
     }
 
     // =====================================================
