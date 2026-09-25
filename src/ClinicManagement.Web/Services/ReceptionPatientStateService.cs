@@ -426,6 +426,7 @@ public class ReceptionPatientStateService
         ActionMessage = string.Empty;
         ActionErrorMessage = string.Empty;
         IsSubmitting = false;
+        IsEditing = false;
 
         StateHasChanged();
     }

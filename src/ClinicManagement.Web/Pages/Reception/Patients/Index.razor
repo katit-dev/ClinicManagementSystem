@@ -461,8 +461,76 @@
             {
                 <div class="patient-detail-grid">
 
-                    ...
-                    giữ nguyên phần hiển thị hiện tại
+                    <div class="patient-detail-item">
+                        <label>Họ và tên</label>
+                        <span>
+                            @patient.FullName
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item">
+                        <label>Giới tính</label>
+                        <span>
+                            @GetGenderText(patient.Gender)
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item">
+                        <label>Ngày sinh</label>
+                        <span>
+                            @FormatDateOfBirth(patient.DateOfBirth)
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item">
+                        <label>Số điện thoại</label>
+                        <span>
+                            @GetDisplayValue(patient.Phone)
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item">
+                        <label>Email</label>
+                        <span>
+                            @GetDisplayValue(patient.Email)
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item">
+                        <label>Nhóm máu</label>
+                        <span>
+                            @GetDisplayValue(patient.BloodType)
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item">
+                        <label>CCCD</label>
+                        <span>
+                            @GetDisplayValue(patient.NationalId)
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item">
+                        <label>Số BHYT</label>
+                        <span>
+                            @GetDisplayValue(patient.InsuranceNumber)
+                        </span>
+                    </div>
+
+
+                    <div class="patient-detail-item patient-detail-full">
+                        <label>Địa chỉ</label>
+                        <span>
+                            @GetDisplayValue(patient.Address)
+                        </span>
+                    </div>
 
                 </div>
 
@@ -688,32 +756,32 @@
 
     private async Task HandleUpdatePatientAsync()
     {
+        Console.WriteLine("========== UPDATE START ==========");
+
         if (PatientState.SelectedPatient == null)
         {
+            Console.WriteLine("NO PATIENT");
             return;
         }
-
-
-        var patientId =
-            PatientState.SelectedPatient.Id;
 
 
         var success =
             await PatientState.UpdatePatientAsync(
-                patientId,
+                PatientState.SelectedPatient.Id,
                 _editPatientRequest
             );
 
 
-        if (!success)
+        Console.WriteLine($"UPDATE RESULT: {success}");
+
+
+        if (success)
         {
-            return;
+            _showEditForm = false;
         }
-
-
-        _showEditForm = false;
     }
 
+    
     // =====================================================
     // OPEN EDIT FORM
     // =====================================================
