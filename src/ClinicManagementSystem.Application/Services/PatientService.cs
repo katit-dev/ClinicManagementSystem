@@ -273,14 +273,69 @@ public class PatientService : IPatientService
 
             // =================================================
             // UPDATE
-            //
-            // Sẽ thực hiện ở bước 6.6.3.
             // =================================================
+
+            patient.FullName = fullName;
+
+            patient.Gender = request.Gender;
+
+            patient.DateOfBirth = request.DateOfBirth;
+
+            patient.Phone = phone;
+
+            patient.Email = email;
+
+            patient.Address = address;
+
+            patient.NationalId = nationalId;
+
+            patient.InsuranceNumber = insuranceNumber;
+
+            patient.BloodType = bloodType;
+
+
+            // =================================================
+            // SAVE CHANGE
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+            // =================================================
+            // RETURN UPDATED PATIENT
+            // =================================================
+
+            var patientDTO = new PatientDTO
+            {
+                Id = patient.Id,
+
+                PatientCode = patient.PatientCode,
+
+                FullName = patient.FullName,
+
+                Gender = patient.Gender,
+
+                DateOfBirth = patient.DateOfBirth,
+
+                Phone = patient.Phone,
+
+                Email = patient.Email,
+
+                Address = patient.Address,
+
+                NationalId = patient.NationalId,
+
+                InsuranceNumber = patient.InsuranceNumber,
+
+                BloodType = patient.BloodType
+            };
+
 
             return new HttpResponseData<PatientDTO>
             {
-                StatusCode = 501,
-                Message = "Dữ liệu hợp lệ. Chức năng cập nhật đang được triển khai."
+                StatusCode = 200,
+                Message = "Cập nhật hồ sơ bệnh nhân thành công.",
+                Content = patientDTO
             };
         }
         catch (Exception ex)
