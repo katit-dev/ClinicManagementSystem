@@ -271,11 +271,7 @@ public class ReceptionPatientStateService
 
             StateHasChanged();
 
-
-            // =================================================
             // REQUEST
-            // =================================================
-
             var content = JsonContent.Create(request);
 
             var response =
@@ -284,21 +280,14 @@ public class ReceptionPatientStateService
                     content
                 );
 
-
-            // =================================================
             // READ RESPONSE
-            // =================================================
-
             var result =
                 await response.Content
                     .ReadFromJsonAsync<
                         HttpResponseData<PatientDTO>>();
 
 
-            // =================================================
             // ERROR
-            // =================================================
-
             if (!response.IsSuccessStatusCode ||
                 result?.Content == null)
             {
@@ -310,19 +299,13 @@ public class ReceptionPatientStateService
             }
 
 
-            // =================================================
             // SUCCESS
-            // =================================================
-
             ActionMessage = result.Message;
 
             SelectedPatient = result.Content;
 
 
-            // =================================================
             // RELOAD PATIENT LIST
-            // =================================================
-
             CurrentPage = 1;
 
             await LoadPatientsAsync();
