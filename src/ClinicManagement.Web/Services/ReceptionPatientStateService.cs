@@ -529,6 +529,7 @@ public class ReceptionPatientStateService
     public void ClearSelectedPatient()
     {
         SelectedPatient = null;
+        Allergies.Clear();
 
         StateHasChanged();
     }
