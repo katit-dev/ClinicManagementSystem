@@ -20,6 +20,8 @@ public interface IPatientService
 
     Task<HttpResponseData<PatientAllergyDTO>> AddPatientAllergyAsync(int patientId, PatientAllergyRequestDTO request);
 
+    Task<HttpResponseData<List<PatientAllergyDTO>>> GetPatientAllergiesAsync(int patientId);
+
 }
 
 public class PatientService : IPatientService
