@@ -349,8 +349,7 @@ public class ReceptionPatientStateService
             // REQUEST
             // =================================================
 
-            var content =
-                JsonContent.Create(request);
+            var content = JsonContent.Create(request);
 
 
             var response =
@@ -381,20 +380,14 @@ public class ReceptionPatientStateService
                 return false;
             }
 
-
-
             // =================================================
             // SUCCESS
             // =================================================
 
-            ActionMessage =
-                result.Message;
+            ActionMessage = result.Message;
 
 
-            SelectedPatient =
-                result.Content;
-
-
+            SelectedPatient = result.Content;
 
             // =================================================
             // RELOAD LIST
