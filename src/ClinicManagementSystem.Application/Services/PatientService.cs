@@ -39,6 +39,81 @@ public class PatientService : IPatientService
         _logger = logger;
     }
 
+    // =====================================================
+    // DELETE PATIENT ALLERGY
+    // =====================================================
+
+    public async Task<HttpResponseData<object>>
+        DeletePatientAllergyAsync(
+            int allergyId)
+    {
+        try
+        {
+            // =================================================
+            // FIND ALLERGY
+            // =================================================
+
+            var allergy =
+                await _unitOfWork.PatientAllergyRepository
+                    .WhereSql(a =>
+                        a.Id == allergyId)
+                    .FirstOrDefaultAsync();
+
+
+            if (allergy == null)
+            {
+                return new HttpResponseData<object>
+                {
+                    StatusCode = 404,
+
+                    Message = "Không tìm thấy thông tin dị ứng."
+                };
+            }
+
+
+
+            // =================================================
+            // DELETE
+            // =================================================
+
+            _unitOfWork.PatientAllergyRepository
+                .Remove(allergy);
+
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+
+            return new HttpResponseData<object>
+            {
+                StatusCode = 200,
+
+                Message = "Xóa thông tin dị ứng thành công."
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to delete patient allergy. AllergyId:{AllergyId}",
+                allergyId
+            );
+
+
+            return new HttpResponseData<object>
+            {
+                StatusCode = 500,
+
+                Message = "Không thể xóa thông tin dị ứng."
+            };
+        }
+    }
+
     public async Task<HttpResponseData<List<PatientAllergyDTO>>>
     GetPatientAllergiesAsync(int patientId)
     {
