@@ -79,22 +79,39 @@ public class PatientController : ControllerBase
     }
 
     // =====================================================
-// ADD PATIENT ALLERGY
-//
-// POST:
-// /api/patients/{id}/allergies
-// =====================================================
+    // ADD PATIENT ALLERGY
+    //
+    // POST:
+    // /api/patients/{id}/allergies
+    // =====================================================
 
-[HttpPost("{id}/allergies")]
-[Authorize(Roles = "Receptionist")]
-public async Task<IActionResult> AddPatientAllergy(
-    int id,
-    [FromBody] PatientAllergyRequestDTO request)
-{
-    var result = await _patientService.AddPatientAllergyAsync(id, request);
+    [HttpPost("{id}/allergies")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> AddPatientAllergy(
+        int id,
+        [FromBody] PatientAllergyRequestDTO request)
+    {
+        var result = await _patientService.AddPatientAllergyAsync(id, request);
 
-    return StatusCode(result.StatusCode, result);
-}
+        return StatusCode(result.StatusCode, result);
+    }
+
+    // =====================================================
+    // GET PATIENT ALLERGIES
+    //
+    // GET:
+    // /api/patients/{id}/allergies
+    // =====================================================
+
+    [HttpGet("{id}/allergies")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> GetPatientAllergies(
+        int id)
+    {
+        var result = await _patientService.GetPatientAllergiesAsync(id);
+
+        return StatusCode(result.StatusCode, result);
+    }
 
 
 }
