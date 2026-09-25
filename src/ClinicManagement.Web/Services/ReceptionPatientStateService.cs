@@ -53,6 +53,13 @@ public class ReceptionPatientStateService
 
     public Action? OnChange { get; set; }
 
+    // ACTION STATE
+    public bool IsSubmitting { get; private set; }
+
+    public string ActionMessage { get; private set; } = string.Empty;
+
+    public string ActionErrorMessage { get; private set; } = string.Empty;
+
 
     // =====================================================
     // CONSTRUCTOR
@@ -64,6 +71,98 @@ public class ReceptionPatientStateService
         _authorizedApiService = authorizedApiService;
     }
 
+    // =====================================================
+    // CREATE PATIENT
+    // =====================================================
+
+    public async Task<bool> CreatePatientAsync(
+        PatientRequestDTO request)
+    {
+        try
+        {
+            // =================================================
+            // START
+            // =================================================
+
+            IsSubmitting = true;
+
+            ActionMessage = string.Empty;
+            ActionErrorMessage = string.Empty;
+
+            StateHasChanged();
+
+
+            // =================================================
+            // REQUEST
+            // =================================================
+
+            var content = JsonContent.Create(request);
+
+            var response =
+                await _authorizedApiService.PostAsync(
+                    "/api/patients",
+                    content
+                );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<PatientDTO>>();
+
+
+            // =================================================
+            // ERROR
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                result?.Content == null)
+            {
+                ActionErrorMessage =
+                    result?.Message ??
+                    "Không thể tạo hồ sơ bệnh nhân.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage = result.Message;
+
+            SelectedPatient = result.Content;
+
+
+            // =================================================
+            // RELOAD PATIENT LIST
+            // =================================================
+
+            CurrentPage = 1;
+
+            await LoadPatientsAsync();
+
+            return true;
+        }
+        catch (Exception)
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
 
     // =====================================================
     // LOAD PATIENTS
@@ -228,6 +327,10 @@ public class ReceptionPatientStateService
 
         ErrorMessage = string.Empty;
         IsLoading = false;
+
+        ActionMessage = string.Empty;
+        ActionErrorMessage = string.Empty;
+        IsSubmitting = false;
 
         StateHasChanged();
     }
