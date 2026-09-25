@@ -538,7 +538,7 @@
 
 
                     <h2 class="patient-section-title">
-                        TIỀN SỬ DỊ ỨNG — PATIENT_ALLERGIES
+                        TIỀN SỬ DỊ ỨNG
                     </h2>
 
 
@@ -1056,9 +1056,13 @@
         }
 
 
+        var patientId =
+            PatientState.SelectedPatient.Id;
+
+
         var success =
             await PatientState.AddPatientAllergyAsync(
-                PatientState.SelectedPatient.Id,
+                patientId,
                 _allergyRequest
             );
 
@@ -1069,12 +1073,19 @@
         }
 
 
+        // reload allergy mới thêm
+        await PatientState.LoadPatientAllergiesAsync(
+            patientId
+        );
+
+
         _showAllergyForm = false;
 
 
         _allergyRequest =
             new PatientAllergyRequestDTO();
     }
+
 
     // =====================================================
     // UPDATE PATIENT
