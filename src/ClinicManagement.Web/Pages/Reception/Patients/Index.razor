@@ -34,28 +34,21 @@
 
     <div class="patients-search-card">
 
-        <form @onsubmit="HandleSearchAsync"
-              @onsubmit:preventDefault>
+        <form @onsubmit="HandleSearchAsync" @onsubmit:preventDefault>
 
             <div class="patients-search-row">
 
-                <input type="text"
-                       class="patients-search-input"
-                       placeholder="Tìm theo tên, số điện thoại hoặc mã bệnh nhân..."
-                       @bind="SearchKeyword"
+                <input type="text" class="patients-search-input"
+                       placeholder="Tìm theo tên, số điện thoại hoặc mã bệnh nhân..." @bind="SearchKeyword"
                        @bind:event="oninput" />
 
-                <button type="submit"
-                        class="patients-search-button"
-                        disabled="@PatientState.IsLoading">
+                <button type="submit" class="patients-search-button" disabled="@PatientState.IsLoading">
 
                     Tìm kiếm
 
                 </button>
 
-                <button type="button"
-                        class="patients-reset-button"
-                        disabled="@PatientState.IsLoading"
+                <button type="button" class="patients-reset-button" disabled="@PatientState.IsLoading"
                         @onclick="HandleResetAsync">
 
                     Đặt lại
@@ -129,6 +122,7 @@
                             <th>Số điện thoại</th>
                             <th>CCCD</th>
                             <th>BHYT</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
 
@@ -164,6 +158,13 @@
                                 <td>
                                     @GetDisplayValue(patient.InsuranceNumber)
                                 </td>
+
+                                <td>
+                                    <button type="button" class="patients-view-button"
+                                            @onclick="() => HandleSelectPatient(patient)">
+                                        Xem
+                                    </button>
+                                </td>
                             </tr>
                         }
 
@@ -184,9 +185,7 @@
         {
             <div class="patients-pagination">
 
-                <button type="button"
-                        disabled="@(PatientState.CurrentPage <= 1)"
-                        @onclick="PreviousPageAsync">
+                <button type="button" disabled="@(PatientState.CurrentPage <= 1)" @onclick="PreviousPageAsync">
 
                     ← Trước
 
@@ -201,8 +200,7 @@
                 </span>
 
 
-                <button type="button"
-                        disabled="@(PatientState.CurrentPage >= PatientState.TotalPages)"
+                <button type="button" disabled="@(PatientState.CurrentPage >= PatientState.TotalPages)"
                         @onclick="NextPageAsync">
 
                     Sau →
@@ -212,6 +210,102 @@
         }
 
     </div>
+
+    @* =====================================================
+   PATIENT DETAIL
+   ===================================================== *@
+
+    @if (PatientState.SelectedPatient is not null)
+    {
+        var patient = PatientState.SelectedPatient;
+
+        <div class="patient-detail-card">
+
+            <div class="patient-detail-header">
+
+                <div>
+                    <h2>Thông tin bệnh nhân</h2>
+
+                    <span>
+                        @patient.PatientCode
+                    </span>
+                </div>
+
+                <button type="button" class="patient-detail-close" @onclick="HandleClearSelectedPatient">
+                    ✕
+                </button>
+
+            </div>
+
+
+            <div class="patient-detail-grid">
+
+                <div class="patient-detail-item">
+                    <label>Họ và tên</label>
+                    <span>@patient.FullName</span>
+                </div>
+
+                <div class="patient-detail-item">
+                    <label>Giới tính</label>
+                    <span>@GetGenderText(patient.Gender)</span>
+                </div>
+
+                <div class="patient-detail-item">
+                    <label>Ngày sinh</label>
+                    <span>@FormatDateOfBirth(patient.DateOfBirth)</span>
+                </div>
+
+                <div class="patient-detail-item">
+                    <label>Số điện thoại</label>
+                    <span>@GetDisplayValue(patient.Phone)</span>
+                </div>
+
+                <div class="patient-detail-item">
+                    <label>Email</label>
+                    <span>@GetDisplayValue(patient.Email)</span>
+                </div>
+
+                <div class="patient-detail-item">
+                    <label>Nhóm máu</label>
+                    <span>@GetDisplayValue(patient.BloodType)</span>
+                </div>
+
+                <div class="patient-detail-item">
+                    <label>CCCD</label>
+                    <span>@GetDisplayValue(patient.NationalId)</span>
+                </div>
+
+                <div class="patient-detail-item">
+                    <label>Số BHYT</label>
+                    <span>@GetDisplayValue(patient.InsuranceNumber)</span>
+                </div>
+
+                <div class="patient-detail-item patient-detail-full">
+                    <label>Địa chỉ</label>
+                    <span>@GetDisplayValue(patient.Address)</span>
+                </div>
+
+            </div>
+
+
+            <div class="patient-detail-actions">
+
+                <button type="button" class="patient-edit-button">
+                    Sửa hồ sơ
+                </button>
+
+                <button type="button" class="patient-allergy-button">
+                    Thêm dị ứng
+                </button>
+
+                <button type="button" class="patient-record-button">
+                    Xem lịch sử khám
+                </button>
+
+            </div>
+
+        </div>
+    }
 
 </div>
 
@@ -238,6 +332,24 @@
         await PatientState.LoadPatientsAsync();
     }
 
+    // =====================================================
+    // SELECT PATIENT
+    // =====================================================
+
+    private void HandleSelectPatient(PatientDTO patient)
+    {
+        PatientState.SelectPatient(patient);
+    }
+
+
+    // =====================================================
+    // CLEAR SELECTED PATIENT
+    // =====================================================
+
+    private void HandleClearSelectedPatient()
+    {
+        PatientState.ClearSelectedPatient();
+    }
 
     // =====================================================
     // SEARCH

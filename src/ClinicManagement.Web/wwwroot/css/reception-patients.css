@@ -198,3 +198,153 @@
         width: 100%;
     }
 }
+
+/* =====================================================
+   SELECT PATIENT
+   ===================================================== */
+
+.patients-view-button {
+    padding: 7px 14px;
+    border: 1px solid #2563eb;
+    border-radius: 7px;
+    background: white;
+    color: #2563eb;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.patients-view-button:hover {
+    background: #eff6ff;
+}
+
+.patients-selected-row {
+    background: #eff6ff !important;
+}
+
+
+/* =====================================================
+   PATIENT DETAIL
+   ===================================================== */
+
+.patient-detail-card {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+}
+
+.patient-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.patient-detail-header h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+}
+
+.patient-detail-header span {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.patient-detail-close {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    color: #64748b;
+}
+
+.patient-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+    padding: 20px 0;
+}
+
+.patient-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.patient-detail-item label {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.patient-detail-item span {
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.patient-detail-full {
+    grid-column: 1 / -1;
+}
+
+
+/* =====================================================
+   DETAIL ACTIONS
+   ===================================================== */
+
+.patient-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.patient-edit-button,
+.patient-allergy-button,
+.patient-record-button {
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.patient-edit-button {
+    border: none;
+    background: #2563eb;
+    color: white;
+}
+
+.patient-allergy-button,
+.patient-record-button {
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #334155;
+}
+
+
+/* =====================================================
+   RESPONSIVE DETAIL
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .patient-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-detail-full {
+        grid-column: auto;
+    }
+
+    .patient-detail-actions {
+        flex-direction: column;
+    }
+
+    .patient-edit-button,
+    .patient-allergy-button,
+    .patient-record-button {
+        width: 100%;
+    }
+}
