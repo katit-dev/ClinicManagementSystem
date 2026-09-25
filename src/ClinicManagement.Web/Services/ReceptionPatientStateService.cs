@@ -62,6 +62,8 @@ public class ReceptionPatientStateService
 
     public bool IsEditing { get; private set; }
 
+    public bool IsAddingAllergy { get; private set; }
+
 
     // =====================================================
     // CONSTRUCTOR
@@ -71,6 +73,89 @@ public class ReceptionPatientStateService
         AuthorizedApiService authorizedApiService)
     {
         _authorizedApiService = authorizedApiService;
+    }
+
+    // =====================================================
+    // ADD PATIENT ALLERGY
+    // =====================================================
+
+    public async Task<bool> AddPatientAllergyAsync(
+        int patientId,
+        PatientAllergyRequestDTO request)
+    {
+        try
+        {
+            IsAddingAllergy = true;
+
+            ActionMessage = string.Empty;
+            ActionErrorMessage = string.Empty;
+
+            StateHasChanged();
+
+
+            // =================================================
+            // REQUEST
+            // =================================================
+
+            var content =
+                JsonContent.Create(request);
+
+
+            var response =
+                await _authorizedApiService.PostAsync(
+                    $"/api/patients/{patientId}/allergies",
+                    content
+                );
+
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<PatientAllergyDTO>>();
+
+
+
+
+            // =================================================
+            // ERROR
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                result?.Content == null)
+            {
+                ActionErrorMessage =
+                    result?.Message ??
+                    "Không thể thêm dị ứng.";
+
+                return false;
+            }
+
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                result.Message;
+
+
+            return true;
+        }
+        catch (Exception)
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsAddingAllergy = false;
+
+            StateHasChanged();
+        }
     }
 
     // =====================================================
