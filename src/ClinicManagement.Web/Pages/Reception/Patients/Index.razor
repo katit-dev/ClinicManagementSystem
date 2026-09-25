@@ -536,13 +536,10 @@
 
                 <div class="patient-allergy-section">
 
-                    <div class="patient-section-header">
 
-                        <h3>
-                            Dị ứng
-                        </h3>
-
-                    </div>
+                    <h2 class="patient-section-title">
+                        TIỀN SỬ DỊ ỨNG — PATIENT_ALLERGIES
+                    </h2>
 
 
 
@@ -556,52 +553,97 @@
                     }
                     else
                     {
-                        <div class="patient-allergy-list">
+
+                        <table class="patient-allergy-table">
 
 
-                            @foreach (var allergy in PatientState.Allergies)
-                            {
-                                <div class="patient-allergy-item">
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Dị nguyên
+                                    </th>
 
 
-                                    <div class="patient-allergy-name">
-
-                                        <i class="fas fa-exclamation-triangle"></i>
-
-                                        @allergy.Allergen
-
-                                    </div>
+                                    <th>
+                                        Mức độ
+                                    </th>
 
 
-                                    <div>
+                                    <th>
+                                        Ghi chú
+                                    </th>
 
-                                        Mức độ:
 
-                                        <strong>
-                                            @GetSeverityText(
-                                                allergy.Severity
+                                    <th>
+                        
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+
+                            <tbody>
+
+
+                                @foreach (var allergy in PatientState.Allergies)
+                                {
+
+                                    <tr>
+
+                                        <td>
+                                            @allergy.Allergen
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="
+                                                allergy-severity 
+                                                severity-@allergy.Severity">
+
+                                                @GetSeverityText(
+                                                    allergy.Severity
+                                                )
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            @GetDisplayValue(
+                                                allergy.Note
                                             )
-                                        </strong>
 
-                                    </div>
-
-
-                                    <div>
-
-                                        Ghi chú:
-
-                                        @GetDisplayValue(
-                                            allergy.Note
-                                        )
-
-                                    </div>
+                                        </td>
 
 
-                                </div>
-                            }
+                                        <td>
+
+                                            <button class="allergy-delete-button">
+
+                                                Xoá
+
+                                            </button>
+
+                                        </td>
 
 
-                        </div>
+                                    </tr>
+
+                                }
+
+
+                            </tbody>
+
+
+                        </table>
+
                     }
 
 
