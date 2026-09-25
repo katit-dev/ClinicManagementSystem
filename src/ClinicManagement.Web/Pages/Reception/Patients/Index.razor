@@ -279,120 +279,7 @@
         </div>
     }
 
-    @if (_showEditForm)
-    {
-        <div class="patient-form-card">
-
-            <div class="patient-form-header">
-
-                <div>
-                    <h2>
-                        Chỉnh sửa hồ sơ bệnh nhân
-                    </h2>
-
-                    <p>
-                        Cập nhật thông tin bệnh nhân.
-                    </p>
-                </div>
-
-            </div>
-
-
-            <EditForm Model="_editPatientRequest" OnValidSubmit="HandleUpdatePatientAsync">
-
-                <div class="patient-form-grid">
-
-
-                    <div class="patient-form-field">
-
-                        <label>
-                            Họ và tên
-                        </label>
-
-
-                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.FullName" />
-
-                    </div>
-
-
-
-                    <div class="patient-form-field">
-
-                        <label>
-                            Số điện thoại
-                        </label>
-
-
-                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.Phone" />
-
-                    </div>
-
-
-
-                    <div class="patient-form-field">
-
-                        <label>
-                            Email
-                        </label>
-
-
-                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.Email" />
-
-                    </div>
-
-
-
-                    <div class="patient-form-field">
-
-                        <label>
-                            CCCD
-                        </label>
-
-
-                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.NationalId" />
-
-                    </div>
-
-
-                </div>
-
-
-
-                <div class="patient-form-actions">
-
-                    <button type="button" class="patient-form-cancel" @onclick="() => _showEditForm = false">
-
-                        Hủy
-
-                    </button>
-
-
-                    <button type="submit" class="patient-form-save" disabled="@PatientState.IsEditing">
-
-
-                        @if (PatientState.IsEditing)
-                        {
-                            <span>
-                                Đang lưu...
-                            </span>
-                        }
-                        else
-                        {
-                            <span>
-                                Lưu thay đổi
-                            </span>
-                        }
-
-
-                    </button>
-
-                </div>
-
-
-            </EditForm>
-
-        </div>
-    }
+    
 
     @* =====================================================
        ERROR
@@ -570,75 +457,208 @@
             </div>
 
 
-            <div class="patient-detail-grid">
+            @if (!_showEditForm)
+            {
+                <div class="patient-detail-grid">
 
-                <div class="patient-detail-item">
-                    <label>Họ và tên</label>
-                    <span>@patient.FullName</span>
+                    ...
+                    giữ nguyên phần hiển thị hiện tại
+
                 </div>
 
-                <div class="patient-detail-item">
-                    <label>Giới tính</label>
-                    <span>@GetGenderText(patient.Gender)</span>
+
+                <div class="patient-detail-actions">
+
+                    <button class="patient-edit-button" @onclick="OpenEditForm">
+
+                        <i class="fas fa-edit"></i>
+
+                        Sửa hồ sơ
+
+                    </button>
+
+
+                    <button type="button" class="patient-allergy-button">
+
+                        Thêm dị ứng
+
+                    </button>
+
+
+                    <button type="button" class="patient-record-button">
+
+                        Xem lịch sử khám
+
+                    </button>
+
                 </div>
+            }
+            else
+            {
+                <EditForm Model="_editPatientRequest" OnValidSubmit="HandleUpdatePatientAsync">
 
-                <div class="patient-detail-item">
-                    <label>Ngày sinh</label>
-                    <span>@FormatDateOfBirth(patient.DateOfBirth)</span>
-                </div>
-
-                <div class="patient-detail-item">
-                    <label>Số điện thoại</label>
-                    <span>@GetDisplayValue(patient.Phone)</span>
-                </div>
-
-                <div class="patient-detail-item">
-                    <label>Email</label>
-                    <span>@GetDisplayValue(patient.Email)</span>
-                </div>
-
-                <div class="patient-detail-item">
-                    <label>Nhóm máu</label>
-                    <span>@GetDisplayValue(patient.BloodType)</span>
-                </div>
-
-                <div class="patient-detail-item">
-                    <label>CCCD</label>
-                    <span>@GetDisplayValue(patient.NationalId)</span>
-                </div>
-
-                <div class="patient-detail-item">
-                    <label>Số BHYT</label>
-                    <span>@GetDisplayValue(patient.InsuranceNumber)</span>
-                </div>
-
-                <div class="patient-detail-item patient-detail-full">
-                    <label>Địa chỉ</label>
-                    <span>@GetDisplayValue(patient.Address)</span>
-                </div>
-
-            </div>
+                    <DataAnnotationsValidator />
 
 
-            <div class="patient-detail-actions">
+                    <div class="patient-form-grid">
 
-                <button class="patient-edit-button" @onclick="OpenEditForm">
 
-                    <i class="fas fa-edit"></i>
+                        <div class="patient-form-field">
 
-                    Sửa hồ sơ
+                            <label>
+                                Họ và tên
+                            </label>
 
-                </button>
+                            <InputText class="patient-form-input" @bind-Value="_editPatientRequest.FullName" />
 
-                <button type="button" class="patient-allergy-button">
-                    Thêm dị ứng
-                </button>
+                        </div>
 
-                <button type="button" class="patient-record-button">
-                    Xem lịch sử khám
-                </button>
 
-            </div>
+
+                        <div class="patient-form-field">
+
+                            <label>
+                                Giới tính
+                            </label>
+
+                            <InputSelect class="patient-form-input" @bind-Value="_editPatientRequest.Gender">
+
+                                <option value="">
+                                    -- Chọn giới tính --
+                                </option>
+
+                                <option value="1">
+                                    Nam
+                                </option>
+
+                                <option value="0">
+                                    Nữ
+                                </option>
+
+                                <option value="2">
+                                    Khác
+                                </option>
+
+                            </InputSelect>
+
+                        </div>
+
+
+
+                        <div class="patient-form-field">
+
+                            <label>
+                                Ngày sinh
+                            </label>
+
+                            <InputDate class="patient-form-input" @bind-Value="_editPatientRequest.DateOfBirth" />
+
+                        </div>
+
+
+
+                        <div class="patient-form-field">
+
+                            <label>
+                                Số điện thoại
+                            </label>
+
+                            <InputText class="patient-form-input" @bind-Value="_editPatientRequest.Phone" />
+
+                        </div>
+
+
+
+                        <div class="patient-form-field">
+
+                            <label>
+                                Email
+                            </label>
+
+                            <InputText class="patient-form-input" @bind-Value="_editPatientRequest.Email" />
+
+                        </div>
+
+
+
+                        <div class="patient-form-field">
+
+                            <label>
+                                CCCD
+                            </label>
+
+                            <InputText class="patient-form-input" @bind-Value="_editPatientRequest.NationalId" />
+
+                        </div>
+
+
+
+                        <div class="patient-form-field">
+
+                            <label>
+                                BHYT
+                            </label>
+
+                            <InputText class="patient-form-input" @bind-Value="_editPatientRequest.InsuranceNumber" />
+
+                        </div>
+
+
+
+                        <div class="patient-form-field">
+
+                            <label>
+                                Nhóm máu
+                            </label>
+
+                            <InputText class="patient-form-input" @bind-Value="_editPatientRequest.BloodType" />
+
+                        </div>
+
+
+
+                        <div class="patient-form-field patient-form-full">
+
+                            <label>
+                                Địa chỉ
+                            </label>
+
+                            <InputTextArea class="patient-form-input" @bind-Value="_editPatientRequest.Address" />
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="patient-form-actions">
+
+                        <button type="button" class="patient-form-cancel" @onclick="() => _showEditForm = false">
+
+                            Hủy
+
+                        </button>
+
+
+                        <button type="submit" class="patient-form-save" disabled="@PatientState.IsEditing">
+
+                            @if (PatientState.IsEditing)
+                            {
+                                <span>Đang lưu...</span>
+                            }
+                            else
+                            {
+                                <span>Lưu thay đổi</span>
+                            }
+
+                        </button>
+
+                    </div>
+
+
+                </EditForm>
+            }
 
         </div>
     }
