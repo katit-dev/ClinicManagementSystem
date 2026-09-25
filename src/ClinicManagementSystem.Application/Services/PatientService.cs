@@ -37,6 +37,96 @@ public class PatientService : IPatientService
         _logger = logger;
     }
 
+    public async Task<HttpResponseData<List<PatientAllergyDTO>>>
+    GetPatientAllergiesAsync(int patientId)
+    {
+        try
+        {
+            // =================================================
+            // CHECK PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork.PatientRepository
+                    .WhereSql(p =>
+                        p.Id == patientId &&
+                        p.IsActive)
+                    .FirstOrDefaultAsync();
+
+
+            if (patient == null)
+            {
+                return new HttpResponseData<List<PatientAllergyDTO>>
+                {
+                    StatusCode = 404,
+                    Message = "Không tìm thấy hồ sơ bệnh nhân."
+                };
+            }
+
+
+
+            // =================================================
+            // GET ALLERGIES
+            // =================================================
+
+            var allergies =
+                await _unitOfWork.PatientAllergyRepository
+                    .WhereSql(a =>
+                        a.PatientId == patientId)
+                    .ToListAsync();
+
+
+
+            // =================================================
+            // MAP DTO
+            // =================================================
+
+            var result =
+                allergies.Select(a =>
+                    new PatientAllergyDTO
+                    {
+                        Id = a.Id,
+
+                        PatientId = a.PatientId,
+
+                        Allergen = a.Allergen,
+
+                        Severity = a.Severity,
+
+                        Note = a.Note
+                    }
+                )
+                .ToList();
+
+
+
+            return new HttpResponseData<List<PatientAllergyDTO>>
+            {
+                StatusCode = 200,
+
+                Message = "Lấy danh sách dị ứng thành công.",
+
+                Content = result
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to get patient allergies. PatientId: {PatientId}",
+                patientId
+            );
+
+
+            return new HttpResponseData<List<PatientAllergyDTO>>
+            {
+                StatusCode = 500,
+
+                Message = "Không thể lấy thông tin dị ứng."
+            };
+        }
+    }
+
     // =====================================================
     // ADD PATIENT ALLERGY
     // =====================================================
