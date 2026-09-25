@@ -60,6 +60,8 @@ public class ReceptionPatientStateService
 
     public string ActionErrorMessage { get; private set; } = string.Empty;
 
+    public bool IsEditing { get; private set; }
+
 
     // =====================================================
     // CONSTRUCTOR
@@ -159,6 +161,99 @@ public class ReceptionPatientStateService
         finally
         {
             IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
+    // UPDATE PATIENT
+    // =====================================================
+
+    public async Task<bool> UpdatePatientAsync(
+        int patientId,
+        PatientRequestDTO request)
+    {
+        try
+        {
+            IsEditing = true;
+
+            ActionMessage = string.Empty;
+            ActionErrorMessage = string.Empty;
+
+            StateHasChanged();
+
+
+            // =================================================
+            // REQUEST
+            // =================================================
+
+            var content =
+                JsonContent.Create(request);
+
+
+            var response =
+                await _authorizedApiService.PutAsync(
+                    $"/api/patients/{patientId}",
+                    content
+                );
+
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<PatientDTO>>();
+
+
+
+            // =================================================
+            // ERROR
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                result?.Content == null)
+            {
+                ActionErrorMessage =
+                    result?.Message ??
+                    "Không thể cập nhật hồ sơ bệnh nhân.";
+
+                return false;
+            }
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                result.Message;
+
+
+            SelectedPatient =
+                result.Content;
+
+
+
+            // =================================================
+            // RELOAD LIST
+            // =================================================
+
+            await LoadPatientsAsync();
+
+
+            return true;
+        }
+        catch (Exception)
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsEditing = false;
 
             StateHasChanged();
         }
