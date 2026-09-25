@@ -534,6 +534,79 @@
 
                 </div>
 
+                <div class="patient-allergy-section">
+
+                    <div class="patient-section-header">
+
+                        <h3>
+                            Dị ứng
+                        </h3>
+
+                    </div>
+
+
+
+                    @if (PatientState.Allergies.Count == 0)
+                    {
+                        <div class="patient-empty-state">
+
+                            Chưa có thông tin dị ứng.
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="patient-allergy-list">
+
+
+                            @foreach (var allergy in PatientState.Allergies)
+                            {
+                                <div class="patient-allergy-item">
+
+
+                                    <div class="patient-allergy-name">
+
+                                        <i class="fas fa-exclamation-triangle"></i>
+
+                                        @allergy.Allergen
+
+                                    </div>
+
+
+                                    <div>
+
+                                        Mức độ:
+
+                                        <strong>
+                                            @GetSeverityText(
+                                                allergy.Severity
+                                            )
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        Ghi chú:
+
+                                        @GetDisplayValue(
+                                            allergy.Note
+                                        )
+
+                                    </div>
+
+
+                                </div>
+                            }
+
+
+                        </div>
+                    }
+
+
+                </div>
+
 
                 <div class="patient-detail-actions">
 
@@ -888,6 +961,25 @@
     private bool _showEditForm;
 
     private PatientRequestDTO _editPatientRequest = new();
+
+    // =====================================================
+    // ALLERGY SEVERITY TEXT
+    // =====================================================
+
+    private static string GetSeverityText(
+        byte? severity)
+    {
+        return severity switch
+        {
+            1 => "Nhẹ",
+
+            2 => "Trung bình",
+
+            3 => "Nặng",
+
+            _ => "-"
+        };
+    }
 
     // =====================================================
     // ADD ALLERGY FORM

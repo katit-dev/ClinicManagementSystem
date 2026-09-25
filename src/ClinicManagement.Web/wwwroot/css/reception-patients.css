@@ -532,3 +532,32 @@
         width: 100%;
     }
 }
+
+.patient-allergy-section {
+    margin-top: 24px;
+}
+
+
+.patient-allergy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.patient-allergy-item {
+    padding: 14px;
+    border-radius: 12px;
+    background: #fff5f5;
+}
+
+
+.patient-allergy-name {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+
+.patient-empty-state {
+    color: #777;
+}
