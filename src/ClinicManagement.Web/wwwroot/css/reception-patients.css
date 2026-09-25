@@ -1,0 +1,200 @@
+.reception-patients-page {
+    padding: 24px;
+}
+
+.patients-header {
+    margin-bottom: 24px;
+}
+
+.patients-header h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+}
+
+.patients-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+
+/* =====================================================
+   SEARCH
+   ===================================================== */
+
+.patients-search-card {
+    padding: 18px;
+    margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+}
+
+.patients-search-row {
+    display: flex;
+    gap: 10px;
+}
+
+.patients-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.patients-search-button,
+.patients-reset-button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.patients-search-button {
+    border: none;
+    background: #2563eb;
+    color: white;
+}
+
+.patients-reset-button {
+    border: 1px solid #d1d5db;
+    background: white;
+}
+
+.patients-search-button:disabled,
+.patients-reset-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+
+/* =====================================================
+   ERROR
+   ===================================================== */
+
+.patients-error {
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   TABLE
+   ===================================================== */
+
+.patients-table-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    overflow: hidden;
+}
+
+.patients-table-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.patients-table-header h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+}
+
+.patients-table-header span {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.patients-table-wrapper {
+    overflow-x: auto;
+}
+
+.patients-table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+}
+
+.patients-table th,
+.patients-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.patients-table th {
+    background: #f8fafc;
+    font-size: 13px;
+    color: #475569;
+}
+
+.patients-table td {
+    font-size: 14px;
+}
+
+.patients-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   EMPTY
+   ===================================================== */
+
+.patients-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+}
+
+
+/* =====================================================
+   PAGINATION
+   ===================================================== */
+
+.patients-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    padding: 16px;
+}
+
+.patients-pagination button {
+    padding: 8px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    background: white;
+    cursor: pointer;
+}
+
+.patients-pagination button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .reception-patients-page {
+        padding: 16px;
+    }
+
+    .patients-search-row {
+        flex-direction: column;
+    }
+
+    .patients-search-button,
+    .patients-reset-button {
+        width: 100%;
+    }
+}

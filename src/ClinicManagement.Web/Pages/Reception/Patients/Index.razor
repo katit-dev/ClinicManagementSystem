@@ -1,0 +1,365 @@
+@page "/reception/patients"
+
+@using ClinicManagementSystem.Application.DTOs.Patient
+
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Receptionist")]
+
+@layout HomePageMaster
+
+@inject ReceptionPatientStateService PatientState
+
+@implements IDisposable
+
+
+<PageTitle>Hồ sơ bệnh nhân</PageTitle>
+
+
+<div class="reception-patients-page">
+
+    @* =====================================================
+       HEADER
+       ===================================================== *@
+
+    <div class="patients-header">
+        <div>
+            <h1>Hồ sơ bệnh nhân</h1>
+            <p>Tra cứu và quản lý hồ sơ bệnh nhân tại phòng khám.</p>
+        </div>
+    </div>
+
+
+    @* =====================================================
+       SEARCH
+       ===================================================== *@
+
+    <div class="patients-search-card">
+
+        <form @onsubmit="HandleSearchAsync"
+              @onsubmit:preventDefault>
+
+            <div class="patients-search-row">
+
+                <input type="text"
+                       class="patients-search-input"
+                       placeholder="Tìm theo tên, số điện thoại hoặc mã bệnh nhân..."
+                       @bind="SearchKeyword"
+                       @bind:event="oninput" />
+
+                <button type="submit"
+                        class="patients-search-button"
+                        disabled="@PatientState.IsLoading">
+
+                    Tìm kiếm
+
+                </button>
+
+                <button type="button"
+                        class="patients-reset-button"
+                        disabled="@PatientState.IsLoading"
+                        @onclick="HandleResetAsync">
+
+                    Đặt lại
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    @* =====================================================
+       ERROR
+       ===================================================== *@
+
+    @if (!string.IsNullOrWhiteSpace(PatientState.ErrorMessage))
+    {
+        <div class="patients-error">
+            @PatientState.ErrorMessage
+        </div>
+    }
+
+
+    @* =====================================================
+       CONTENT
+       ===================================================== *@
+
+    <div class="patients-table-card">
+
+        <div class="patients-table-header">
+
+            <div>
+                <h2>Danh sách bệnh nhân</h2>
+
+                <span>
+                    Tổng:
+                    <strong>@PatientState.TotalItems</strong>
+                    bệnh nhân
+                </span>
+            </div>
+
+        </div>
+
+
+        @if (PatientState.IsLoading)
+        {
+            <div class="patients-empty">
+                Đang tải danh sách bệnh nhân...
+            </div>
+        }
+        else if (PatientState.Patients.Count == 0)
+        {
+            <div class="patients-empty">
+                Không tìm thấy bệnh nhân phù hợp.
+            </div>
+        }
+        else
+        {
+            <div class="patients-table-wrapper">
+
+                <table class="patients-table">
+
+                    <thead>
+                        <tr>
+                            <th>Mã BN</th>
+                            <th>Họ và tên</th>
+                            <th>Ngày sinh</th>
+                            <th>Giới tính</th>
+                            <th>Số điện thoại</th>
+                            <th>CCCD</th>
+                            <th>BHYT</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var patient in PatientState.Patients)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@patient.PatientCode</strong>
+                                </td>
+
+                                <td>
+                                    @patient.FullName
+                                </td>
+
+                                <td>
+                                    @FormatDateOfBirth(patient.DateOfBirth)
+                                </td>
+
+                                <td>
+                                    @GetGenderText(patient.Gender)
+                                </td>
+
+                                <td>
+                                    @patient.Phone
+                                </td>
+
+                                <td>
+                                    @GetDisplayValue(patient.NationalId)
+                                </td>
+
+                                <td>
+                                    @GetDisplayValue(patient.InsuranceNumber)
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+
+
+        @* =================================================
+           PAGINATION
+           ================================================= *@
+
+        @if (!PatientState.IsLoading &&
+             PatientState.TotalPages > 0)
+        {
+            <div class="patients-pagination">
+
+                <button type="button"
+                        disabled="@(PatientState.CurrentPage <= 1)"
+                        @onclick="PreviousPageAsync">
+
+                    ← Trước
+
+                </button>
+
+
+                <span>
+                    Trang
+                    <strong>@PatientState.CurrentPage</strong>
+                    /
+                    <strong>@PatientState.TotalPages</strong>
+                </span>
+
+
+                <button type="button"
+                        disabled="@(PatientState.CurrentPage >= PatientState.TotalPages)"
+                        @onclick="NextPageAsync">
+
+                    Sau →
+                </button>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // SEARCH
+    // =====================================================
+
+    private string SearchKeyword { get; set; } = string.Empty;
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        PatientState.OnChange = HandleStateChanged;
+
+        SearchKeyword = PatientState.Keyword;
+
+        await PatientState.LoadPatientsAsync();
+    }
+
+
+    // =====================================================
+    // SEARCH
+    // =====================================================
+
+    private async Task HandleSearchAsync()
+    {
+        PatientState.SetKeyword(SearchKeyword);
+
+        await PatientState.LoadPatientsAsync();
+    }
+
+
+    // =====================================================
+    // RESET SEARCH
+    // =====================================================
+
+    private async Task HandleResetAsync()
+    {
+        SearchKeyword = string.Empty;
+
+        PatientState.SetKeyword(string.Empty);
+
+        await PatientState.LoadPatientsAsync();
+    }
+
+
+    // =====================================================
+    // PREVIOUS PAGE
+    // =====================================================
+
+    private async Task PreviousPageAsync()
+    {
+        if (PatientState.CurrentPage <= 1)
+        {
+            return;
+        }
+
+        PatientState.SetPage(
+            PatientState.CurrentPage - 1
+        );
+
+        await PatientState.LoadPatientsAsync();
+    }
+
+
+    // =====================================================
+    // NEXT PAGE
+    // =====================================================
+
+    private async Task NextPageAsync()
+    {
+        if (PatientState.CurrentPage >= PatientState.TotalPages)
+        {
+            return;
+        }
+
+        PatientState.SetPage(
+            PatientState.CurrentPage + 1
+        );
+
+        await PatientState.LoadPatientsAsync();
+    }
+
+
+    // =====================================================
+    // FORMAT DATE OF BIRTH
+    // =====================================================
+
+    private static string FormatDateOfBirth(
+        DateOnly? dateOfBirth)
+    {
+        return dateOfBirth?.ToString("dd/MM/yyyy") ?? "-";
+    }
+
+
+    // =====================================================
+    // GENDER TEXT
+    // =====================================================
+
+    private static string GetGenderText(
+        byte? gender)
+    {
+        return gender switch
+        {
+            0 => "Nữ",
+            1 => "Nam",
+            2 => "Khác",
+            _ => "-"
+        };
+    }
+
+
+    // =====================================================
+    // DISPLAY VALUE
+    // =====================================================
+
+    private static string GetDisplayValue(
+        string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "-"
+            : value;
+    }
+
+
+    // =====================================================
+    // STATE CHANGE
+    // =====================================================
+
+    private void HandleStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        PatientState.OnChange = null;
+    }
+}
