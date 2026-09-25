@@ -78,6 +78,65 @@ public class ReceptionPatientStateService
     }
 
     // =====================================================
+    // DELETE PATIENT ALLERGY
+    // =====================================================
+
+    public async Task<bool> DeletePatientAllergyAsync(
+        int allergyId)
+    {
+        try
+        {
+            IsSubmitting = true;
+
+            ActionMessage = string.Empty;
+            ActionErrorMessage = string.Empty;
+
+
+            var response =
+                await _authorizedApiService.DeleteAsync(
+                    $"/api/patients/allergies/{allergyId}"
+                );
+
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<object>>();
+
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ActionErrorMessage =
+                    result?.Message ??
+                    "Không thể xóa thông tin dị ứng.";
+
+                return false;
+            }
+
+
+            ActionMessage =
+                result?.Message ??
+                "Xóa dị ứng thành công.";
+
+
+            return true;
+        }
+        catch (Exception)
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
     // LOAD PATIENT ALLERGIES
     // =====================================================
 
