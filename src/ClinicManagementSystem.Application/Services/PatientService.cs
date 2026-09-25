@@ -76,9 +76,7 @@ public class PatientService : IPatientService
             // DELETE
             // =================================================
 
-            _unitOfWork.PatientAllergyRepository
-                .Remove(allergy);
-
+            await _unitOfWork.PatientAllergyRepository.DeleteAsync(allergyId);
 
 
             // =================================================
