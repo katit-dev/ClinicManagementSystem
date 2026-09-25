@@ -7,6 +7,7 @@
 @layout HomePageMaster
 
 @inject ReceptionPatientStateService PatientState
+@inject IJSRuntime JS
 
 @implements IDisposable
 
@@ -625,9 +626,9 @@
 
                                         <td>
 
-                                            <button class="allergy-delete-button">
+                                            <button class="allergy-delete-button" @onclick="() => HandleDeleteAllergyAsync(allergy)">
 
-                                                Xoá
+                                                Xóa
 
                                             </button>
 
@@ -1003,6 +1004,49 @@
     private bool _showEditForm;
 
     private PatientRequestDTO _editPatientRequest = new();
+
+    // =====================================================
+    // DELETE ALLERGY
+    // =====================================================
+
+    private async Task HandleDeleteAllergyAsync(
+        PatientAllergyDTO allergy)
+    {
+        if (PatientState.SelectedPatient == null)
+        {
+            return;
+        }
+
+
+        var confirm =
+            await JS.InvokeAsync<bool>(
+                "confirm",
+                $"Bạn có chắc muốn xóa dị ứng {allergy.Allergen}?"
+            );
+
+
+        if (!confirm)
+        {
+            return;
+        }
+
+
+        var success =
+            await PatientState.DeletePatientAllergyAsync(
+                allergy.Id
+            );
+
+
+        if (!success)
+        {
+            return;
+        }
+
+
+        await PatientState.LoadPatientAllergiesAsync(
+            PatientState.SelectedPatient.Id
+        );
+    }
 
     // =====================================================
     // ALLERGY SEVERITY TEXT
