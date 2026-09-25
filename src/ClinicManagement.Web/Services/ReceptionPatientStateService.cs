@@ -198,10 +198,7 @@ public class ReceptionPatientStateService
             StateHasChanged();
 
 
-            // =================================================
             // REQUEST
-            // =================================================
-
             var content =
                 JsonContent.Create(request);
 
@@ -221,10 +218,7 @@ public class ReceptionPatientStateService
 
 
 
-            // =================================================
             // ERROR
-            // =================================================
-
             if (!response.IsSuccessStatusCode ||
                 result?.Content == null)
             {
@@ -236,14 +230,8 @@ public class ReceptionPatientStateService
             }
 
 
-
-
-            // =================================================
             // SUCCESS
-            // =================================================
-
-            ActionMessage =
-                result.Message;
+            ActionMessage = result.Message;
 
 
             return true;
