@@ -546,7 +546,9 @@
                     </button>
 
 
-                    <button type="button" class="patient-allergy-button">
+                    <button class="patient-allergy-button" @onclick="OpenAllergyForm">
+
+                        <i class="fas fa-exclamation-triangle"></i>
 
                         Thêm dị ứng
 
@@ -560,6 +562,144 @@
                     </button>
 
                 </div>
+
+                @if (_showAllergyForm)
+                {
+                    <div class="patient-form-card mt-3">
+
+
+                        <div class="patient-form-header">
+
+                            <div>
+
+                                <h3>
+                                    Thêm thông tin dị ứng
+                                </h3>
+
+                                <p>
+                                    Cập nhật dị ứng của bệnh nhân.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <EditForm Model="_allergyRequest" OnValidSubmit="HandleAddAllergyAsync">
+
+
+                            <DataAnnotationsValidator />
+
+
+                            <div class="patient-form-grid">
+
+
+                                <div class="patient-form-field">
+
+                                    <label>
+                                        Chất gây dị ứng
+                                    </label>
+
+
+                                    <InputText class="patient-form-input" @bind-Value="_allergyRequest.Allergen" />
+
+                                </div>
+
+
+
+                                <div class="patient-form-field">
+
+                                    <label>
+                                        Mức độ
+                                    </label>
+
+
+                                    <InputSelect class="patient-form-input" @bind-Value="_allergyRequest.Severity">
+
+
+                                        <option value="">
+                                            -- Chọn mức độ --
+                                        </option>
+
+
+                                        <option value="1">
+                                            Nhẹ
+                                        </option>
+
+
+                                        <option value="2">
+                                            Trung bình
+                                        </option>
+
+
+                                        <option value="3">
+                                            Nặng
+                                        </option>
+
+
+                                    </InputSelect>
+
+                                </div>
+
+
+
+                                <div class="patient-form-field patient-form-full">
+
+                                    <label>
+                                        Ghi chú
+                                    </label>
+
+
+                                    <InputTextArea class="patient-form-input" @bind-Value="_allergyRequest.Note" />
+
+                                </div>
+
+
+                            </div>
+
+
+
+                            <div class="patient-form-actions">
+
+
+                                <button type="button" class="patient-form-cancel" @onclick="() => _showAllergyForm = false">
+
+                                    Hủy
+
+                                </button>
+
+
+
+                                <button type="submit" class="patient-form-save" disabled="@PatientState.IsAddingAllergy">
+
+
+                                    @if (PatientState.IsAddingAllergy)
+                                    {
+                                        <span>
+                                            Đang lưu...
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            Lưu dị ứng
+                                        </span>
+                                    }
+
+
+                                </button>
+
+
+                            </div>
+
+
+                        </EditForm>
+
+
+                    </div>
+                }
+
             }
             else
             {
@@ -749,6 +889,58 @@
 
     private PatientRequestDTO _editPatientRequest = new();
 
+    // =====================================================
+    // ADD ALLERGY FORM
+    // =====================================================
+
+    private bool _showAllergyForm;
+
+    private PatientAllergyRequestDTO _allergyRequest = new();
+
+
+    // =====================================================
+    // OPEN ALLERGY FORM
+    // =====================================================
+
+    private void OpenAllergyForm()
+    {
+        _allergyRequest =
+            new PatientAllergyRequestDTO();
+
+        _showAllergyForm = true;
+    }
+
+    // =====================================================
+    // ADD ALLERGY
+    // =====================================================
+
+    private async Task HandleAddAllergyAsync()
+    {
+        if (PatientState.SelectedPatient == null)
+        {
+            return;
+        }
+
+
+        var success =
+            await PatientState.AddPatientAllergyAsync(
+                PatientState.SelectedPatient.Id,
+                _allergyRequest
+            );
+
+
+        if (!success)
+        {
+            return;
+        }
+
+
+        _showAllergyForm = false;
+
+
+        _allergyRequest =
+            new PatientAllergyRequestDTO();
+    }
 
     // =====================================================
     // UPDATE PATIENT
