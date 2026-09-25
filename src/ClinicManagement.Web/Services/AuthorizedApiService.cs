@@ -1,6 +1,8 @@
+using System.Net;
 using System.Net.Http.Headers;
 
 namespace ClinicManagementSystem.Web.Services;
+
 
 public class AuthorizedApiService
 {
@@ -9,10 +11,6 @@ public class AuthorizedApiService
     private readonly UserStateService
         _userStateService;
 
-
-    // =====================================================
-    // CONSTRUCTOR
-    // =====================================================
 
     public AuthorizedApiService(
         IHttpClientFactory httpClientFactory,
@@ -28,28 +26,18 @@ public class AuthorizedApiService
     }
 
 
+
     // =====================================================
-    // PREPARE AUTHORIZATION
+    // PREPARE TOKEN
     // =====================================================
 
     private async Task<bool> PrepareAuthorizationAsync()
     {
-        // =================================================
-        // GET ACCESS TOKEN FROM CURRENT STATE
-        // =================================================
-
         var accessToken =
             _userStateService.AccessToken;
 
 
-        // =================================================
-        // STATE CHƯA ĐƯỢC KHÔI PHỤC
-        //
-        // Có thể xảy ra khi user F5.
-        // =================================================
-
-        if (string.IsNullOrWhiteSpace(
-            accessToken))
+        if (string.IsNullOrWhiteSpace(accessToken))
         {
             await _userStateService
                 .LoadUserStateAsync();
@@ -59,20 +47,11 @@ public class AuthorizedApiService
         }
 
 
-        // =================================================
-        // ACCESS TOKEN VẪN KHÔNG TỒN TẠI
-        // =================================================
-
-        if (string.IsNullOrWhiteSpace(
-            accessToken))
+        if (string.IsNullOrWhiteSpace(accessToken))
         {
             return false;
         }
 
-
-        // =================================================
-        // SET BEARER TOKEN
-        // =================================================
 
         _httpClient
             .DefaultRequestHeaders
@@ -87,6 +66,71 @@ public class AuthorizedApiService
     }
 
 
+
+    // =====================================================
+    // HANDLE RESPONSE
+    // =====================================================
+
+    private async Task<HttpResponseMessage>
+        SendWithRefreshAsync(
+            Func<Task<HttpResponseMessage>> request)
+    {
+
+        var response =
+            await request();
+
+
+        // =================================================
+        // TOKEN CÒN HẠN
+        // =================================================
+
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+        {
+            return response;
+        }
+
+
+
+        // =================================================
+        // TOKEN HẾT HẠN
+        // THỬ REFRESH
+        // =================================================
+
+        var refreshed =
+            await _userStateService
+                .RefreshTokenAsync();
+
+
+        if (!refreshed)
+        {
+            return response;
+        }
+
+
+
+        // =================================================
+        // GẮN TOKEN MỚI
+        // =================================================
+
+        _httpClient
+            .DefaultRequestHeaders
+            .Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    _userStateService.AccessToken
+                );
+
+
+
+        // =================================================
+        // RETRY 1 LẦN
+        // =================================================
+
+        return await request();
+    }
+
+
+
     // =====================================================
     // GET
     // =====================================================
@@ -94,22 +138,24 @@ public class AuthorizedApiService
     public async Task<HttpResponseMessage> GetAsync(
         string requestUri)
     {
-        var isAuthorized =
+        var authorized =
             await PrepareAuthorizationAsync();
 
 
-        if (!isAuthorized)
+        if (!authorized)
         {
             return new HttpResponseMessage(
-                System.Net.HttpStatusCode.Unauthorized
+                HttpStatusCode.Unauthorized
             );
         }
 
 
-        return await _httpClient.GetAsync(
-            requestUri
+        return await SendWithRefreshAsync(
+            () =>
+                _httpClient.GetAsync(requestUri)
         );
     }
+
 
 
     // =====================================================
@@ -120,23 +166,27 @@ public class AuthorizedApiService
         string requestUri,
         HttpContent content)
     {
-        var isAuthorized =
+        var authorized =
             await PrepareAuthorizationAsync();
 
 
-        if (!isAuthorized)
+        if (!authorized)
         {
             return new HttpResponseMessage(
-                System.Net.HttpStatusCode.Unauthorized
+                HttpStatusCode.Unauthorized
             );
         }
 
 
-        return await _httpClient.PostAsync(
-            requestUri,
-            content
+        return await SendWithRefreshAsync(
+            () =>
+                _httpClient.PostAsync(
+                    requestUri,
+                    content
+                )
         );
     }
+
 
 
     // =====================================================
@@ -147,23 +197,28 @@ public class AuthorizedApiService
         string requestUri,
         HttpContent content)
     {
-        var isAuthorized =
+        var authorized =
             await PrepareAuthorizationAsync();
 
 
-        if (!isAuthorized)
+        if (!authorized)
         {
             return new HttpResponseMessage(
-                System.Net.HttpStatusCode.Unauthorized
+                HttpStatusCode.Unauthorized
             );
         }
 
 
-        return await _httpClient.PutAsync(
-            requestUri,
-            content
+        return await SendWithRefreshAsync(
+            () =>
+                _httpClient.PutAsync(
+                    requestUri,
+                    content
+                )
         );
     }
+
+
 
     // =====================================================
     // PATCH
@@ -173,24 +228,27 @@ public class AuthorizedApiService
         string requestUri,
         HttpContent content)
     {
-        var isAuthorized =
+        var authorized =
             await PrepareAuthorizationAsync();
 
 
-        if (!isAuthorized)
+        if (!authorized)
         {
             return new HttpResponseMessage(
-                System.Net.HttpStatusCode.Unauthorized
+                HttpStatusCode.Unauthorized
             );
         }
 
 
-        return await _httpClient
-            .PatchAsync(
-                requestUri,
-                content
-            );
+        return await SendWithRefreshAsync(
+            () =>
+                _httpClient.PatchAsync(
+                    requestUri,
+                    content
+                )
+        );
     }
+
 
 
     // =====================================================
@@ -200,20 +258,21 @@ public class AuthorizedApiService
     public async Task<HttpResponseMessage> DeleteAsync(
         string requestUri)
     {
-        var isAuthorized =
+        var authorized =
             await PrepareAuthorizationAsync();
 
 
-        if (!isAuthorized)
+        if (!authorized)
         {
             return new HttpResponseMessage(
-                System.Net.HttpStatusCode.Unauthorized
+                HttpStatusCode.Unauthorized
             );
         }
 
 
-        return await _httpClient.DeleteAsync(
-            requestUri
+        return await SendWithRefreshAsync(
+            () =>
+                _httpClient.DeleteAsync(requestUri)
         );
     }
 }
