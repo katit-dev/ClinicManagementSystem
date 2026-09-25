@@ -263,6 +263,108 @@
         </div>
     }
 
+    @if (_showEditForm)
+    {
+        <div class="patient-form-card">
+
+            <div class="patient-form-header">
+
+                <div>
+                    <h2>
+                        Chỉnh sửa hồ sơ bệnh nhân
+                    </h2>
+
+                    <p>
+                        Cập nhật thông tin bệnh nhân.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <EditForm Model="_editPatientRequest">
+
+                <div class="patient-form-grid">
+
+
+                    <div class="patient-form-field">
+
+                        <label>
+                            Họ và tên
+                        </label>
+
+
+                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.FullName" />
+
+                    </div>
+
+
+
+                    <div class="patient-form-field">
+
+                        <label>
+                            Số điện thoại
+                        </label>
+
+
+                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.Phone" />
+
+                    </div>
+
+
+
+                    <div class="patient-form-field">
+
+                        <label>
+                            Email
+                        </label>
+
+
+                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.Email" />
+
+                    </div>
+
+
+
+                    <div class="patient-form-field">
+
+                        <label>
+                            CCCD
+                        </label>
+
+
+                        <InputText class="patient-form-input" @bind-Value="_editPatientRequest.NationalId" />
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="patient-form-actions">
+
+                    <button type="button" class="patient-form-cancel" @onclick="() => _showEditForm = false">
+
+                        Hủy
+
+                    </button>
+
+
+                    <button type="submit" class="patient-form-save">
+
+                        Lưu thay đổi
+
+                    </button>
+
+                </div>
+
+
+            </EditForm>
+
+        </div>
+    }
+
     @* =====================================================
        ERROR
        ===================================================== *@
@@ -491,8 +593,12 @@
 
             <div class="patient-detail-actions">
 
-                <button type="button" class="patient-edit-button">
+                <button class="patient-edit-button" @onclick="OpenEditForm">
+
+                    <i class="fas fa-edit"></i>
+
                     Sửa hồ sơ
+
                 </button>
 
                 <button type="button" class="patient-allergy-button">
@@ -520,6 +626,58 @@
     private bool _showCreateForm;
 
     private PatientRequestDTO _createPatientRequest = new();
+
+    // EDIT PATIENT FORM
+    private bool _showEditForm;
+
+    private PatientRequestDTO _editPatientRequest = new();
+
+
+
+    // =====================================================
+    // OPEN EDIT FORM
+    // =====================================================
+
+    private void OpenEditForm()
+    {
+        if (PatientState.SelectedPatient == null)
+        {
+            return;
+        }
+
+
+        var patient =
+            PatientState.SelectedPatient;
+
+
+        _editPatientRequest =
+            new PatientRequestDTO
+            {
+                FullName = patient.FullName,
+
+                Gender = patient.Gender,
+
+                DateOfBirth = patient.DateOfBirth,
+
+                Phone = patient.Phone,
+
+                Email = patient.Email,
+
+                Address = patient.Address,
+
+                NationalId = patient.NationalId,
+
+                InsuranceNumber =
+                    patient.InsuranceNumber,
+
+                BloodType =
+                    patient.BloodType
+            };
+
+
+        _showEditForm = true;
+    }
+    
 
     // =====================================================
     // SEARCH
