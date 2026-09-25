@@ -228,7 +228,23 @@
                         @PatientState.ActionMessage
                     </div>
                 }
+                
+                // message loi/thanh cong
+                @if (!string.IsNullOrWhiteSpace(PatientState.ActionErrorMessage))
+                {
+                    <div class="patients-error">
+                        @PatientState.ActionErrorMessage
+                    </div>
+                }
 
+
+                @if (!string.IsNullOrWhiteSpace(
+                        PatientState.ActionMessage))
+                {
+                    <div class="patients-success">
+                        @PatientState.ActionMessage
+                    </div>
+                }
 
                 @* =================================================
                ACTIONS
@@ -282,7 +298,7 @@
             </div>
 
 
-            <EditForm Model="_editPatientRequest">
+            <EditForm Model="_editPatientRequest" OnValidSubmit="HandleUpdatePatientAsync">
 
                 <div class="patient-form-grid">
 
@@ -351,9 +367,22 @@
                     </button>
 
 
-                    <button type="submit" class="patient-form-save">
+                    <button type="submit" class="patient-form-save" disabled="@PatientState.IsEditing">
 
-                        Lưu thay đổi
+
+                        @if (PatientState.IsEditing)
+                        {
+                            <span>
+                                Đang lưu...
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                Lưu thay đổi
+                            </span>
+                        }
+
 
                     </button>
 
@@ -633,6 +662,37 @@
     private PatientRequestDTO _editPatientRequest = new();
 
 
+    // =====================================================
+    // UPDATE PATIENT
+    // =====================================================
+
+    private async Task HandleUpdatePatientAsync()
+    {
+        if (PatientState.SelectedPatient == null)
+        {
+            return;
+        }
+
+
+        var patientId =
+            PatientState.SelectedPatient.Id;
+
+
+        var success =
+            await PatientState.UpdatePatientAsync(
+                patientId,
+                _editPatientRequest
+            );
+
+
+        if (!success)
+        {
+            return;
+        }
+
+
+        _showEditForm = false;
+    }
 
     // =====================================================
     // OPEN EDIT FORM
