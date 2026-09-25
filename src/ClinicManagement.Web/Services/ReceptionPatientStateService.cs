@@ -22,6 +22,8 @@ public class ReceptionPatientStateService
 
     public PatientDTO? SelectedPatient { get; private set; }
 
+    public List<PatientAllergyDTO> Allergies { get; private set; } = new();
+
 
     // =====================================================
     // SEARCH
@@ -73,6 +75,50 @@ public class ReceptionPatientStateService
         AuthorizedApiService authorizedApiService)
     {
         _authorizedApiService = authorizedApiService;
+    }
+
+    // =====================================================
+    // LOAD PATIENT ALLERGIES
+    // =====================================================
+
+    public async Task LoadPatientAllergiesAsync(
+        int patientId)
+    {
+        try
+        {
+            Allergies.Clear();
+
+
+            var response =
+                await _authorizedApiService.GetAsync(
+                    $"/api/patients/{patientId}/allergies"
+                );
+
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<List<PatientAllergyDTO>>>();
+
+
+            if (!response.IsSuccessStatusCode ||
+                result?.Content == null)
+            {
+                return;
+            }
+
+
+            Allergies =
+                result.Content;
+        }
+        catch (Exception)
+        {
+            Allergies.Clear();
+        }
+        finally
+        {
+            StateHasChanged();
+        }
     }
 
     // =====================================================
