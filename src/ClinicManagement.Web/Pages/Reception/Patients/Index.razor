@@ -1093,10 +1093,15 @@
     // =====================================================
     // SELECT PATIENT
     // =====================================================
-
-    private void HandleSelectPatient(PatientDTO patient)
+    private async Task HandleSelectPatient(
+        PatientDTO patient)
     {
         PatientState.SelectPatient(patient);
+
+
+        await PatientState.LoadPatientAllergiesAsync(
+            patient.Id
+        );
     }
 
 
