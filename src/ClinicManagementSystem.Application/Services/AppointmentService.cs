@@ -57,6 +57,350 @@ public class AppointmentService : IAppointmentService
         _logger = logger;
     }
 
+    // =====================================================
+    // CREATE RECEPTION APPOINTMENT
+    // =====================================================
+
+    public async Task<HttpResponseData<AppointmentDTO>>
+        CreateReceptionAppointmentAsync(
+            CreateReceptionAppointmentRequestDTO request,
+            int currentUserId)
+    {
+        bool transactionStarted = false;
+
+        try
+        {
+            // =================================================
+            // CHECK PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            p.Id == request.PatientId &&
+                            p.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (patient == null)
+            {
+                return Response(
+                    404,
+                    AppointmentResponseMessageDTO
+                        .PatientNotFound
+                );
+            }
+
+
+
+            // =================================================
+            // CHECK DOCTOR
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.Id == request.DoctorId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (doctor == null)
+            {
+                return Response(
+                    404,
+                    AppointmentResponseMessageDTO
+                        .DoctorNotFound
+                );
+            }
+
+
+
+            // =================================================
+            // CHECK APPOINTMENT TIME
+            // =================================================
+
+            if (request.StartTime <= DateTime.Now)
+            {
+                return Response(
+                    400,
+                    AppointmentResponseMessageDTO
+                        .InvalidAppointmentDate
+                );
+            }
+
+
+
+            // =================================================
+            // CHECK SLOT
+            // =================================================
+
+            var appointmentDate =
+                DateOnly.FromDateTime(
+                    request.StartTime
+                );
+
+
+            var availableSlots =
+                await _doctorService
+                    .GetAvailableSlotsAsync(
+                        request.DoctorId,
+                        appointmentDate
+                    );
+
+
+            var selectedSlot =
+                availableSlots.Content?
+                    .FirstOrDefault(
+                        s =>
+                            s.StartTime ==
+                            request.StartTime
+                    );
+
+
+            if (selectedSlot == null)
+            {
+                return Response(
+                    409,
+                    AppointmentResponseMessageDTO
+                        .SlotNotAvailable
+                );
+            }
+
+
+
+            var now =
+                DateTime.UtcNow;
+
+
+
+            // =================================================
+            // CREATE APPOINTMENT
+            // =================================================
+
+            var appointment =
+                new Appointment
+                {
+                    PatientId =
+                        patient.Id,
+
+                    DoctorId =
+                        request.DoctorId,
+
+                    StartTime =
+                        selectedSlot.StartTime,
+
+                    EndTime =
+                        selectedSlot.EndTime,
+
+
+                    Status =
+                        (byte)AppointmentStatus.Pending,
+
+
+                    Reason =
+                        request.Reason,
+
+
+                    AppointmentCode =
+                        "APT" +
+                        Guid.NewGuid()
+                            .ToString("N")[..17]
+                            .ToUpperInvariant(),
+
+
+                    CreatedBy =
+                        currentUserId,
+
+
+                    CreatedAt =
+                        now,
+
+
+                    Source =
+                        request.Source,
+
+
+                    FeeSnapshot =
+                        doctor.ConsultationFee
+                };
+
+
+
+            // =================================================
+            // STATUS HISTORY
+            // =================================================
+
+            var history =
+                new AppointmentStatusHistory
+                {
+                    Appointment =
+                        appointment,
+
+                    FromStatus =
+                        null,
+
+                    ToStatus =
+                        (byte)AppointmentStatus.Pending,
+
+                    ChangedBy =
+                        currentUserId,
+
+                    ChangedAt =
+                        now
+                };
+
+
+
+            // =================================================
+            // TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+
+            // =================================================
+            // CHECK CONFLICT AGAIN
+            // =================================================
+
+            var exists =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.DoctorId ==
+                                request.DoctorId &&
+
+                            a.Status <
+                                (byte)AppointmentStatus.Cancelled &&
+
+                            a.StartTime <
+                                appointment.EndTime &&
+
+                            a.EndTime >
+                                appointment.StartTime
+                    )
+                    .AnyAsync();
+
+
+            if (exists)
+            {
+                await _unitOfWork
+                    .RollbackTransactionAsync();
+
+                transactionStarted = false;
+
+
+                return Response(
+                    409,
+                    AppointmentResponseMessageDTO
+                        .SlotNotAvailable
+                );
+            }
+
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork
+                .AppointmentRepository
+                .AddAsync(
+                    appointment
+                );
+
+
+            await _unitOfWork
+                .AppointmentStatusHistoryRepository
+                .AddAsync(
+                    history
+                );
+
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+
+            transactionStarted = false;
+
+
+
+            // =================================================
+            // RESPONSE
+            // =================================================
+
+            var result =
+                new AppointmentDTO
+                {
+                    Id =
+                        appointment.Id,
+
+                    AppointmentCode =
+                        appointment.AppointmentCode,
+
+                    DoctorName =
+                        doctor.FullName,
+
+                    StartTime =
+                        appointment.StartTime,
+
+                    Status =
+                        appointment.Status,
+
+                    QueueNumber =
+                        appointment.QueueNumber,
+
+                    FeeSnapshot =
+                        appointment.FeeSnapshot
+                };
+
+
+            return Response(
+                201,
+                AppointmentResponseMessageDTO
+                    .CreateSuccess,
+
+                result
+            );
+        }
+        catch (Exception ex)
+        {
+            if (transactionStarted)
+            {
+                await _unitOfWork
+                    .RollbackTransactionAsync();
+            }
+
+
+            _logger.LogError(
+                ex,
+                "Failed to create reception appointment."
+            );
+
+
+            return Response(
+                500,
+                AppointmentResponseMessageDTO
+                    .CreateFailed
+            );
+        }
+    }
 
     // =====================================================
     // MARK APPOINTMENT AS NO SHOW
