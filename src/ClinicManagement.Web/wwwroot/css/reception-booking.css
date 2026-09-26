@@ -1,0 +1,45 @@
+.reception-booking-search-row {
+
+    display: flex;
+
+    gap: 12px;
+
+}
+
+
+
+.reception-booking-input {
+
+    flex: 1;
+
+    padding: 10px;
+
+}
+
+
+
+.reception-booking-button {
+
+    padding: 10px 18px;
+
+}
+
+
+
+.reception-booking-error {
+
+    margin-top: 12px;
+
+}
+
+
+
+.reception-booking-patient-result {
+
+    margin-top: 20px;
+
+    padding: 16px;
+
+    border-radius: 10px;
+
+}

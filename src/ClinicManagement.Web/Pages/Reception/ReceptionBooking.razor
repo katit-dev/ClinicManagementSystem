@@ -76,9 +76,94 @@
 
 
 
-        <div class="reception-booking-empty">
+        <div class="reception-booking-patient-search">
 
-            Chưa chọn bệnh nhân.
+
+            <div class="reception-booking-search-row">
+
+
+                <input class="reception-booking-input" placeholder="Nhập số điện thoại" @bind="_phone" />
+
+
+                <button class="reception-booking-button" @onclick="LookupPatientAsync">
+
+                    Tìm bệnh nhân
+
+                </button>
+
+
+            </div>
+
+
+
+            @if (!string.IsNullOrWhiteSpace(
+                ReceptionBookingStateService.ErrorMessage))
+            {
+                <div class="reception-booking-error">
+
+                    @ReceptionBookingStateService.ErrorMessage
+
+                </div>
+            }
+
+
+
+            @if (ReceptionBookingStateService.SelectedPatient != null)
+            {
+
+                <div class="reception-booking-patient-result">
+
+
+                    <div>
+                        <strong>
+                            Mã bệnh nhân:
+                        </strong>
+
+                        @ReceptionBookingStateService.SelectedPatient.PatientCode
+                    </div>
+
+
+
+                    <div>
+                        <strong>
+                            Họ tên:
+                        </strong>
+
+                        @ReceptionBookingStateService.SelectedPatient.FullName
+                    </div>
+
+
+
+                    <div>
+                        <strong>
+                            Điện thoại:
+                        </strong>
+
+                        @ReceptionBookingStateService.SelectedPatient.Phone
+                    </div>
+
+
+
+                    <div>
+                        @if (ReceptionBookingStateService.SelectedPatient.HasAccount)
+                        {
+                            <span>
+                                Đã có tài khoản
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                Chưa có tài khoản
+                            </span>
+                        }
+                    </div>
+
+
+                </div>
+
+            }
+
 
         </div>
 
@@ -216,8 +301,7 @@
 
 
 
-        <textarea class="reception-booking-textarea"
-                  placeholder="Nhập lý do khám">
+        <textarea class="reception-booking-textarea" placeholder="Nhập lý do khám">
         </textarea>
 
 
@@ -237,8 +321,7 @@
     <div class="reception-booking-actions">
 
 
-        <button type="button"
-                class="reception-booking-submit-button">
+        <button type="button" class="reception-booking-submit-button">
 
 
             Xác nhận đặt lịch
@@ -256,9 +339,10 @@
 
 
 
-
-
 @code {
+
+
+    private string _phone = string.Empty;
 
 
 
@@ -266,10 +350,34 @@
     // INITIALIZE
     // =====================================================
 
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        ReceptionBookingStateService.OnChange +=
+            HandleStateChanged;
 
+
+        await ReceptionBookingStateService
+            .LoadSpecialtiesAsync();
+    }
+
+
+
+
+
+    // =====================================================
+    // LOOKUP PATIENT
+    // =====================================================
+
+    private async Task LookupPatientAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_phone))
+        {
+            return;
+        }
+
+
+        await ReceptionBookingStateService
+            .LookupPatientAsync(_phone);
     }
 
 
@@ -279,7 +387,6 @@
     // =====================================================
     // STATE CHANGED
     // =====================================================
-
 
     private void HandleStateChanged()
     {
@@ -294,11 +401,10 @@
     // DISPOSE
     // =====================================================
 
-
     public void Dispose()
     {
-
+        ReceptionBookingStateService.OnChange -=
+            HandleStateChanged;
     }
-
 
 }
