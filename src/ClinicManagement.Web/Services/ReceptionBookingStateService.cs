@@ -87,7 +87,7 @@ public class ReceptionBookingStateService
     }
     = string.Empty;
 
-   public event Action? OnChange;
+    public event Action? OnChange;
 
 
     // =====================================================
@@ -281,12 +281,17 @@ public class ReceptionBookingStateService
                     );
 
 
+
             var responseData =
                 await response.Content
                     .ReadFromJsonAsync<
                         HttpResponseData<PatientLookupDTO?>>();
 
 
+
+            // =================================================
+            // API FAILED
+            // =================================================
 
             if (!response.IsSuccessStatusCode ||
                 responseData == null ||
@@ -297,27 +302,45 @@ public class ReceptionBookingStateService
                     responseData?.Message
                     ?? "Không thể tìm bệnh nhân.";
 
+
                 return false;
             }
 
 
+
+
+            // =================================================
+            // PATIENT NOT FOUND
+            // =================================================
 
             if (responseData.Content == null)
             {
                 ErrorMessage =
                     "Không tìm thấy bệnh nhân.";
 
+
                 return false;
             }
 
-            SelectedPatient = responseData.Content;
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            SelectedPatient =
+                responseData.Content;
+
 
             return true;
+
         }
         catch
         {
             ErrorMessage =
                 "Không thể kết nối đến hệ thống.";
+
 
             return false;
         }
