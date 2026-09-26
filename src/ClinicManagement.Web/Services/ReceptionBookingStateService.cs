@@ -231,6 +231,103 @@ public class ReceptionBookingStateService
         }
     }
 
+    // =====================================================
+    // LOAD DOCTORS BY SPECIALTY
+    // =====================================================
+
+    public async Task<bool> LoadDoctorsAsync(
+        int specialtyId)
+    {
+        Doctors.Clear();
+
+        Slots.Clear();
+
+        SelectedDoctorId = null;
+
+        SelectedSlot = null;
+
+
+        SelectedSpecialtyId =
+            specialtyId;
+
+
+        ErrorMessage = string.Empty;
+
+        IsLoading = true;
+
+        StateHasChanged();
+
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/doctors?specialtyId={specialtyId}"
+                    );
+
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<List<DoctorDTO>>>();
+
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải danh sách bác sĩ.";
+
+                return false;
+            }
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            Doctors =
+                responseData.Content
+                ?? new List<DoctorDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
     private void StateHasChanged()
     {
         OnChange?.Invoke();
