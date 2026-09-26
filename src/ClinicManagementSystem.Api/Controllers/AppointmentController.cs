@@ -217,4 +217,36 @@ public class AppointmentController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+    // CREATE RECEPTION APPOINTMENT
+    //
+    // POST:
+    // /api/appointments/reception
+    //
+    // Receptionist đặt lịch cho bệnh nhân
+    // =====================================================
+
+    [HttpPost("reception")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> CreateReceptionAppointment(
+        [FromBody] CreateReceptionAppointmentRequestDTO request)
+    {
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _appointmentService.CreateReceptionAppointmentAsync(request, currentUserId);
+
+        return StatusCode(result.StatusCode, result);
+    }
+
 }
