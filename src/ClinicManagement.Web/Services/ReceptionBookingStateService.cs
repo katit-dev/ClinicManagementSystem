@@ -328,6 +328,104 @@ public class ReceptionBookingStateService
         }
     }
 
+    // =====================================================
+    // LOAD AVAILABLE SLOTS
+    // =====================================================
+
+    public async Task<bool> LoadSlotsAsync(
+        int doctorId,
+        DateOnly date)
+    {
+        Slots.Clear();
+
+        SelectedDoctorId =
+            doctorId;
+
+
+        SelectedDate =
+            date;
+
+
+        SelectedSlot = null;
+
+
+        ErrorMessage = string.Empty;
+
+        IsLoading = true;
+
+        StateHasChanged();
+
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/doctors/{doctorId}/available-slots?date={date:yyyy-MM-dd}"
+                    );
+
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<List<SlotDTO>>>();
+
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải lịch trống.";
+
+                return false;
+            }
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            Slots =
+                responseData.Content
+                ?? new List<SlotDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
     private void StateHasChanged()
     {
         OnChange?.Invoke();
