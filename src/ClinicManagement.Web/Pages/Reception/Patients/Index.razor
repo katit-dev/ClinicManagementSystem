@@ -662,7 +662,7 @@
                     </button>
 
 
-                    <button class="patient-allergy-button" @onclick="OpenAllergyForm">
+                    <button class="patient-action-btn patient-action-secondary" @onclick="OpenAllergyForm">
 
                         <i class="fas fa-exclamation-triangle"></i>
 
@@ -671,7 +671,7 @@
                     </button>
 
 
-                    <button class="patient-action-button" @onclick="OpenMedicalHistoryAsync">
+                    <button class="patient-action-btn patient-action-secondary" @onclick="OpenMedicalHistoryAsync">
 
                         Xem lịch sử khám
 
@@ -815,6 +815,8 @@
 
                     </div>
                 }
+
+               
 
             }
             else
@@ -989,6 +991,96 @@
 
 </div>
 
+@if (_showMedicalHistory)
+{
+    <div class="medical-history-overlay">
+
+
+        <div class="medical-history-modal">
+
+
+            <div class="medical-history-header">
+
+                <h2>
+                    Lịch sử khám
+                </h2>
+
+
+                <button class="close-button" @onclick="CloseMedicalHistory">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+
+            <div class="medical-history-body">
+
+
+                @if (PatientState.MedicalRecords.Count == 0)
+                {
+                    <p class="empty-text">
+                        Chưa có lịch sử khám.
+                    </p>
+                }
+                else
+                {
+
+                    @foreach (var record in PatientState.MedicalRecords)
+                    {
+                        <div class="medical-record-card">
+
+
+                            <div>
+                                <b>
+                                    Ngày khám:
+                                </b>
+
+                                @record.CreatedAt.ToString("dd/MM/yyyy")
+                            </div>
+
+
+                            <div>
+                                <b>
+                                    Bác sĩ:
+                                </b>
+
+                                @record.DoctorName
+                            </div>
+
+
+                            <div>
+                                <b>
+                                    Chẩn đoán:
+                                </b>
+
+                                @record.Diagnosis
+                            </div>
+
+
+                            <div>
+                                <b>
+                                    Điều trị:
+                                </b>
+
+                                @record.TreatmentPlan
+                            </div>
+
+
+                        </div>
+                    }
+
+                }
+
+
+            </div>
+
+        </div>
+
+    </div>
+}
 
 @code {
 
@@ -1005,6 +1097,11 @@
     private bool _showEditForm;
 
     private PatientRequestDTO _editPatientRequest = new();
+
+    private void CloseMedicalHistory()
+    {
+        _showMedicalHistory = false;
+    }
 
     // =====================================================
     // OPEN MEDICAL HISTORY
