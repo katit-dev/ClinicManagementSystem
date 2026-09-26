@@ -1,0 +1,68 @@
+@page "/reception/booking"
+
+@inject ReceptionBookingStateService BookingState
+
+
+<h1>
+    Đặt lịch hộ / khách vãng lai
+</h1>
+
+
+<div class="booking-container">
+
+    <div class="card">
+
+    <h3>
+        Bệnh nhân
+    </h3>
+
+
+    @if (BookingState.SelectedPatient == null)
+    {
+        <p>
+            Chưa chọn bệnh nhân
+        </p>
+    }
+    else
+    {
+        <div>
+
+            <b>
+                @BookingState.SelectedPatient.PatientCode
+            </b>
+
+            -
+
+            @BookingState.SelectedPatient.FullName
+
+
+            <br />
+
+            @BookingState.SelectedPatient.Phone
+
+        </div>
+    }
+
+</div>
+
+</div>
+
+
+@code {
+
+protected override async Task OnInitializedAsync()
+{
+    BookingState.OnChange += StateHasChanged;
+
+
+    await BookingState
+        .LoadSpecialtiesAsync();
+}
+
+
+
+public void Dispose()
+{
+    BookingState.OnChange -= StateHasChanged;
+}
+}
