@@ -1,3 +1,105 @@
+/* =====================================================
+   PAGE
+===================================================== */
+
+.reception-booking-page {
+
+    padding: 32px;
+
+    background: #f8fafc;
+
+    min-height: 100vh;
+
+}
+
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.reception-booking-header {
+
+    margin-bottom: 32px;
+
+}
+
+
+.reception-booking-header h1 {
+
+    font-size: 32px;
+
+    font-weight: 700;
+
+    margin-bottom: 8px;
+
+    color: #111827;
+
+}
+
+
+.reception-booking-header p {
+
+    color: #64748b;
+
+    font-size: 16px;
+
+}
+
+
+
+
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.reception-booking-card {
+
+    background: white;
+
+    border-radius: 16px;
+
+    padding: 24px;
+
+    margin-bottom: 24px;
+
+    border: 1px solid #e5e7eb;
+
+}
+
+
+
+
+
+.reception-booking-card-header {
+
+    margin-bottom: 20px;
+
+}
+
+
+
+.reception-booking-card-header h2 {
+
+    font-size: 20px;
+
+    font-weight: 600;
+
+    color: #1f2937;
+
+}
+
+
+
+
+
+
+/* =====================================================
+   PATIENT SEARCH
+===================================================== */
+
+
 .reception-booking-search-row {
 
     display: flex;
@@ -8,49 +110,252 @@
 
 
 
+
+
 .reception-booking-input {
+
 
     flex: 1;
 
-    padding: 10px;
+
+    height: 44px;
+
+
+    padding: 0 14px;
+
+
+    border-radius: 10px;
+
+
+    border: 1px solid #d1d5db;
+
+
+    font-size: 15px;
+
 
 }
 
+
+
+.reception-booking-input:focus {
+
+
+    outline: none;
+
+
+    border-color: #2563eb;
+
+
+}
+
+
+
+
+
+
+/* =====================================================
+   BUTTON
+===================================================== */
 
 
 .reception-booking-button {
 
-    padding: 10px 18px;
+
+    padding: 0 24px;
+
+
+    border-radius: 10px;
+
+
+    border: none;
+
+
+    background: #2563eb;
+
+
+    color: white;
+
+
+    font-weight: 600;
+
+
+    cursor: pointer;
+
 
 }
 
 
 
-.reception-booking-error {
+.reception-booking-button:hover {
 
-    margin-top: 12px;
+    background: #1d4ed8;
 
 }
 
+
+
+
+
+
+/* =====================================================
+   PATIENT RESULT
+===================================================== */
 
 
 .reception-booking-patient-result {
 
+
     margin-top: 20px;
 
-    padding: 16px;
 
-    border-radius: 10px;
+    padding: 20px;
+
+
+    background: #eff6ff;
+
+
+    border-radius: 12px;
+
+
+    line-height: 1.8;
+
 
 }
+
+
+
+
+
+
+/* =====================================================
+   SELECT
+===================================================== */
+
+
 .reception-booking-select {
+
 
     width: 100%;
 
-    padding: 12px;
 
-    border-radius: 8px;
+    height: 44px;
 
-    border: 1px solid #ddd;
+
+    padding: 0 12px;
+
+
+    border-radius: 10px;
+
+
+    border: 1px solid #d1d5db;
+
+
+    background: white;
+
+
+    font-size: 15px;
+
+}
+
+
+
+
+
+
+/* =====================================================
+   EMPTY
+===================================================== */
+
+
+.reception-booking-empty {
+
+
+    color: #64748b;
+
+
+    padding: 16px;
+
+
+}
+
+
+
+
+
+
+/* =====================================================
+   TEXTAREA
+===================================================== */
+
+
+.reception-booking-textarea {
+
+
+    width: 100%;
+
+
+    min-height: 120px;
+
+
+    padding: 14px;
+
+
+    border-radius: 10px;
+
+
+    border: 1px solid #d1d5db;
+
+
+    resize: vertical;
+
+
+}
+
+
+
+
+
+
+/* =====================================================
+   ACTION
+===================================================== */
+
+
+.reception-booking-actions {
+
+
+    display: flex;
+
+
+    justify-content: flex-end;
+
+
+}
+
+
+
+.reception-booking-submit-button {
+
+
+    padding: 14px 32px;
+
+
+    border-radius: 12px;
+
+
+    border: none;
+
+
+    background: #16a34a;
+
+
+    color: white;
+
+
+    font-weight: 600;
+
+
+    font-size: 16px;
+
 
 }
