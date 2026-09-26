@@ -671,7 +671,7 @@
                     </button>
 
 
-                    <button type="button" class="patient-record-button">
+                    <button class="patient-action-button" @onclick="OpenMedicalHistoryAsync">
 
                         Xem lịch sử khám
 
@@ -997,6 +997,7 @@
     // =====================================================
 
     private bool _showCreateForm;
+    private bool _showMedicalHistory;
 
     private PatientRequestDTO _createPatientRequest = new();
 
@@ -1004,6 +1005,26 @@
     private bool _showEditForm;
 
     private PatientRequestDTO _editPatientRequest = new();
+
+    // =====================================================
+    // OPEN MEDICAL HISTORY
+    // =====================================================
+
+    private async Task OpenMedicalHistoryAsync()
+    {
+        if (PatientState.SelectedPatient == null)
+        {
+            return;
+        }
+
+
+        await PatientState.LoadPatientMedicalRecordsAsync(
+            PatientState.SelectedPatient.Id
+        );
+
+
+        _showMedicalHistory = true;
+    }
 
     // =====================================================
     // DELETE ALLERGY

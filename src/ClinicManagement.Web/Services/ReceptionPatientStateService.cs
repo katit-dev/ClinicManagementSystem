@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Patient;
+using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 
 namespace ClinicManagementSystem.Web.Services;
 
@@ -24,18 +25,13 @@ public class ReceptionPatientStateService
 
     public List<PatientAllergyDTO> Allergies { get; private set; } = new();
 
+    // MEDICAL HISTORY
+    public List<MedicalRecordDTO> MedicalRecords { get; private set; } = new();
 
-    // =====================================================
     // SEARCH
-    // =====================================================
-
     public string Keyword { get; private set; } = string.Empty;
 
-
-    // =====================================================
     // PAGINATION
-    // =====================================================
-
     public int CurrentPage { get; private set; } = 1;
 
     public int PageSize { get; private set; } = 10;
@@ -75,6 +71,63 @@ public class ReceptionPatientStateService
         AuthorizedApiService authorizedApiService)
     {
         _authorizedApiService = authorizedApiService;
+    }
+
+    // =====================================================
+    // LOAD PATIENT MEDICAL RECORDS
+    // =====================================================
+
+    public async Task LoadPatientMedicalRecordsAsync(
+        int patientId)
+    {
+        try
+        {
+            IsLoading = true;
+
+            ErrorMessage = string.Empty;
+
+
+            var response =
+                await _authorizedApiService.GetAsync(
+                    $"/api/medical-records/patient/{patientId}"
+                );
+
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<List<MedicalRecordDTO>>>();
+
+
+            if (!response.IsSuccessStatusCode ||
+                result?.Content == null)
+            {
+                MedicalRecords.Clear();
+
+                ErrorMessage =
+                    result?.Message ??
+                    "Không thể tải lịch sử khám.";
+
+                return;
+            }
+
+
+            MedicalRecords =
+                result.Content;
+        }
+        catch (Exception)
+        {
+            MedicalRecords.Clear();
+
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
     }
 
     // =====================================================
