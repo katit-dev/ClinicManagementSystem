@@ -24,6 +24,8 @@ public interface IPatientService
 
     Task<HttpResponseData<object>> DeletePatientAllergyAsync(int allergyId);
 
+    Task<HttpResponseData<PatientDTO>> CreateQuickPatientAsync(QuickPatientRequestDTO request);
+
 }
 
 public class PatientService : IPatientService
