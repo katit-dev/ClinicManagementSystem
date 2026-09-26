@@ -1095,7 +1095,7 @@ public class PatientService : IPatientService
                     PatientResponseMessageDTO.LookupNotFound);
             }
 
-            new PatientLookupDTO
+            var result = new PatientLookupDTO
             {
                 Id = patient.Id,
 
@@ -1106,7 +1106,7 @@ public class PatientService : IPatientService
                 DateOfBirth = patient.DateOfBirth,
 
                 HasAccount = patient.UserId.HasValue
-            }
+            };
 
             return Response(
                 200,

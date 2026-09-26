@@ -214,8 +214,8 @@ public class ReceptionBookingStateService
                     Id =
                         patient.Id,
 
-                    PatientCode =
-                        patient.PatientCode,
+                    // PatientCode =
+                    //     patient.PatientCode,
 
                     FullName =
                         patient.FullName,
