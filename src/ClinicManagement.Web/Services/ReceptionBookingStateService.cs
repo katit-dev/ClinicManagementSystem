@@ -87,15 +87,7 @@ public class ReceptionBookingStateService
     }
     = string.Empty;
 
-
-
-
-    public Action? OnChange
-    {
-        get;
-        set;
-    }
-
+   public event Action? OnChange;
 
 
     // =====================================================
@@ -146,6 +138,12 @@ public class ReceptionBookingStateService
         SelectedDoctorId = null;
 
         SelectedStartTime = null;
+
+
+        Doctors.Clear();
+
+        Slots.Clear();
+
 
         StateHasChanged();
     }
@@ -573,6 +571,8 @@ public class ReceptionBookingStateService
         Slots.Clear();
 
         SelectedDoctorId = null;
+
+        SelectedStartTime = null;
 
         SelectedSpecialtyId =
             specialtyId;
