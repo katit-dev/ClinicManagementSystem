@@ -42,6 +42,181 @@ public class PatientService : IPatientService
     }
 
     // =====================================================
+    // CREATE QUICK PATIENT
+    // =====================================================
+
+    public async Task<HttpResponseData<PatientDTO>>
+        CreateQuickPatientAsync(
+            QuickPatientRequestDTO request)
+    {
+        try
+        {
+            // =================================================
+            // NORMALIZE INPUT
+            // =================================================
+
+            var fullName =
+                request.FullName.Trim();
+
+
+            var phone =
+                request.Phone.Trim();
+
+
+
+            // =================================================
+            // VALIDATE REQUIRED DATA
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        PatientResponseMessageDTO.InvalidFullName
+                };
+            }
+
+
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        PatientResponseMessageDTO.InvalidPhone
+                };
+            }
+
+
+
+            // =================================================
+            // CHECK DUPLICATE PHONE
+            // =================================================
+
+            var existingPatient =
+                await _unitOfWork.PatientRepository
+                    .WhereSql(p =>
+                        p.Phone == phone)
+                    .FirstOrDefaultAsync();
+
+
+            if (existingPatient != null)
+            {
+                return new HttpResponseData<PatientDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        PatientResponseMessageDTO.PhoneAlreadyExists
+                };
+            }
+
+
+
+            // =================================================
+            // CREATE PATIENT
+            // =================================================
+
+            var now = DateTime.UtcNow;
+
+
+            var patient = new Patient
+            {
+                // Quick patient chưa có account
+                UserId = null,
+
+
+                FullName = fullName,
+
+                Phone = phone,
+
+
+                PatientCode =
+                    PatientCodeHelper.Generate(),
+
+
+                IsActive = true,
+
+                CreatedAt = now
+            };
+
+
+
+            // =================================================
+            // ADD PATIENT
+            // =================================================
+
+            await _unitOfWork
+                .PatientRepository
+                .AddAsync(patient);
+
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork.SaveChangesAsync();
+
+
+
+            // =================================================
+            // MAP DTO
+            // =================================================
+
+            var result =
+                new PatientDTO
+                {
+                    Id = patient.Id,
+
+                    PatientCode =
+                        patient.PatientCode,
+
+                    FullName =
+                        patient.FullName,
+
+                    Phone =
+                        patient.Phone
+                };
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<PatientDTO>
+            {
+                StatusCode = 201,
+
+                Message =
+                    PatientResponseMessageDTO.QuickCreateSuccess,
+
+                Content = result
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to quick create patient.");
+
+
+            return new HttpResponseData<PatientDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    PatientResponseMessageDTO.QuickCreateFailed
+            };
+        }
+    }
+
+    // =====================================================
     // DELETE PATIENT ALLERGY
     // =====================================================
 
@@ -93,7 +268,7 @@ public class PatientService : IPatientService
             {
                 StatusCode = 200,
 
-                Message = "Xóa thông tin dị ứng thành công."
+                Message = PatientResponseMessageDTO.AllergyDeleteSuccess
             };
         }
         catch (Exception ex)
@@ -109,7 +284,7 @@ public class PatientService : IPatientService
             {
                 StatusCode = 500,
 
-                Message = "Không thể xóa thông tin dị ứng."
+                Message = PatientResponseMessageDTO.AllergyDeleteFailed
             };
         }
     }
@@ -136,7 +311,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<List<PatientAllergyDTO>>
                 {
                     StatusCode = 404,
-                    Message = "Không tìm thấy hồ sơ bệnh nhân."
+                    Message = PatientResponseMessageDTO.PatientNotFound
                 };
             }
 
@@ -181,7 +356,7 @@ public class PatientService : IPatientService
             {
                 StatusCode = 200,
 
-                Message = "Lấy danh sách dị ứng thành công.",
+                Message = PatientResponseMessageDTO.AllergyListSuccess,
 
                 Content = result
             };
@@ -199,7 +374,7 @@ public class PatientService : IPatientService
             {
                 StatusCode = 500,
 
-                Message = "Không thể lấy thông tin dị ứng."
+                Message = PatientResponseMessageDTO.AllergyListFailed
             };
         }
     }
@@ -227,7 +402,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientAllergyDTO>
                 {
                     StatusCode = 404,
-                    Message = "Không tìm thấy hồ sơ bệnh nhân."
+                    Message = PatientResponseMessageDTO.PatientNotFound
                 };
             }
 
@@ -252,7 +427,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientAllergyDTO>
                 {
                     StatusCode = 400,
-                    Message = "Tên chất gây dị ứng không được để trống."
+                    Message = PatientResponseMessageDTO.InvalidAllergen
                 };
             }
 
@@ -305,7 +480,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PatientAllergyDTO>
             {
                 StatusCode = 201,
-                Message = "Thêm dị ứng cho bệnh nhân thành công.",
+                Message = PatientResponseMessageDTO.AllergyCreateSuccess,
                 Content = result
             };
         }
@@ -319,7 +494,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PatientAllergyDTO>
             {
                 StatusCode = 500,
-                Message = "Không thể thêm thông tin dị ứng."
+                Message = PatientResponseMessageDTO.AllergyCreateFailed
             };
         }
     }
@@ -347,7 +522,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 404,
-                    Message = "Không tìm thấy hồ sơ bệnh nhân."
+                    Message = PatientResponseMessageDTO.PatientNotFound
                 };
             }
 
@@ -389,7 +564,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 400,
-                    Message = "Họ tên bệnh nhân không được để trống."
+                    Message = PatientResponseMessageDTO.InvalidFullName
                 };
             }
 
@@ -398,7 +573,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 400,
-                    Message = "Số điện thoại không được để trống."
+                    Message = PatientResponseMessageDTO.InvalidPhone
                 };
             }
 
@@ -413,7 +588,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 400,
-                    Message = "Ngày sinh không thể lớn hơn ngày hiện tại."
+                    Message = PatientResponseMessageDTO.InvalidDateOfBirth
                 };
             }
 
@@ -435,7 +610,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 409,
-                    Message = "Số điện thoại đã tồn tại trong hồ sơ bệnh nhân khác."
+                    Message = PatientResponseMessageDTO.PhoneAlreadyExists
                 };
             }
 
@@ -503,7 +678,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PatientDTO>
             {
                 StatusCode = 200,
-                Message = "Cập nhật hồ sơ bệnh nhân thành công.",
+                Message = PatientResponseMessageDTO.UpdateSuccess,
                 Content = patientDTO
             };
         }
@@ -517,7 +692,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PatientDTO>
             {
                 StatusCode = 500,
-                Message = "Không thể xử lý thông tin bệnh nhân."
+                Message = PatientResponseMessageDTO.UpdateFailed
             };
         }
     }
@@ -568,7 +743,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 400,
-                    Message = "Họ tên bệnh nhân không được để trống."
+                    Message = PatientResponseMessageDTO.InvalidFullName
                 };
             }
 
@@ -577,7 +752,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 400,
-                    Message = "Số điện thoại không được để trống."
+                    Message = PatientResponseMessageDTO.InvalidPhone
                 };
             }
 
@@ -592,7 +767,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 400,
-                    Message = "Ngày sinh không thể lớn hơn ngày hiện tại."
+                    Message = PatientResponseMessageDTO.InvalidDateOfBirth
                 };
             }
 
@@ -610,7 +785,7 @@ public class PatientService : IPatientService
                 return new HttpResponseData<PatientDTO>
                 {
                     StatusCode = 409,
-                    Message = "Số điện thoại đã tồn tại trong hồ sơ bệnh nhân."
+                    Message = PatientResponseMessageDTO.PhoneAlreadyExists
                 };
             }
 
@@ -692,7 +867,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PatientDTO>
             {
                 StatusCode = 201,
-                Message = "Tạo hồ sơ bệnh nhân thành công.",
+                Message = PatientResponseMessageDTO.CreateSuccess,
                 Content = result
             };
         }
@@ -714,7 +889,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PatientDTO>
             {
                 StatusCode = 500,
-                Message = "Không thể tạo hồ sơ bệnh nhân."
+                Message = PatientResponseMessageDTO.CreateFailed
             };
         }
     }
@@ -871,7 +1046,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PagedResult<PatientDTO>>
             {
                 StatusCode = 200,
-                Message = "Lấy danh sách bệnh nhân thành công.",
+                Message = PatientResponseMessageDTO.SearchSuccess,
                 Content = result
             };
         }
@@ -896,7 +1071,7 @@ public class PatientService : IPatientService
             return new HttpResponseData<PagedResult<PatientDTO>>
             {
                 StatusCode = 500,
-                Message = "Không thể lấy danh sách bệnh nhân.",
+                Message = PatientResponseMessageDTO.SearchFailed,
                 Content = new PagedResult<PatientDTO>()
             };
         }
@@ -956,4 +1131,5 @@ public class PatientService : IPatientService
             Content = content
         };
     }
+
 }

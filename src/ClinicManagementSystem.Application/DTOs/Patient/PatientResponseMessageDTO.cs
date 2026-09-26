@@ -61,6 +61,26 @@ public static class PatientResponseMessageDTO
     public const string AllergyNotFound =
         "Không tìm thấy thông tin dị ứng.";
 
+    public const string AllergyListSuccess =
+        "Lấy danh sách dị ứng thành công.";
+
+    public const string AllergyListFailed =
+        "Không thể lấy thông tin dị ứng.";
+
+    public const string InvalidAllergen =
+        "Tên chất gây dị ứng không được để trống.";
+
+
+    // =====================================================
+    // SEARCH
+    // =====================================================
+
+    public const string SearchSuccess =
+        "Lấy danh sách bệnh nhân thành công.";
+
+    public const string SearchFailed =
+        "Không thể lấy danh sách bệnh nhân.";
+
 
     // =====================================================
     // QUICK CREATE
