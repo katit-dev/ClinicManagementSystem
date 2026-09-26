@@ -1,22 +1,16 @@
 @page "/reception/booking"
 
-
 @layout HomePageMaster
 
-
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Receptionist")]
-
 
 @using ClinicManagementSystem.Application.DTOs.Appointment
 @using ClinicManagementSystem.Application.DTOs.Patient
 @using ClinicManagementSystem.Application.Enums
 
-
 @inject ReceptionBookingStateService ReceptionBookingStateService
 
-
 @implements IDisposable
-
 
 
 <PageTitle>
@@ -24,10 +18,7 @@
 </PageTitle>
 
 
-
-
 <div class="reception-booking-page">
-
 
 
     @* =====================================================
@@ -40,7 +31,6 @@
             Đặt lịch khám
         </h1>
 
-
         <p>
             Đặt lịch khám thay cho bệnh nhân tại quầy tiếp đón.
         </p>
@@ -48,437 +38,503 @@
     </div>
 
 
+    @if (ReceptionBookingStateService.CreatedAppointment != null)
+    {
+        @* =====================================================
+           BOOKING SUCCESS
+           ===================================================== *@
 
+        <div class="reception-booking-success">
 
+            <div class="reception-booking-success-header">
 
-    @* =====================================================
-       PATIENT
-       ===================================================== *@
+                <h2>
+                    Đặt lịch thành công
+                </h2>
 
-
-    <div class="reception-booking-card">
-
-
-        <div class="reception-booking-card-header">
-
-            <h2>
-                Thông tin bệnh nhân
-            </h2>
-
-        </div>
-
-
-
-
-        <div class="reception-booking-search-row">
-
-
-            <input class="reception-booking-input" placeholder="Nhập số điện thoại" @bind="_phone" />
-
-
-
-            <button class="reception-booking-button" @onclick="LookupPatientAsync">
-
-                Tìm bệnh nhân
-
-            </button>
-
-
-        </div>
-
-        @if (!string.IsNullOrWhiteSpace(_phoneError))
-        {
-            <div class="reception-booking-error">
-                @_phoneError
-            </div>
-        }
-
-
-        @if (!string.IsNullOrWhiteSpace(
-            ReceptionBookingStateService.ErrorMessage))
-        {
-
-            <div class="reception-booking-error">
-
-                @ReceptionBookingStateService.ErrorMessage
+                <p>
+                    Lịch khám đã được tạo thành công.
+                </p>
 
             </div>
 
 
+            <div class="reception-booking-success-info">
+
+                <div>
+                    <strong>Mã lịch khám:</strong>
+
+                    @ReceptionBookingStateService
+                        .CreatedAppointment
+                        .AppointmentCode
+                </div>
 
 
-            @* =================================================
-               QUICK CREATE PATIENT
-               ================================================= *@
+                <div>
+                    <strong>Bệnh nhân:</strong>
+
+                    @ReceptionBookingStateService
+                        .SelectedPatient?
+                        .FullName
+                </div>
 
 
-            <div class="reception-booking-quick-create">
+                <div>
+                    <strong>Bác sĩ:</strong>
+
+                    @ReceptionBookingStateService
+                        .CreatedAppointment
+                        .DoctorName
+                </div>
 
 
-                <h3>
-                    Tạo nhanh bệnh nhân
-                </h3>
+                <div>
+                    <strong>Chuyên khoa:</strong>
+
+                    @ReceptionBookingStateService
+                        .CreatedAppointment
+                        .SpecialtyName
+                </div>
 
 
+                <div>
+                    <strong>Thời gian:</strong>
 
-                <input class="reception-booking-input" placeholder="Họ tên bệnh nhân" @bind="_quickPatientName" />
+                    @ReceptionBookingStateService
+                        .CreatedAppointment
+                        .StartTime
+                        .ToString("dd/MM/yyyy HH:mm")
+                </div>
 
 
+                @if (ReceptionBookingStateService
+                    .CreatedAppointment
+                    .QueueNumber.HasValue)
+                {
+                    <div>
+                        <strong>Số thứ tự:</strong>
 
-                <button class="reception-booking-button" @onclick="CreateQuickPatientAsync">
+                        @ReceptionBookingStateService
+                            .CreatedAppointment
+                            .QueueNumber
+                    </div>
+                }
 
-                    Tạo bệnh nhân
+            </div>
+
+        </div>
+    }
+    else
+    {
+
+
+        @* =====================================================
+           PATIENT
+           ===================================================== *@
+
+        <div class="reception-booking-card">
+
+            <div class="reception-booking-card-header">
+
+                <h2>
+                    Thông tin bệnh nhân
+                </h2>
+
+            </div>
+
+
+            <div class="reception-booking-search-row">
+
+                <input class="reception-booking-input"
+                       placeholder="Nhập số điện thoại"
+                       @bind="_phone" />
+
+
+                <button class="reception-booking-button"
+                        @onclick="LookupPatientAsync">
+
+                    Tìm bệnh nhân
 
                 </button>
 
-
             </div>
 
-        }
 
-
-
-
-
-
-        @if (ReceptionBookingStateService.SelectedPatient != null)
-        {
-
-            <div class="reception-booking-patient-result">
-
-
-                <div>
-                    <strong>
-                        Mã bệnh nhân:
-                    </strong>
-
-                    @ReceptionBookingStateService.SelectedPatient.PatientCode
-                </div>
-
-
-
-                <div>
-                    <strong>
-                        Họ tên:
-                    </strong>
-
-                    @ReceptionBookingStateService.SelectedPatient.FullName
-                </div>
-
-
-
-                <div>
-                    <strong>
-                        Điện thoại:
-                    </strong>
-
-                    @ReceptionBookingStateService.SelectedPatient.Phone
-                </div>
-
-
-
-                <div>
-
-                    @if (ReceptionBookingStateService.SelectedPatient.HasAccount)
-                    {
-
-                        <span>
-                            Đã có tài khoản
-                        </span>
-
-                    }
-                    else
-                    {
-
-                        <span>
-                            Chưa có tài khoản
-                        </span>
-
-                    }
-
-                </div>
-
-
-            </div>
-
-        }
-
-
-    </div>
-
-
-
-
-
-
-
-    @* =====================================================
-       SPECIALTY
-       ===================================================== *@
-
-
-    <div class="reception-booking-card">
-
-
-        <div class="reception-booking-card-header">
-
-            <h2>
-                Chọn chuyên khoa
-            </h2>
-
-        </div>
-
-
-
-        <select class="reception-booking-select" disabled="@(ReceptionBookingStateService.SelectedPatient == null)"
-                @onchange="SelectSpecialtyAsync">
-
-            <option value="">
-                -- Chọn chuyên khoa --
-            </option>
-
-            @foreach (var specialty
-                in ReceptionBookingStateService.Specialties)
+            @if (!string.IsNullOrWhiteSpace(_phoneError))
             {
-                <option value="@specialty.Id">
-                    @specialty.Name
-                </option>
+                <div class="reception-booking-error">
+
+                    @_phoneError
+
+                </div>
             }
 
-        </select>
+
+            @if (!string.IsNullOrWhiteSpace(
+                ReceptionBookingStateService.ErrorMessage))
+            {
+
+                <div class="reception-booking-error">
+
+                    @ReceptionBookingStateService.ErrorMessage
+
+                </div>
 
 
-    </div>
+                @* =================================================
+                   QUICK CREATE PATIENT
+                   ================================================= *@
+
+                <div class="reception-booking-quick-create">
+
+                    <h3>
+                        Tạo nhanh bệnh nhân
+                    </h3>
 
 
+                    <input class="reception-booking-input"
+                           placeholder="Họ tên bệnh nhân"
+                           @bind="_quickPatientName" />
 
 
+                    <button class="reception-booking-button"
+                            @onclick="CreateQuickPatientAsync">
+
+                        Tạo bệnh nhân
+
+                    </button>
+
+                </div>
+
+            }
 
 
+            @if (ReceptionBookingStateService.SelectedPatient != null)
+            {
 
-    @* =====================================================
-       DOCTOR
-       ===================================================== *@
+                <div class="reception-booking-patient-result">
+
+                    <div>
+
+                        <strong>
+                            Mã bệnh nhân:
+                        </strong>
+
+                        @ReceptionBookingStateService
+                            .SelectedPatient
+                            .PatientCode
+
+                    </div>
 
 
-    <div class="reception-booking-card">
+                    <div>
+
+                        <strong>
+                            Họ tên:
+                        </strong>
+
+                        @ReceptionBookingStateService
+                            .SelectedPatient
+                            .FullName
+
+                    </div>
 
 
-        <div class="reception-booking-card-header">
+                    <div>
 
-            <h2>
-                Chọn bác sĩ
-            </h2>
+                        <strong>
+                            Điện thoại:
+                        </strong>
+
+                        @ReceptionBookingStateService
+                            .SelectedPatient
+                            .Phone
+
+                    </div>
+
+
+                    <div>
+
+                        @if (ReceptionBookingStateService
+                            .SelectedPatient
+                            .HasAccount)
+                        {
+                            <span>
+                                Đã có tài khoản
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                Chưa có tài khoản
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+
+            }
 
         </div>
 
-        @if (ReceptionBookingStateService.SelectedSpecialtyId == null)
-        {
-            <div class="reception-booking-empty">
-                Vui lòng chọn chuyên khoa.
+
+        @* =====================================================
+           SPECIALTY
+           ===================================================== *@
+
+        <div class="reception-booking-card">
+
+            <div class="reception-booking-card-header">
+
+                <h2>
+                    Chọn chuyên khoa
+                </h2>
+
             </div>
-        }
-        else if (ReceptionBookingStateService.IsLoading)
-        {
-            <div class="reception-booking-empty">
-                Đang tải danh sách bác sĩ...
-            </div>
-        }
-        else if (!ReceptionBookingStateService.Doctors.Any())
-        {
-            <div class="reception-booking-empty">
-                Không có bác sĩ thuộc chuyên khoa này.
-            </div>
-        }
-        else
-        {
-            <select class="reception-booking-select" disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
-                     ReceptionBookingStateService.SelectedSpecialtyId == null)"
-                    value="@ReceptionBookingStateService.SelectedDoctorId?.ToString()" @onchange="SelectDoctorAsync">
+
+
+            <select class="reception-booking-select"
+                    disabled="@(ReceptionBookingStateService.SelectedPatient == null)"
+                    @onchange="SelectSpecialtyAsync">
 
                 <option value="">
-                    -- Chọn bác sĩ --
+                    -- Chọn chuyên khoa --
                 </option>
 
-                @foreach (var doctor
-                    in ReceptionBookingStateService.Doctors)
+
+                @foreach (var specialty
+                    in ReceptionBookingStateService.Specialties)
                 {
-                    <option value="@doctor.Id">
-                        @doctor.FullName
+                    <option value="@specialty.Id">
+
+                        @specialty.Name
+
                     </option>
                 }
 
             </select>
-        }
-
-
-    </div>
-
-
-
-
-
-
-
-    @* =====================================================
-   SLOT
-   ===================================================== *@
-
-    <div class="reception-booking-card">
-
-        <div class="reception-booking-card-header">
-
-            <h2>
-                Chọn giờ khám
-            </h2>
 
         </div>
 
 
-        @if (ReceptionBookingStateService.SelectedDoctorId == null)
-        {
-            <div class="reception-booking-empty">
+        @* =====================================================
+           DOCTOR
+           ===================================================== *@
 
-                Vui lòng chọn bác sĩ.
+        <div class="reception-booking-card">
 
-            </div>
-        }
-        else
-        {
-            <div class="reception-booking-slot-date">
+            <div class="reception-booking-card-header">
 
-                <label>
-                    Ngày khám
-                </label>
-
-                <input type="date" class="reception-booking-input"
-                       value="@ReceptionBookingStateService.SelectedDate.ToString("yyyy-MM-dd")"
-                       min="@DateTime.Today.ToString("yyyy-MM-dd")" @onchange="SelectDateAsync" disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
-                       ReceptionBookingStateService.SelectedDoctorId == null)" />
+                <h2>
+                    Chọn bác sĩ
+                </h2>
 
             </div>
 
 
-            @if (ReceptionBookingStateService.IsLoading)
+            @if (ReceptionBookingStateService.SelectedSpecialtyId == null)
             {
                 <div class="reception-booking-empty">
 
-                    Đang tải khung giờ...
+                    Vui lòng chọn chuyên khoa.
 
                 </div>
             }
-            else if (!ReceptionBookingStateService.Slots.Any())
+            else if (ReceptionBookingStateService.IsLoading)
             {
                 <div class="reception-booking-empty">
 
-                    Không có khung giờ khám trong ngày này.
+                    Đang tải danh sách bác sĩ...
+
+                </div>
+            }
+            else if (!ReceptionBookingStateService.Doctors.Any())
+            {
+                <div class="reception-booking-empty">
+
+                    Không có bác sĩ thuộc chuyên khoa này.
 
                 </div>
             }
             else
             {
-                <div class="reception-booking-slots">
+                <select class="reception-booking-select"
+                        disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
+                                    ReceptionBookingStateService.SelectedSpecialtyId == null)"
+                        value="@ReceptionBookingStateService.SelectedDoctorId?.ToString()"
+                        @onchange="SelectDoctorAsync">
 
-                    @foreach (var slot
-                        in ReceptionBookingStateService.Slots)
+                    <option value="">
+                        -- Chọn bác sĩ --
+                    </option>
+
+
+                    @foreach (var doctor
+                        in ReceptionBookingStateService.Doctors)
                     {
-                        <button type="button" class="@(slot.IsAvailable
-                                    ? "reception-booking-slot"
-                                    : "reception-booking-slot unavailable")
-                            @(ReceptionBookingStateService.SelectedStartTime == slot.StartTime
-    ? " selected"
-    : "")" disabled="@(!slot.IsAvailable)" @onclick="() => SelectSlot(slot.StartTime)">
+                        <option value="@doctor.Id">
 
-                            <span class="reception-booking-slot-time">
+                            @doctor.FullName
 
-                                @slot.StartTime.ToString("HH:mm")
-                                -
-                                @slot.EndTime.ToString("HH:mm")
-
-                            </span>
-
-
-                            <span class="reception-booking-slot-status">
-
-                                @(slot.IsAvailable
-                                    ? "Trống"
-                                    : "Đã đặt")
-
-                            </span>
-
-                        </button>
+                        </option>
                     }
 
-                </div>
+                </select>
             }
-
-        }
-
-    </div>
-
-
-
-
-
-
-    @* =====================================================
-       REASON
-       ===================================================== *@
-
-
-    <div class="reception-booking-card">
-
-
-        <div class="reception-booking-card-header">
-
-            <h2>
-                Lý do khám
-            </h2>
 
         </div>
 
 
+        @* =====================================================
+           SLOT
+           ===================================================== *@
 
-        <textarea class="reception-booking-textarea" placeholder="Nhập lý do khám" @bind="_reason">
-</textarea>
+        <div class="reception-booking-card">
 
+            <div class="reception-booking-card-header">
 
-    </div>
+                <h2>
+                    Chọn giờ khám
+                </h2>
 
-
-
-
-
-
-
-    @* =====================================================
-       ACTION
-       ===================================================== *@
+            </div>
 
 
-    <div class="reception-booking-actions">
+            @if (ReceptionBookingStateService.SelectedDoctorId == null)
+            {
+                <div class="reception-booking-empty">
+
+                    Vui lòng chọn bác sĩ.
+
+                </div>
+            }
+            else
+            {
+                <div class="reception-booking-slot-date">
+
+                    <label>
+                        Ngày khám
+                    </label>
 
 
-        <button type="button" class="reception-booking-submit-button" disabled="@ReceptionBookingStateService.IsLoading"
-                @onclick="CreateAppointmentAsync">
+                    <input type="date"
+                           class="reception-booking-input"
+                           value="@ReceptionBookingStateService.SelectedDate.ToString("yyyy-MM-dd")"
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
+                                       ReceptionBookingStateService.SelectedDoctorId == null)"
+                           @onchange="SelectDateAsync" />
 
-            @(ReceptionBookingStateService.IsLoading
-                ? "Đang đặt lịch..."
-                : "Xác nhận đặt lịch")
-
-        </button>
-
-
-    </div>
+                </div>
 
 
+                @if (ReceptionBookingStateService.IsLoading)
+                {
+                    <div class="reception-booking-empty">
 
+                        Đang tải khung giờ...
+
+                    </div>
+                }
+                else if (!ReceptionBookingStateService.Slots.Any())
+                {
+                    <div class="reception-booking-empty">
+
+                        Không có khung giờ khám trong ngày này.
+
+                    </div>
+                }
+                else
+                {
+                    <div class="reception-booking-slots">
+
+                        @foreach (var slot
+                            in ReceptionBookingStateService.Slots)
+                        {
+                            <button type="button"
+                                    class="@(slot.IsAvailable
+                                        ? "reception-booking-slot"
+                                        : "reception-booking-slot unavailable")
+                                        @(ReceptionBookingStateService.SelectedStartTime == slot.StartTime
+                                            ? " selected"
+                                            : "")"
+                                    disabled="@(!slot.IsAvailable)"
+                                    @onclick="() => SelectSlot(slot.StartTime)">
+
+                                <span class="reception-booking-slot-time">
+
+                                    @slot.StartTime.ToString("HH:mm")
+                                    -
+                                    @slot.EndTime.ToString("HH:mm")
+
+                                </span>
+
+
+                                <span class="reception-booking-slot-status">
+
+                                    @(slot.IsAvailable
+                                        ? "Trống"
+                                        : "Đã đặt")
+
+                                </span>
+
+                            </button>
+                        }
+
+                    </div>
+                }
+
+            }
+
+        </div>
+
+
+        @* =====================================================
+           REASON
+           ===================================================== *@
+
+        <div class="reception-booking-card">
+
+            <div class="reception-booking-card-header">
+
+                <h2>
+                    Lý do khám
+                </h2>
+
+            </div>
+
+
+            <textarea class="reception-booking-textarea"
+                      placeholder="Nhập lý do khám"
+                      @bind="_reason">
+            </textarea>
+
+        </div>
+
+
+        @* =====================================================
+           ACTION
+           ===================================================== *@
+
+        <div class="reception-booking-actions">
+
+            <button type="button"
+                    class="reception-booking-submit-button"
+                    disabled="@ReceptionBookingStateService.IsLoading"
+                    @onclick="CreateAppointmentAsync">
+
+                @(ReceptionBookingStateService.IsLoading
+                    ? "Đang đặt lịch..."
+                    : "Xác nhận đặt lịch")
+
+            </button>
+
+        </div>
+
+    }
 
 </div>
-
-
-
-
 
 
 @code {

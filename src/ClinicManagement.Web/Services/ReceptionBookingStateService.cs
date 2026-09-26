@@ -69,6 +69,12 @@ public class ReceptionBookingStateService
         DateTime.Now
     );
 
+    public AppointmentDTO? CreatedAppointment
+    {
+        get;
+        private set;
+    }
+
     // =====================================================
     // STATE
     // =====================================================
@@ -480,6 +486,8 @@ public class ReceptionBookingStateService
             // =================================================
             // SUCCESS
             // =================================================
+
+            CreatedAppointment = responseData.Content;
 
             return true;
         }
