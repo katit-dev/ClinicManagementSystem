@@ -353,9 +353,8 @@
 
                 <input type="date" class="reception-booking-input"
                        value="@ReceptionBookingStateService.SelectedDate.ToString("yyyy-MM-dd")"
-                       min="@DateTime.Today.ToString("yyyy-MM-dd")" @onchange="SelectDateAsync" 
-                       disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
-                    ReceptionBookingStateService.SelectedDoctorId == null)"/>
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")" @onchange="SelectDateAsync" disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
+                       ReceptionBookingStateService.SelectedDoctorId == null)" />
 
             </div>
 
@@ -440,8 +439,8 @@
 
 
 
-        <textarea class="reception-booking-textarea" placeholder="Nhập lý do khám">
-        </textarea>
+        <textarea class="reception-booking-textarea" placeholder="Nhập lý do khám" @bind="_reason">
+</textarea>
 
 
     </div>
@@ -460,9 +459,12 @@
     <div class="reception-booking-actions">
 
 
-        <button type="button" class="reception-booking-submit-button">
+        <button type="button" class="reception-booking-submit-button" disabled="@ReceptionBookingStateService.IsLoading"
+                @onclick="CreateAppointmentAsync">
 
-            Xác nhận đặt lịch
+            @(ReceptionBookingStateService.IsLoading
+                ? "Đang đặt lịch..."
+                : "Xác nhận đặt lịch")
 
         </button>
 
@@ -483,11 +485,9 @@
 
 
     private string _phone = string.Empty;
-
-
     private string _quickPatientName = string.Empty;
     private string _phoneError = string.Empty;
-
+    private string _reason = string.Empty;
 
 
     // =====================================================
@@ -504,6 +504,18 @@
         await ReceptionBookingStateService
             .LoadSpecialtiesAsync();
 
+    }
+
+    // =====================================================
+    // CREATE APPOINTMENT
+    // =====================================================
+
+    private async Task CreateAppointmentAsync()
+    {
+        await ReceptionBookingStateService
+            .CreateAppointmentAsync(
+                _reason,
+                1);
     }
 
     // =====================================================
