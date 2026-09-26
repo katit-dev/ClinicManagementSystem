@@ -14,9 +14,7 @@ namespace ClinicManagementSystem.Web.Services;
 public class ReceptionBookingStateService
 {
 
-    private readonly AuthorizedApiService
-        _authorizedApiService;
-
+    private readonly AuthorizedApiService _authorizedApiService;
 
 
     // =====================================================
@@ -145,6 +143,154 @@ public class ReceptionBookingStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // CREATE RECEPTION APPOINTMENT
+    // =====================================================
+
+    public async Task<bool> CreateAppointmentAsync(
+        string? reason,
+        byte source)
+    {
+        ErrorMessage = string.Empty;
+
+
+        if (SelectedPatient == null)
+        {
+            ErrorMessage =
+                "Chưa chọn bệnh nhân.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        if (!SelectedDoctorId.HasValue)
+        {
+            ErrorMessage =
+                "Chưa chọn bác sĩ.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        if (!SelectedSlot.HasValue)
+        {
+            ErrorMessage =
+                "Chưa chọn giờ khám.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+
+        IsLoading = true;
+
+        StateHasChanged();
+
+
+
+        try
+        {
+            // =================================================
+            // BUILD REQUEST
+            // =================================================
+
+            var request =
+                new CreateReceptionAppointmentRequestDTO
+                {
+                    PatientId =
+                        SelectedPatient.Id,
+
+
+                    DoctorId =
+                        SelectedDoctorId.Value,
+
+
+                    StartTime =
+                        SelectedSlot.Value,
+
+
+                    Reason =
+                        reason,
+
+
+                    Source =
+                        source
+                };
+
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var content =
+        JsonContent.Create(request);
+
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        "/api/appointments/reception",
+                        content
+                    );
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<AppointmentDTO>>();
+
+
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tạo lịch khám.";
+
+                return false;
+            }
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
     }
 
     // =====================================================
