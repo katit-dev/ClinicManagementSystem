@@ -790,6 +790,38 @@ public class ReceptionBookingStateService
         }
     }
 
+    // =====================================================
+    // RESET BOOKING
+    // =====================================================
+
+    public void ResetBooking()
+    {
+        CreatedAppointment = null;
+
+        SelectedPatient = null;
+
+        SelectedSpecialtyId = null;
+
+        SelectedDoctorId = null;
+
+        SelectedStartTime = null;
+
+        SelectedDate =
+            DateOnly.FromDateTime(
+                DateTime.Now
+            );
+
+        Doctors.Clear();
+
+        Slots.Clear();
+
+        ErrorMessage = string.Empty;
+
+        IsLoading = false;
+
+        StateHasChanged();
+    }
+
     private void StateHasChanged()
     {
         OnChange?.Invoke();

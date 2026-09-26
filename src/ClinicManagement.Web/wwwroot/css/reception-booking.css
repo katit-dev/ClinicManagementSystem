@@ -723,3 +723,20 @@
     }
 
 }
+
+/* =====================================================
+   SUCCESS ACTIONS
+   ===================================================== */
+
+.reception-booking-success-actions {
+    display: flex;
+
+    justify-content: center;
+
+    margin-top: 24px;
+}
+
+.reception-booking-success-actions
+.reception-booking-button {
+    min-width: 170px;
+}
