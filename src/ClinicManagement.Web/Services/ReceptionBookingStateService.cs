@@ -147,7 +147,89 @@ public class ReceptionBookingStateService
             authorizedApiService;
     }
 
+    // =====================================================
+    // LOAD SPECIALTIES
+    // =====================================================
 
+    public async Task<bool> LoadSpecialtiesAsync()
+    {
+        Specialties.Clear();
+
+        ErrorMessage = string.Empty;
+
+        IsLoading = true;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        "/api/specialties?active=true"
+                    );
+
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<List<SpecialtyDTO>>>();
+
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải danh sách chuyên khoa.";
+
+                return false;
+            }
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            Specialties =
+                responseData.Content
+                ?? new List<SpecialtyDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
 
     private void StateHasChanged()
     {
