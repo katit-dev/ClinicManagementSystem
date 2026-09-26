@@ -8,6 +8,7 @@
 
 
 @using ClinicManagementSystem.Application.DTOs.Appointment
+@using ClinicManagementSystem.Application.DTOs.Patient
 @using ClinicManagementSystem.Application.Enums
 
 
@@ -28,6 +29,7 @@
 <div class="reception-booking-page">
 
 
+
     @* =====================================================
        PAGE HEADER
        ===================================================== *@
@@ -35,20 +37,14 @@
 
     <div class="reception-booking-header">
 
-
-        <div>
-
-            <h1>
-                Đặt lịch khám
-            </h1>
+        <h1>
+            Đặt lịch khám
+        </h1>
 
 
-            <p>
-                Đặt lịch khám thay cho bệnh nhân tại quầy tiếp đón.
-            </p>
-
-        </div>
-
+        <p>
+            Đặt lịch khám thay cho bệnh nhân tại quầy tiếp đón.
+        </p>
 
     </div>
 
@@ -66,106 +62,133 @@
 
         <div class="reception-booking-card-header">
 
-
             <h2>
                 Thông tin bệnh nhân
             </h2>
+
+        </div>
+
+
+
+
+        <div class="reception-booking-search-row">
+
+
+            <input class="reception-booking-input" placeholder="Nhập số điện thoại" @bind="_phone" />
+
+
+
+            <button class="reception-booking-button" @onclick="LookupPatientAsync">
+
+                Tìm bệnh nhân
+
+            </button>
 
 
         </div>
 
 
 
-        <div class="reception-booking-patient-search">
+
+        @if (!string.IsNullOrWhiteSpace(
+            ReceptionBookingStateService.ErrorMessage))
+        {
+
+            <div class="reception-booking-error">
+
+                @ReceptionBookingStateService.ErrorMessage
+
+            </div>
 
 
-            <div class="reception-booking-search-row">
+            @* QUICK CREATE *@
+
+            <div class="reception-booking-quick-create">
 
 
-                <input class="reception-booking-input" placeholder="Nhập số điện thoại" @bind="_phone" />
+                <h3>
+                    Tạo nhanh bệnh nhân
+                </h3>
 
 
-                <button class="reception-booking-button" @onclick="LookupPatientAsync">
 
-                    Tìm bệnh nhân
+                <input class="reception-booking-input" placeholder="Họ tên bệnh nhân" @bind="_quickPatientName" />
+
+
+
+                <button class="reception-booking-button" @onclick="CreateQuickPatientAsync">
+
+                    Tạo bệnh nhân
 
                 </button>
 
 
             </div>
 
+        }
 
 
-            @if (!string.IsNullOrWhiteSpace(
-                ReceptionBookingStateService.ErrorMessage))
-            {
-                <div class="reception-booking-error">
 
-                    @ReceptionBookingStateService.ErrorMessage
 
+
+
+        @if (ReceptionBookingStateService.SelectedPatient != null)
+        {
+
+            <div class="reception-booking-patient-result">
+
+
+                <div>
+                    <strong>
+                        Mã bệnh nhân:
+                    </strong>
+
+                    @ReceptionBookingStateService.SelectedPatient.PatientCode
                 </div>
-            }
 
 
 
-            @if (ReceptionBookingStateService.SelectedPatient != null)
-            {
+                <div>
+                    <strong>
+                        Họ tên:
+                    </strong>
 
-                <div class="reception-booking-patient-result">
-
-
-                    <div>
-                        <strong>
-                            Mã bệnh nhân:
-                        </strong>
-
-                        @ReceptionBookingStateService.SelectedPatient.PatientCode
-                    </div>
+                    @ReceptionBookingStateService.SelectedPatient.FullName
+                </div>
 
 
 
-                    <div>
-                        <strong>
-                            Họ tên:
-                        </strong>
+                <div>
+                    <strong>
+                        Điện thoại:
+                    </strong>
 
-                        @ReceptionBookingStateService.SelectedPatient.FullName
-                    </div>
-
-
-
-                    <div>
-                        <strong>
-                            Điện thoại:
-                        </strong>
-
-                        @ReceptionBookingStateService.SelectedPatient.Phone
-                    </div>
+                    @ReceptionBookingStateService.SelectedPatient.Phone
+                </div>
 
 
 
-                    <div>
-                        @if (ReceptionBookingStateService.SelectedPatient.HasAccount)
-                        {
-                            <span>
-                                Đã có tài khoản
-                            </span>
-                        }
-                        else
-                        {
-                            <span>
-                                Chưa có tài khoản
-                            </span>
-                        }
-                    </div>
+                <div>
 
+                    @if (ReceptionBookingStateService.SelectedPatient.HasAccount)
+                    {
+                        <span>
+                            Đã có tài khoản
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            Chưa có tài khoản
+                        </span>
+                    }
 
                 </div>
 
-            }
 
+            </div>
 
-        </div>
+        }
 
 
     </div>
@@ -183,24 +206,35 @@
 
     <div class="reception-booking-card">
 
-
         <div class="reception-booking-card-header">
-
 
             <h2>
                 Chọn chuyên khoa
             </h2>
 
-
         </div>
 
 
+        <select class="reception-booking-select" @onchange="SelectSpecialtyAsync">
 
-        <div class="reception-booking-empty">
 
-            Chưa chọn chuyên khoa.
+            <option value="">
+                -- Chọn chuyên khoa --
+            </option>
 
-        </div>
+
+            @foreach (var specialty
+                in ReceptionBookingStateService.Specialties)
+            {
+                <option value="@specialty.Id">
+
+                    @specialty.Name
+
+                </option>
+            }
+
+
+        </select>
 
 
     </div>
@@ -221,11 +255,9 @@
 
         <div class="reception-booking-card-header">
 
-
             <h2>
                 Chọn bác sĩ
             </h2>
-
 
         </div>
 
@@ -247,7 +279,7 @@
 
 
     @* =====================================================
-       AVAILABLE SLOT
+       SLOT
        ===================================================== *@
 
 
@@ -256,11 +288,9 @@
 
         <div class="reception-booking-card-header">
 
-
             <h2>
                 Chọn giờ khám
             </h2>
-
 
         </div>
 
@@ -291,11 +321,9 @@
 
         <div class="reception-booking-card-header">
 
-
             <h2>
                 Lý do khám
             </h2>
-
 
         </div>
 
@@ -323,9 +351,7 @@
 
         <button type="button" class="reception-booking-submit-button">
 
-
             Xác nhận đặt lịch
-
 
         </button>
 
@@ -339,10 +365,16 @@
 
 
 
+
+
+
 @code {
 
 
     private string _phone = string.Empty;
+
+
+    private string _quickPatientName = string.Empty;
 
 
 
@@ -362,7 +394,20 @@
 
 
 
-
+    // =====================================================
+    // Select SpecialtyAsync
+    // =====================================================
+    private async Task SelectSpecialtyAsync(
+        ChangeEventArgs e)
+    {
+        if (int.TryParse(
+            e.Value?.ToString(),
+            out var specialtyId))
+        {
+            await ReceptionBookingStateService
+                .LoadDoctorsAsync(specialtyId);
+        }
+    }
 
     // =====================================================
     // LOOKUP PATIENT
@@ -384,6 +429,41 @@
 
 
 
+
+    // =====================================================
+    // CREATE QUICK PATIENT
+    // =====================================================
+
+    private async Task CreateQuickPatientAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_quickPatientName))
+        {
+            return;
+        }
+
+
+
+        var request =
+            new QuickPatientRequestDTO
+            {
+                FullName =
+                    _quickPatientName,
+
+                Phone =
+                    _phone
+            };
+
+
+
+        await ReceptionBookingStateService
+            .CreateQuickPatientAsync(request);
+    }
+
+
+
+
+
+
     // =====================================================
     // STATE CHANGED
     // =====================================================
@@ -392,6 +472,7 @@
     {
         InvokeAsync(StateHasChanged);
     }
+
 
 
 
@@ -406,5 +487,6 @@
         ReceptionBookingStateService.OnChange -=
             HandleStateChanged;
     }
+
 
 }

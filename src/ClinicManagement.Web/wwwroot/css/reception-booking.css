@@ -43,3 +43,14 @@
     border-radius: 10px;
 
 }
+.reception-booking-select {
+
+    width: 100%;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    border: 1px solid #ddd;
+
+}
