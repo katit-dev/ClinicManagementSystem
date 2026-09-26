@@ -1,68 +1,304 @@
 @page "/reception/booking"
 
-@inject ReceptionBookingStateService BookingState
+
+@layout HomePageMaster
 
 
-<h1>
-    Đặt lịch hộ / khách vãng lai
-</h1>
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Receptionist")]
 
 
-<div class="booking-container">
-
-    <div class="card">
-
-    <h3>
-        Bệnh nhân
-    </h3>
+@using ClinicManagementSystem.Application.DTOs.Appointment
+@using ClinicManagementSystem.Application.Enums
 
 
-    @if (BookingState.SelectedPatient == null)
-    {
-        <p>
-            Chưa chọn bệnh nhân
-        </p>
-    }
-    else
-    {
+@inject ReceptionBookingStateService ReceptionBookingStateService
+
+
+@implements IDisposable
+
+
+
+<PageTitle>
+    Đặt lịch khám
+</PageTitle>
+
+
+
+
+<div class="reception-booking-page">
+
+
+    @* =====================================================
+       PAGE HEADER
+       ===================================================== *@
+
+
+    <div class="reception-booking-header">
+
+
         <div>
 
-            <b>
-                @BookingState.SelectedPatient.PatientCode
-            </b>
-
-            -
-
-            @BookingState.SelectedPatient.FullName
+            <h1>
+                Đặt lịch khám
+            </h1>
 
 
-            <br />
-
-            @BookingState.SelectedPatient.Phone
+            <p>
+                Đặt lịch khám thay cho bệnh nhân tại quầy tiếp đón.
+            </p>
 
         </div>
-    }
+
+
+    </div>
+
+
+
+
+
+    @* =====================================================
+       PATIENT
+       ===================================================== *@
+
+
+    <div class="reception-booking-card">
+
+
+        <div class="reception-booking-card-header">
+
+
+            <h2>
+                Thông tin bệnh nhân
+            </h2>
+
+
+        </div>
+
+
+
+        <div class="reception-booking-empty">
+
+            Chưa chọn bệnh nhân.
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+
+    @* =====================================================
+       SPECIALTY
+       ===================================================== *@
+
+
+    <div class="reception-booking-card">
+
+
+        <div class="reception-booking-card-header">
+
+
+            <h2>
+                Chọn chuyên khoa
+            </h2>
+
+
+        </div>
+
+
+
+        <div class="reception-booking-empty">
+
+            Chưa chọn chuyên khoa.
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+
+    @* =====================================================
+       DOCTOR
+       ===================================================== *@
+
+
+    <div class="reception-booking-card">
+
+
+        <div class="reception-booking-card-header">
+
+
+            <h2>
+                Chọn bác sĩ
+            </h2>
+
+
+        </div>
+
+
+
+        <div class="reception-booking-empty">
+
+            Chưa chọn bác sĩ.
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+
+    @* =====================================================
+       AVAILABLE SLOT
+       ===================================================== *@
+
+
+    <div class="reception-booking-card">
+
+
+        <div class="reception-booking-card-header">
+
+
+            <h2>
+                Chọn giờ khám
+            </h2>
+
+
+        </div>
+
+
+
+        <div class="reception-booking-empty">
+
+            Chưa chọn khung giờ.
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+
+    @* =====================================================
+       REASON
+       ===================================================== *@
+
+
+    <div class="reception-booking-card">
+
+
+        <div class="reception-booking-card-header">
+
+
+            <h2>
+                Lý do khám
+            </h2>
+
+
+        </div>
+
+
+
+        <textarea class="reception-booking-textarea"
+                  placeholder="Nhập lý do khám">
+        </textarea>
+
+
+    </div>
+
+
+
+
+
+
+
+    @* =====================================================
+       ACTION
+       ===================================================== *@
+
+
+    <div class="reception-booking-actions">
+
+
+        <button type="button"
+                class="reception-booking-submit-button">
+
+
+            Xác nhận đặt lịch
+
+
+        </button>
+
+
+    </div>
+
+
+
 
 </div>
 
-</div>
+
+
 
 
 @code {
 
-protected override async Task OnInitializedAsync()
-{
-    BookingState.OnChange += StateHasChanged;
 
 
-    await BookingState
-        .LoadSpecialtiesAsync();
-}
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+
+    protected override void OnInitialized()
+    {
+
+    }
 
 
 
-public void Dispose()
-{
-    BookingState.OnChange -= StateHasChanged;
-}
+
+
+    // =====================================================
+    // STATE CHANGED
+    // =====================================================
+
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+
+
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+
+    public void Dispose()
+    {
+
+    }
+
+
 }
