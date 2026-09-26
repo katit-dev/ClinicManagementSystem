@@ -55,10 +55,7 @@
                DASHBOARD
                ========================================= *@
 
-            <NavLink href="@GetDashboardUrl()"
-                     class="sidebar-link"
-                     ActiveClass="active"
-                     Match="NavLinkMatch.All"
+            <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                      @onclick="CloseSidebar">
 
                 <i class="fas fa-home"></i>
@@ -76,23 +73,39 @@
 
             @if (HasRole("Receptionist"))
             {
-                @* =====================================
-                   PATIENT MANAGEMENT
-                   ===================================== *@
 
-                <NavLink href="/reception/patients"
-                         class="sidebar-link"
-                         ActiveClass="active"
-                         Match="NavLinkMatch.Prefix"
+
+                <NavLink href="/reception/booking" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
+
+                    <i class="fas fa-calendar-plus"></i>
+
+
+                    <span>
+                        Đặt lịch khám
+                    </span>
+
+
+                </NavLink>
+
+
+
+                <NavLink href="/reception/patients" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.Prefix"
+                         @onclick="CloseSidebar">
+
+
                     <i class="fas fa-user-injured"></i>
+
 
                     <span>
                         Hồ sơ bệnh nhân
                     </span>
 
+
                 </NavLink>
+
+
             }
 
 
@@ -106,10 +119,7 @@
                    BOOK APPOINTMENT
                    ===================================== *@
 
-                <NavLink href="/patient/booking"
-                         class="sidebar-link"
-                         ActiveClass="active"
-                         Match="NavLinkMatch.All"
+                <NavLink href="/patient/booking" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-plus"></i>
@@ -125,10 +135,7 @@
                    MY APPOINTMENTS
                    ===================================== *@
 
-                <NavLink href="/patient/appointments"
-                         class="sidebar-link"
-                         ActiveClass="active"
-                         Match="NavLinkMatch.All"
+                <NavLink href="/patient/appointments" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-calendar-check"></i>
@@ -144,10 +151,7 @@
                    MEDICAL RECORDS
                    ===================================== *@
 
-                <NavLink href="/patient/records"
-                         class="sidebar-link"
-                         ActiveClass="active"
-                         Match="NavLinkMatch.All"
+                <NavLink href="/patient/records" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-file-medical-alt"></i>
@@ -163,10 +167,7 @@
                    MY INVOICES
                    ===================================== *@
 
-                <NavLink href="/patient/invoices"
-                         class="sidebar-link"
-                         ActiveClass="active"
-                         Match="NavLinkMatch.All"
+                <NavLink href="/patient/invoices" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-file-invoice-dollar"></i>
@@ -189,8 +190,7 @@
 
     @if (_isSidebarOpen)
     {
-        <div class="sidebar-overlay"
-             @onclick="CloseSidebar">
+        <div class="sidebar-overlay" @onclick="CloseSidebar">
         </div>
     }
 
@@ -220,10 +220,7 @@
                    MOBILE MENU
                    ===================================== *@
 
-                <button type="button"
-                        class="mobile-menu-button"
-                        aria-label="Mở menu"
-                        @onclick="ToggleSidebar">
+                <button type="button" class="mobile-menu-button" aria-label="Mở menu" @onclick="ToggleSidebar">
 
                     <i class="fas fa-bars"></i>
 
@@ -290,10 +287,7 @@
                        LOGOUT
                        ================================= *@
 
-                    <button type="button"
-                            class="header-logout"
-                            title="Đăng xuất"
-                            @onclick="HandleLogout">
+                    <button type="button" class="header-logout" title="Đăng xuất" @onclick="HandleLogout">
 
                         <i class="fas fa-sign-out-alt"></i>
 
@@ -445,7 +439,7 @@
     {
         _userStateService.OnChange += StateHasChanged;
 
-    //    await _userStateService.LoadUserStateAsync();
+        // await _userStateService.LoadUserStateAsync();
     }
 
 
