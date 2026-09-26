@@ -21,7 +21,7 @@ public class ReceptionBookingStateService
     // SELECTED PATIENT
     // =====================================================
 
-    public PatientLookupDTO? SelectedPatient
+    public PatientSelectionDTO? SelectedPatient
     {
         get;
         private set;
@@ -143,6 +143,106 @@ public class ReceptionBookingStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // LOOKUP PATIENT BY PHONE
+    // =====================================================
+
+    public async Task<bool> LookupPatientAsync(
+        string phone)
+    {
+        ErrorMessage = string.Empty;
+
+        SelectedPatient = null;
+
+        IsLoading = true;
+
+        StateHasChanged();
+
+
+        try
+        {
+            var encodedPhone =
+                Uri.EscapeDataString(
+                    phone.Trim()
+                );
+
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/patients/lookup?phone={encodedPhone}"
+                    );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<PatientLookupDTO?>>();
+
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tìm bệnh nhân.";
+
+                return false;
+            }
+
+
+
+            if (responseData.Content == null)
+            {
+                ErrorMessage =
+                    "Không tìm thấy bệnh nhân.";
+
+                return false;
+            }
+
+            var patient =
+                responseData.Content;
+
+            SelectedPatient =
+                new PatientSelectionDTO
+                {
+                    Id =
+                        patient.Id,
+
+                    PatientCode =
+                        patient.PatientCode,
+
+                    FullName =
+                        patient.FullName,
+
+                    Phone =
+                        patient.Phone,
+
+                    DateOfBirth =
+                        patient.DateOfBirth
+                };
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
     }
 
     // =====================================================

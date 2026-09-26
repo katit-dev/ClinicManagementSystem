@@ -1,7 +1,13 @@
 namespace ClinicManagementSystem.Application.DTOs.Patient;
 
+
 public class PatientLookupDTO
 {
+    // PATIENT ID
+    public int Id { get; set; }
+
+    public string Phone { get; set; } = string.Empty;
+    
     public string FullName { get; set; } = string.Empty;
 
     public DateOnly? DateOfBirth { get; set; }
