@@ -16,6 +16,30 @@ public class ReceptionBookingStateService
 
     private readonly AuthorizedApiService _authorizedApiService;
 
+    // =====================================================
+    // BOOKING SELECTION
+    // =====================================================
+
+    public int? SelectedSpecialtyId
+    {
+        get;
+        private set;
+    }
+
+
+    public int? SelectedDoctorId
+    {
+        get;
+        private set;
+    }
+
+
+    public DateTime? SelectedStartTime
+    {
+        get;
+        private set;
+    }
+
     public PatientLookupDTO? SelectedPatient
     {
         get;
@@ -58,25 +82,6 @@ public class ReceptionBookingStateService
         private set;
     }
     = new();
-
-
-
-    // =====================================================
-    // SELECTED
-    // =====================================================
-
-    public int? SelectedSpecialtyId
-    {
-        get;
-        private set;
-    }
-
-
-    public int? SelectedDoctorId
-    {
-        get;
-        private set;
-    }
 
 
     public DateOnly SelectedDate
@@ -136,6 +141,45 @@ public class ReceptionBookingStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // SELECT SLOT
+    // =====================================================
+
+    public void SelectSlot(DateTime startTime)
+    {
+        SelectedStartTime = startTime;
+
+        StateHasChanged();
+    }
+
+    // =====================================================
+    // SELECT DOCTOR
+    // =====================================================
+
+    public void SelectDoctor(int doctorId)
+    {
+        SelectedDoctorId = doctorId;
+
+        SelectedStartTime = null;
+
+        StateHasChanged();
+    }
+
+    // =====================================================
+    // SELECT SPECIALTY
+    // =====================================================
+
+    public void SelectSpecialty(int specialtyId)
+    {
+        SelectedSpecialtyId = specialtyId;
+
+        SelectedDoctorId = null;
+
+        SelectedStartTime = null;
+
+        StateHasChanged();
     }
 
     // =====================================================
@@ -361,12 +405,10 @@ public class ReceptionBookingStateService
                         SelectedPatient.Id,
 
 
-                    DoctorId =
-                        SelectedDoctorId.Value,
+                    DoctorId = SelectedDoctorId.Value,
 
 
-                    StartTime =
-                        SelectedSlot.Value,
+                    StartTime = SelectedStartTime.Value,
 
 
                     Reason =
