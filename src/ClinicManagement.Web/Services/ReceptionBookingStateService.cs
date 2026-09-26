@@ -139,6 +139,86 @@ public class ReceptionBookingStateService
     }
 
     // =====================================================
+    // CREATE QUICK PATIENT
+    // =====================================================
+
+    public async Task<bool> CreateQuickPatientAsync(
+        QuickPatientRequestDTO request)
+    {
+        ErrorMessage = string.Empty;
+
+        IsLoading = true;
+
+        StateHasChanged();
+
+
+        try
+        {
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        "/api/patients/quick",
+                        JsonContent.Create(request)
+                    );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<PatientLookupDTO?>>();
+
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tạo bệnh nhân.";
+
+                return false;
+            }
+
+
+
+            if (responseData.Content == null)
+            {
+                ErrorMessage =
+                    "Không nhận được thông tin bệnh nhân.";
+
+                return false;
+            }
+
+
+
+            // =================================================
+            // UPDATE SELECTED PATIENT
+            // =================================================
+
+            SelectedPatient =
+                responseData.Content;
+
+
+            return true;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoading = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
     // LOOKUP PATIENT BY PHONE
     // =====================================================
 
