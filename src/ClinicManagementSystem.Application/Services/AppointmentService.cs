@@ -28,6 +28,8 @@ public interface IAppointmentService
     Task<HttpResponseData<ReceptionAppointmentDTO>> CheckInAppointmentAsync(int appointmentId, int currentUserId);
     Task<HttpResponseData<ReceptionAppointmentDTO>> MarkNoShowAsync(int appointmentId, NoShowAppointmentRequestDTO request, int currentUserId);
 
+    Task<HttpResponseData<AppointmentDTO>> CreateReceptionAppointmentAsync(CreateReceptionAppointmentRequestDTO request, int currentUserId);
+
 
 
 }
