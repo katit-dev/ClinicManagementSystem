@@ -1095,12 +1095,18 @@ public class PatientService : IPatientService
                     PatientResponseMessageDTO.LookupNotFound);
             }
 
-            var result = new PatientLookupDTO
+            new PatientLookupDTO
             {
+                Id = patient.Id,
+
+                Phone = patient.Phone,
+
                 FullName = patient.FullName,
+
                 DateOfBirth = patient.DateOfBirth,
+
                 HasAccount = patient.UserId.HasValue
-            };
+            }
 
             return Response(
                 200,
