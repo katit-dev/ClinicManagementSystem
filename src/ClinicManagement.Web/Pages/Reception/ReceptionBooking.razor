@@ -326,12 +326,10 @@
 
 
     @* =====================================================
-       SLOT
-       ===================================================== *@
-
+   SLOT
+   ===================================================== *@
 
     <div class="reception-booking-card">
-
 
         <div class="reception-booking-card-header">
 
@@ -342,16 +340,85 @@
         </div>
 
 
+        @if (ReceptionBookingStateService.SelectedDoctorId == null)
+        {
+            <div class="reception-booking-empty">
 
-        <div class="reception-booking-empty">
+                Vui lòng chọn bác sĩ.
 
-            Chưa chọn khung giờ.
+            </div>
+        }
+        else
+        {
+            <div class="reception-booking-slot-date">
 
-        </div>
+                <label>
+                    Ngày khám
+                </label>
 
+                <input type="date" class="reception-booking-input"
+                       value="@ReceptionBookingStateService.SelectedDate.ToString("yyyy-MM-dd")"
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")" @onchange="SelectDateAsync" />
+
+            </div>
+
+
+            @if (ReceptionBookingStateService.IsLoading)
+            {
+                <div class="reception-booking-empty">
+
+                    Đang tải khung giờ...
+
+                </div>
+            }
+            else if (!ReceptionBookingStateService.Slots.Any())
+            {
+                <div class="reception-booking-empty">
+
+                    Không có khung giờ khám trong ngày này.
+
+                </div>
+            }
+            else
+            {
+                <div class="reception-booking-slots">
+
+                    @foreach (var slot
+                        in ReceptionBookingStateService.Slots)
+                    {
+                        <button type="button" class="@(slot.IsAvailable
+                                    ? "reception-booking-slot"
+                                    : "reception-booking-slot unavailable")
+                            @(ReceptionBookingStateService.SelectedStartTime == slot.StartTime
+    ? " selected"
+    : "")" disabled="@(!slot.IsAvailable)" @onclick="() => SelectSlot(slot.StartTime)">
+
+                            <span class="reception-booking-slot-time">
+
+                                @slot.StartTime.ToString("HH:mm")
+                                -
+                                @slot.EndTime.ToString("HH:mm")
+
+                            </span>
+
+
+                            <span class="reception-booking-slot-status">
+
+                                @(slot.IsAvailable
+                                    ? "Trống"
+                                    : "Đã đặt")
+
+                            </span>
+
+                        </button>
+                    }
+
+                </div>
+            }
+
+        }
 
     </div>
-
 
 
 
@@ -442,6 +509,47 @@
 
     }
 
+    // =====================================================
+    // SELECT DATE
+    // =====================================================
+
+    private async Task SelectDateAsync(
+        ChangeEventArgs e)
+    {
+        if (!DateOnly.TryParse(
+            e.Value?.ToString(),
+            out var selectedDate))
+        {
+            return;
+        }
+
+
+        if (!ReceptionBookingStateService
+            .SelectedDoctorId.HasValue)
+        {
+            return;
+        }
+
+
+        await ReceptionBookingStateService
+            .LoadSlotsAsync(
+                ReceptionBookingStateService
+                    .SelectedDoctorId.Value,
+
+                selectedDate
+            );
+    }
+
+    // =====================================================
+    // SELECT SLOT
+    // =====================================================
+
+    private void SelectSlot(
+        DateTime startTime)
+    {
+        ReceptionBookingStateService
+            .SelectSlot(startTime);
+    }
 
     // =====================================================
     // SELECT DoctorAsync

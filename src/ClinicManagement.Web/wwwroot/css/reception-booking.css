@@ -377,3 +377,195 @@
     font-size: 14px;
 
 }
+
+.reception-booking-slot-date {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+    max-width: 320px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.reception-booking-slot-date label {
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+}
+
+/* =====================================================
+   SLOT DATE
+   ===================================================== */
+
+.reception-booking-slot-date {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+    max-width: 320px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.reception-booking-slot-date label {
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+}
+
+
+
+/* =====================================================
+   SLOT LIST
+   ===================================================== */
+
+.reception-booking-slots {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+
+}
+
+
+
+/* =====================================================
+   SLOT
+   ===================================================== */
+
+.reception-booking-slot {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    min-height: 72px;
+
+    padding: 12px;
+
+    border-radius: 12px;
+
+    border: 1px solid #d1d5db;
+
+    background: white;
+
+    cursor: pointer;
+
+    transition: 0.15s ease;
+
+}
+
+
+.reception-booking-slot:hover {
+
+    border-color: #2563eb;
+
+    background: #eff6ff;
+
+}
+
+
+
+/* =====================================================
+   SLOT TIME
+   ===================================================== */
+
+.reception-booking-slot-time {
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    color: #1f2937;
+
+}
+
+
+
+/* =====================================================
+   SLOT STATUS
+   ===================================================== */
+
+.reception-booking-slot-status {
+
+    font-size: 13px;
+
+    color: #16a34a;
+
+}
+
+
+
+/* =====================================================
+   SELECTED SLOT
+   ===================================================== */
+
+.reception-booking-slot.selected {
+
+    border-color: #2563eb;
+
+    background: #eff6ff;
+
+}
+
+
+
+/* =====================================================
+   UNAVAILABLE SLOT
+   ===================================================== */
+
+.reception-booking-slot.unavailable {
+
+    background: #f3f4f6;
+
+    border-color: #e5e7eb;
+
+    cursor: not-allowed;
+
+    opacity: 0.65;
+
+}
+
+
+.reception-booking-slot.unavailable
+.reception-booking-slot-time {
+
+    color: #6b7280;
+
+}
+
+
+.reception-booking-slot.unavailable
+.reception-booking-slot-status {
+
+    color: #9ca3af;
+
+}
