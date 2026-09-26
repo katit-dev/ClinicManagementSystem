@@ -16,18 +16,11 @@ public class ReceptionBookingStateService
 
     private readonly AuthorizedApiService _authorizedApiService;
 
-
-    // =====================================================
-    // SELECTED PATIENT
-    // =====================================================
-
-    public PatientSelectionDTO? SelectedPatient
+    public PatientLookupDTO? SelectedPatient
     {
         get;
         private set;
     }
-
-
 
     // =====================================================
     // SPECIALTIES
@@ -205,28 +198,7 @@ public class ReceptionBookingStateService
                 return false;
             }
 
-            var patient =
-                responseData.Content;
-
-            SelectedPatient =
-                new PatientSelectionDTO
-                {
-                    Id =
-                        patient.Id,
-
-                    // PatientCode =
-                    //     patient.PatientCode,
-
-                    FullName =
-                        patient.FullName,
-
-                    Phone =
-                        patient.Phone,
-
-                    DateOfBirth =
-                        patient.DateOfBirth
-                };
-
+            SelectedPatient = responseData.Content;
 
             return true;
         }
