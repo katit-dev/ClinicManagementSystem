@@ -992,3 +992,31 @@ BEGIN
         SYSUTCDATETIME()
     );
 END;
+
+-- seeding to test vc 09, dat lich qua receptionist
+INSERT INTO scheduling.doctor_schedules
+(
+    doctor_id,
+    day_of_week,
+    start_time,
+    end_time,
+    slot_minutes,
+    is_active,
+    effective_from,
+    effective_to,
+    break_start,
+    break_end
+)
+VALUES
+(
+    5,
+    2,
+    '08:00',
+    '17:00',
+    30,
+    1,
+    '2026-09-26',
+    NULL,
+    '12:00',
+    '13:30'
+);

@@ -230,27 +230,20 @@
 
 
 
-        <select class="reception-booking-select" @onchange="SelectSpecialtyAsync">
-
+        <select class="reception-booking-select" disabled="@(ReceptionBookingStateService.SelectedPatient == null)"
+                @onchange="SelectSpecialtyAsync">
 
             <option value="">
                 -- Chọn chuyên khoa --
             </option>
 
-
-
             @foreach (var specialty
                 in ReceptionBookingStateService.Specialties)
             {
-
                 <option value="@specialty.Id">
-
                     @specialty.Name
-
                 </option>
-
             }
-
 
         </select>
 
@@ -299,7 +292,9 @@
         }
         else
         {
-            <select class="reception-booking-select" @onchange="SelectDoctorAsync">
+            <select class="reception-booking-select" disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
+                     ReceptionBookingStateService.SelectedSpecialtyId == null)"
+                    value="@ReceptionBookingStateService.SelectedDoctorId?.ToString()" @onchange="SelectDoctorAsync">
 
                 <option value="">
                     -- Chọn bác sĩ --
@@ -358,7 +353,9 @@
 
                 <input type="date" class="reception-booking-input"
                        value="@ReceptionBookingStateService.SelectedDate.ToString("yyyy-MM-dd")"
-                       min="@DateTime.Today.ToString("yyyy-MM-dd")" @onchange="SelectDateAsync" />
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")" @onchange="SelectDateAsync" 
+                       disabled="@(ReceptionBookingStateService.SelectedPatient == null ||
+                    ReceptionBookingStateService.SelectedDoctorId == null)"/>
 
             </div>
 
