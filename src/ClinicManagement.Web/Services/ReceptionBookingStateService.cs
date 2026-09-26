@@ -46,42 +46,17 @@ public class ReceptionBookingStateService
         private set;
     }
 
-    // =====================================================
-    // SPECIALTIES
-    // =====================================================
-
-    public List<SpecialtyDTO> Specialties
-    {
-        get;
-        private set;
-    }
-    = new();
+    // State de du giu du lieu tu api
+    public List<SpecialtyDTO> Specialties { get; private set; }
+        = new();
 
 
-
-    // =====================================================
-    // DOCTORS
-    // =====================================================
-
-    public List<DoctorDTO> Doctors
-    {
-        get;
-        private set;
-    }
-    = new();
+    public List<DoctorDTO> Doctors { get; private set; }
+        = new();
 
 
-
-    // =====================================================
-    // SLOTS
-    // =====================================================
-
-    public List<SlotDTO> Slots
-    {
-        get;
-        private set;
-    }
-    = new();
+    public List<SlotDTO> Slots { get; private set; }
+        = new();
 
 
     public DateOnly SelectedDate
@@ -93,16 +68,6 @@ public class ReceptionBookingStateService
     DateOnly.FromDateTime(
         DateTime.Now
     );
-
-
-
-    public DateTime? SelectedSlot
-    {
-        get;
-        private set;
-    }
-
-
 
     // =====================================================
     // STATE
@@ -121,6 +86,7 @@ public class ReceptionBookingStateService
         private set;
     }
     = string.Empty;
+
 
 
 
@@ -163,6 +129,8 @@ public class ReceptionBookingStateService
         SelectedDoctorId = doctorId;
 
         SelectedStartTime = null;
+
+        Slots.Clear();
 
         StateHasChanged();
     }
@@ -207,9 +175,9 @@ public class ReceptionBookingStateService
 
 
             var responseData =
-                await response.Content
-                    .ReadFromJsonAsync<
-                        HttpResponseData<PatientLookupDTO?>>();
+    await response.Content
+        .ReadFromJsonAsync<
+            HttpResponseData<PatientDTO?>>();
 
 
 
@@ -241,8 +209,30 @@ public class ReceptionBookingStateService
             // UPDATE SELECTED PATIENT
             // =================================================
 
-            SelectedPatient =
+            var patient =
                 responseData.Content;
+
+
+            SelectedPatient =
+                new PatientLookupDTO
+                {
+                    Id = patient.Id,
+
+                    PatientCode =
+                        patient.PatientCode,
+
+                    FullName =
+                        patient.FullName,
+
+                    Phone =
+                        patient.Phone,
+
+                    DateOfBirth =
+                        patient.DateOfBirth,
+
+                    HasAccount =
+                        false
+                };
 
 
             return true;
@@ -374,7 +364,7 @@ public class ReceptionBookingStateService
         }
 
 
-        if (!SelectedSlot.HasValue)
+        if (!SelectedStartTime.HasValue)
         {
             ErrorMessage =
                 "Chưa chọn giờ khám.";
@@ -584,9 +574,6 @@ public class ReceptionBookingStateService
 
         SelectedDoctorId = null;
 
-        SelectedSlot = null;
-
-
         SelectedSpecialtyId =
             specialtyId;
 
@@ -684,9 +671,6 @@ public class ReceptionBookingStateService
 
         SelectedDate =
             date;
-
-
-        SelectedSlot = null;
 
 
         ErrorMessage = string.Empty;
