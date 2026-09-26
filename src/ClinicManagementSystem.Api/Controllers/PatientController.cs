@@ -130,6 +130,21 @@ public class PatientController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
-    
+    // =====================================================
+// QUICK CREATE PATIENT
+//
+// POST:
+// /api/patients/quick
+// =====================================================
+
+[HttpPost("quick")]
+[Authorize(Roles = "Receptionist")]
+public async Task<IActionResult> CreateQuickPatient(
+    [FromBody] QuickPatientRequestDTO request)
+{
+    var result = await _patientService.CreateQuickPatientAsync(request);
+
+    return StatusCode(result.StatusCode, result);
+}
 
 }
