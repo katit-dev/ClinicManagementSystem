@@ -120,7 +120,18 @@ public class AppointmentService : IAppointmentService
                 );
             }
 
+            // =====================================================
+            // GET SPECIALTY
+            // =====================================================
 
+            var specialty =
+                await _unitOfWork
+                    .SpecialtyRepository
+                    .WhereSql(
+                        s =>
+                            s.Id == doctor.SpecialtyId
+                    )
+                    .FirstOrDefaultAsync();
 
             // =================================================
             // CHECK APPOINTMENT TIME
@@ -341,9 +352,9 @@ public class AppointmentService : IAppointmentService
 
 
 
-            // =================================================
+            // =====================================================
             // RESPONSE
-            // =================================================
+            // =====================================================
 
             var result =
                 new AppointmentDTO
@@ -357,6 +368,10 @@ public class AppointmentService : IAppointmentService
                     DoctorName =
                         doctor.FullName,
 
+                    SpecialtyName =
+                        specialty?.Name
+                        ?? string.Empty,
+
                     StartTime =
                         appointment.StartTime,
 
@@ -369,8 +384,6 @@ public class AppointmentService : IAppointmentService
                     FeeSnapshot =
                         appointment.FeeSnapshot
                 };
-
-
             return Response(
                 201,
                 AppointmentResponseMessageDTO

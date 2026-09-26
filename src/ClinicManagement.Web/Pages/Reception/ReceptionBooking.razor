@@ -64,59 +64,44 @@
                 <div>
                     <strong>Mã lịch khám:</strong>
 
-                    @ReceptionBookingStateService
-                        .CreatedAppointment
-                        .AppointmentCode
+                    @ReceptionBookingStateService.CreatedAppointment.AppointmentCode
                 </div>
 
 
                 <div>
                     <strong>Bệnh nhân:</strong>
 
-                    @ReceptionBookingStateService
-                        .SelectedPatient?
-                        .FullName
+                    @ReceptionBookingStateService.SelectedPatient?.FullName
                 </div>
 
 
                 <div>
                     <strong>Bác sĩ:</strong>
 
-                    @ReceptionBookingStateService
-                        .CreatedAppointment
-                        .DoctorName
+                    @ReceptionBookingStateService.CreatedAppointment.DoctorName
                 </div>
 
 
                 <div>
                     <strong>Chuyên khoa:</strong>
 
-                    @ReceptionBookingStateService
-                        .CreatedAppointment
-                        .SpecialtyName
+                    @ReceptionBookingStateService.CreatedAppointment.SpecialtyName
                 </div>
 
 
                 <div>
                     <strong>Thời gian:</strong>
 
-                    @ReceptionBookingStateService
-                        .CreatedAppointment
-                        .StartTime
-                        .ToString("dd/MM/yyyy HH:mm")
+                    @ReceptionBookingStateService.CreatedAppointment.StartTime.ToString("dd/MM/yyyy HH:mm")
                 </div>
 
 
-                @if (ReceptionBookingStateService
-                    .CreatedAppointment
-                    .QueueNumber.HasValue)
+                @if (ReceptionBookingStateService.CreatedAppointment.QueueNumber.HasValue)
                 {
                     <div>
                         <strong>Số thứ tự:</strong>
 
-                        @ReceptionBookingStateService
-                            .CreatedAppointment
-                            .QueueNumber
+                        @ReceptionBookingStateService.CreatedAppointment.QueueNumber
                     </div>
                 }
 
@@ -220,9 +205,7 @@
                             Mã bệnh nhân:
                         </strong>
 
-                        @ReceptionBookingStateService
-                            .SelectedPatient
-                            .PatientCode
+                        @ReceptionBookingStateService.SelectedPatient.PatientCode
 
                     </div>
 
@@ -233,9 +216,7 @@
                             Họ tên:
                         </strong>
 
-                        @ReceptionBookingStateService
-                            .SelectedPatient
-                            .FullName
+                        @ReceptionBookingStateService.SelectedPatient.FullName
 
                     </div>
 
@@ -246,18 +227,14 @@
                             Điện thoại:
                         </strong>
 
-                        @ReceptionBookingStateService
-                            .SelectedPatient
-                            .Phone
+                        @ReceptionBookingStateService.SelectedPatient.Phone
 
                     </div>
 
 
                     <div>
 
-                        @if (ReceptionBookingStateService
-                            .SelectedPatient
-                            .HasAccount)
+                        @if (ReceptionBookingStateService.SelectedPatient.HasAccount)
                         {
                             <span>
                                 Đã có tài khoản

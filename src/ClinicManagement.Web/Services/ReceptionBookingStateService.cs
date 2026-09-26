@@ -483,11 +483,20 @@ public class ReceptionBookingStateService
 
 
 
-            // =================================================
+            // =====================================================
             // SUCCESS
-            // =================================================
+            // =====================================================
 
-            CreatedAppointment = responseData.Content;
+            if (responseData.Content == null)
+            {
+                ErrorMessage =
+                    "Không nhận được thông tin lịch khám.";
+
+                return false;
+            }
+
+            CreatedAppointment =
+                responseData.Content;
 
             return true;
         }
