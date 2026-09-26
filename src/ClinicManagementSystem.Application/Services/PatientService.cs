@@ -1099,6 +1099,8 @@ public class PatientService : IPatientService
             {
                 Id = patient.Id,
 
+                PatientCode = patient.PatientCode,
+
                 Phone = patient.Phone,
 
                 FullName = patient.FullName,
