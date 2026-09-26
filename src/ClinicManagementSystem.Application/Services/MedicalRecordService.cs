@@ -16,6 +16,8 @@ namespace ClinicManagementSystem.Application.Services;
 public interface IMedicalRecordService
 {
     Task<HttpResponseData<MedicalRecordDTO>> GetMedicalRecordByAppointmentAsync(int appointmentId, int currentUserId);
+
+    Task<HttpResponseData<List<MedicalRecordDTO>>>GetPatientMedicalRecordsAsync(int patientId);
 }
 
 // =====================================================
