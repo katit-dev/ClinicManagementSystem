@@ -87,6 +87,15 @@
 
         </div>
 
+        @if (!string.IsNullOrWhiteSpace(_validationMessage))
+        {
+            <div class="reception-booking-error">
+
+                @_validationMessage
+
+            </div>
+        }
+
 
 
 
@@ -373,8 +382,8 @@
 
     private string _phone = string.Empty;
 
-
     private string _quickPatientName = string.Empty;
+    private string _validationMessage = string.Empty;
 
 
 
@@ -415,8 +424,14 @@
 
     private async Task LookupPatientAsync()
     {
+        _validationMessage = string.Empty;
+
+
         if (string.IsNullOrWhiteSpace(_phone))
         {
+            _validationMessage =
+                "Vui lòng nhập số điện thoại.";
+
             return;
         }
 
