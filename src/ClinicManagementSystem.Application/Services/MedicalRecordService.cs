@@ -50,14 +50,20 @@ public class MedicalRecordService
     // =====================================================
     // Receptionist Action - GET MEDICAL RECORD
     // =====================================================
-    public async Task<HttpResponseData<List<MedicalRecordDTO>>>
-    GetPatientMedicalRecordsAsync(
-        int patientId)
+    public async Task<
+        HttpResponseData<List<MedicalRecordDTO>>>
+        GetPatientMedicalRecordsAsync(
+            int patientId)
     {
         try
         {
+            // =================================================
+            // CHECK PATIENT
+            // =================================================
+
             var patient =
-                await _unitOfWork.PatientRepository
+                await _unitOfWork
+                    .PatientRepository
                     .WhereSql(
                         p =>
                             p.Id == patientId &&
@@ -71,10 +77,17 @@ public class MedicalRecordService
                 return new HttpResponseData<List<MedicalRecordDTO>>
                 {
                     StatusCode = 404,
-                    Message = "Không tìm thấy bệnh nhân."
+
+                    Message =
+                        "Không tìm thấy bệnh nhân."
                 };
             }
 
+
+
+            // =================================================
+            // GET MEDICAL RECORDS
+            // =================================================
 
             var records =
                 await _unitOfWork
@@ -85,88 +98,115 @@ public class MedicalRecordService
                             m.Status ==
                             (byte)MedicalRecordStatus.Finalized
                     )
+                    .Include(m => m.Doctor)
+                    .OrderByDescending(
+                        m => m.CreatedAt
+                    )
                     .ToListAsync();
 
 
+
+            // =================================================
+            // MAP DTO
+            // =================================================
+
             var result =
-                new List<MedicalRecordDTO>();
+                records
+                    .Select(
+                        record =>
+                            new MedicalRecordDTO
+                            {
+                                Id =
+                                    record.Id,
 
 
-            foreach (var record in records)
-            {
-                var doctor =
-                    await _unitOfWork.DoctorRepository
-                        .WhereSql(
-                            d => d.Id == record.DoctorId
-                        )
-                        .FirstOrDefaultAsync();
+                                AppointmentId =
+                                    record.AppointmentId,
 
 
-                result.Add(
-                    new MedicalRecordDTO
-                    {
-                        Id = record.Id,
+                                DoctorName =
+                                    record.Doctor != null
+                                        ? record.Doctor.FullName
+                                        : string.Empty,
 
-                        AppointmentId =
-                            record.AppointmentId,
 
-                        DoctorName =
-                            doctor?.FullName ?? "",
+                                Symptoms =
+                                    record.Symptoms,
 
-                        Symptoms =
-                            record.Symptoms,
 
-                        Diagnosis =
-                            record.Diagnosis,
+                                Diagnosis =
+                                    record.Diagnosis,
 
-                        Icd10Code =
-                            record.Icd10Code,
 
-                        TreatmentPlan =
-                            record.TreatmentPlan,
+                                Icd10Code =
+                                    record.Icd10Code,
 
-                        Note =
-                            record.Note,
 
-                        FollowUpDate =
-                            record.FollowUpDate,
+                                TreatmentPlan =
+                                    record.TreatmentPlan,
 
-                        Status =
-                            record.Status,
 
-                        FinalizedAt =
-                            record.FinalizedAt,
+                                Note =
+                                    record.Note,
 
-                        CreatedAt =
-                            record.CreatedAt
-                    });
-            }
 
+                                FollowUpDate =
+                                    record.FollowUpDate,
+
+
+                                Status =
+                                    record.Status,
+
+
+                                FinalizedAt =
+                                    record.FinalizedAt,
+
+
+                                CreatedAt =
+                                    record.CreatedAt
+                            }
+                    )
+                    .ToList();
+
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
 
             return new HttpResponseData<List<MedicalRecordDTO>>
             {
                 StatusCode = 200,
-                Content = result,
-                Message = "Lấy lịch sử khám thành công."
+
+                Message =
+                    "Lấy lịch sử khám thành công.",
+
+                Content =
+                    result
             };
         }
         catch (Exception ex)
         {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
             _logger.LogError(
                 ex,
-                "Failed get patient medical records"
+                "Failed to get patient medical records. PatientId: {PatientId}",
+                patientId
             );
 
 
             return new HttpResponseData<List<MedicalRecordDTO>>
             {
                 StatusCode = 500,
-                Message = "Không thể lấy lịch sử khám."
+
+                Message =
+                    "Không thể lấy lịch sử khám."
             };
         }
     }
-
-
     // =====================================================
     // GET MEDICAL RECORD BY APPOINTMENT
     // =====================================================
