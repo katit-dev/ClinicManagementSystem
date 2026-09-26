@@ -8,13 +8,13 @@ public static class PatientResponseMessageDTO
     // =====================================================
 
     public const string LookupSuccess =
-        "Lấy thông tin bệnh nhân thành công.";
+        "Tìm thấy hồ sơ bệnh nhân";
 
     public const string LookupNotFound =
-        "Không tìm thấy bệnh nhân.";
+        "Không tìm thấy hồ sơ bệnh nhân";
 
     public const string LookupFailed =
-        "Không thể tìm kiếm bệnh nhân.";
+        "Không thể tra cứu hồ sơ bệnh nhân";
 
 
     // =====================================================
@@ -84,7 +84,7 @@ public static class PatientResponseMessageDTO
         "Họ tên bệnh nhân không được để trống.";
 
     public const string InvalidPhone =
-        "Số điện thoại không được để trống.";
+        "Số điện thoại không hợp lệ";
 
     public const string InvalidDateOfBirth =
         "Ngày sinh không thể lớn hơn ngày hiện tại.";

@@ -68,7 +68,7 @@ public class PatientService : IPatientService
                 {
                     StatusCode = 404,
 
-                    Message = "Không tìm thấy thông tin dị ứng."
+                    Message = PatientResponseMessageDTO.AllergyNotFound
                 };
             }
 

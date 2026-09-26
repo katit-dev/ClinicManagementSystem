@@ -96,17 +96,3 @@ public const string ResetPasswordFailed =
     "Không thể đặt lại mật khẩu.";
 }
 
-public static class PatientResponseMessageDTO
-{
-    public const string LookupSuccess =
-        "Tìm thấy hồ sơ bệnh nhân";
-
-    public const string LookupNotFound =
-        "Không tìm thấy hồ sơ bệnh nhân";
-
-    public const string InvalidPhone =
-        "Số điện thoại không hợp lệ";
-
-    public const string LookupFailed =
-        "Không thể tra cứu hồ sơ bệnh nhân";
-}
