@@ -65,6 +65,7 @@ builder.Services.AddScoped<ISpecialtyRepository, SpecialtyRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
+
 // ============================================================
 // DI UnitOfWork
 // ============================================================
@@ -86,6 +87,7 @@ builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
 builder.Services.AddScoped<IPatientRecordService, PatientRecordService>();
 builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IPatientInvoiceService, PatientInvoiceService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 // ============================================================
 // DI Serilog
