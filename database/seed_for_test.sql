@@ -1173,3 +1173,59 @@ SELECT
 FROM scheduling.appointments
 WHERE appointment_code LIKE 'TEST27-%'
 ORDER BY start_time;
+
+-------------------------------------------------
+------- test invoice
+-------------------------------------------------
+SELECT TOP 20
+    id,
+    invoice_no,
+    total_amount,
+    tax_amount,
+    discount_amount,
+    insurance_amount,
+    paid_amount,
+    status,
+    (
+        total_amount
+        + tax_amount
+        - discount_amount
+        - insurance_amount
+    ) AS payable_amount,
+    (
+        total_amount
+        + tax_amount
+        - discount_amount
+        - insurance_amount
+        - paid_amount
+    ) AS remaining_amount
+FROM billing.invoices
+WHERE status IN (0, 1)
+ORDER BY id DESC;
+
+SELECT TOP 10
+    id,
+    invoice_id,
+    amount,
+    method,
+    paid_at,
+    reference_code,
+    received_by,
+    is_refund
+FROM billing.payments
+WHERE invoice_id = 1
+ORDER BY id DESC;
+
+SELECT TOP 10
+    id,
+    user_id,
+    action,
+    entity_name,
+    entity_id,
+    details,
+    succeeded,
+    occurred_at
+FROM auth.audit_logs
+WHERE entity_name = 'Invoice'
+  AND entity_id = 1
+ORDER BY id DESC;
