@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Infrastructure.Models;
 using ClinicManagementSystem.Application.Enums;
+using ClinicManagementSystem.Infrastructure.Repositories;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -57,7 +58,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Mã hóa đơn không hợp lệ."
+                    InvoiceResponseMessageDTO.InvoiceNotFound
                 );
             }
 
@@ -84,7 +85,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     404,
-                    "Không tìm thấy hóa đơn."
+                    InvoiceResponseMessageDTO.InvoiceNotFound
                 );
             }
 
@@ -280,7 +281,7 @@ public class InvoiceService : IInvoiceService
 
             return Response(
                 200,
-                "Lấy hóa đơn thành công.",
+                InvoiceResponseMessageDTO.GetSuccess,
                 result
             );
         }
@@ -295,7 +296,7 @@ public class InvoiceService : IInvoiceService
 
             return Response(
                 500,
-                "Không thể lấy thông tin hóa đơn."
+                InvoiceResponseMessageDTO.GetFailed
             );
         }
     }
@@ -347,7 +348,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Mã hóa đơn không hợp lệ."
+                    InvoiceResponseMessageDTO.InvalidInvoiceId
                 );
             }
 
@@ -360,7 +361,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     401,
-                    "Không xác định được người thực hiện giao dịch."
+                    InvoiceResponseMessageDTO.PaymentUserNotFound
                 );
             }
 
@@ -373,7 +374,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Thông tin thanh toán không được để trống."
+                    InvoiceResponseMessageDTO.RefundRequestRequired
                 );
             }
 
@@ -402,7 +403,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Số tiền thanh toán phải lớn hơn 0."
+                    InvoiceResponseMessageDTO.RefundAmountInvalid 
                 );
             }
 
@@ -416,7 +417,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Phương thức thanh toán không hợp lệ."
+                    InvoiceResponseMessageDTO.PaymentMethodInvalid 
                 );
             }
 
@@ -439,7 +440,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     404,
-                    "Không tìm thấy hóa đơn."
+                    InvoiceResponseMessageDTO.InvoiceNotFound 
                 );
             }
 
@@ -453,7 +454,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Hóa đơn đã bị hủy, không thể thu tiền."
+                    InvoiceResponseMessageDTO.PaymentInvoiceCancelled 
                 );
             }
 
@@ -479,7 +480,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Hóa đơn không còn số tiền cần thanh toán."
+                    InvoiceResponseMessageDTO.InvoiceAlreadyPaid 
                 );
             }
 
@@ -670,8 +671,7 @@ public class InvoiceService : IInvoiceService
             }
 
 
-            result.Message =
-                "Thu tiền thành công.";
+            result.Message = InvoiceResponseMessageDTO.InvoiceAlreadyPaid;
 
 
             return result;
@@ -717,7 +717,7 @@ public class InvoiceService : IInvoiceService
 
             return Response(
                 500,
-                "Không thể thực hiện thanh toán."
+                InvoiceResponseMessageDTO.PaymentFailed
             );
         }
     }
@@ -741,7 +741,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Mã hóa đơn không hợp lệ."
+                    InvoiceResponseMessageDTO.InvoiceNotFound
                 );
             }
 
@@ -754,7 +754,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     401,
-                    "Không xác định được người thực hiện hoàn tiền."
+                    InvoiceResponseMessageDTO.PaymentUserNotFound
                 );
             }
 
@@ -767,7 +767,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Thông tin hoàn tiền không được để trống."
+                    InvoiceResponseMessageDTO.PaymentRequestRequired 
                 );
             }
 
@@ -780,7 +780,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Giao dịch này không phải giao dịch hoàn tiền."
+                    InvoiceResponseMessageDTO.RefundFlagInvalid 
                 );
             }
 
@@ -801,7 +801,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Số tiền hoàn phải lớn hơn 0."
+                    InvoiceResponseMessageDTO.PaymentAmountInvalid 
                 );
             }
 
@@ -815,7 +815,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Phương thức hoàn tiền không hợp lệ."
+                    InvoiceResponseMessageDTO.PaymentMethodInvalid 
                 );
             }
 
@@ -838,7 +838,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     404,
-                    "Không tìm thấy hóa đơn."
+                    InvoiceResponseMessageDTO.InvoiceNotFound
                 );
             }
 
@@ -852,7 +852,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Hóa đơn đã bị hủy, không thể hoàn tiền."
+                    InvoiceResponseMessageDTO.PaymentInvoiceCancelled
                 );
             }
 
@@ -865,7 +865,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Hóa đơn chưa có khoản tiền đã thu để hoàn."
+                    InvoiceResponseMessageDTO.RefundNotAvailable 
                 );
             }
 
@@ -1069,8 +1069,7 @@ public class InvoiceService : IInvoiceService
             }
 
 
-            result.Message =
-                "Hoàn tiền thành công.";
+            result.Message = InvoiceResponseMessageDTO.RefundSuccess;
 
 
             return result;
@@ -1116,7 +1115,7 @@ public class InvoiceService : IInvoiceService
 
             return Response(
                 500,
-                "Không thể thực hiện hoàn tiền."
+                InvoiceResponseMessageDTO.RefundFailed 
             );
         }
     }
