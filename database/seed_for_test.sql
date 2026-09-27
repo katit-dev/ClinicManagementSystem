@@ -1262,3 +1262,17 @@ ORDER BY id DESC;
 
 USE ClinicManagementSystem;
 GO
+
+SELECT TOP 10
+    id,
+    user_id,
+    action,
+    entity_name,
+    entity_id,
+    details,
+    succeeded,
+    occurred_at
+FROM auth.audit_logs
+WHERE entity_name = 'Invoice'
+  AND entity_id = 1
+ORDER BY id DESC;
