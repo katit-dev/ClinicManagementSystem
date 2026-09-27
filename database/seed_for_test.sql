@@ -1020,3 +1020,156 @@ VALUES
     '12:00',
     '13:30'
 );
+
+------------------------------------------------------------------
+------ Test queue
+------------------------------------------------------------------
+INSERT INTO scheduling.appointments
+(
+    patient_id,
+    doctor_id,
+    start_time,
+    end_time,
+    status,
+    reason,
+    note,
+    created_by,
+    created_at,
+    updated_at,
+    appointment_code,
+    queue_number,
+    checked_in_at,
+    completed_at,
+    cancel_reason,
+    source,
+    fee_snapshot
+)
+VALUES
+(
+    1,
+    5,
+    '2026-09-27 08:00:00',
+    '2026-09-27 08:30:00',
+    0,
+    N'Khám tổng quát',
+    NULL,
+    NULL,
+    GETDATE(),
+    NULL,
+    'TEST27-P01',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    1,
+    200000
+),
+(
+    2,
+    5,
+    '2026-09-27 08:30:00',
+    '2026-09-27 09:00:00',
+    0,
+    N'Đau đầu',
+    NULL,
+    NULL,
+    GETDATE(),
+    NULL,
+    'TEST27-P02',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    1,
+    200000
+),
+(
+    3,
+    5,
+    '2026-09-27 09:00:00',
+    '2026-09-27 09:30:00',
+    0,
+    N'Đau bụng',
+    NULL,
+    NULL,
+    GETDATE(),
+    NULL,
+    'TEST27-P03',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    1,
+    200000
+),
+(
+    5,
+    5,
+    '2026-09-27 09:30:00',
+    '2026-09-27 10:00:00',
+    0,
+    N'Khám định kỳ',
+    NULL,
+    NULL,
+    GETDATE(),
+    NULL,
+    'TEST27-P05',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    1,
+    200000
+),
+(
+    6,
+    5,
+    '2026-09-27 10:00:00',
+    '2026-09-27 10:30:00',
+    0,
+    N'Ho và đau họng',
+    NULL,
+    NULL,
+    GETDATE(),
+    NULL,
+    'TEST27-P06',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    1,
+    200000
+),
+(
+    7,
+    5,
+    '2026-09-27 10:30:00',
+    '2026-09-27 11:00:00',
+    0,
+    N'Đau lưng',
+    NULL,
+    NULL,
+    GETDATE(),
+    NULL,
+    'TEST27-P07',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    1,
+    200000
+);
+
+SELECT
+    Id,
+    patient_id,
+    doctor_id,
+    start_time,
+    end_time,
+    Status,
+    queue_number,
+    checked_in_at,
+    appointment_code
+FROM scheduling.appointments
+WHERE appointment_code LIKE 'TEST27-%'
+ORDER BY start_time;
