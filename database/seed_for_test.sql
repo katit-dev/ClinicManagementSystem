@@ -1276,3 +1276,57 @@ FROM auth.audit_logs
 WHERE entity_name = 'Invoice'
   AND entity_id = 1
 ORDER BY id DESC;
+
+-------- test cancel invoice
+INSERT INTO billing.invoices
+(
+    patient_id,
+    appointment_id,
+    medical_record_id,
+    patient_name,
+    total_amount,
+    status,
+    created_by,
+    created_at,
+    updated_at,
+    invoice_no,
+    discount_amount,
+    tax_amount,
+    paid_amount,
+    insurance_amount,
+    cancelled_at,
+    cancel_reason
+)
+VALUES
+(
+    5,                          -- patient_id
+    NULL,                       -- appointment_id
+    NULL,                       -- medical_record_id
+    N'Lieu Nguyen',             -- patient_name
+    250000,                     -- total_amount
+    0,                          -- Unpaid
+    NULL,                       -- created_by
+    GETDATE(),                  -- created_at
+    NULL,                       -- updated_at
+    'INV-TEST-CANCEL-0001',     -- invoice_no
+    0,                          -- discount_amount
+    0,                          -- tax_amount
+    0,                          -- paid_amount
+    0,                          -- insurance_amount
+    NULL,                       -- cancelled_at
+    NULL                        -- cancel_reason
+);
+
+SELECT TOP 5
+    id,
+    invoice_no,
+    patient_id,
+    patient_name,
+    total_amount,
+    paid_amount,
+    insurance_amount,
+    status,
+    cancelled_at,
+    cancel_reason
+FROM billing.invoices
+WHERE invoice_no = 'INV-TEST-CANCEL-0001';
