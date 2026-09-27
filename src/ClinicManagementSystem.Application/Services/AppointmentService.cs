@@ -434,6 +434,34 @@ public class AppointmentService : IAppointmentService
                 };
             }
 
+            // kiem tra so nho nhat
+            var currentQueueNumber =
+    await _unitOfWork
+        .AppointmentRepository
+        .WhereSql(
+            a =>
+                a.DoctorId == appointment.DoctorId &&
+                a.StartTime >= appointment.StartTime.Date &&
+                a.StartTime < appointment.StartTime.Date.AddDays(1) &&
+                a.Status ==
+                    (byte)AppointmentStatus.CheckedIn &&
+                a.QueueNumber.HasValue
+        )
+        .MinAsync(a => a.QueueNumber);
+
+            if (currentQueueNumber.HasValue &&
+        appointment.QueueNumber.Value ==
+        currentQueueNumber.Value)
+            {
+                return new HttpResponseData<QueueItemDTO>
+                {
+                    StatusCode = 400,
+                    Message =
+                        "Không thể chuyển bệnh nhân đang được khám xuống cuối hàng.",
+                    Content = null
+                };
+            }
+
 
             // =================================================
             // CHECK TODAY
@@ -626,6 +654,7 @@ public class AppointmentService : IAppointmentService
             };
         }
     }
+
 
     // =====================================================
     // CREATE RECEPTION APPOINTMENT
