@@ -1229,3 +1229,36 @@ FROM auth.audit_logs
 WHERE entity_name = 'Invoice'
   AND entity_id = 1
 ORDER BY id DESC;
+
+---------- test refund invoice
+SELECT TOP 20
+    id,
+    invoice_id,
+    amount,
+    method,
+    reference_code,
+    received_by,
+    is_refund,
+    paid_at
+FROM billing.payments
+WHERE invoice_id = 1
+ORDER BY id DESC;
+
+
+SELECT TOP 10
+    id,
+    user_id,
+    action,
+    entity_name,
+    entity_id,
+    details,
+    succeeded,
+    occurred_at
+FROM auth.audit_logs
+WHERE entity_name = 'Invoice'
+  AND entity_id = 1
+ORDER BY id DESC;
+
+
+USE ClinicManagementSystem;
+GO
