@@ -80,6 +80,7 @@ public static class InvoiceResponseMessageDTO
     public const string RefundAmountExceeded =
         "Số tiền hoàn không được vượt quá số tiền đã thanh toán.";
 
+
     // =====================================================
     // CANCEL INVOICE
     // =====================================================
@@ -95,6 +96,9 @@ public static class InvoiceResponseMessageDTO
 
     public const string InvoiceAlreadyCancelled =
         "Hóa đơn đã được hủy.";
+
+    public const string CannotCancelPaidInvoice =
+        "Chỉ có thể hủy hóa đơn chưa thanh toán.";
 
     // =====================================================
     // AUTHENTICATION / USER
