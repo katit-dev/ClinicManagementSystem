@@ -302,41 +302,63 @@
 
                     <div class="reception-queue-next">
 
-                        <div class="reception-queue-number">
+    <div class="reception-queue-number">
 
-                            @next.QueueNumber.ToString("00")
+        @next.QueueNumber.ToString("00")
 
-                        </div>
-
-                        <div class="reception-queue-patient">
-
-                            <strong>
-                                @next.PatientName
-                            </strong>
-
-                            <span>
-                                @next.PatientCode
-                            </span>
-
-                            <small>
-                                Giờ hẹn:
-                                @next.StartTime.ToString("HH:mm")
-                            </small>
-
-                        </div>
+    </div>
 
 
-                        <button
-                            type="button"
-                            class="reception-queue-call-button"
-                            disabled="@ReceptionQueueStateService.IsActionLoading"
-                            @onclick="() => HandleRecallAsync(next.AppointmentId)">
+    <div class="reception-queue-patient">
 
-                            Gọi số
+        <strong>
+            @next.PatientName
+        </strong>
 
-                        </button>
+        <span>
+            @next.PatientCode
+        </span>
 
-                    </div>
+        <small>
+            Giờ hẹn:
+            @next.StartTime.ToString("HH:mm")
+        </small>
+
+    </div>
+
+
+    <div class="reception-queue-next-actions">
+
+        <button
+            type="button"
+            class="reception-queue-call-button"
+            disabled="@ReceptionQueueStateService.IsActionLoading"
+            @onclick="() => HandleRecallAsync(next.AppointmentId)">
+
+            Gọi số
+
+        </button>
+
+
+        @if (
+            ReceptionQueueStateService.Queue?
+                .Waiting
+                .Count > 0)
+        {
+            <button
+                type="button"
+                class="reception-queue-defer-button"
+                disabled="@ReceptionQueueStateService.IsActionLoading"
+                @onclick="() => HandleDeferAsync(next.AppointmentId)">
+
+                Chuyển xuống cuối
+
+            </button>
+        }
+
+    </div>
+
+</div>
                 }
 
             </div>
@@ -387,57 +409,70 @@
                 {
                     <div class="reception-queue-list">
 
-                        @foreach (
-                            var patient
-                            in ReceptionQueueStateService
-                                .Queue!
-                                .Waiting)
-                        {
-                            <div
-                                class="reception-queue-waiting-item">
-
-                                <div
-                                    class="reception-queue-waiting-number">
-
-                                    @patient.QueueNumber.ToString("00")
-
-                                </div>
+                    @for (
+    var i = 0;
+    i < ReceptionQueueStateService.Queue!.Waiting.Count;
+    i++)
+{
+    var patient =
+        ReceptionQueueStateService
+            .Queue
+            .Waiting[i];
 
 
-                                <div
-                                    class="reception-queue-waiting-patient">
+    <div
+        class="reception-queue-waiting-item">
 
-                                    <strong>
-                                        @patient.PatientName
-                                    </strong>
+        <div
+            class="reception-queue-waiting-number">
 
-                                    <span>
-                                        @patient.PatientCode
-                                    </span>
+            @patient.QueueNumber.ToString("00")
 
-                                </div>
+        </div>
 
 
-                                <div
-                                    class="reception-queue-waiting-time">
+        <div
+            class="reception-queue-waiting-patient">
 
-                                    @patient.StartTime.ToString("HH:mm")
+            <strong>
+                @patient.PatientName
+            </strong>
 
-                                </div>
+            <span>
+                @patient.PatientCode
+            </span>
+
+        </div>
 
 
-                                <button
-                                    type="button"
-                                    class="reception-queue-defer-button"
-                                    disabled="@ReceptionQueueStateService.IsActionLoading"
-                                    @onclick="() => HandleDeferAsync(patient.AppointmentId)">
+        <div
+            class="reception-queue-waiting-time">
 
-                                    Chuyển xuống cuối
+            @patient.StartTime.ToString("HH:mm")
 
-                                </button>
+        </div>
 
-                            </div>
-                        }
+
+        @if (
+            i <
+            ReceptionQueueStateService
+                .Queue
+                .Waiting
+                .Count - 1)
+        {
+            <button
+                type="button"
+                class="reception-queue-defer-button"
+                disabled="@ReceptionQueueStateService.IsActionLoading"
+                @onclick="() => HandleDeferAsync(patient.AppointmentId)">
+
+                Chuyển xuống cuối
+
+            </button>
+        }
+
+    </div>
+}
 
                     </div>
                 }
