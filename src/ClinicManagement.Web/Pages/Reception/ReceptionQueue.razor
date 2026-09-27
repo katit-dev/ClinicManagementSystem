@@ -1,0 +1,660 @@
+@page "/reception/queue"
+
+@layout HomePageMaster
+
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(
+    Roles = "Receptionist"
+)]
+
+@using ClinicManagementSystem.Application.DTOs.Queue
+@using ClinicManagementSystem.Application.Enums
+
+@inject ReceptionQueueStateService ReceptionQueueStateService
+
+@implements IDisposable
+
+
+<PageTitle>
+    Điều hành hàng chờ
+</PageTitle>
+
+
+<div class="reception-queue-page">
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <div class="reception-queue-header">
+
+        <div>
+
+            <h1>
+                Điều hành hàng chờ
+            </h1>
+
+            <p>
+                Theo dõi và điều phối bệnh nhân đang chờ khám.
+            </p>
+
+        </div>
+
+        <button
+            type="button"
+            class="reception-queue-refresh-button"
+            @onclick="RefreshQueueAsync"
+            disabled="@ReceptionQueueStateService.IsLoading">
+
+            ↻ Làm mới
+
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTERS
+         ===================================================== -->
+
+    <div class="reception-queue-filter-card">
+
+        <div class="reception-queue-filter-group">
+
+            <label>
+                Ngày khám
+            </label>
+
+            <input
+                type="date"
+                class="reception-queue-input"
+                value="@GetDateValue()"
+                @onchange="HandleDateChanged" />
+
+        </div>
+
+
+        <div class="reception-queue-filter-group">
+
+            <label>
+                Chuyên khoa
+            </label>
+
+            <select
+                class="reception-queue-input"
+                value="@GetSelectedSpecialtyValue()"
+                @onchange="HandleSpecialtyChanged">
+
+                <option value="">
+                    -- Chọn chuyên khoa --
+                </option>
+
+                @foreach (
+                    var specialty
+                    in ReceptionQueueStateService.Specialties)
+                {
+                    <option value="@specialty.Id">
+                        @specialty.Name
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+
+        <div class="reception-queue-filter-group">
+
+            <label>
+                Bác sĩ
+            </label>
+
+            <select
+                class="reception-queue-input"
+                value="@GetSelectedDoctorValue()"
+                @onchange="HandleDoctorChanged"
+                disabled="@(!ReceptionQueueStateService.SelectedSpecialtyId.HasValue)">
+
+                <option value="">
+                    -- Chọn bác sĩ --
+                </option>
+
+                @foreach (
+                    var doctor
+                    in ReceptionQueueStateService.Doctors)
+                {
+                    <option value="@doctor.Id">
+                        @doctor.FullName
+                    </option>
+                }
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ERROR
+         ===================================================== -->
+
+    @if (!string.IsNullOrWhiteSpace(
+        ReceptionQueueStateService.ErrorMessage))
+    {
+        <div class="reception-queue-message reception-queue-error">
+
+            @ReceptionQueueStateService.ErrorMessage
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         ACTION MESSAGE
+         ===================================================== -->
+
+    @if (!string.IsNullOrWhiteSpace(
+        ReceptionQueueStateService.ActionMessage))
+    {
+        <div class="reception-queue-message reception-queue-success">
+
+            @ReceptionQueueStateService.ActionMessage
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
+
+    @if (ReceptionQueueStateService.IsLoading)
+    {
+        <div class="reception-queue-loading">
+
+            Đang tải hàng chờ...
+
+        </div>
+    }
+
+    else if (
+        !ReceptionQueueStateService.SelectedDoctorId.HasValue)
+    {
+        <div class="reception-queue-empty-state">
+
+            <div class="reception-queue-empty-icon">
+                ☰
+            </div>
+
+            <h3>
+                Chưa chọn bác sĩ
+            </h3>
+
+            <p>
+                Vui lòng chọn chuyên khoa và bác sĩ
+                để xem hàng chờ.
+            </p>
+
+        </div>
+    }
+
+    else
+    {
+        <!-- =================================================
+             QUEUE CONTENT
+             ================================================= -->
+
+        <div class="reception-queue-content">
+
+            <!-- =============================================
+                 CURRENT
+                 ============================================= -->
+
+            <div class="reception-queue-main-card">
+
+                <div class="reception-queue-card-title">
+
+                    <span>
+                        Đang khám
+                    </span>
+
+                </div>
+
+
+                @if (ReceptionQueueStateService.Queue?.Current
+                    == null)
+                {
+                    <div class="reception-queue-no-patient">
+
+                        Chưa có bệnh nhân đang chờ xử lý.
+
+                    </div>
+                }
+                else
+                {
+                    var current =
+                        ReceptionQueueStateService
+                            .Queue
+                            .Current;
+
+                    <div class="reception-queue-current">
+
+                        <div class="reception-queue-number">
+
+                            @current.QueueNumber.ToString("00")
+
+                        </div>
+
+                        <div class="reception-queue-patient">
+
+                            <strong>
+                                @current.PatientName
+                            </strong>
+
+                            <span>
+                                @current.PatientCode
+                            </span>
+
+                        </div>
+
+                        <div class="reception-queue-time">
+
+                            @current.StartTime.ToString("HH:mm")
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+
+            <!-- =============================================
+                 NEXT
+                 ============================================= -->
+
+            <div class="reception-queue-main-card reception-queue-next-card">
+
+                <div class="reception-queue-card-title">
+
+                    <span>
+                        Tiếp theo
+                    </span>
+
+                </div>
+
+
+                @if (ReceptionQueueStateService.Queue?.Next
+                    == null)
+                {
+                    <div class="reception-queue-no-patient">
+
+                        Không có bệnh nhân tiếp theo.
+
+                    </div>
+                }
+                else
+                {
+                    var next =
+                        ReceptionQueueStateService
+                            .Queue
+                            .Next;
+
+                    <div class="reception-queue-next">
+
+                        <div class="reception-queue-number">
+
+                            @next.QueueNumber.ToString("00")
+
+                        </div>
+
+                        <div class="reception-queue-patient">
+
+                            <strong>
+                                @next.PatientName
+                            </strong>
+
+                            <span>
+                                @next.PatientCode
+                            </span>
+
+                            <small>
+                                Giờ hẹn:
+                                @next.StartTime.ToString("HH:mm")
+                            </small>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="reception-queue-call-button"
+                            disabled="@ReceptionQueueStateService.IsActionLoading"
+                            @onclick="() => HandleRecallAsync(next.AppointmentId)">
+
+                            Gọi số
+
+                        </button>
+
+                    </div>
+                }
+
+            </div>
+
+
+            <!-- =============================================
+                 WAITING
+                 ============================================= -->
+
+            <div class="reception-queue-waiting-card">
+
+                <div class="reception-queue-waiting-header">
+
+                    <div>
+
+                        <h2>
+                            Danh sách chờ
+                        </h2>
+
+                        <span>
+                            @(
+                                ReceptionQueueStateService
+                                    .Queue?
+                                    .WaitingCount
+                                    ?? 0
+                            )
+                            người
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                @if (
+                    ReceptionQueueStateService
+                        .Queue?
+                        .Waiting
+                        .Count == 0)
+                {
+                    <div class="reception-queue-no-patient">
+
+                        Không còn bệnh nhân trong hàng chờ.
+
+                    </div>
+                }
+                else
+                {
+                    <div class="reception-queue-list">
+
+                        @foreach (
+                            var patient
+                            in ReceptionQueueStateService
+                                .Queue!
+                                .Waiting)
+                        {
+                            <div
+                                class="reception-queue-waiting-item">
+
+                                <div
+                                    class="reception-queue-waiting-number">
+
+                                    @patient.QueueNumber.ToString("00")
+
+                                </div>
+
+
+                                <div
+                                    class="reception-queue-waiting-patient">
+
+                                    <strong>
+                                        @patient.PatientName
+                                    </strong>
+
+                                    <span>
+                                        @patient.PatientCode
+                                    </span>
+
+                                </div>
+
+
+                                <div
+                                    class="reception-queue-waiting-time">
+
+                                    @patient.StartTime.ToString("HH:mm")
+
+                                </div>
+
+
+                                <button
+                                    type="button"
+                                    class="reception-queue-defer-button"
+                                    disabled="@ReceptionQueueStateService.IsActionLoading"
+                                    @onclick="() => HandleDeferAsync(patient.AppointmentId)">
+
+                                    Chuyển xuống cuối
+
+                                </button>
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReceptionQueueStateService.OnChange +=
+            HandleStateChanged;
+
+
+        await ReceptionQueueStateService
+            .LoadSpecialtiesAsync();
+    }
+
+
+    // =====================================================
+    // DATE CHANGED
+    // =====================================================
+
+    private async Task HandleDateChanged(
+        ChangeEventArgs e)
+    {
+        var value =
+            e.Value?.ToString();
+
+
+        if (!DateOnly.TryParse(
+            value,
+            out var date))
+        {
+            return;
+        }
+
+
+        ReceptionQueueStateService
+            .SetDate(date);
+
+
+        if (
+            ReceptionQueueStateService
+                .SelectedDoctorId
+                .HasValue)
+        {
+            await ReceptionQueueStateService
+                .LoadQueueAsync();
+        }
+    }
+
+
+    // =====================================================
+    // SPECIALTY CHANGED
+    // =====================================================
+
+    private async Task HandleSpecialtyChanged(
+        ChangeEventArgs e)
+    {
+        var value =
+            e.Value?.ToString();
+
+
+        int? specialtyId =
+            int.TryParse(
+                value,
+                out var parsedId)
+                    ? parsedId
+                    : null;
+
+
+        ReceptionQueueStateService
+            .SetSpecialty(
+                specialtyId
+            );
+
+
+        await ReceptionQueueStateService
+            .LoadDoctorsAsync();
+    }
+
+
+    // =====================================================
+    // DOCTOR CHANGED
+    // =====================================================
+
+    private async Task HandleDoctorChanged(
+        ChangeEventArgs e)
+    {
+        var value =
+            e.Value?.ToString();
+
+
+        int? doctorId =
+            int.TryParse(
+                value,
+                out var parsedId)
+                    ? parsedId
+                    : null;
+
+
+        ReceptionQueueStateService
+            .SetDoctor(
+                doctorId
+            );
+
+
+        if (doctorId.HasValue)
+        {
+            await ReceptionQueueStateService
+                .LoadQueueAsync();
+        }
+    }
+
+
+    // =====================================================
+    // RECALL
+    // =====================================================
+
+    private async Task HandleRecallAsync(
+        int appointmentId)
+    {
+        await ReceptionQueueStateService
+            .RecallAsync(
+                appointmentId
+            );
+    }
+
+
+    // =====================================================
+    // DEFER
+    // =====================================================
+
+    private async Task HandleDeferAsync(
+        int appointmentId)
+    {
+        await ReceptionQueueStateService
+            .DeferAsync(
+                appointmentId
+            );
+    }
+
+
+    // =====================================================
+    // REFRESH
+    // =====================================================
+
+    private async Task RefreshQueueAsync()
+    {
+        await ReceptionQueueStateService
+            .RefreshAsync();
+    }
+
+
+    // =====================================================
+    // SELECTED VALUES
+    // =====================================================
+
+    private string GetSelectedSpecialtyValue()
+    {
+        return
+            ReceptionQueueStateService
+                .SelectedSpecialtyId?
+                .ToString()
+            ?? string.Empty;
+    }
+
+
+    private string GetSelectedDoctorValue()
+    {
+        return
+            ReceptionQueueStateService
+                .SelectedDoctorId?
+                .ToString()
+            ?? string.Empty;
+    }
+
+
+    private string GetDateValue()
+    {
+        return
+            ReceptionQueueStateService
+                .SelectedDate
+                .ToString("yyyy-MM-dd");
+    }
+
+
+    // =====================================================
+    // STATE CHANGED
+    // =====================================================
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(
+            StateHasChanged
+        );
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        ReceptionQueueStateService.OnChange -=
+            HandleStateChanged;
+    }
+}
