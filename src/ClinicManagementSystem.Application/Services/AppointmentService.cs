@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Infrastructure.Models;
+using ClinicManagementSystem.Application.DTOs.Queue;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -29,6 +30,16 @@ public interface IAppointmentService
     Task<HttpResponseData<ReceptionAppointmentDTO>> MarkNoShowAsync(int appointmentId, NoShowAppointmentRequestDTO request, int currentUserId);
 
     Task<HttpResponseData<AppointmentDTO>> CreateReceptionAppointmentAsync(CreateReceptionAppointmentRequestDTO request, int currentUserId);
+
+    // =====================================================
+    // QUEUE
+    // =====================================================
+
+    Task<HttpResponseData<QueueDTO>> GetQueueAsync(int doctorId, DateOnly date);
+
+    Task<HttpResponseData<QueueItemDTO>> RecallQueueAsync(int appointmentId);
+
+    Task<HttpResponseData<QueueItemDTO>> DeferQueueAsync(int appointmentId, int currentUserId);
 
 
 
