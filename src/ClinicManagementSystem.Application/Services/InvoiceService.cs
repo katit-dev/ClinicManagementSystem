@@ -187,18 +187,16 @@ public class InvoiceService : IInvoiceService
 
             // =================================================
             // CALCULATE REMAINING
-            //
-            // Requirement:
-            //
-            // Remaining =
-            // Total
-            // - Insurance
-            // - Paid
             // =================================================
 
+            var payableAmount =
+    invoice.TotalAmount
+    + invoice.TaxAmount
+    - invoice.DiscountAmount
+    - invoice.InsuranceAmount;
+
             var remainingAmount =
-                invoice.TotalAmount
-                - invoice.InsuranceAmount
+                payableAmount
                 - invoice.PaidAmount;
 
 
@@ -374,8 +372,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.RefundRequestRequired
-                );
+InvoiceResponseMessageDTO.PaymentRequestRequired);
             }
 
 
@@ -390,8 +387,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    "Giao dịch hoàn tiền phải được xử lý bằng chức năng hoàn tiền."
-                );
+InvoiceResponseMessageDTO.RefundMustUseRefundFunction);
             }
 
 
@@ -403,7 +399,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.RefundAmountInvalid 
+                    InvoiceResponseMessageDTO.RefundAmountInvalid
                 );
             }
 
@@ -417,7 +413,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.PaymentMethodInvalid 
+                    InvoiceResponseMessageDTO.PaymentMethodInvalid
                 );
             }
 
@@ -440,7 +436,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     404,
-                    InvoiceResponseMessageDTO.InvoiceNotFound 
+                    InvoiceResponseMessageDTO.InvoiceNotFound
                 );
             }
 
@@ -454,25 +450,23 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.PaymentInvoiceCancelled 
+                    InvoiceResponseMessageDTO.PaymentInvoiceCancelled
                 );
             }
 
 
             // =====================================================
             // CALCULATE REMAINING
-            //
-            // Requirement:
-            //
-            // Remaining =
-            // TotalAmount
-            // - InsuranceAmount
-            // - PaidAmount
             // =====================================================
 
+            var payableAmount =
+    invoice.TotalAmount
+    + invoice.TaxAmount
+    - invoice.DiscountAmount
+    - invoice.InsuranceAmount;
+
             var remainingAmount =
-                invoice.TotalAmount
-                - invoice.InsuranceAmount
+                payableAmount
                 - invoice.PaidAmount;
 
 
@@ -480,7 +474,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.InvoiceAlreadyPaid 
+                    InvoiceResponseMessageDTO.InvoiceAlreadyPaid
                 );
             }
 
@@ -562,16 +556,7 @@ public class InvoiceService : IInvoiceService
             // 2 = Paid
             // =====================================================
 
-            var newPaidAmount =
-                invoice.PaidAmount;
-
-            var payableAmount =
-                invoice.TotalAmount
-                - invoice.InsuranceAmount;
-
-
-            if (newPaidAmount >=
-                payableAmount)
+            if (invoice.PaidAmount >= payableAmount)
             {
                 invoice.Status =
                     (byte)InvoiceStatus.Paid;
@@ -671,8 +656,8 @@ public class InvoiceService : IInvoiceService
             }
 
 
-            result.Message = InvoiceResponseMessageDTO.InvoiceAlreadyPaid;
-
+            result.Message =
+                InvoiceResponseMessageDTO.PaymentSuccess;
 
             return result;
         }
@@ -767,7 +752,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.PaymentRequestRequired 
+                    InvoiceResponseMessageDTO.PaymentRequestRequired
                 );
             }
 
@@ -780,7 +765,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.RefundFlagInvalid 
+                    InvoiceResponseMessageDTO.RefundFlagInvalid
                 );
             }
 
@@ -801,7 +786,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.PaymentAmountInvalid 
+                    InvoiceResponseMessageDTO.PaymentAmountInvalid
                 );
             }
 
@@ -815,7 +800,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.PaymentMethodInvalid 
+                    InvoiceResponseMessageDTO.PaymentMethodInvalid
                 );
             }
 
@@ -865,7 +850,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.RefundNotAvailable 
+                    InvoiceResponseMessageDTO.RefundNotAvailable
                 );
             }
 
@@ -956,9 +941,10 @@ public class InvoiceService : IInvoiceService
             // =====================================================
 
             var payableAmount =
-                invoice.TotalAmount
-                - invoice.InsuranceAmount;
-
+    invoice.TotalAmount
+    + invoice.TaxAmount
+    - invoice.DiscountAmount
+    - invoice.InsuranceAmount;
 
             if (invoice.PaidAmount <= 0)
             {
@@ -1115,7 +1101,7 @@ public class InvoiceService : IInvoiceService
 
             return Response(
                 500,
-                InvoiceResponseMessageDTO.RefundFailed 
+                InvoiceResponseMessageDTO.RefundFailed
             );
         }
     }
