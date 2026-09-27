@@ -1108,12 +1108,260 @@ InvoiceResponseMessageDTO.RefundMustUseRefundFunction);
     }
 
 
-    public Task<HttpResponseData<InvoiceDTO>>
-        CancelInvoiceAsync(
-            int invoiceId,
-            CancelInvoiceRequestDTO request,
-            int currentUserId)
+    public async Task<HttpResponseData<InvoiceDTO>>
+    CancelInvoiceAsync(
+        int invoiceId,
+        CancelInvoiceRequestDTO request,
+        int currentUserId)
     {
-        throw new NotImplementedException();
+        bool transactionStarted = false;
+
+        try
+        {
+            // =====================================================
+            // VALIDATE INVOICE ID
+            // =====================================================
+
+            if (invoiceId <= 0)
+            {
+                return Response(
+                    400,
+                    InvoiceResponseMessageDTO.InvoiceNotFound
+                );
+            }
+
+
+            // =====================================================
+            // VALIDATE USER
+            // =====================================================
+
+            if (currentUserId <= 0)
+            {
+                return Response(
+                    401,
+                    InvoiceResponseMessageDTO.PaymentUserNotFound
+                );
+            }
+
+
+            // =====================================================
+            // VALIDATE REQUEST
+            // =====================================================
+
+            if (request == null)
+            {
+                return Response(
+                    400,
+                    InvoiceResponseMessageDTO.CancelRequestRequired
+                );
+            }
+
+
+            // =====================================================
+            // GET INVOICE
+            // =====================================================
+
+            var invoice =
+                await _unitOfWork
+                    .InvoiceRepository
+                    .WhereSql(
+                        i =>
+                            i.Id == invoiceId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (invoice == null)
+            {
+                return Response(
+                    404,
+                    InvoiceResponseMessageDTO.InvoiceNotFound
+                );
+            }
+
+
+            // =====================================================
+            // CHECK ALREADY CANCELLED
+            // =====================================================
+
+            if (invoice.Status ==
+                (byte)InvoiceStatus.Cancelled)
+            {
+                return Response(
+                    400,
+                    InvoiceResponseMessageDTO.InvoiceAlreadyCancelled
+                );
+            }
+
+
+            // =====================================================
+            // CHECK PAID AMOUNT
+            //
+            // Requirement:
+            // Chỉ hủy được khi paid_amount = 0
+            // =====================================================
+
+            if (invoice.PaidAmount != 0)
+            {
+                return Response(
+                    400,
+                    InvoiceResponseMessageDTO.CannotCancelPaidInvoice
+                );
+            }
+
+
+            // =====================================================
+            // BEGIN TRANSACTION
+            // =====================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =====================================================
+            // CANCEL INVOICE
+            // =====================================================
+
+            invoice.Status =
+                (byte)InvoiceStatus.Cancelled;
+
+            invoice.CancelledAt =
+                DateTime.Now;
+
+            invoice.CancelReason =
+                request.CancelReason.Trim();
+
+            invoice.UpdatedAt =
+                DateTime.Now;
+
+
+            // =====================================================
+            // AUDIT LOG
+            // =====================================================
+
+            var auditLog =
+                new AuditLog
+                {
+                    UserId =
+                        currentUserId,
+
+                    Action =
+                        "CANCEL_INVOICE",
+
+                    EntityName =
+                        "Invoice",
+
+                    EntityId =
+                        invoice.Id,
+
+                    Details =
+                        $"Hủy hóa đơn " +
+                        $"{invoice.InvoiceNo}. " +
+                        $"Lý do: {invoice.CancelReason}",
+
+                    IpAddress =
+                        null,
+
+                    Succeeded =
+                        true,
+
+                    OccurredAt =
+                        DateTime.Now
+                };
+
+
+            await _unitOfWork
+                .AuditLogRepository
+                .AddAsync(
+                    auditLog
+                );
+
+
+            // =====================================================
+            // SAVE
+            // =====================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =====================================================
+            // COMMIT
+            // =====================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =====================================================
+            // GET UPDATED INVOICE
+            // =====================================================
+
+            var result =
+                await GetInvoiceAsync(
+                    invoiceId
+                );
+
+
+            if (result.StatusCode != 200)
+            {
+                return result;
+            }
+
+
+            result.Message =
+                InvoiceResponseMessageDTO.CancelSuccess;
+
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            // =====================================================
+            // ROLLBACK
+            // =====================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback cancel invoice transaction. " +
+                        "InvoiceId: {InvoiceId}",
+                        invoiceId
+                    );
+                }
+            }
+
+
+            // =====================================================
+            // LOG ERROR
+            // =====================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to cancel invoice. " +
+                "InvoiceId: {InvoiceId}, " +
+                "UserId: {UserId}",
+                invoiceId,
+                currentUserId
+            );
+
+
+            return Response(
+                500,
+                InvoiceResponseMessageDTO.CancelFailed
+            );
+        }
     }
 }
