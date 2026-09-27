@@ -19,6 +19,8 @@ public interface IInvoiceService
     Task<HttpResponseData<InvoiceDTO>> RefundPaymentAsync(int invoiceId, PaymentRequestDTO request, int currentUserId);
 
     Task<HttpResponseData<InvoiceDTO>> CancelInvoiceAsync(int invoiceId, CancelInvoiceRequestDTO request, int currentUserId);
+
+    Task<HttpResponseData<InvoiceDTO>> RefundPaymentAsync(int invoiceId PaymentRequestDTO request, int currentUserId);
 }
 
 public class InvoiceService : IInvoiceService
