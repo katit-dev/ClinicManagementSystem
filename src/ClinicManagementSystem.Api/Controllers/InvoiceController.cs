@@ -75,6 +75,47 @@ public class InvoiceController : ControllerBase
 
         var result = await _invoiceService.CreatePaymentAsync(id, request, currentUserId);
 
-        return StatusCode(result.StatusCode,result);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    // =====================================================
+    // REFUND PAYMENT
+    //
+    // POST:
+    // /api/invoices/{id}/refunds
+    //
+    // Receptionist hoàn tiền cho hóa đơn
+    // =====================================================
+
+    [HttpPost("{id}/refunds")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> RefundPayment(
+        int id,
+        [FromBody] PaymentRequestDTO request)
+    {
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result =
+            await _invoiceService
+                .RefundPaymentAsync(
+                    id,
+                    request,
+                    currentUserId
+                );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
     }
 }
