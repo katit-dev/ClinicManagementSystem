@@ -723,13 +723,402 @@ public class InvoiceService : IInvoiceService
     }
 
 
-    public Task<HttpResponseData<InvoiceDTO>>
-        RefundPaymentAsync(
-            int invoiceId,
-            PaymentRequestDTO request,
-            int currentUserId)
+    public async Task<HttpResponseData<InvoiceDTO>>
+    RefundPaymentAsync(
+        int invoiceId,
+        PaymentRequestDTO request,
+        int currentUserId)
     {
-        throw new NotImplementedException();
+        bool transactionStarted = false;
+
+        try
+        {
+            // =====================================================
+            // VALIDATE INVOICE ID
+            // =====================================================
+
+            if (invoiceId <= 0)
+            {
+                return Response(
+                    400,
+                    "Mã hóa đơn không hợp lệ."
+                );
+            }
+
+
+            // =====================================================
+            // VALIDATE USER
+            // =====================================================
+
+            if (currentUserId <= 0)
+            {
+                return Response(
+                    401,
+                    "Không xác định được người thực hiện hoàn tiền."
+                );
+            }
+
+
+            // =====================================================
+            // VALIDATE REQUEST
+            // =====================================================
+
+            if (request == null)
+            {
+                return Response(
+                    400,
+                    "Thông tin hoàn tiền không được để trống."
+                );
+            }
+
+
+            // =====================================================
+            // MUST BE REFUND
+            // =====================================================
+
+            if (!request.IsRefund)
+            {
+                return Response(
+                    400,
+                    "Giao dịch này không phải giao dịch hoàn tiền."
+                );
+            }
+
+
+            // =====================================================
+            // AMOUNT
+            //
+            // Frontend gửi số dương:
+            //
+            // 100000
+            //
+            // Backend sẽ tạo:
+            //
+            // -100000
+            // =====================================================
+
+            if (request.Amount <= 0)
+            {
+                return Response(
+                    400,
+                    "Số tiền hoàn phải lớn hơn 0."
+                );
+            }
+
+
+            // =====================================================
+            // PAYMENT METHOD
+            // =====================================================
+
+            if (request.Method >
+                (byte)PaymentMethod.EWallet)
+            {
+                return Response(
+                    400,
+                    "Phương thức hoàn tiền không hợp lệ."
+                );
+            }
+
+
+            // =====================================================
+            // GET INVOICE
+            // =====================================================
+
+            var invoice =
+                await _unitOfWork
+                    .InvoiceRepository
+                    .WhereSql(
+                        i =>
+                            i.Id == invoiceId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (invoice == null)
+            {
+                return Response(
+                    404,
+                    "Không tìm thấy hóa đơn."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK CANCELLED
+            // =====================================================
+
+            if (invoice.Status ==
+                (byte)InvoiceStatus.Cancelled)
+            {
+                return Response(
+                    400,
+                    "Hóa đơn đã bị hủy, không thể hoàn tiền."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK PAID AMOUNT
+            // =====================================================
+
+            if (invoice.PaidAmount <= 0)
+            {
+                return Response(
+                    400,
+                    "Hóa đơn chưa có khoản tiền đã thu để hoàn."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK REFUND AMOUNT
+            //
+            // Không được hoàn vượt quá số tiền
+            // hiện đang được ghi nhận là đã thanh toán.
+            // =====================================================
+
+            if (request.Amount >
+                invoice.PaidAmount)
+            {
+                return Response(
+                    400,
+                    $"Số tiền hoàn không được vượt quá " +
+                    $"{invoice.PaidAmount:N0}."
+                );
+            }
+
+
+            // =====================================================
+            // BEGIN TRANSACTION
+            // =====================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =====================================================
+            // CREATE REFUND PAYMENT
+            //
+            // QUAN TRỌNG:
+            //
+            // Không sửa Payment cũ.
+            // Tạo một Payment mới với Amount âm.
+            // =====================================================
+
+            var refundPayment =
+                new Payment
+                {
+                    InvoiceId =
+                        invoice.Id,
+
+                    Amount =
+                        -request.Amount,
+
+                    Method =
+                        request.Method,
+
+                    PaidAt =
+                        DateTime.Now,
+
+                    Note =
+                        request.Note,
+
+                    ReferenceCode =
+                        request.ReferenceCode,
+
+                    ReceivedBy =
+                        currentUserId,
+
+                    IsRefund =
+                        true
+                };
+
+
+            // =====================================================
+            // UPDATE PAID AMOUNT
+            // =====================================================
+
+            invoice.PaidAmount -=
+                request.Amount;
+
+            invoice.UpdatedAt =
+                DateTime.Now;
+
+
+            // =====================================================
+            // UPDATE STATUS
+            //
+            // 0 = Unpaid
+            // 1 = PartiallyPaid
+            // 2 = Paid
+            // =====================================================
+
+            var payableAmount =
+                invoice.TotalAmount
+                - invoice.InsuranceAmount;
+
+
+            if (invoice.PaidAmount <= 0)
+            {
+                invoice.PaidAmount = 0;
+
+                invoice.Status =
+                    (byte)InvoiceStatus.Unpaid;
+            }
+            else if (
+                invoice.PaidAmount <
+                payableAmount)
+            {
+                invoice.Status =
+                    (byte)InvoiceStatus.PartiallyPaid;
+            }
+            else
+            {
+                invoice.Status =
+                    (byte)InvoiceStatus.Paid;
+            }
+
+
+            // =====================================================
+            // SAVE REFUND PAYMENT
+            // =====================================================
+
+            await _unitOfWork
+                .PaymentRepository
+                .AddAsync(
+                    refundPayment
+                );
+
+
+            // =====================================================
+            // AUDIT LOG
+            // =====================================================
+
+            var auditLog =
+                new AuditLog
+                {
+                    UserId =
+                        currentUserId,
+
+                    Action =
+                        "REFUND_INVOICE",
+
+                    EntityName =
+                        "Invoice",
+
+                    EntityId =
+                        invoice.Id,
+
+                    Details =
+                        $"Hoàn tiền hóa đơn " +
+                        $"{invoice.InvoiceNo}. " +
+                        $"Số tiền: {-request.Amount:N0}. " +
+                        $"Phương thức: {request.Method}.",
+
+                    IpAddress =
+                        null,
+
+                    Succeeded =
+                        true,
+
+                    OccurredAt =
+                        DateTime.Now
+                };
+
+
+            await _unitOfWork
+                .AuditLogRepository
+                .AddAsync(
+                    auditLog
+                );
+
+
+            // =====================================================
+            // SAVE
+            // =====================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =====================================================
+            // COMMIT
+            // =====================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =====================================================
+            // GET UPDATED INVOICE
+            // =====================================================
+
+            var result =
+                await GetInvoiceAsync(
+                    invoiceId
+                );
+
+
+            if (result.StatusCode != 200)
+            {
+                return result;
+            }
+
+
+            result.Message =
+                "Hoàn tiền thành công.";
+
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            // =====================================================
+            // ROLLBACK
+            // =====================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback refund transaction. " +
+                        "InvoiceId: {InvoiceId}",
+                        invoiceId
+                    );
+                }
+            }
+
+
+            // =====================================================
+            // LOG ERROR
+            // =====================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to refund invoice. " +
+                "InvoiceId: {InvoiceId}, " +
+                "UserId: {UserId}",
+                invoiceId,
+                currentUserId
+            );
+
+
+            return Response(
+                500,
+                "Không thể thực hiện hoàn tiền."
+            );
+        }
     }
 
 
