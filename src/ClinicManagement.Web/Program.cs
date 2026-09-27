@@ -91,6 +91,7 @@ builder.Services.AddScoped<PatientInvoiceStateService>();
 builder.Services.AddScoped<ReceptionAppointmentStateService>();
 builder.Services.AddScoped<ReceptionPatientStateService>();
 builder.Services.AddScoped<ReceptionBookingStateService>();
+builder.Services.AddScoped<ReceptionQueueStateService>();
 
 
 
