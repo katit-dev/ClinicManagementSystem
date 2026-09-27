@@ -276,97 +276,360 @@ public class AppointmentService : IAppointmentService
     }
 
     // =====================================================
-// RECALL QUEUE
-// =====================================================
+    // RECALL QUEUE
+    // =====================================================
 
-public async Task<HttpResponseData<QueueItemDTO>> RecallQueueAsync(
-    int appointmentId)
-{
-    try
+    public async Task<HttpResponseData<QueueItemDTO>> RecallQueueAsync(
+        int appointmentId)
     {
-        var appointment =
-            await _unitOfWork
-                .AppointmentRepository
-                .WhereSql(
-                    a =>
-                        a.Id == appointmentId &&
-
-                        a.Status ==
-                            (byte)AppointmentStatus.CheckedIn &&
-
-                        a.QueueNumber.HasValue
-                )
-                .Select(
-                    a =>
-                        new QueueItemDTO
-                        {
-                            AppointmentId =
-                                a.Id,
-
-                            AppointmentCode =
-                                a.AppointmentCode,
-
-                            QueueNumber =
-                                a.QueueNumber!.Value,
-
-                            PatientId =
-                                a.PatientId,
-
-                            PatientCode =
-                                a.Patient.PatientCode,
-
-                            PatientName =
-                                a.Patient.FullName,
-
-                            StartTime =
-                                a.StartTime,
-
-                            CheckedInAt =
-                                a.CheckedInAt
-                        }
-                )
-                .FirstOrDefaultAsync();
-
-
-        if (appointment == null)
+        try
         {
+            var appointment =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id == appointmentId &&
+
+                            a.Status ==
+                                (byte)AppointmentStatus.CheckedIn &&
+
+                            a.QueueNumber.HasValue
+                    )
+                    .Select(
+                        a =>
+                            new QueueItemDTO
+                            {
+                                AppointmentId =
+                                    a.Id,
+
+                                AppointmentCode =
+                                    a.AppointmentCode,
+
+                                QueueNumber =
+                                    a.QueueNumber!.Value,
+
+                                PatientId =
+                                    a.PatientId,
+
+                                PatientCode =
+                                    a.Patient.PatientCode,
+
+                                PatientName =
+                                    a.Patient.FullName,
+
+                                StartTime =
+                                    a.StartTime,
+
+                                CheckedInAt =
+                                    a.CheckedInAt
+                            }
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (appointment == null)
+            {
+                return new HttpResponseData<QueueItemDTO>
+                {
+                    StatusCode = 404,
+                    Message =
+                        "Không tìm thấy bệnh nhân trong hàng chờ.",
+                    Content = null
+                };
+            }
+
+
             return new HttpResponseData<QueueItemDTO>
             {
-                StatusCode = 404,
+                StatusCode = 200,
                 Message =
-                    "Không tìm thấy bệnh nhân trong hàng chờ.",
+                    $"Mời bệnh nhân {appointment.PatientName}, " +
+                    $"số {appointment.QueueNumber}.",
+
+                Content = appointment
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to recall queue. " +
+                "AppointmentId: {AppointmentId}",
+                appointmentId
+            );
+
+            return new HttpResponseData<QueueItemDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể gọi lại số.",
                 Content = null
             };
         }
-
-
-        return new HttpResponseData<QueueItemDTO>
-        {
-            StatusCode = 200,
-            Message =
-                $"Mời bệnh nhân {appointment.PatientName}, " +
-                $"số {appointment.QueueNumber}.",
-
-            Content = appointment
-        };
     }
-    catch (Exception ex)
+
+    // =====================================================
+    // DEFER QUEUE
+    // =====================================================
+
+    public async Task<HttpResponseData<QueueItemDTO>> DeferQueueAsync(
+        int appointmentId,
+        int currentUserId)
     {
-        _logger.LogError(
-            ex,
-            "Failed to recall queue. " +
-            "AppointmentId: {AppointmentId}",
-            appointmentId
-        );
+        bool transactionStarted = false;
 
-        return new HttpResponseData<QueueItemDTO>
+        try
         {
-            StatusCode = 500,
-            Message = "Không thể gọi lại số.",
-            Content = null
-        };
+            // =================================================
+            // GET APPOINTMENT
+            // =================================================
+
+            var appointment =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id == appointmentId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (appointment == null)
+            {
+                return new HttpResponseData<QueueItemDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Không tìm thấy lịch hẹn.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK STATUS
+            // =================================================
+
+            if (
+                appointment.Status !=
+                (byte)AppointmentStatus.CheckedIn
+            )
+            {
+                return new HttpResponseData<QueueItemDTO>
+                {
+                    StatusCode = 400,
+                    Message =
+                        "Chỉ có thể chuyển bệnh nhân đang trong hàng chờ.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK QUEUE NUMBER
+            // =================================================
+
+            if (!appointment.QueueNumber.HasValue)
+            {
+                return new HttpResponseData<QueueItemDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Bệnh nhân chưa được cấp số thứ tự.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK TODAY
+            // =================================================
+
+            var today =
+                DateOnly.FromDateTime(
+                    DateTime.Now
+                );
+
+            var appointmentDate =
+                DateOnly.FromDateTime(
+                    appointment.StartTime
+                );
+
+
+            if (appointmentDate != today)
+            {
+                return new HttpResponseData<QueueItemDTO>
+                {
+                    StatusCode = 400,
+                    Message =
+                        "Chỉ có thể chuyển hàng chờ trong ngày hôm nay.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
+            // GET LAST QUEUE NUMBER
+            // =================================================
+
+            var startOfDay =
+                today.ToDateTime(
+                    TimeOnly.MinValue
+                );
+
+            var endOfDay =
+                startOfDay.AddDays(1);
+
+
+            var lastQueueNumber =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.DoctorId ==
+                                appointment.DoctorId &&
+
+                            a.StartTime >=
+                                startOfDay &&
+
+                            a.StartTime <
+                                endOfDay &&
+
+                            a.QueueNumber.HasValue
+                    )
+                    .MaxAsync(
+                        a => a.QueueNumber
+                    )
+                    ?? 0;
+
+
+            // =================================================
+            // MOVE TO END
+            // =================================================
+
+            appointment.QueueNumber =
+                lastQueueNumber + 1;
+
+            appointment.UpdatedAt =
+                DateTime.Now;
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // GET UPDATED RESULT
+            // =================================================
+
+            var result =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id == appointment.Id
+                    )
+                    .Select(
+                        a =>
+                            new QueueItemDTO
+                            {
+                                AppointmentId =
+                                    a.Id,
+
+                                AppointmentCode =
+                                    a.AppointmentCode,
+
+                                QueueNumber =
+                                    a.QueueNumber!.Value,
+
+                                PatientId =
+                                    a.PatientId,
+
+                                PatientCode =
+                                    a.Patient.PatientCode,
+
+                                PatientName =
+                                    a.Patient.FullName,
+
+                                StartTime =
+                                    a.StartTime,
+
+                                CheckedInAt =
+                                    a.CheckedInAt
+                            }
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            return new HttpResponseData<QueueItemDTO>
+            {
+                StatusCode = 200,
+                Message =
+                    $"Đã chuyển bệnh nhân xuống cuối hàng. " +
+                    $"Số mới: {appointment.QueueNumber}.",
+
+                Content = result
+            };
+        }
+        catch (Exception ex)
+        {
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback queue defer."
+                    );
+                }
+            }
+
+
+            _logger.LogError(
+                ex,
+                "Failed to defer queue. " +
+                "AppointmentId: {AppointmentId}, " +
+                "UserId: {UserId}",
+                appointmentId,
+                currentUserId
+            );
+
+
+            return new HttpResponseData<QueueItemDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể chuyển bệnh nhân xuống cuối hàng.",
+                Content = null
+            };
+        }
     }
-}
 
     // =====================================================
     // CREATE RECEPTION APPOINTMENT
