@@ -69,85 +69,232 @@ public class AppointmentService : IAppointmentService
     }
 
     // =====================================================
-// GET QUEUE
-// =====================================================
+    // GET QUEUE
+    // =====================================================
 
-public async Task<HttpResponseData<QueueDTO>> GetQueueAsync(
-    int doctorId,
-    DateOnly date)
-{
-    try
+    public async Task<HttpResponseData<QueueDTO>> GetQueueAsync(
+        int doctorId,
+        DateOnly date)
     {
-        // =================================================
-        // CHECK DOCTOR
-        // =================================================
-
-        var doctor =
-            await _unitOfWork
-                .DoctorRepository
-                .WhereSql(
-                    d =>
-                        d.Id == doctorId &&
-                        d.IsActive
-                )
-                .Select(
-                    d =>
-                        new
-                        {
-                            d.Id,
-                            d.FullName,
-                            SpecialtyName = d.Specialty.Name
-                        }
-                )
-                .FirstOrDefaultAsync();
-
-
-        if (doctor == null)
+        try
         {
+            // =================================================
+            // CHECK DOCTOR
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.Id == doctorId &&
+                            d.IsActive
+                    )
+                    .Select(
+                        d =>
+                            new
+                            {
+                                d.Id,
+                                d.FullName,
+                                SpecialtyName = d.Specialty.Name
+                            }
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (doctor == null)
+            {
+                return new HttpResponseData<QueueDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Không tìm thấy bác sĩ.",
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // DATE RANGE
+            // =================================================
+
+            var startOfDay =
+                date.ToDateTime(TimeOnly.MinValue);
+
+            var endOfDay =
+                startOfDay.AddDays(1);
+
+
+            // =================================================
+            // GET QUEUE
+            //
+            // Chỉ lấy bệnh nhân đã CheckIn.
+            // =================================================
+
+            var items =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.DoctorId == doctorId &&
+
+                            a.StartTime >= startOfDay &&
+
+                            a.StartTime < endOfDay &&
+
+                            a.Status ==
+                                (byte)AppointmentStatus.CheckedIn &&
+
+                            a.QueueNumber.HasValue
+                    )
+                    .OrderBy(
+                        a => a.QueueNumber
+                    )
+                    .Select(
+                        a =>
+                            new QueueItemDTO
+                            {
+                                AppointmentId =
+                                    a.Id,
+
+                                AppointmentCode =
+                                    a.AppointmentCode,
+
+                                QueueNumber =
+                                    a.QueueNumber!.Value,
+
+                                PatientId =
+                                    a.PatientId,
+
+                                PatientCode =
+                                    a.Patient.PatientCode,
+
+                                PatientName =
+                                    a.Patient.FullName,
+
+                                StartTime =
+                                    a.StartTime,
+
+                                CheckedInAt =
+                                    a.CheckedInAt
+                            }
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // CURRENT
+            //
+            // Hiện tại hệ thống chưa có status "Serving".
+            //
+            // Vì vậy quy ước:
+            // QueueNumber nhỏ nhất = đang khám.
+            // =================================================
+
+            var current =
+                items.FirstOrDefault();
+
+
+            // =================================================
+            // NEXT
+            // =================================================
+
+            var next =
+                items
+                    .Skip(1)
+                    .FirstOrDefault();
+
+
+            // =================================================
+            // WAITING
+            //
+            // Bao gồm cả NEXT.
+            // =================================================
+
+            var waiting =
+                items
+                    .Skip(1)
+                    .ToList();
+
+
+            // =================================================
+            // RESPONSE
+            // =================================================
+
+            var result =
+                new QueueDTO
+                {
+                    DoctorId =
+                        doctor.Id,
+
+                    DoctorName =
+                        doctor.FullName,
+
+                    SpecialtyName =
+                        doctor.SpecialtyName,
+
+                    Date =
+                        date,
+
+                    Current =
+                        current,
+
+                    Next =
+                        next,
+
+                    WaitingCount =
+                        waiting.Count,
+
+                    Waiting =
+                        waiting
+                };
+
+
             return new HttpResponseData<QueueDTO>
             {
-                StatusCode = 404,
-                Message = "Không tìm thấy bác sĩ.",
+                StatusCode = 200,
+                Message = "Lấy hàng chờ thành công.",
+                Content = result
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to get queue. " +
+                "DoctorId: {DoctorId}, Date: {Date}",
+                doctorId,
+                date
+            );
+
+            return new HttpResponseData<QueueDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể lấy hàng chờ.",
                 Content = null
             };
         }
+    }
 
+    // =====================================================
+// RECALL QUEUE
+// =====================================================
 
-        // =================================================
-        // DATE RANGE
-        // =================================================
-
-        var startOfDay =
-            date.ToDateTime(TimeOnly.MinValue);
-
-        var endOfDay =
-            startOfDay.AddDays(1);
-
-
-        // =================================================
-        // GET QUEUE
-        //
-        // Chỉ lấy bệnh nhân đã CheckIn.
-        // =================================================
-
-        var items =
+public async Task<HttpResponseData<QueueItemDTO>> RecallQueueAsync(
+    int appointmentId)
+{
+    try
+    {
+        var appointment =
             await _unitOfWork
                 .AppointmentRepository
                 .WhereSql(
                     a =>
-                        a.DoctorId == doctorId &&
-
-                        a.StartTime >= startOfDay &&
-
-                        a.StartTime < endOfDay &&
+                        a.Id == appointmentId &&
 
                         a.Status ==
                             (byte)AppointmentStatus.CheckedIn &&
 
                         a.QueueNumber.HasValue
-                )
-                .OrderBy(
-                    a => a.QueueNumber
                 )
                 .Select(
                     a =>
@@ -178,98 +325,44 @@ public async Task<HttpResponseData<QueueDTO>> GetQueueAsync(
                                 a.CheckedInAt
                         }
                 )
-                .ToListAsync();
+                .FirstOrDefaultAsync();
 
 
-        // =================================================
-        // CURRENT
-        //
-        // Hiện tại hệ thống chưa có status "Serving".
-        //
-        // Vì vậy quy ước:
-        // QueueNumber nhỏ nhất = đang khám.
-        // =================================================
-
-        var current =
-            items.FirstOrDefault();
-
-
-        // =================================================
-        // NEXT
-        // =================================================
-
-        var next =
-            items
-                .Skip(1)
-                .FirstOrDefault();
-
-
-        // =================================================
-        // WAITING
-        //
-        // Bao gồm cả NEXT.
-        // =================================================
-
-        var waiting =
-            items
-                .Skip(1)
-                .ToList();
-
-
-        // =================================================
-        // RESPONSE
-        // =================================================
-
-        var result =
-            new QueueDTO
+        if (appointment == null)
+        {
+            return new HttpResponseData<QueueItemDTO>
             {
-                DoctorId =
-                    doctor.Id,
-
-                DoctorName =
-                    doctor.FullName,
-
-                SpecialtyName =
-                    doctor.SpecialtyName,
-
-                Date =
-                    date,
-
-                Current =
-                    current,
-
-                Next =
-                    next,
-
-                WaitingCount =
-                    waiting.Count,
-
-                Waiting =
-                    waiting
+                StatusCode = 404,
+                Message =
+                    "Không tìm thấy bệnh nhân trong hàng chờ.",
+                Content = null
             };
+        }
 
 
-        return new HttpResponseData<QueueDTO>
+        return new HttpResponseData<QueueItemDTO>
         {
             StatusCode = 200,
-            Message = "Lấy hàng chờ thành công.",
-            Content = result
+            Message =
+                $"Mời bệnh nhân {appointment.PatientName}, " +
+                $"số {appointment.QueueNumber}.",
+
+            Content = appointment
         };
     }
     catch (Exception ex)
     {
         _logger.LogError(
             ex,
-            "Failed to get queue. " +
-            "DoctorId: {DoctorId}, Date: {Date}",
-            doctorId,
-            date
+            "Failed to recall queue. " +
+            "AppointmentId: {AppointmentId}",
+            appointmentId
         );
 
-        return new HttpResponseData<QueueDTO>
+        return new HttpResponseData<QueueItemDTO>
         {
             StatusCode = 500,
-            Message = "Không thể lấy hàng chờ.",
+            Message = "Không thể gọi lại số.",
             Content = null
         };
     }
