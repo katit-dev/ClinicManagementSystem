@@ -73,45 +73,53 @@
 
             @if (HasRole("Receptionist"))
             {
-
+                @* =========================================
+       BOOKING
+       ========================================= *@
 
                 <NavLink href="/reception/booking" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
 
-
                     <i class="fas fa-calendar-plus"></i>
-
 
                     <span>
                         Đặt lịch khám
                     </span>
 
+                </NavLink>
+
+
+                @* =========================================
+       QUEUE
+       ========================================= *@
+
+                <NavLink href="/reception/queue" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
+
+                    <i class="fas fa-list-ol"></i>
+
+                    <span>
+                        Hàng chờ
+                    </span>
 
                 </NavLink>
 
 
+                @* =========================================
+       PATIENTS
+       ========================================= *@
 
                 <NavLink href="/reception/patients" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.Prefix"
                          @onclick="CloseSidebar">
 
-
                     <i class="fas fa-user-injured"></i>
-
 
                     <span>
                         Hồ sơ bệnh nhân
                     </span>
 
-
                 </NavLink>
-
-
             }
-
-
-            @* =========================================
-               PATIENT MENU
-               ========================================= *@
 
             @if (HasRole("Patient"))
             {
