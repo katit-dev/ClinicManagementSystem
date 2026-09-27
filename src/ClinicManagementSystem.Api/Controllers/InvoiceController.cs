@@ -118,4 +118,46 @@ public class InvoiceController : ControllerBase
             result
         );
     }
+
+    // =====================================================
+    // CANCEL INVOICE
+    //
+    // PATCH:
+    // /api/invoices/{id}/cancel
+    //
+    // Receptionist hủy hóa đơn
+    // Chỉ được hủy khi paid_amount = 0
+    // =====================================================
+
+    [HttpPatch("{id}/cancel")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> CancelInvoice(
+        int id,
+        [FromBody] CancelInvoiceRequestDTO request)
+    {
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result =
+            await _invoiceService
+                .CancelInvoiceAsync(
+                    id,
+                    request,
+                    currentUserId
+                );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
 }
