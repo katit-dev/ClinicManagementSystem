@@ -5,10 +5,6 @@ public static class InvoiceResponseMessageDTO
     // =====================================================
     // COMMON
     // =====================================================
-
-    public const string InvalidInvoiceId =
-        "Mã hóa đơn không hợp lệ.";
-
     public const string InvoiceNotFound =
         "Không tìm thấy hóa đơn.";
 
@@ -84,6 +80,21 @@ public static class InvoiceResponseMessageDTO
     public const string RefundAmountExceeded =
         "Số tiền hoàn không được vượt quá số tiền đã thanh toán.";
 
+    // =====================================================
+    // CANCEL INVOICE
+    // =====================================================
+
+    public const string CancelSuccess =
+        "Hủy hóa đơn thành công.";
+
+    public const string CancelFailed =
+        "Không thể hủy hóa đơn.";
+
+    public const string CancelRequestRequired =
+        "Thông tin hủy hóa đơn không được để trống.";
+
+    public const string InvoiceAlreadyCancelled =
+        "Hóa đơn đã được hủy.";
 
     // =====================================================
     // AUTHENTICATION / USER

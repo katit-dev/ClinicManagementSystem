@@ -347,7 +347,7 @@ public class InvoiceService : IInvoiceService
             {
                 return Response(
                     400,
-                    InvoiceResponseMessageDTO.InvalidInvoiceId
+                    InvoiceResponseMessageDTO.InvoiceNotFound
                 );
             }
 
