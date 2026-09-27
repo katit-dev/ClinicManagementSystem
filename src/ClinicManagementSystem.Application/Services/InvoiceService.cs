@@ -4,6 +4,8 @@ using ClinicManagementSystem.Application.DTOs.Payment;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using ClinicManagementSystem.Infrastructure.Models;
+using ClinicManagementSystem.Application.Enums;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -324,16 +326,400 @@ public class InvoiceService : IInvoiceService
 
 
     // =====================================================
-    // NOT IMPLEMENTED YET
+    // Create Payment
     // =====================================================
 
-    public Task<HttpResponseData<InvoiceDTO>>
-        CreatePaymentAsync(
-            int invoiceId,
-            PaymentRequestDTO request,
-            int currentUserId)
+    public async Task<HttpResponseData<InvoiceDTO>>
+    CreatePaymentAsync(
+        int invoiceId,
+        PaymentRequestDTO request,
+        int currentUserId)
     {
-        throw new NotImplementedException();
+        bool transactionStarted = false;
+
+        try
+        {
+            // =====================================================
+            // VALIDATE INVOICE ID
+            // =====================================================
+
+            if (invoiceId <= 0)
+            {
+                return Response(
+                    400,
+                    "Mã hóa đơn không hợp lệ."
+                );
+            }
+
+
+            // =====================================================
+            // VALIDATE USER
+            // =====================================================
+
+            if (currentUserId <= 0)
+            {
+                return Response(
+                    401,
+                    "Không xác định được người thực hiện giao dịch."
+                );
+            }
+
+
+            // =====================================================
+            // VALIDATE REQUEST
+            // =====================================================
+
+            if (request == null)
+            {
+                return Response(
+                    400,
+                    "Thông tin thanh toán không được để trống."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK REFUND
+            //
+            // Method này chỉ xử lý THU TIỀN.
+            // Refund sẽ được xử lý riêng ở bước tiếp theo.
+            // =====================================================
+
+            if (request.IsRefund)
+            {
+                return Response(
+                    400,
+                    "Giao dịch hoàn tiền phải được xử lý bằng chức năng hoàn tiền."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK AMOUNT
+            // =====================================================
+
+            if (request.Amount <= 0)
+            {
+                return Response(
+                    400,
+                    "Số tiền thanh toán phải lớn hơn 0."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK PAYMENT METHOD
+            // =====================================================
+
+            if (request.Method >
+                (byte)PaymentMethod.EWallet)
+            {
+                return Response(
+                    400,
+                    "Phương thức thanh toán không hợp lệ."
+                );
+            }
+
+
+            // =====================================================
+            // GET INVOICE
+            // =====================================================
+
+            var invoice =
+                await _unitOfWork
+                    .InvoiceRepository
+                    .WhereSql(
+                        i =>
+                            i.Id == invoiceId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (invoice == null)
+            {
+                return Response(
+                    404,
+                    "Không tìm thấy hóa đơn."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK CANCELLED
+            // =====================================================
+
+            if (invoice.Status ==
+                (byte)InvoiceStatus.Cancelled)
+            {
+                return Response(
+                    400,
+                    "Hóa đơn đã bị hủy, không thể thu tiền."
+                );
+            }
+
+
+            // =====================================================
+            // CALCULATE REMAINING
+            //
+            // Requirement:
+            //
+            // Remaining =
+            // TotalAmount
+            // - InsuranceAmount
+            // - PaidAmount
+            // =====================================================
+
+            var remainingAmount =
+                invoice.TotalAmount
+                - invoice.InsuranceAmount
+                - invoice.PaidAmount;
+
+
+            if (remainingAmount <= 0)
+            {
+                return Response(
+                    400,
+                    "Hóa đơn không còn số tiền cần thanh toán."
+                );
+            }
+
+
+            // =====================================================
+            // CHECK PAYMENT AMOUNT
+            // =====================================================
+
+            if (request.Amount >
+                remainingAmount)
+            {
+                return Response(
+                    400,
+                    $"Số tiền thanh toán không được vượt quá " +
+                    $"{remainingAmount:N0}."
+                );
+            }
+
+
+            // =====================================================
+            // BEGIN TRANSACTION
+            // =====================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =====================================================
+            // CREATE PAYMENT
+            // =====================================================
+
+            var payment =
+                new Payment
+                {
+                    InvoiceId =
+                        invoice.Id,
+
+                    Amount =
+                        request.Amount,
+
+                    Method =
+                        request.Method,
+
+                    PaidAt =
+                        DateTime.Now,
+
+                    Note =
+                        request.Note,
+
+                    ReferenceCode =
+                        request.ReferenceCode,
+
+                    ReceivedBy =
+                        currentUserId,
+
+                    IsRefund =
+                        false
+                };
+
+
+            // =====================================================
+            // UPDATE INVOICE PAID AMOUNT
+            // =====================================================
+
+            invoice.PaidAmount +=
+                request.Amount;
+
+            invoice.UpdatedAt =
+                DateTime.Now;
+
+
+            // =====================================================
+            // UPDATE INVOICE STATUS
+            //
+            // 0 = Unpaid
+            // 1 = PartiallyPaid
+            // 2 = Paid
+            // =====================================================
+
+            var newPaidAmount =
+                invoice.PaidAmount;
+
+            var payableAmount =
+                invoice.TotalAmount
+                - invoice.InsuranceAmount;
+
+
+            if (newPaidAmount >=
+                payableAmount)
+            {
+                invoice.Status =
+                    (byte)InvoiceStatus.Paid;
+            }
+            else
+            {
+                invoice.Status =
+                    (byte)InvoiceStatus.PartiallyPaid;
+            }
+
+
+            // =====================================================
+            // SAVE PAYMENT
+            // =====================================================
+
+            await _unitOfWork
+                .PaymentRepository
+                .AddAsync(
+                    payment
+                );
+
+
+            // =====================================================
+            // AUDIT LOG
+            // =====================================================
+
+            var auditLog =
+                new AuditLog
+                {
+                    UserId =
+                        currentUserId,
+
+                    Action =
+                        "CREATE_PAYMENT",
+
+                    EntityName =
+                        "Invoice",
+
+                    EntityId =
+                        invoice.Id,
+
+                    Details =
+                        $"Thu tiền hóa đơn " +
+                        $"{invoice.InvoiceNo}. " +
+                        $"Số tiền: {request.Amount:N0}. " +
+                        $"Phương thức: {request.Method}.",
+
+                    IpAddress =
+                        null,
+
+                    Succeeded =
+                        true,
+
+                    OccurredAt =
+                        DateTime.Now
+                };
+
+
+            await _unitOfWork
+                .AuditLogRepository
+                .AddAsync(
+                    auditLog
+                );
+
+
+            // =====================================================
+            // SAVE ALL
+            // =====================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =====================================================
+            // COMMIT
+            // =====================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =====================================================
+            // GET UPDATED INVOICE
+            // =====================================================
+
+            var result =
+                await GetInvoiceAsync(
+                    invoiceId
+                );
+
+
+            if (result.StatusCode != 200)
+            {
+                return result;
+            }
+
+
+            result.Message =
+                "Thu tiền thành công.";
+
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            // =====================================================
+            // ROLLBACK
+            // =====================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback payment transaction. " +
+                        "InvoiceId: {InvoiceId}",
+                        invoiceId
+                    );
+                }
+            }
+
+
+            // =====================================================
+            // LOG ERROR
+            // =====================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to create payment. " +
+                "InvoiceId: {InvoiceId}, " +
+                "UserId: {UserId}",
+                invoiceId,
+                currentUserId
+            );
+
+
+            return Response(
+                500,
+                "Không thể thực hiện thanh toán."
+            );
+        }
     }
 
 
