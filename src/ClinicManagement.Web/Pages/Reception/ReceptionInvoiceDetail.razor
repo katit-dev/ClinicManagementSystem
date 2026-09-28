@@ -1,0 +1,495 @@
+@page "/reception/invoices/{InvoiceId:int}"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Receptionist")]
+
+@using Microsoft.AspNetCore.Authorization
+@using ClinicManagementSystem.Application.DTOs.Invoice
+@using ClinicManagementSystem.Application.DTOs.Payment
+
+@inject ReceptionInvoiceStateService ReceptionInvoiceStateService
+
+@implements IDisposable
+
+
+<PageTitle>Chi tiết hóa đơn</PageTitle>
+
+
+<div class="reception-invoice-page">
+
+    @* =====================================================
+       HEADER
+       ===================================================== *@
+
+    <div class="reception-invoice-header">
+
+        <div>
+            <div class="reception-invoice-label">
+                VC-11
+            </div>
+
+            <h1>
+                Chi tiết hóa đơn
+            </h1>
+
+            <p>
+                Xem thông tin hóa đơn, các khoản mục và lịch sử thanh toán.
+            </p>
+        </div>
+
+    </div>
+
+
+    @* =====================================================
+       ERROR
+       ===================================================== *@
+
+    @if (!string.IsNullOrWhiteSpace(
+        ReceptionInvoiceStateService.ErrorMessage))
+    {
+        <div class="reception-invoice-message reception-invoice-error">
+            @ReceptionInvoiceStateService.ErrorMessage
+        </div>
+    }
+
+
+    @* =====================================================
+       LOADING
+       ===================================================== *@
+
+    @if (ReceptionInvoiceStateService.IsLoading)
+    {
+        <div class="reception-invoice-loading">
+            Đang tải thông tin hóa đơn...
+        </div>
+    }
+    else if (ReceptionInvoiceStateService.Invoice == null)
+    {
+        <div class="reception-invoice-empty">
+            Không có thông tin hóa đơn.
+        </div>
+    }
+    else
+    {
+        var invoice =
+            ReceptionInvoiceStateService.Invoice;
+
+
+        @* =================================================
+           INVOICE HEADER
+           ================================================= *@
+
+        <section class="reception-invoice-card">
+
+            <div class="reception-invoice-card-header">
+
+                <div>
+                    <span class="reception-invoice-card-label">
+                        HÓA ĐƠN
+                    </span>
+
+                    <h2>
+                        @invoice.InvoiceNo
+                    </h2>
+                </div>
+
+                <span class="reception-invoice-status @GetStatusClass(invoice.Status)">
+                    @GetStatusText(invoice.Status)
+                </span>
+
+            </div>
+
+
+            @* =============================================
+               PATIENT INFORMATION
+               ============================================= *@
+
+            <div class="reception-invoice-section">
+
+                <div class="reception-invoice-section-title">
+                    Thông tin bệnh nhân
+                </div>
+
+                <div class="reception-invoice-info-grid">
+
+                    <div class="reception-invoice-info-item">
+                        <span>Bệnh nhân</span>
+                        <strong>
+                            @invoice.PatientName
+                        </strong>
+                    </div>
+
+                    <div class="reception-invoice-info-item">
+                        <span>Mã bệnh nhân</span>
+                        <strong>
+                            @invoice.PatientId
+                        </strong>
+                    </div>
+
+                    <div class="reception-invoice-info-item">
+                        <span>Ngày tạo</span>
+                        <strong>
+                            @invoice.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </strong>
+                    </div>
+
+                    <div class="reception-invoice-info-item">
+                        <span>Mã lịch hẹn</span>
+                        <strong>
+                            @(invoice.AppointmentId?.ToString() ?? "—")
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            @* =============================================
+               ITEMS
+               ============================================= *@
+
+            <div class="reception-invoice-section">
+
+                <div class="reception-invoice-section-title">
+                    Chi tiết hóa đơn
+                </div>
+
+                @if (invoice.Items == null ||
+                    invoice.Items.Count == 0)
+                {
+                    <div class="reception-invoice-muted">
+                        Hóa đơn chưa có khoản mục.
+                    </div>
+                }
+                else
+                {
+                    <div class="reception-invoice-table-wrapper">
+
+                        <table class="reception-invoice-table">
+
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Nội dung</th>
+                                    <th>Số lượng</th>
+                                    <th>Đơn giá</th>
+                                    <th>Giảm giá</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @{
+                                    var itemIndex = 1;
+                                }
+
+                                @foreach (var item in invoice.Items)
+                                {
+                                    <tr>
+
+                                        <td>
+                                            @itemIndex
+                                        </td>
+
+                                        <td>
+                                            @item.Description
+                                        </td>
+
+                                        <td>
+                                            @item.Quantity
+                                        </td>
+
+                                        <td>
+                                            @item.UnitPrice.ToString("N0")
+                                        </td>
+
+                                        <td>
+                                            @item.DiscountAmount.ToString("N0")
+                                        </td>
+
+                                        <td>
+                                            <strong>
+                                                @item.Amount.ToString("N0")
+                                            </strong>
+                                        </td>
+
+                                    </tr>
+
+                                    itemIndex++;
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+            </div>
+
+
+            @* =============================================
+               TOTALS
+               ============================================= *@
+
+            <div class="reception-invoice-summary">
+
+                <div class="reception-invoice-summary-row">
+                    <span>Tổng tiền</span>
+                    <strong>
+                        @invoice.TotalAmount.ToString("N0") đ
+                    </strong>
+                </div>
+
+                <div class="reception-invoice-summary-row">
+                    <span>Giảm giá</span>
+                    <strong>
+                        -@invoice.DiscountAmount.ToString("N0") đ
+                    </strong>
+                </div>
+
+                <div class="reception-invoice-summary-row">
+                    <span>Thuế</span>
+                    <strong>
+                        @invoice.TaxAmount.ToString("N0") đ
+                    </strong>
+                </div>
+
+                <div class="reception-invoice-summary-row">
+                    <span>Bảo hiểm</span>
+                    <strong>
+                        -@invoice.InsuranceAmount.ToString("N0") đ
+                    </strong>
+                </div>
+
+                <div class="reception-invoice-summary-row reception-invoice-summary-paid">
+                    <span>Đã thanh toán</span>
+                    <strong>
+                        @invoice.PaidAmount.ToString("N0") đ
+                    </strong>
+                </div>
+
+                <div class="reception-invoice-summary-row reception-invoice-summary-remaining">
+                    <span>Còn phải thu</span>
+                    <strong>
+                        @invoice.RemainingAmount.ToString("N0") đ
+                    </strong>
+                </div>
+
+            </div>
+
+
+            @* =============================================
+               PAYMENTS
+               ============================================= *@
+
+            <div class="reception-invoice-section">
+
+                <div class="reception-invoice-section-title">
+                    Lịch sử thanh toán
+                </div>
+
+                @if (invoice.Payments == null ||
+                    invoice.Payments.Count == 0)
+                {
+                    <div class="reception-invoice-muted">
+                        Chưa có giao dịch thanh toán.
+                    </div>
+                }
+                else
+                {
+                    <div class="reception-invoice-table-wrapper">
+
+                        <table class="reception-invoice-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Loại</th>
+                                    <th>Phương thức</th>
+                                    <th>Mã tham chiếu</th>
+                                    <th>Ghi chú</th>
+                                    <th>Số tiền</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var payment in invoice.Payments)
+                                {
+                                    <tr>
+
+                                        <td>
+                                            @payment.PaidAt.ToString("dd/MM/yyyy HH:mm")
+                                        </td>
+
+                                        <td>
+                                            <span class="@GetPaymentTypeClass(payment)">
+                                                @(payment.IsRefund
+                                                    ? "Hoàn tiền"
+                                                    : "Thu tiền")
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @GetPaymentMethodText(payment.Method)
+                                        </td>
+
+                                        <td>
+                                            @(payment.ReferenceCode ?? "—")
+                                        </td>
+
+                                        <td>
+                                            @(payment.Note ?? "—")
+                                        </td>
+
+                                        <td>
+                                            <strong class="@GetPaymentAmountClass(payment)">
+                                                @payment.Amount.ToString("N0") đ
+                                            </strong>
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+            </div>
+
+
+            @* =============================================
+               CANCEL INFORMATION
+               ============================================= *@
+
+            @if (invoice.Status == 3)
+            {
+                <div class="reception-invoice-cancelled">
+
+                    <strong>
+                        Hóa đơn đã hủy
+                    </strong>
+
+                    @if (invoice.CancelledAt.HasValue)
+                    {
+                        <span>
+                            Thời gian:
+                            @invoice.CancelledAt.Value.ToString("dd/MM/yyyy HH:mm")
+                        </span>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(invoice.CancelReason))
+                    {
+                        <span>
+                            Lý do:
+                            @invoice.CancelReason
+                        </span>
+                    }
+
+                </div>
+            }
+
+        </section>
+    }
+
+</div>
+
+
+@code
+{
+    [Parameter]
+    public int InvoiceId { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReceptionInvoiceStateService.OnChange += HandleStateChanged;
+
+        await ReceptionInvoiceStateService
+            .LoadInvoiceAsync(InvoiceId);
+    }
+
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+
+    public void Dispose()
+    {
+        ReceptionInvoiceStateService.OnChange -= HandleStateChanged;
+    }
+
+
+    // =====================================================
+    // INVOICE STATUS
+    // =====================================================
+
+    private static string GetStatusText(byte status)
+    {
+        return status switch
+        {
+            0 => "Chưa thanh toán",
+            1 => "Thanh toán một phần",
+            2 => "Đã thanh toán",
+            3 => "Đã hủy",
+            _ => "Không xác định"
+        };
+    }
+
+
+    private static string GetStatusClass(byte status)
+    {
+        return status switch
+        {
+            0 => "invoice-status-unpaid",
+            1 => "invoice-status-partial",
+            2 => "invoice-status-paid",
+            3 => "invoice-status-cancelled",
+            _ => "invoice-status-unknown"
+        };
+    }
+
+
+    // =====================================================
+    // PAYMENT
+    // =====================================================
+
+    private static string GetPaymentMethodText(byte method)
+    {
+        return method switch
+        {
+            0 => "Tiền mặt",
+            1 => "Thẻ",
+            2 => "Chuyển khoản",
+            3 => "Ví điện tử",
+            _ => "Không xác định"
+        };
+    }
+
+
+    private static string GetPaymentTypeClass(
+        PaymentDTO payment)
+    {
+        return payment.IsRefund
+            ? "invoice-payment-refund"
+            : "invoice-payment-income";
+    }
+
+
+    private static string GetPaymentAmountClass(
+        PaymentDTO payment)
+    {
+        return payment.IsRefund
+            ? "invoice-payment-amount-refund"
+            : "invoice-payment-amount-income";
+    }
+}

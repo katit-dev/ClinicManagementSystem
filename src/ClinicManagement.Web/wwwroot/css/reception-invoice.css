@@ -1,0 +1,380 @@
+/* =====================================================
+   RECEPTION INVOICE
+   ===================================================== */
+
+.reception-invoice-page {
+    padding: 24px;
+}
+
+.reception-invoice-header {
+    margin-bottom: 24px;
+}
+
+.reception-invoice-label {
+    margin-bottom: 6px;
+    color: #0284c7;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.reception-invoice-header h1 {
+    margin: 0;
+    color: #16324f;
+    font-size: 28px;
+}
+
+.reception-invoice-header p {
+    margin: 6px 0 0;
+    color: #64748b;
+}
+
+
+/* =====================================================
+   CARD
+   ===================================================== */
+
+.reception-invoice-card {
+    overflow: hidden;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    background: #ffffff;
+}
+
+.reception-invoice-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 22px 24px;
+
+    border-bottom: 1px solid #eef2f6;
+}
+
+.reception-invoice-card-label {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.reception-invoice-card-header h2 {
+    margin: 4px 0 0;
+
+    color: #16324f;
+    font-size: 22px;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.reception-invoice-status {
+    display: inline-flex;
+
+    padding: 7px 12px;
+
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.invoice-status-unpaid {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.invoice-status-partial {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.invoice-status-paid {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.invoice-status-cancelled {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.invoice-status-unknown {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+
+/* =====================================================
+   SECTION
+   ===================================================== */
+
+.reception-invoice-section {
+    padding: 24px;
+}
+
+.reception-invoice-section-title {
+    margin-bottom: 16px;
+
+    color: #16324f;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+
+/* =====================================================
+   INFO
+   ===================================================== */
+
+.reception-invoice-info-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 16px;
+}
+
+.reception-invoice-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.reception-invoice-info-item span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.reception-invoice-info-item strong {
+    color: #334155;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   TABLE
+   ===================================================== */
+
+.reception-invoice-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.reception-invoice-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 800px;
+}
+
+.reception-invoice-table th {
+    padding: 12px 14px;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    background: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.reception-invoice-table td {
+    padding: 14px;
+
+    border-bottom: 1px solid #eef2f6;
+
+    color: #334155;
+
+    font-size: 13px;
+}
+
+.reception-invoice-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =====================================================
+   SUMMARY
+   ===================================================== */
+
+.reception-invoice-summary {
+    margin: 0 24px 24px;
+    padding: 18px;
+
+    border-radius: 12px;
+
+    background: #f8fafc;
+}
+
+.reception-invoice-summary-row {
+    display: flex;
+    justify-content: space-between;
+
+    padding: 7px 0;
+
+    color: #64748b;
+    font-size: 14px;
+}
+
+.reception-invoice-summary-row strong {
+    color: #334155;
+}
+
+.reception-invoice-summary-paid {
+    margin-top: 8px;
+    padding-top: 14px;
+
+    border-top: 1px solid #e2e8f0;
+
+    color: #334155;
+}
+
+.reception-invoice-summary-remaining {
+    color: #0284c7;
+    font-size: 16px;
+}
+
+.reception-invoice-summary-remaining strong {
+    color: #0284c7;
+}
+
+
+/* =====================================================
+   PAYMENT
+   ===================================================== */
+
+.invoice-payment-income,
+.invoice-payment-refund {
+    display: inline-flex;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.invoice-payment-income {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.invoice-payment-refund {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.invoice-payment-amount-income {
+    color: #15803d;
+}
+
+.invoice-payment-amount-refund {
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   CANCELLED
+   ===================================================== */
+
+.reception-invoice-cancelled {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    margin: 0 24px 24px;
+    padding: 14px 16px;
+
+    border-radius: 10px;
+
+    background: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+.reception-invoice-cancelled strong {
+    color: #475569;
+}
+
+
+/* =====================================================
+   STATE
+   ===================================================== */
+
+.reception-invoice-loading,
+.reception-invoice-empty,
+.reception-invoice-muted {
+    padding: 30px;
+
+    color: #64748b;
+
+    text-align: center;
+}
+
+.reception-invoice-message {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+}
+
+.reception-invoice-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+    .reception-invoice-info-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .reception-invoice-page {
+        padding: 16px;
+    }
+
+    .reception-invoice-card-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .reception-invoice-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reception-invoice-section {
+        padding: 18px;
+    }
+
+    .reception-invoice-summary {
+        margin: 0 18px 18px;
+    }
+
+    .reception-invoice-cancelled {
+        margin: 0 18px 18px;
+    }
+}
