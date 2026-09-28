@@ -1,6 +1,5 @@
 namespace ClinicManagementSystem.Application.DTOs.MedicalRecord;
 
-
 // =====================================================
 // MEDICAL RECORD RESPONSE MESSAGE
 // =====================================================
@@ -18,4 +17,26 @@ public static class MedicalRecordResponseMessageDTO
 
     public const string MedicalRecordNotFinalized =
         "Bệnh án chưa được hoàn tất.";
+
+    // =================================================
+    // START EXAM
+    // =================================================
+
+    public const string StartExamSuccess =
+        "Bắt đầu khám thành công.";
+
+    public const string StartExamFailed =
+        "Không thể bắt đầu khám.";
+
+    public const string AppointmentNotFound =
+        "Không tìm thấy lịch hẹn.";
+
+    public const string AppointmentNotCheckedIn =
+        "Lịch hẹn chưa được check-in.";
+
+    public const string DoctorNotFound =
+        "Không tìm thấy bác sĩ.";
+
+    public const string AppointmentNotBelongToDoctor =
+        "Lịch hẹn không thuộc bác sĩ hiện tại.";
 }
