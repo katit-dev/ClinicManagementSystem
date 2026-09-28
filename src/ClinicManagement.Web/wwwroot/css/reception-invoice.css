@@ -936,3 +936,13 @@
     background: #dcfce7;
     color: #15803d;
 }
+
+.invoice-action-print {
+    border: 1px solid #0284c7;
+    background: #ffffff;
+    color: #0284c7;
+}
+
+.invoice-action-print:hover {
+    background: #f0f9ff;
+}
