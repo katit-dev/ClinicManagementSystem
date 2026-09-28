@@ -18,6 +18,12 @@ public interface IMedicalRecordService
     Task<HttpResponseData<MedicalRecordDTO>> GetMedicalRecordByAppointmentAsync(int appointmentId, int currentUserId);
 
     Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientMedicalRecordsAsync(int patientId);
+
+    // =====================================================
+    // GET PATIENT MEDICAL RECORD HISTORY
+    // =====================================================
+
+    Task<HttpResponseData<List<MedicalRecordDTO>>>GetPatientMedicalRecordsAsync(int patientId,  int currentUserId);
 }
 
 // =====================================================

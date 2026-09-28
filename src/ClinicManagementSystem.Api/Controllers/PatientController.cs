@@ -147,27 +147,5 @@ public class PatientController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
-    // =====================================================
-    // GET PATIENT MEDICAL RECORDS
-    //
-    // GET:
-    // /api/patients/{id}/records
-    //
-    // Doctor xem lịch sử bệnh án của bệnh nhân.
-    // =====================================================
-
-    [HttpGet("{id}/records")]
-    [Authorize(Roles = "Doctor")]
-    public async Task<IActionResult> GetPatientRecords(
-        int id)
-    {
-        var result =
-            await _patientService.GetPatientRecordsAsync(id);
-
-        return StatusCode(
-            result.StatusCode,
-            result
-        );
-    }
 
 }
