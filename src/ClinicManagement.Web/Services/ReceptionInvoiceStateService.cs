@@ -458,6 +458,169 @@ public class ReceptionInvoiceStateService
     }
 
     // =====================================================
+// CANCEL INVOICE
+// =====================================================
+
+public async Task<bool> CancelInvoiceAsync(
+    string reason)
+{
+    // =====================================================
+    // CHECK INVOICE
+    // =====================================================
+
+    if (Invoice == null)
+    {
+        ActionErrorMessage =
+            "Chưa có thông tin hóa đơn.";
+
+        StateHasChanged();
+
+        return false;
+    }
+
+
+    // =====================================================
+    // VALIDATE REASON
+    // =====================================================
+
+    if (string.IsNullOrWhiteSpace(reason))
+    {
+        ActionErrorMessage =
+            "Lý do hủy hóa đơn không được để trống.";
+
+        StateHasChanged();
+
+        return false;
+    }
+
+
+    if (reason.Trim().Length > 500)
+    {
+        ActionErrorMessage =
+            "Lý do hủy không được vượt quá 500 ký tự.";
+
+        StateHasChanged();
+
+        return false;
+    }
+
+
+    // =====================================================
+    // START
+    // =====================================================
+
+    IsSubmitting = true;
+
+    ActionMessage = string.Empty;
+
+    ActionErrorMessage = string.Empty;
+
+    StateHasChanged();
+
+
+    try
+    {
+        // =================================================
+        // BUILD REQUEST
+        // =================================================
+
+        var request =
+            new CancelInvoiceRequestDTO
+            {
+                CancelReason =
+                    reason.Trim()
+            };
+
+
+        var content =
+            JsonContent.Create(request);
+
+
+        // =================================================
+        // CALL API
+        // =================================================
+
+        var response =
+            await _authorizedApiService
+                .PatchAsync(
+                    $"/api/invoices/{Invoice.Id}/cancel",
+                    content
+                );
+
+
+        // =================================================
+        // READ RESPONSE
+        // =================================================
+
+        var responseData =
+            await response.Content
+                .ReadFromJsonAsync<
+                    HttpResponseData<InvoiceDTO?>>();
+
+
+        // =================================================
+        // FAILED
+        // =================================================
+
+        if (!response.IsSuccessStatusCode ||
+            responseData == null ||
+            responseData.StatusCode < 200 ||
+            responseData.StatusCode >= 300)
+        {
+            ActionErrorMessage =
+                responseData?.Message
+                ?? "Không thể hủy hóa đơn.";
+
+            return false;
+        }
+
+
+        // =================================================
+        // CHECK CONTENT
+        // =================================================
+
+        if (responseData.Content == null)
+        {
+            ActionErrorMessage =
+                "Không nhận được thông tin hóa đơn sau khi hủy.";
+
+            return false;
+        }
+
+
+        // =================================================
+        // UPDATE INVOICE
+        // =================================================
+
+        Invoice =
+            responseData.Content;
+
+
+        // =================================================
+        // SUCCESS
+        // =================================================
+
+        ActionMessage =
+            responseData.Message;
+
+        return true;
+    }
+    catch
+    {
+        ActionErrorMessage =
+            "Không thể kết nối đến hệ thống.";
+
+        return false;
+    }
+    finally
+    {
+        IsSubmitting = false;
+
+        StateHasChanged();
+    }
+}
+
+    // =====================================================
     // RESET INVOICE
     // =====================================================
 
