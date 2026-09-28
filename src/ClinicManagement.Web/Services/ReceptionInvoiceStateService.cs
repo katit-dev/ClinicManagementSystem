@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Invoice;
+using ClinicManagementSystem.Application.DTOs.Payment;
 
 namespace ClinicManagementSystem.Web.Services;
 
@@ -32,6 +33,30 @@ public class ReceptionInvoiceStateService
 
 
     public string ErrorMessage
+    {
+        get;
+        private set;
+    } = string.Empty;
+
+    // =====================================================
+    // ACTION STATE
+    // =====================================================
+
+    public bool IsSubmitting
+    {
+        get;
+        private set;
+    }
+
+
+    public string ActionMessage
+    {
+        get;
+        private set;
+    } = string.Empty;
+
+
+    public string ActionErrorMessage
     {
         get;
         private set;
@@ -142,6 +167,150 @@ public class ReceptionInvoiceStateService
         }
     }
 
+    // =====================================================
+    // CREATE PAYMENT
+    // =====================================================
+
+    public async Task<bool> CreatePaymentAsync(
+        decimal amount,
+        byte method,
+        string? referenceCode,
+        string? note)
+    {
+        if (Invoice == null)
+        {
+            ActionErrorMessage =
+                "Chưa có thông tin hóa đơn.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =====================================================
+        // RESET ACTION STATE
+        // =====================================================
+
+        IsSubmitting = true;
+
+        ActionMessage = string.Empty;
+
+        ActionErrorMessage = string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // BUILD REQUEST
+            // =================================================
+
+            var request =
+                new PaymentRequestDTO
+                {
+                    Amount = amount,
+
+                    Method = method,
+
+                    ReferenceCode =
+                        string.IsNullOrWhiteSpace(referenceCode)
+                            ? null
+                            : referenceCode.Trim(),
+
+                    Note =
+                        string.IsNullOrWhiteSpace(note)
+                            ? null
+                            : note.Trim(),
+
+                    IsRefund = false
+                };
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        $"/api/invoices/{Invoice.Id}/payments",
+                        JsonContent.Create(request)
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<InvoiceDTO?>>();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể thực hiện thu tiền.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // CHECK CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Không nhận được thông tin hóa đơn sau khi thu tiền.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE INVOICE
+            // =================================================
+
+            Invoice =
+                responseData.Content;
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
 
     // =====================================================
     // RESET INVOICE
@@ -154,6 +323,12 @@ public class ReceptionInvoiceStateService
         ErrorMessage = string.Empty;
 
         IsLoading = false;
+
+        IsSubmitting = false;
+
+        ActionMessage = string.Empty;
+
+        ActionErrorMessage = string.Empty;
 
         StateHasChanged();
     }
