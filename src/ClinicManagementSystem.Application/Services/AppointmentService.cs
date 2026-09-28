@@ -49,6 +49,12 @@ public interface IAppointmentService
 
     Task<HttpResponseData<MedicalRecordDTO>> StartExamAsync(int appointmentId, int currentUserId);
 
+    // =====================================================
+    // GET PATIENT MEDICAL RECORDS
+    // =====================================================
+
+    Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientRecordsAsync(int patientId);
+
 
 
 }
