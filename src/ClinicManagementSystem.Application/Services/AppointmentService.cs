@@ -37,6 +37,8 @@ public interface IAppointmentService
 
     Task<HttpResponseData<QueueDTO>> GetQueueAsync(int doctorId, DateOnly date);
 
+    Task<HttpResponseData<QueueDTO>> GetMyQueueAsync(int currentUserId, DateOnly date);
+
     Task<HttpResponseData<QueueItemDTO>> RecallQueueAsync(int appointmentId);
 
     Task<HttpResponseData<QueueItemDTO>> DeferQueueAsync(int appointmentId, int currentUserId);
@@ -66,6 +68,69 @@ public class AppointmentService : IAppointmentService
         _doctorService = doctorService;
 
         _logger = logger;
+    }
+
+    public async Task<HttpResponseData<QueueDTO>> GetMyQueueAsync(
+    int currentUserId,
+    DateOnly date)
+    {
+        try
+        {
+            // =====================================================
+            // FIND DOCTOR BY CURRENT USER
+            // =====================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .Select(d => d.Id)
+                    .FirstOrDefaultAsync();
+
+            // =====================================================
+            // DOCTOR NOT FOUND
+            // =====================================================
+
+            if (doctor <= 0)
+            {
+                return new HttpResponseData<QueueDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Không tìm thấy bác sĩ.",
+                    Content = null
+                };
+            }
+
+            // =====================================================
+            // GET QUEUE
+            // =====================================================
+
+            return await GetQueueAsync(
+                doctor,
+                date
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to get current doctor's queue. " +
+                "UserId: {UserId}, Date: {Date}",
+                currentUserId,
+                date
+            );
+
+            return new HttpResponseData<QueueDTO>
+            {
+                StatusCode = 500,
+                Message = "Không thể lấy hàng chờ.",
+                Content = null
+            };
+        }
     }
 
     public async Task<HttpResponseData<QueueDTO>> GetQueueAsync(
