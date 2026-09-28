@@ -98,8 +98,32 @@
                     @GetStatusText(invoice.Status)
                 </span>
 
+                @if (invoice.Status != 3 &&
+                     invoice.RemainingAmount > 0)
+                {
+                    <button type="button" class="invoice-action-button invoice-action-primary" @onclick="OpenPaymentModal">
+
+                        Thu tiền
+                    </button>
+                }
+
             </div>
 
+            @if (!string.IsNullOrWhiteSpace(
+    ReceptionInvoiceStateService.ActionMessage))
+            {
+                <div class="reception-invoice-message reception-invoice-success">
+                    @ReceptionInvoiceStateService.ActionMessage
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(
+                ReceptionInvoiceStateService.ActionErrorMessage))
+            {
+                <div class="reception-invoice-message reception-invoice-error">
+                    @ReceptionInvoiceStateService.ActionErrorMessage
+                </div>
+            }
 
             @* =============================================
                PATIENT INFORMATION
@@ -401,11 +425,222 @@
 
 </div>
 
+@if (ShowPaymentModal)
+{
+    <div class="invoice-modal-backdrop">
+
+        <div class="invoice-modal">
+
+            <div class="invoice-modal-header">
+
+                <div>
+                    <div class="invoice-modal-label">
+                        THANH TOÁN
+                    </div>
+
+                    <h3>
+                        Thu tiền hóa đơn
+                    </h3>
+                </div>
+
+                <button type="button" class="invoice-modal-close" @onclick="ClosePaymentModal"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <div class="invoice-modal-body">
+
+                @if (ReceptionInvoiceStateService.Invoice != null)
+                {
+                    <div class="invoice-payment-summary">
+
+                        <div>
+                            <span>Hóa đơn</span>
+
+                            <strong>
+                                @ReceptionInvoiceStateService.Invoice.InvoiceNo
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Còn phải thu</span>
+
+                            <strong>
+                                @ReceptionInvoiceStateService.Invoice.RemainingAmount.ToString("N0") đ
+                            </strong>
+                        </div>
+
+                    </div>
+                }
+
+
+                @* =============================================
+                   AMOUNT
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Số tiền thu
+                    </label>
+
+                    <input type="number" step="1000" min="0" class="invoice-form-input" @bind="PaymentAmount"
+                           disabled="@ReceptionInvoiceStateService.IsSubmitting" />
+
+                </div>
+
+
+                @* =============================================
+                   METHOD
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Phương thức thanh toán
+                    </label>
+
+                    <select class="invoice-form-input" @bind="PaymentMethod"
+                            disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                        <option value="0">
+                            Tiền mặt
+                        </option>
+
+                        <option value="1">
+                            Thẻ
+                        </option>
+
+                        <option value="2">
+                            Chuyển khoản
+                        </option>
+
+                        <option value="3">
+                            Ví điện tử
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                @* =============================================
+                   REFERENCE CODE
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Mã tham chiếu
+                        <span>(không bắt buộc)</span>
+                    </label>
+
+                    <input type="text" maxlength="200" class="invoice-form-input" @bind="PaymentReferenceCode"
+                           disabled="@ReceptionInvoiceStateService.IsSubmitting" />
+
+                </div>
+
+
+                @* =============================================
+                   NOTE
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Ghi chú
+                        <span>(không bắt buộc)</span>
+                    </label>
+
+                    <textarea class="invoice-form-input invoice-form-textarea" rows="3" @bind="PaymentNote"
+                              disabled="@ReceptionInvoiceStateService.IsSubmitting">
+                    </textarea>
+
+                </div>
+
+
+                @* =============================================
+                   CLIENT VALIDATION
+                   ============================================= *@
+
+                @if (!string.IsNullOrWhiteSpace(PaymentValidationMessage))
+                {
+                    <div class="invoice-form-validation">
+                        @PaymentValidationMessage
+                    </div>
+                }
+
+            </div>
+
+
+            <div class="invoice-modal-footer">
+
+                <button type="button" class="invoice-modal-button invoice-modal-secondary" @onclick="ClosePaymentModal"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    Hủy
+                </button>
+
+
+                <button type="button" class="invoice-modal-button invoice-modal-primary" @onclick="SubmitPaymentAsync"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    @if (ReceptionInvoiceStateService.IsSubmitting)
+                    {
+                        <span>
+                            Đang xử lý...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            Xác nhận thu tiền
+                        </span>
+                    }
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
 
 @code
 {
     [Parameter]
     public int InvoiceId { get; set; }
+
+    // =====================================================
+    // PAYMENT MODAL
+    // =====================================================
+
+    private bool ShowPaymentModal { get; set; }
+
+
+    private decimal PaymentAmount { get; set; }
+
+
+    private byte PaymentMethod { get; set; }
+
+
+    private string PaymentReferenceCode { get; set; } =
+        string.Empty;
+
+
+    private string PaymentNote { get; set; } =
+        string.Empty;
+
+
+    private string PaymentValidationMessage { get; set; } =
+        string.Empty;
 
 
     protected override async Task OnInitializedAsync()
@@ -428,6 +663,110 @@
         ReceptionInvoiceStateService.OnChange -= HandleStateChanged;
     }
 
+    // Open Modal
+    private void OpenPaymentModal()
+    {
+        var invoice =
+            ReceptionInvoiceStateService.Invoice;
+
+        if (invoice == null)
+        {
+            return;
+        }
+
+        PaymentAmount =
+            invoice.RemainingAmount;
+
+        PaymentMethod = 0;
+
+        PaymentReferenceCode =
+            string.Empty;
+
+        PaymentNote =
+            string.Empty;
+
+        PaymentValidationMessage =
+            string.Empty;
+
+        ShowPaymentModal = true;
+    }
+
+    // close modal
+    private void ClosePaymentModal()
+    {
+        if (ReceptionInvoiceStateService.IsSubmitting)
+        {
+            return;
+        }
+
+        ShowPaymentModal = false;
+
+        PaymentValidationMessage =
+            string.Empty;
+    }
+
+    // submit
+    private async Task SubmitPaymentAsync()
+{
+    var invoice =
+        ReceptionInvoiceStateService.Invoice;
+
+    if (invoice == null)
+    {
+        return;
+    }
+
+
+    // =====================================================
+    // VALIDATE AMOUNT
+    // =====================================================
+
+    if (PaymentAmount <= 0)
+    {
+        PaymentValidationMessage =
+            "Số tiền thanh toán phải lớn hơn 0.";
+
+        return;
+    }
+
+
+    if (PaymentAmount >
+        invoice.RemainingAmount)
+    {
+        PaymentValidationMessage =
+            "Số tiền thanh toán vượt quá số tiền còn phải thu.";
+
+        return;
+    }
+
+
+    // =====================================================
+    // CLEAR VALIDATION
+    // =====================================================
+
+    PaymentValidationMessage =
+        string.Empty;
+
+
+    // =====================================================
+    // CALL STATE SERVICE
+    // =====================================================
+
+    var success =
+        await ReceptionInvoiceStateService
+            .CreatePaymentAsync(
+                PaymentAmount,
+                PaymentMethod,
+                PaymentReferenceCode,
+                PaymentNote
+            );
+
+
+    if (success)
+    {
+        ShowPaymentModal = false;
+    }
+}
 
     // =====================================================
     // INVOICE STATUS
