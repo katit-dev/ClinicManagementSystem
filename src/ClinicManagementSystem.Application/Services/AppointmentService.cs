@@ -37,7 +37,7 @@ public interface IAppointmentService
 
     Task<HttpResponseData<QueueDTO>> GetQueueAsync(int doctorId, DateOnly date);
 
-    Task<HttpResponseData<QueueDTO>> GetMyQueueAsync(int currentUserId, DateOnly date);
+    Task<HttpResponseData<List<DoctorQueueItemDTO>>> GetDoctorQueueAsync(int doctorId, DateOnly date);
 
     Task<HttpResponseData<QueueItemDTO>> RecallQueueAsync(int appointmentId);
 
@@ -70,34 +70,45 @@ public class AppointmentService : IAppointmentService
         _logger = logger;
     }
 
-    public async Task<HttpResponseData<QueueDTO>> GetMyQueueAsync(
-    int currentUserId,
-    DateOnly date)
+    // =====================================================
+    // GET DOCTOR QUEUE
+    //
+    // Dùng cho VC-12
+    //
+    // Chỉ trả danh sách bệnh nhân CheckedIn
+    // của bác sĩ đang đăng nhập.
+    //
+    // Response:
+    // List<DoctorQueueItemDTO>
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<List<DoctorQueueItemDTO>>>
+        GetDoctorQueueAsync(
+            int doctorId,
+            DateOnly date)
     {
         try
         {
-            // =====================================================
-            // FIND DOCTOR BY CURRENT USER
-            // =====================================================
+            // =================================================
+            // CHECK DOCTOR
+            // =================================================
 
-            var doctor =
+            var doctorExists =
                 await _unitOfWork
                     .DoctorRepository
                     .WhereSql(
                         d =>
-                            d.UserId == currentUserId &&
+                            d.Id == doctorId &&
                             d.IsActive
                     )
-                    .Select(d => d.Id)
-                    .FirstOrDefaultAsync();
+                    .AnyAsync();
 
-            // =====================================================
-            // DOCTOR NOT FOUND
-            // =====================================================
 
-            if (doctor <= 0)
+            if (!doctorExists)
             {
-                return new HttpResponseData<QueueDTO>
+                return new HttpResponseData<
+                    List<DoctorQueueItemDTO>>
                 {
                     StatusCode = 404,
                     Message = "Không tìm thấy bác sĩ.",
@@ -105,29 +116,247 @@ public class AppointmentService : IAppointmentService
                 };
             }
 
+
+            // =================================================
+            // DATE RANGE
+            // =================================================
+
+            var startOfDay =
+                date.ToDateTime(
+                    TimeOnly.MinValue
+                );
+
+            var endOfDay =
+                startOfDay.AddDays(1);
+
+
+            // =================================================
+            // GET CHECKED-IN APPOINTMENTS
+            // =================================================
+
+            var rows =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.DoctorId == doctorId &&
+
+                            a.StartTime >= startOfDay &&
+
+                            a.StartTime < endOfDay &&
+
+                            a.Status ==
+                                (byte)AppointmentStatus.CheckedIn &&
+
+                            a.QueueNumber.HasValue
+                    )
+                    .OrderBy(
+                        a => a.QueueNumber
+                    )
+                    .Select(
+                        a =>
+                            new
+                            {
+                                AppointmentId =
+                                    a.Id,
+
+                                AppointmentCode =
+                                    a.AppointmentCode,
+
+                                QueueNumber =
+                                    a.QueueNumber!.Value,
+
+                                PatientId =
+                                    a.PatientId,
+
+                                PatientCode =
+                                    a.Patient.PatientCode,
+
+                                PatientName =
+                                    a.Patient.FullName,
+
+                                DateOfBirth =
+                                    a.Patient.DateOfBirth,
+
+                                StartTime =
+                                    a.StartTime,
+
+                                Reason =
+                                    a.Reason
+                            }
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // GET ALLERGIES
+            // =================================================
+
+            var patientIds =
+                rows
+                    .Select(
+                        x => x.PatientId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
             // =====================================================
-            // GET QUEUE
+            // GROUP ALLERGIES BY PATIENT
             // =====================================================
 
-            return await GetQueueAsync(
-                doctor,
-                date
-            );
+            var allergyLookup =
+                new Dictionary<int, List<string>>();
+
+
+            // =====================================================
+            // GET ALLERGIES
+            // =====================================================
+
+            if (patientIds.Count > 0)
+            {
+                var allergyRows =
+                    await _unitOfWork
+                        .PatientAllergyRepository
+                        .WhereSql(
+                            a =>
+                                patientIds.Contains(
+                                    a.PatientId
+                                )
+                        )
+                        .Select(
+                            a =>
+                                new
+                                {
+                                    a.PatientId,
+                                    a.Allergen
+                                }
+                        )
+                        .ToListAsync();
+
+
+                allergyLookup =
+                    allergyRows
+                        .GroupBy(
+                            x => x.PatientId
+                        )
+                        .ToDictionary(
+                            g => g.Key,
+                            g =>
+                                g.Select(
+                                    x => x.Allergen
+                                )
+                                .Where(
+                                    x =>
+                                        !string.IsNullOrWhiteSpace(
+                                            x
+                                        )
+                                )
+                                .Distinct()
+                                .ToList()
+                        );
+            }
+
+
+            // =================================================
+            // MAP DTO
+            // =================================================
+
+            var result =
+                rows
+                    .Select(
+                        x =>
+                        {
+                            var age =
+                                CalculateAge(
+                                    x.DateOfBirth,
+                                    date
+                                );
+
+
+                            var hasAllergy =
+                                allergyLookup.TryGetValue(
+                                    x.PatientId,
+                                    out var allergens
+                                );
+
+
+                            var allergyWarning =
+                                hasAllergy &&
+                                allergens != null &&
+                                allergens.Count > 0
+                                    ? $"Dị ứng {string.Join(
+                                        ", ",
+                                        allergens
+                                    )}"
+                                    : null;
+
+
+                            return new DoctorQueueItemDTO
+                            {
+                                AppointmentId =
+                                    x.AppointmentId,
+
+                                AppointmentCode =
+                                    x.AppointmentCode,
+
+                                QueueNumber =
+                                    x.QueueNumber,
+
+                                PatientId =
+                                    x.PatientId,
+
+                                PatientCode =
+                                    x.PatientCode,
+
+                                PatientName =
+                                    x.PatientName,
+
+                                Age =
+                                    age,
+
+                                StartTime =
+                                    x.StartTime,
+
+                                Reason =
+                                    x.Reason,
+
+                                AllergyWarning =
+                                    allergyWarning
+                            };
+                        }
+                    )
+                    .ToList();
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<
+                List<DoctorQueueItemDTO>>
+            {
+                StatusCode = 200,
+                Message = "Lấy hàng chờ bác sĩ thành công.",
+                Content = result
+            };
         }
         catch (Exception ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to get current doctor's queue. " +
-                "UserId: {UserId}, Date: {Date}",
-                currentUserId,
+                "Failed to get doctor queue. " +
+                "DoctorId: {DoctorId}, Date: {Date}",
+                doctorId,
                 date
             );
 
-            return new HttpResponseData<QueueDTO>
+
+            return new HttpResponseData<
+                List<DoctorQueueItemDTO>>
             {
                 StatusCode = 500,
-                Message = "Không thể lấy hàng chờ.",
+                Message = "Không thể lấy hàng chờ bác sĩ.",
                 Content = null
             };
         }
@@ -3213,5 +3442,42 @@ public class AppointmentService : IAppointmentService
                 content ??
                 new List<MyAppointmentDTO>()
         };
+    }
+
+    // =====================================================
+    // CALCULATE AGE
+    // =====================================================
+
+    private static int CalculateAge(
+        DateOnly? dateOfBirth,
+        DateOnly referenceDate)
+    {
+        if (!dateOfBirth.HasValue)
+        {
+            return 0;
+        }
+
+
+        var birthDate =
+            dateOfBirth.Value;
+
+
+        var age =
+            referenceDate.Year -
+            birthDate.Year;
+
+
+        if (
+            referenceDate <
+            birthDate.AddYears(age)
+        )
+        {
+            age--;
+        }
+
+
+        return age < 0
+            ? 0
+            : age;
     }
 }
