@@ -74,6 +74,55 @@ public class DoctorController : ControllerBase
         );
     }
 
-    
+    // =====================================================
+    // GET MY QUEUE
+    //
+    // GET:
+    // /api/doctors/me/queue?date=2026-09-28
+    //
+    // DoctorId lấy từ JWT
+    // Date do service xử lý
+    // =====================================================
+
+    [HttpGet("me/queue")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> GetMyQueue(
+        [FromQuery] DateOnly? date)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // GET DOCTOR QUEUE
+        // =================================================
+
+        var result =
+            await _appointmentService
+                .GetMyDoctorQueueAsync(
+                    currentUserId,
+                    date
+                );
+
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
 
 }
