@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using ClinicManagementSystem.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicManagementSystem.Api.Controllers;
@@ -8,6 +10,7 @@ namespace ClinicManagementSystem.Api.Controllers;
 public class DoctorController : ControllerBase
 {
     private readonly IDoctorService _doctorService;
+    private readonly IAppointmentService _appointmentService;
 
 
     // =====================================================
@@ -15,10 +18,11 @@ public class DoctorController : ControllerBase
     // =====================================================
 
     public DoctorController(
-        IDoctorService doctorService)
+    IDoctorService doctorService,
+    IAppointmentService appointmentService)
     {
-        _doctorService =
-            doctorService;
+        _doctorService = doctorService;
+        _appointmentService = appointmentService;
     }
 
 
@@ -62,6 +66,49 @@ public class DoctorController : ControllerBase
                 .GetAvailableSlotsAsync(
                     id,
                     date
+                );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
+    // =====================================================
+    // GET MY QUEUE
+    //
+    // GET:
+    // /api/doctors/me/queue?date=2026-09-28
+    // =====================================================
+
+    [HttpGet("me/queue")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> GetMyQueue(
+        [FromQuery] DateOnly? date)
+    {
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var selectedDate =
+            date ??
+            DateOnly.FromDateTime(
+                DateTime.Now
+            );
+
+        var result =
+            await _appointmentService
+                .GetMyQueueAsync(
+                    currentUserId,
+                    selectedDate
                 );
 
         return StatusCode(
