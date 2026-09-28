@@ -20,6 +20,8 @@ public interface IInvoiceService
 
     Task<HttpResponseData<InvoiceDTO>> CancelInvoiceAsync(int invoiceId, CancelInvoiceRequestDTO request, int currentUserId);
 
+    Task<byte[]?> GetInvoicePdfAsync(int invoiceId);
+
 }
 
 public class InvoiceService : IInvoiceService
