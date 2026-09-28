@@ -12,6 +12,13 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// =====================================================
+// QUESTPDF
+// =====================================================
+
+QuestPDF.Settings.License =
+    QuestPDF.Infrastructure.LicenseType.Evaluation;
+
 // ============================================================
 // CONTROLLERS
 // ============================================================

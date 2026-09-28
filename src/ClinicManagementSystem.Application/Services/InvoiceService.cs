@@ -1366,4 +1366,9 @@ InvoiceResponseMessageDTO.RefundMustUseRefundFunction);
             );
         }
     }
+
+    public Task<byte[]?> GetInvoicePdfAsync(int invoiceId)
+    {
+        throw new NotImplementedException();
+    }
 }
