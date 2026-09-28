@@ -1260,8 +1260,7 @@ WHERE entity_name = 'Invoice'
 ORDER BY id DESC;
 
 
-USE ClinicManagementSystem;
-GO
+
 
 SELECT TOP 10
     id,
@@ -1330,3 +1329,340 @@ SELECT TOP 5
     cancel_reason
 FROM billing.invoices
 WHERE invoice_no = 'INV-TEST-CANCEL-0001';
+
+
+--- them invoice de test cancel
+
+BEGIN TRANSACTION;
+
+BEGIN TRY
+
+    DECLARE @PatientId INT = 5;
+    DECLARE @CreatedBy INT = 1;
+
+    DECLARE @MedicalRecordServiceId INT = 1;
+    DECLARE @MedicineId INT = 1;
+
+    DECLARE @InvoiceId INT;
+    DECLARE @InvoiceNo VARCHAR(100);
+
+
+    -- =====================================================
+    -- INVOICE NO
+    -- =====================================================
+
+    SET @InvoiceNo =
+        'INV-TEST-CANCEL-' +
+        CONVERT(VARCHAR(8), GETDATE(), 112) +
+        '-' +
+        RIGHT(
+            '000' +
+            CAST(
+                ABS(CHECKSUM(NEWID())) % 1000
+                AS VARCHAR(3)
+            ),
+            3
+        );
+
+
+    -- =====================================================
+    -- CREATE INVOICE
+    -- =====================================================
+
+    INSERT INTO billing.invoices
+    (
+        patient_id,
+        appointment_id,
+        medical_record_id,
+        patient_name,
+        total_amount,
+        status,
+        created_by,
+        created_at,
+        updated_at,
+        invoice_no,
+        discount_amount,
+        tax_amount,
+        paid_amount,
+        insurance_amount,
+        cancelled_at,
+        cancel_reason
+    )
+    SELECT
+        p.id,
+        NULL,
+        NULL,
+        p.full_name,
+        190000,
+        0,              -- Unpaid
+        @CreatedBy,
+        GETDATE(),
+        NULL,
+        @InvoiceNo,
+        0,
+        0,
+        0,              -- IMPORTANT: chưa thu tiền
+        0,
+        NULL,
+        NULL
+    FROM scheduling.patients p
+    WHERE p.id = @PatientId;
+
+
+    SET @InvoiceId = SCOPE_IDENTITY();
+
+
+    IF @InvoiceId IS NULL
+    BEGIN
+        THROW 50001,
+            'Không tạo được invoice. Kiểm tra PatientId.',
+            1;
+    END;
+
+
+    -- =====================================================
+    -- ITEM 1
+    -- Xét nghiệm công thức máu
+    -- =====================================================
+
+    INSERT INTO billing.invoice_items
+    (
+        invoice_id,
+        medicine_id,
+        description,
+        quantity,
+        unit_price,
+        amount,
+        medical_record_service_id,
+        discount_amount
+    )
+    VALUES
+    (
+        @InvoiceId,
+        NULL,
+        N'Xét nghiệm công thức máu',
+        1,
+        150000,
+        150000,
+        @MedicalRecordServiceId,
+        0
+    );
+
+
+    -- =====================================================
+    -- ITEM 2
+    -- Paracetamol 500mg
+    -- =====================================================
+
+    INSERT INTO billing.invoice_items
+    (
+        invoice_id,
+        medicine_id,
+        description,
+        quantity,
+        unit_price,
+        amount,
+        medical_record_service_id,
+        discount_amount
+    )
+    VALUES
+    (
+        @InvoiceId,
+        @MedicineId,
+        N'Paracetamol 500mg',
+        20,
+        2000,
+        40000,
+        NULL,
+        0
+    );
+
+
+    -- =====================================================
+    -- COMMIT
+    -- =====================================================
+
+    COMMIT TRANSACTION;
+
+
+    -- =====================================================
+    -- CHECK INVOICE
+    -- =====================================================
+
+    SELECT
+        id,
+        invoice_no,
+        patient_id,
+        patient_name,
+        total_amount,
+        discount_amount,
+        tax_amount,
+        insurance_amount,
+        paid_amount,
+        status,
+        cancelled_at,
+        cancel_reason
+    FROM billing.invoices
+    WHERE id = @InvoiceId;
+
+
+    -- =====================================================
+    -- CHECK ITEMS
+    -- =====================================================
+
+    SELECT
+        id,
+        invoice_id,
+        medicine_id,
+        medical_record_service_id,
+        description,
+        quantity,
+        unit_price,
+        amount,
+        discount_amount
+    FROM billing.invoice_items
+    WHERE invoice_id = @InvoiceId
+    ORDER BY id;
+
+
+END TRY
+
+BEGIN CATCH
+
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;
+
+    THROW;
+
+END CATCH;
+
+----------------------------------------------------------------------------------------------------------
+USE ClinicManagementSystem;
+GO
+
+
+BEGIN TRANSACTION;
+
+BEGIN TRY
+
+    DECLARE @PatientId INT = 5;
+    DECLARE @CreatedBy INT = 1;
+
+    DECLARE @InvoiceId INT;
+    DECLARE @InvoiceNo VARCHAR(100);
+
+
+    -- =====================================================
+    -- GENERATE INVOICE NO
+    -- =====================================================
+
+    SET @InvoiceNo =
+        'INV-TEST-CANCEL-' +
+        CONVERT(VARCHAR(8), GETDATE(), 112) +
+        '-' +
+        RIGHT(
+            '000' +
+            CAST(
+                ABS(CHECKSUM(NEWID())) % 1000
+                AS VARCHAR(3)
+            ),
+            3
+        );
+
+
+    -- =====================================================
+    -- CREATE INVOICE
+    -- =====================================================
+
+    INSERT INTO billing.invoices
+    (
+        patient_id,
+        appointment_id,
+        medical_record_id,
+        patient_name,
+        total_amount,
+        status,
+        created_by,
+        created_at,
+        updated_at,
+        invoice_no,
+        discount_amount,
+        tax_amount,
+        paid_amount,
+        insurance_amount,
+        cancelled_at,
+        cancel_reason
+    )
+    SELECT
+        p.id,
+        NULL,
+        NULL,
+        p.full_name,
+
+        100000,     -- TotalAmount
+
+        0,          -- Unpaid
+
+        @CreatedBy,
+        GETDATE(),
+        NULL,
+
+        @InvoiceNo,
+
+        0,          -- Discount
+        0,          -- Tax
+        0,          -- PaidAmount - IMPORTANT
+        0,          -- Insurance
+
+        NULL,
+        NULL
+
+    FROM scheduling.patients p
+    WHERE p.id = @PatientId;
+
+
+    SET @InvoiceId = SCOPE_IDENTITY();
+
+
+    IF @InvoiceId IS NULL
+    BEGIN
+        THROW 50001,
+            'Không tạo được Invoice. Kiểm tra PatientId.',
+            1;
+    END;
+
+
+    COMMIT TRANSACTION;
+
+
+    -- =====================================================
+    -- RESULT
+    -- =====================================================
+
+    SELECT
+        id,
+        invoice_no,
+        patient_id,
+        patient_name,
+        total_amount,
+        discount_amount,
+        tax_amount,
+        insurance_amount,
+        paid_amount,
+        status,
+        cancelled_at,
+        cancel_reason
+    FROM billing.invoices
+    WHERE id = @InvoiceId;
+
+
+END TRY
+
+BEGIN CATCH
+
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;
+
+    THROW;
+
+END CATCH;

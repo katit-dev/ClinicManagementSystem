@@ -224,6 +224,7 @@
                                 <tr>
                                     <th>STT</th>
                                     <th>Nội dung</th>
+                                    <th>Loại</th>
                                     <th>Số lượng</th>
                                     <th>Đơn giá</th>
                                     <th>Giảm giá</th>
@@ -247,6 +248,21 @@
 
                                         <td>
                                             @item.Description
+                                        </td>
+
+                                        <td>
+                                            @if (item.MedicineId.HasValue)
+                                            {
+                                                <span class="invoice-item-type invoice-item-type-medicine">
+                                                    Thuốc
+                                                </span>
+                                            }
+                                            else if (item.MedicalRecordServiceId.HasValue)
+                                            {
+                                                <span class="invoice-item-type invoice-item-type-service">
+                                                    Dịch vụ
+                                                </span>
+                                            }
                                         </td>
 
                                         <td>
@@ -1120,82 +1136,82 @@
 
     // submit cancel
     private async Task SubmitCancelAsync()
-{
-    var invoice =
-        ReceptionInvoiceStateService.Invoice;
-
-    if (invoice == null)
     {
-        return;
-    }
+        var invoice =
+            ReceptionInvoiceStateService.Invoice;
+
+        if (invoice == null)
+        {
+            return;
+        }
 
 
-    // =====================================================
-    // FRONTEND GUARD
-    // =====================================================
+        // =====================================================
+        // FRONTEND GUARD
+        // =====================================================
 
-    if (invoice.Status == 3)
-    {
+        if (invoice.Status == 3)
+        {
+            CancelValidationMessage =
+                "Hóa đơn đã được hủy.";
+
+            return;
+        }
+
+
+        if (invoice.PaidAmount != 0)
+        {
+            CancelValidationMessage =
+                "Chỉ có thể hủy hóa đơn chưa phát sinh thanh toán.";
+
+            return;
+        }
+
+
+        // =====================================================
+        // VALIDATE REASON
+        // =====================================================
+
+        if (string.IsNullOrWhiteSpace(CancelReason))
+        {
+            CancelValidationMessage =
+                "Lý do hủy hóa đơn không được để trống.";
+
+            return;
+        }
+
+
+        if (CancelReason.Trim().Length > 500)
+        {
+            CancelValidationMessage =
+                "Lý do hủy không được vượt quá 500 ký tự.";
+
+            return;
+        }
+
+
         CancelValidationMessage =
-            "Hóa đơn đã được hủy.";
+            string.Empty;
 
-        return;
+
+        // =====================================================
+        // CALL API
+        // =====================================================
+
+        var success =
+            await ReceptionInvoiceStateService
+                .CancelInvoiceAsync(
+                    CancelReason
+                );
+
+
+        if (success)
+        {
+            ShowCancelModal = false;
+
+            CancelReason = string.Empty;
+        }
     }
-
-
-    if (invoice.PaidAmount != 0)
-    {
-        CancelValidationMessage =
-            "Chỉ có thể hủy hóa đơn chưa phát sinh thanh toán.";
-
-        return;
-    }
-
-
-    // =====================================================
-    // VALIDATE REASON
-    // =====================================================
-
-    if (string.IsNullOrWhiteSpace(CancelReason))
-    {
-        CancelValidationMessage =
-            "Lý do hủy hóa đơn không được để trống.";
-
-        return;
-    }
-
-
-    if (CancelReason.Trim().Length > 500)
-    {
-        CancelValidationMessage =
-            "Lý do hủy không được vượt quá 500 ký tự.";
-
-        return;
-    }
-
-
-    CancelValidationMessage =
-        string.Empty;
-
-
-    // =====================================================
-    // CALL API
-    // =====================================================
-
-    var success =
-        await ReceptionInvoiceStateService
-            .CancelInvoiceAsync(
-                CancelReason
-            );
-
-
-    if (success)
-    {
-        ShowCancelModal = false;
-
-        CancelReason = string.Empty;
-    }
-}
 
     // =====================================================
     // REFUND MODAL
