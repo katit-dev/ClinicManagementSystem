@@ -313,6 +313,151 @@ public class ReceptionInvoiceStateService
     }
 
     // =====================================================
+    // REFUND PAYMENT
+    // =====================================================
+
+    public async Task<bool> RefundInvoiceAsync(
+        decimal amount,
+        byte method,
+        string? referenceCode,
+        string? note)
+    {
+        if (Invoice == null)
+        {
+            ActionErrorMessage =
+                "Chưa có thông tin hóa đơn.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =====================================================
+        // RESET ACTION STATE
+        // =====================================================
+
+        IsSubmitting = true;
+
+        ActionMessage = string.Empty;
+
+        ActionErrorMessage = string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // BUILD REQUEST
+            // =================================================
+
+            var request =
+                new PaymentRequestDTO
+                {
+                    Amount = amount,
+
+                    Method = method,
+
+                    ReferenceCode =
+                        string.IsNullOrWhiteSpace(referenceCode)
+                            ? null
+                            : referenceCode.Trim(),
+
+                    Note =
+                        string.IsNullOrWhiteSpace(note)
+                            ? null
+                            : note.Trim(),
+
+                    IsRefund = true
+                };
+
+
+            // =================================================
+            // CALL REFUND API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        $"/api/invoices/{Invoice.Id}/refunds",
+                        JsonContent.Create(request)
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<InvoiceDTO?>>();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể thực hiện hoàn tiền.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // CHECK CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Không nhận được thông tin hóa đơn sau khi hoàn tiền.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE INVOICE
+            // =================================================
+
+            Invoice =
+                responseData.Content;
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
     // RESET INVOICE
     // =====================================================
 
