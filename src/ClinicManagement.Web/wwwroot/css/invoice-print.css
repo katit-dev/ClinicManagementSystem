@@ -1,0 +1,43 @@
+/* =====================================================
+   INVOICE PRINT
+   ===================================================== */
+
+@media print
+{
+    /* Không in layout của application */
+    .app-sidebar,
+    .app-header,
+    .no-print
+    {
+        display: none !important;
+    }
+
+    /* Main content chiếm toàn bộ trang */
+    .app-layout,
+    .app-content,
+    .app-main,
+    .app-main-container
+    {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    /* Chỉ giữ nội dung hóa đơn */
+    .invoice-print-area
+    {
+        display: block !important;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Không để background của application ảnh hưởng bản in */
+    body
+    {
+        margin: 0;
+        padding: 0;
+        background: white !important;
+    }
+}
