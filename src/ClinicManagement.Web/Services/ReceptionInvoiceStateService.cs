@@ -458,167 +458,269 @@ public class ReceptionInvoiceStateService
     }
 
     // =====================================================
-// CANCEL INVOICE
-// =====================================================
-
-public async Task<bool> CancelInvoiceAsync(
-    string reason)
-{
-    // =====================================================
-    // CHECK INVOICE
+    // CANCEL INVOICE
     // =====================================================
 
-    if (Invoice == null)
+    public async Task<bool> CancelInvoiceAsync(
+        string reason)
     {
-        ActionErrorMessage =
-            "Chưa có thông tin hóa đơn.";
+        // =====================================================
+        // CHECK INVOICE
+        // =====================================================
+
+        if (Invoice == null)
+        {
+            ActionErrorMessage =
+                "Chưa có thông tin hóa đơn.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =====================================================
+        // VALIDATE REASON
+        // =====================================================
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            ActionErrorMessage =
+                "Lý do hủy hóa đơn không được để trống.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        if (reason.Trim().Length > 500)
+        {
+            ActionErrorMessage =
+                "Lý do hủy không được vượt quá 500 ký tự.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =====================================================
+        // START
+        // =====================================================
+
+        IsSubmitting = true;
+
+        ActionMessage = string.Empty;
+
+        ActionErrorMessage = string.Empty;
 
         StateHasChanged();
 
-        return false;
-    }
+
+        try
+        {
+            // =================================================
+            // BUILD REQUEST
+            // =================================================
+
+            var request =
+                new CancelInvoiceRequestDTO
+                {
+                    CancelReason =
+                        reason.Trim()
+                };
 
 
-    // =====================================================
-    // VALIDATE REASON
-    // =====================================================
-
-    if (string.IsNullOrWhiteSpace(reason))
-    {
-        ActionErrorMessage =
-            "Lý do hủy hóa đơn không được để trống.";
-
-        StateHasChanged();
-
-        return false;
-    }
+            var content =
+                JsonContent.Create(request);
 
 
-    if (reason.Trim().Length > 500)
-    {
-        ActionErrorMessage =
-            "Lý do hủy không được vượt quá 500 ký tự.";
+            // =================================================
+            // CALL API
+            // =================================================
 
-        StateHasChanged();
-
-        return false;
-    }
-
-
-    // =====================================================
-    // START
-    // =====================================================
-
-    IsSubmitting = true;
-
-    ActionMessage = string.Empty;
-
-    ActionErrorMessage = string.Empty;
-
-    StateHasChanged();
+            var response =
+                await _authorizedApiService
+                    .PatchAsync(
+                        $"/api/invoices/{Invoice.Id}/cancel",
+                        content
+                    );
 
 
-    try
-    {
-        // =================================================
-        // BUILD REQUEST
-        // =================================================
+            // =================================================
+            // READ RESPONSE
+            // =================================================
 
-        var request =
-            new CancelInvoiceRequestDTO
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<InvoiceDTO?>>();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
             {
-                CancelReason =
-                    reason.Trim()
-            };
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể hủy hóa đơn.";
+
+                return false;
+            }
 
 
-        var content =
-            JsonContent.Create(request);
+            // =================================================
+            // CHECK CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Không nhận được thông tin hóa đơn sau khi hủy.";
+
+                return false;
+            }
 
 
-        // =================================================
-        // CALL API
-        // =================================================
+            // =================================================
+            // UPDATE INVOICE
+            // =================================================
 
-        var response =
-            await _authorizedApiService
-                .PatchAsync(
-                    $"/api/invoices/{Invoice.Id}/cancel",
-                    content
-                );
+            Invoice =
+                responseData.Content;
 
 
-        // =================================================
-        // READ RESPONSE
-        // =================================================
+            // =================================================
+            // SUCCESS
+            // =================================================
 
-        var responseData =
-            await response.Content
-                .ReadFromJsonAsync<
-                    HttpResponseData<InvoiceDTO?>>();
+            ActionMessage =
+                responseData.Message;
 
-
-        // =================================================
-        // FAILED
-        // =================================================
-
-        if (!response.IsSuccessStatusCode ||
-            responseData == null ||
-            responseData.StatusCode < 200 ||
-            responseData.StatusCode >= 300)
+            return true;
+        }
+        catch
         {
             ActionErrorMessage =
-                responseData?.Message
-                ?? "Không thể hủy hóa đơn.";
+                "Không thể kết nối đến hệ thống.";
 
             return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
+    // GET INVOICE PDF
+    // =====================================================
+
+    public async Task<byte[]?> GetInvoicePdfAsync(
+        int invoiceId)
+    {
+        // =================================================
+        // VALIDATE INVOICE ID
+        // =================================================
+
+        if (invoiceId <= 0)
+        {
+            ActionErrorMessage =
+                "Mã hóa đơn không hợp lệ.";
+
+            StateHasChanged();
+
+            return null;
         }
 
 
         // =================================================
-        // CHECK CONTENT
+        // START
         // =================================================
 
-        if (responseData.Content == null)
-        {
-            ActionErrorMessage =
-                "Không nhận được thông tin hóa đơn sau khi hủy.";
-
-            return false;
-        }
-
-
-        // =================================================
-        // UPDATE INVOICE
-        // =================================================
-
-        Invoice =
-            responseData.Content;
-
-
-        // =================================================
-        // SUCCESS
-        // =================================================
+        IsSubmitting = true;
 
         ActionMessage =
-            responseData.Message;
+            string.Empty;
 
-        return true;
-    }
-    catch
-    {
         ActionErrorMessage =
-            "Không thể kết nối đến hệ thống.";
-
-        return false;
-    }
-    finally
-    {
-        IsSubmitting = false;
+            string.Empty;
 
         StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL PDF API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/invoices/{invoiceId}/pdf"
+                    );
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ActionErrorMessage =
+                    "Không thể lấy file hóa đơn.";
+
+                return null;
+            }
+
+
+            // =================================================
+            // READ PDF
+            // =================================================
+
+            var pdfBytes =
+                await response.Content
+                    .ReadAsByteArrayAsync();
+
+
+            // =================================================
+            // EMPTY FILE
+            // =================================================
+
+            if (pdfBytes.Length == 0)
+            {
+                ActionErrorMessage =
+                    "File hóa đơn không có dữ liệu.";
+
+                return null;
+            }
+
+
+            return pdfBytes;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return null;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
     }
-}
 
     // =====================================================
     // RESET INVOICE
