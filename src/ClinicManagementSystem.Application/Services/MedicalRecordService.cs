@@ -19,11 +19,6 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientMedicalRecordsAsync(int patientId);
 
-    // =====================================================
-    // GET PATIENT MEDICAL RECORD HISTORY
-    // =====================================================
-
-    Task<HttpResponseData<List<MedicalRecordDTO>>>GetPatientMedicalRecordsAsync(int patientId,  int currentUserId);
 }
 
 // =====================================================
@@ -52,9 +47,10 @@ public class MedicalRecordService
         _logger =
             logger;
     }
+    
 
     // =====================================================
-    // Receptionist Action - GET MEDICAL RECORD
+    // Doctor Action - GET MEDICAL RECORD
     // =====================================================
     public async Task<
         HttpResponseData<List<MedicalRecordDTO>>>
