@@ -54,19 +54,20 @@ public class MedicalRecordController : ControllerBase
     }
 
     // =====================================================
-// GET PATIENT MEDICAL HISTORY
-//
-// GET:
-// /api/medical-records/patient/{patientId}
-// =====================================================
+    // GET PATIENT MEDICAL HISTORY
+    //
+    // GET:
+    // /api/medical-records/patient/{patientId}
+    // =====================================================
 
-[HttpGet("patient/{patientId}")]
-[Authorize(Roles = "Receptionist")]
-public async Task<IActionResult> GetPatientMedicalRecords(
-    int patientId)
-{
-    var result = await _medicalRecordService.GetPatientMedicalRecordsAsync(patientId);
+    [HttpGet("patient/{patientId}")]
+    [Authorize(Roles = "Doctor,Receptionist")]
+    public async Task<IActionResult> GetPatientMedicalRecords(
+        int patientId)
+    {
+        var result = await _medicalRecordService.GetPatientMedicalRecordsAsync(patientId);
 
-    return StatusCode(result.StatusCode,result);
-}
+        return StatusCode(result.StatusCode, result);
+    }
+
 }
