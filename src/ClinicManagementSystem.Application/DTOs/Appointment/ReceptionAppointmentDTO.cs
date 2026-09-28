@@ -37,4 +37,14 @@ public class ReceptionAppointmentDTO
     public int SpecialtyId { get; set; }
 
     public string SpecialtyName { get; set; } = string.Empty;
+
+    // =====================================================
+    // INVOICE
+    // =====================================================
+
+    public int? InvoiceId { get; set; }
+
+    public byte? InvoiceStatus { get; set; }
+
+    public decimal? InvoiceRemainingAmount { get; set; }
 }
