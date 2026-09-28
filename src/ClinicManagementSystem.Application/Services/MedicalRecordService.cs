@@ -4,6 +4,7 @@ using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Application.Enums;
+using ClinicManagementSystem.Infrastructure.Models;
 
 
 namespace ClinicManagementSystem.Application.Services;
@@ -17,7 +18,7 @@ public interface IMedicalRecordService
 {
     Task<HttpResponseData<MedicalRecordDTO>> GetMedicalRecordByAppointmentAsync(int appointmentId, int currentUserId);
 
-    Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientMedicalRecordsAsync(int patientId);
+    Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientMedicalRecordsAsync(int patientId, int currentUserId);
 
 }
 
@@ -47,15 +48,22 @@ public class MedicalRecordService
         _logger =
             logger;
     }
-    
+
 
     // =====================================================
-    // Doctor Action - GET MEDICAL RECORD
+    // GET PATIENT MEDICAL HISTORY
+    //
+    // Doctor / Receptionist
+    //
+    // GET:
+    // /api/medical-records/patient/{patientId}
     // =====================================================
+
     public async Task<
         HttpResponseData<List<MedicalRecordDTO>>>
         GetPatientMedicalRecordsAsync(
-            int patientId)
+            int patientId,
+            int currentUserId)
     {
         try
         {
@@ -76,19 +84,20 @@ public class MedicalRecordService
 
             if (patient == null)
             {
-                return new HttpResponseData<List<MedicalRecordDTO>>
+                return new HttpResponseData<
+                    List<MedicalRecordDTO>>
                 {
                     StatusCode = 404,
 
                     Message =
-                        "Không tìm thấy bệnh nhân."
+                        MedicalRecordResponseMessageDTO
+                            .PatientNotFound
                 };
             }
 
 
-
             // =================================================
-            // GET MEDICAL RECORDS
+            // GET FINALIZED MEDICAL RECORDS
             // =================================================
 
             var records =
@@ -98,14 +107,13 @@ public class MedicalRecordService
                         m =>
                             m.PatientId == patientId &&
                             m.Status ==
-                            (byte)MedicalRecordStatus.Finalized
+                                (byte)MedicalRecordStatus.Finalized
                     )
                     .Include(m => m.Doctor)
                     .OrderByDescending(
                         m => m.CreatedAt
                     )
                     .ToListAsync();
-
 
 
             // =================================================
@@ -121,48 +129,37 @@ public class MedicalRecordService
                                 Id =
                                     record.Id,
 
-
                                 AppointmentId =
                                     record.AppointmentId,
-
 
                                 DoctorName =
                                     record.Doctor != null
                                         ? record.Doctor.FullName
                                         : string.Empty,
 
-
                                 Symptoms =
                                     record.Symptoms,
-
 
                                 Diagnosis =
                                     record.Diagnosis,
 
-
                                 Icd10Code =
                                     record.Icd10Code,
-
 
                                 TreatmentPlan =
                                     record.TreatmentPlan,
 
-
                                 Note =
                                     record.Note,
-
 
                                 FollowUpDate =
                                     record.FollowUpDate,
 
-
                                 Status =
                                     record.Status,
 
-
                                 FinalizedAt =
                                     record.FinalizedAt,
-
 
                                 CreatedAt =
                                     record.CreatedAt
@@ -171,17 +168,58 @@ public class MedicalRecordService
                     .ToList();
 
 
+            // =================================================
+            // AUDIT LOG
+            // =================================================
+
+            var auditLog =
+                new AuditLog
+                {
+                    UserId =
+                        currentUserId,
+
+                    Action =
+                        "VIEW_PATIENT_MEDICAL_RECORDS",
+
+                    EntityName =
+                        "Patient",
+
+                    EntityId =
+                        patientId,
+
+                    Details =
+                        $"Viewed medical records of patient " +
+                        $"{patient.PatientCode}.",
+
+                    Succeeded =
+                        true,
+
+                    OccurredAt =
+                        DateTime.UtcNow
+                };
+
+
+            await _unitOfWork
+                .AuditLogRepository
+                .AddAsync(auditLog);
+
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
 
             // =================================================
             // SUCCESS
             // =================================================
 
-            return new HttpResponseData<List<MedicalRecordDTO>>
+            return new HttpResponseData<
+                List<MedicalRecordDTO>>
             {
                 StatusCode = 200,
 
                 Message =
-                    "Lấy lịch sử khám thành công.",
+                    MedicalRecordResponseMessageDTO
+                        .GetSuccess,
 
                 Content =
                     result
@@ -195,20 +233,30 @@ public class MedicalRecordService
 
             _logger.LogError(
                 ex,
-                "Failed to get patient medical records. PatientId: {PatientId}",
-                patientId
+                "Failed to get patient medical records. " +
+                "PatientId: {PatientId}, " +
+                "UserId: {UserId}",
+                patientId,
+                currentUserId
             );
 
 
-            return new HttpResponseData<List<MedicalRecordDTO>>
+            // =================================================
+            // FAILED
+            // =================================================
+
+            return new HttpResponseData<
+                List<MedicalRecordDTO>>
             {
                 StatusCode = 500,
 
                 Message =
-                    "Không thể lấy lịch sử khám."
+                    MedicalRecordResponseMessageDTO
+                        .GetFailed
             };
         }
     }
+
     // =====================================================
     // GET MEDICAL RECORD BY APPOINTMENT
     // =====================================================

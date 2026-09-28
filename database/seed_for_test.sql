@@ -1702,3 +1702,17 @@ SELECT
 FROM scheduling.appointment_status_history
 WHERE appointment_id = 9
 ORDER BY Id;
+
+------ test VC 13 audit_logs
+SELECT TOP 10
+    Id,
+    [user_id],
+    Action,
+    entity_id,
+    entity_name,
+    Details,
+    Succeeded,
+    occurred_at
+FROM auth.audit_logs
+WHERE Action = 'VIEW_PATIENT_MEDICAL_RECORDS'
+ORDER BY Id DESC;

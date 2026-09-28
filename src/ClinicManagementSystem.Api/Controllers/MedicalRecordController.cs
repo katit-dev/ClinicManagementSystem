@@ -63,11 +63,31 @@ public class MedicalRecordController : ControllerBase
     [HttpGet("patient/{patientId}")]
     [Authorize(Roles = "Doctor,Receptionist")]
     public async Task<IActionResult> GetPatientMedicalRecords(
-        int patientId)
+    int patientId)
     {
-        var result = await _medicalRecordService.GetPatientMedicalRecordsAsync(patientId);
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
 
-        return StatusCode(result.StatusCode, result);
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result =
+            await _medicalRecordService
+                .GetPatientMedicalRecordsAsync(
+                    patientId,
+                    currentUserId
+                );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
     }
 
 }
