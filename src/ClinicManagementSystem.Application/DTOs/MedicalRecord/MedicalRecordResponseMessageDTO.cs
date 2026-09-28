@@ -39,4 +39,17 @@ public static class MedicalRecordResponseMessageDTO
 
     public const string AppointmentNotBelongToDoctor =
         "Lịch hẹn không thuộc bác sĩ hiện tại.";
+
+    // =====================================================
+    // PATIENT HISTORY
+    // =====================================================
+
+    public const string PatientNotFound =
+        "Không tìm thấy bệnh nhân.";
+
+    public const string HistorySuccess =
+        "Lấy lịch sử khám thành công.";
+
+    public const string HistoryFailed =
+        "Lấy lịch sử khám thất bại.";
 }
