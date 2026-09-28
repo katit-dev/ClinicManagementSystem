@@ -10,10 +10,13 @@ namespace ClinicManagementSystem.Api.Controllers;
 public class PatientController : ControllerBase
 {
     private readonly IPatientService _patientService;
+    private readonly IAppointmentService _appointmentService;
 
-    public PatientController(IPatientService patientService)
+
+    public PatientController(IPatientService patientService, IAppointmentService appointmentService)
     {
         _patientService = patientService;
+        _appointmentService = appointmentService;
     }
 
     [HttpGet("lookup")]
@@ -131,20 +134,43 @@ public class PatientController : ControllerBase
     }
 
     // =====================================================
-// QUICK CREATE PATIENT
-//
-// POST:
-// /api/patients/quick
-// =====================================================
+    // QUICK CREATE PATIENT
+    //
+    // POST:
+    // /api/patients/quick
+    // =====================================================
 
-[HttpPost("quick")]
-[Authorize(Roles = "Receptionist")]
-public async Task<IActionResult> CreateQuickPatient(
-    [FromBody] QuickPatientRequestDTO request)
-{
-    var result = await _patientService.CreateQuickPatientAsync(request);
+    [HttpPost("quick")]
+    [Authorize(Roles = "Receptionist")]
+    public async Task<IActionResult> CreateQuickPatient(
+        [FromBody] QuickPatientRequestDTO request)
+    {
+        var result = await _patientService.CreateQuickPatientAsync(request);
 
-    return StatusCode(result.StatusCode, result);
-}
+        return StatusCode(result.StatusCode, result);
+    }
+
+    // =====================================================
+    // GET PATIENT MEDICAL RECORDS
+    //
+    // GET:
+    // /api/patients/{id}/records
+    //
+    // Doctor xem lịch sử bệnh án của bệnh nhân.
+    // =====================================================
+
+    [HttpGet("{id}/records")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> GetPatientRecords(
+        int id)
+    {
+        var result =
+            await _patientService .GetPatientRecordsAsync(id);
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
 
 }
