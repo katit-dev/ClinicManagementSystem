@@ -122,6 +122,16 @@
                         </button>
                     }
 
+                    @if (invoice.Status != 3 &&
+     invoice.PaidAmount == 0)
+                    {
+                        <button type="button" class="invoice-action-button invoice-action-cancel" @onclick="OpenCancelModal">
+
+                            Hủy hóa đơn
+
+                        </button>
+                    }
+
                 </div>
 
             </div>
@@ -843,6 +853,157 @@
     </div>
 }
 
+@* =====================================================
+   CANCEL INVOICE MODAL
+   ===================================================== *@
+
+@if (ShowCancelModal)
+{
+    <div class="invoice-modal-backdrop">
+
+        <div class="invoice-modal invoice-cancel-modal">
+
+            <div class="invoice-modal-header">
+
+                <div>
+
+                    <div class="invoice-modal-label invoice-cancel-label">
+                        HỦY HÓA ĐƠN
+                    </div>
+
+                    <h3>
+                        Hủy hóa đơn
+                    </h3>
+
+                </div>
+
+
+                <button type="button" class="invoice-modal-close" @onclick="CloseCancelModal"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <div class="invoice-modal-body">
+
+                @if (ReceptionInvoiceStateService.Invoice != null)
+                {
+                    <div class="invoice-payment-summary">
+
+                        <div>
+
+                            <span>
+                                Hóa đơn
+                            </span>
+
+                            <strong>
+                                @ReceptionInvoiceStateService
+                                .Invoice
+                                .InvoiceNo
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Đã thanh toán
+                            </span>
+
+                            <strong>
+                                @ReceptionInvoiceStateService
+                                .Invoice
+                                .PaidAmount
+                                .ToString("N0") đ
+                            </strong>
+
+                        </div>
+
+                    </div>
+                }
+
+
+                <div class="invoice-cancel-warning">
+
+                    <strong>
+                        Lưu ý
+                    </strong>
+
+                    <span>
+                        Hóa đơn sau khi hủy sẽ không thể tiếp tục thu tiền.
+                    </span>
+
+                </div>
+
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Lý do hủy
+                    </label>
+
+                    <textarea class="invoice-form-input invoice-form-textarea" rows="4" maxlength="500" @bind="CancelReason"
+                              disabled="@ReceptionInvoiceStateService.IsSubmitting">
+                    </textarea>
+
+                    <div class="invoice-character-count">
+                        @CancelReason.Length / 500
+                    </div>
+
+                </div>
+
+
+                @if (!string.IsNullOrWhiteSpace(
+                    CancelValidationMessage))
+                {
+                    <div class="invoice-form-validation">
+                        @CancelValidationMessage
+                    </div>
+                }
+
+            </div>
+
+
+            <div class="invoice-modal-footer">
+
+                <button type="button" class="invoice-modal-button invoice-modal-secondary" @onclick="CloseCancelModal"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    Không hủy
+
+                </button>
+
+
+                <button type="button" class="invoice-modal-button invoice-modal-cancel" @onclick="SubmitCancelAsync"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    @if (ReceptionInvoiceStateService.IsSubmitting)
+                    {
+                        <span>
+                            Đang xử lý...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            Xác nhận hủy
+                        </span>
+                    }
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
 
 @code
 {
@@ -873,6 +1034,20 @@
     private string PaymentValidationMessage { get; set; } =
         string.Empty;
 
+    // =====================================================
+    // CANCEL MODAL
+    // =====================================================
+
+    private bool ShowCancelModal { get; set; }
+
+
+    private string CancelReason { get; set; } =
+        string.Empty;
+
+
+    private string CancelValidationMessage { get; set; } =
+        string.Empty;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -893,6 +1068,134 @@
     {
         ReceptionInvoiceStateService.OnChange -= HandleStateChanged;
     }
+
+    // open cancel modal
+    private void OpenCancelModal()
+    {
+        var invoice =
+            ReceptionInvoiceStateService.Invoice;
+
+        if (invoice == null)
+        {
+            return;
+        }
+
+
+        // =====================================================
+        // FRONTEND GUARD
+        // =====================================================
+
+        if (invoice.Status == 3 ||
+            invoice.PaidAmount != 0)
+        {
+            return;
+        }
+
+
+        CancelReason =
+            string.Empty;
+
+        CancelValidationMessage =
+            string.Empty;
+
+        ShowCancelModal = true;
+    }
+
+    // close cancel modal
+    private void CloseCancelModal()
+    {
+        if (ReceptionInvoiceStateService.IsSubmitting)
+        {
+            return;
+        }
+
+        ShowCancelModal = false;
+
+        CancelReason =
+            string.Empty;
+
+        CancelValidationMessage =
+            string.Empty;
+    }
+
+    // submit cancel
+    private async Task SubmitCancelAsync()
+{
+    var invoice =
+        ReceptionInvoiceStateService.Invoice;
+
+    if (invoice == null)
+    {
+        return;
+    }
+
+
+    // =====================================================
+    // FRONTEND GUARD
+    // =====================================================
+
+    if (invoice.Status == 3)
+    {
+        CancelValidationMessage =
+            "Hóa đơn đã được hủy.";
+
+        return;
+    }
+
+
+    if (invoice.PaidAmount != 0)
+    {
+        CancelValidationMessage =
+            "Chỉ có thể hủy hóa đơn chưa phát sinh thanh toán.";
+
+        return;
+    }
+
+
+    // =====================================================
+    // VALIDATE REASON
+    // =====================================================
+
+    if (string.IsNullOrWhiteSpace(CancelReason))
+    {
+        CancelValidationMessage =
+            "Lý do hủy hóa đơn không được để trống.";
+
+        return;
+    }
+
+
+    if (CancelReason.Trim().Length > 500)
+    {
+        CancelValidationMessage =
+            "Lý do hủy không được vượt quá 500 ký tự.";
+
+        return;
+    }
+
+
+    CancelValidationMessage =
+        string.Empty;
+
+
+    // =====================================================
+    // CALL API
+    // =====================================================
+
+    var success =
+        await ReceptionInvoiceStateService
+            .CancelInvoiceAsync(
+                CancelReason
+            );
+
+
+    if (success)
+    {
+        ShowCancelModal = false;
+
+        CancelReason = string.Empty;
+    }
+}
 
     // =====================================================
     // REFUND MODAL

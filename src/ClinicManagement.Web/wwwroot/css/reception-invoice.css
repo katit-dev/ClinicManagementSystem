@@ -850,3 +850,68 @@
 .invoice-modal-refund:hover {
     background: #b91c1c;
 }
+
+/* =====================================================
+   CANCEL INVOICE
+   ===================================================== */
+
+.invoice-action-cancel {
+    border: 1px solid #dc2626;
+
+    background: #ffffff;
+
+    color: #dc2626;
+}
+
+.invoice-action-cancel:hover {
+    background: #fef2f2;
+}
+
+
+.invoice-cancel-label {
+    color: #dc2626;
+}
+
+
+.invoice-cancel-warning {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    margin-bottom: 16px;
+    padding: 12px 14px;
+
+    border-radius: 8px;
+
+    background: #fff7ed;
+
+    color: #9a3412;
+
+    font-size: 13px;
+}
+
+.invoice-cancel-warning strong {
+    font-size: 13px;
+}
+
+
+.invoice-character-count {
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    text-align: right;
+}
+
+
+.invoice-modal-cancel {
+    border: none;
+
+    background: #dc2626;
+
+    color: #ffffff;
+}
+
+.invoice-modal-cancel:hover {
+    background: #b91c1c;
+}
