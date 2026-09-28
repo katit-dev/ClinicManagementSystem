@@ -431,7 +431,11 @@
 
     padding: 20px;
 
+    box-sizing: border-box;
+
     background: rgba(15, 23, 42, 0.45);
+
+    overflow-y: auto;
 }
 
 
@@ -439,7 +443,14 @@
     width: 100%;
     max-width: 520px;
 
+    max-height: calc(100vh - 40px);
+
+    display: flex;
+    flex-direction: column;
+
     overflow: hidden;
+
+    box-sizing: border-box;
 
     border-radius: 16px;
 
@@ -447,6 +458,101 @@
 
     box-shadow:
         0 20px 50px rgba(15, 23, 42, 0.2);
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.invoice-modal-header {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    padding: 18px 22px;
+
+    border-bottom: 1px solid #e2e8f0;
+}
+
+
+.invoice-modal-label {
+    margin-bottom: 3px;
+
+    color: #0284c7;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+
+.invoice-modal-header h3 {
+    margin: 0;
+
+    color: #16324f;
+
+    font-size: 20px;
+}
+
+
+.invoice-modal-close {
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #64748b;
+
+    font-size: 25px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   BODY
+   ===================================================== */
+
+.invoice-modal-body {
+    flex: 1 1 auto;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 18px 22px;
+}
+
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+
+.invoice-modal-footer {
+    flex-shrink: 0;
+
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+
+    padding: 14px 22px;
+
+    border-top: 1px solid #e2e8f0;
+
+    background: #f8fafc;
 }
 
 
@@ -497,23 +603,6 @@
 }
 
 
-.invoice-modal-body {
-    padding: 22px;
-}
-
-
-.invoice-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-
-    padding: 16px 22px;
-
-    border-top: 1px solid #e2e8f0;
-
-    background: #f8fafc;
-}
-
 
 /* =====================================================
    PAYMENT SUMMARY
@@ -524,11 +613,11 @@
 
     grid-template-columns: 1fr 1fr;
 
-    gap: 12px;
+    gap: 10px;
 
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 
-    padding: 14px;
+    padding: 12px 14px;
 
     border-radius: 10px;
 
@@ -571,9 +660,9 @@
 .invoice-form-group {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 6px;
 
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 
@@ -612,7 +701,6 @@
     outline: none;
 }
 
-
 .invoice-form-input:focus {
     border-color: #0284c7;
 }
@@ -620,6 +708,9 @@
 
 .invoice-form-textarea {
     resize: vertical;
+
+    min-height: 80px;
+    max-height: 120px;
 }
 
 
@@ -682,4 +773,56 @@
     opacity: 0.6;
 
     cursor: not-allowed;
+}
+
+.invoice-form-group select.invoice-form-input {
+    appearance: none;
+    -webkit-appearance: none;
+
+    padding-right: 42px;
+
+    background-color: #ffffff;
+
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+    background-repeat: no-repeat;
+
+    background-position:
+        right 12px center;
+
+    background-size: 18px 18px;
+}
+@media (max-width: 600px) {
+
+    .invoice-modal-backdrop {
+        padding: 10px;
+    }
+
+    .invoice-modal {
+        max-height: calc(100vh - 20px);
+
+        border-radius: 12px;
+    }
+
+    .invoice-modal-header {
+        padding: 16px;
+    }
+
+    .invoice-modal-body {
+        padding: 16px;
+    }
+
+    .invoice-modal-footer {
+        padding: 12px 16px;
+    }
+
+    .invoice-payment-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .invoice-modal-button {
+        flex: 1;
+        min-width: 0;
+    }
 }
