@@ -160,4 +160,60 @@ public class InvoiceController : ControllerBase
             result
         );
     }
+
+    // =====================================================
+    // GET INVOICE PDF
+    //
+    // GET:
+    // /api/invoices/{id}/pdf
+    // =====================================================
+
+    [HttpGet("{id}/pdf")]
+    public async Task<IActionResult> GetInvoicePdf(
+        int id)
+    {
+        // =================================================
+        // VALIDATE ID
+        // =================================================
+
+        if (id <= 0)
+        {
+            return BadRequest(
+                "Mã hóa đơn không hợp lệ."
+            );
+        }
+
+
+        // =================================================
+        // GENERATE PDF
+        // =================================================
+
+        var pdfBytes =
+            await _invoiceService
+                .GetInvoicePdfAsync(id);
+
+
+        // =================================================
+        // PDF NOT FOUND / FAILED
+        // =================================================
+
+        if (pdfBytes == null ||
+            pdfBytes.Length == 0)
+        {
+            return NotFound(
+                "Không thể tạo file hóa đơn."
+            );
+        }
+
+
+        // =================================================
+        // RETURN PDF
+        // =================================================
+
+        return File(
+            pdfBytes,
+            "application/pdf",
+            $"invoice-{id}.pdf"
+        );
+    }
 }
