@@ -77,22 +77,385 @@ public class AppointmentService : IAppointmentService
     }
 
     // =====================================================
+    // START EXAM
+    // =====================================================
+
+    public async Task<HttpResponseData<MedicalRecordDTO>>
+        StartExamAsync(
+            int appointmentId,
+            int currentUserId)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE APPOINTMENT ID
+            // =================================================
+
+            if (appointmentId <= 0)
+            {
+                return new HttpResponseData<MedicalRecordDTO>
+                {
+                    StatusCode = 400,
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .AppointmentNotFound,
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // GET CURRENT DOCTOR
+            //
+            // JWT UserId -> Doctor.UserId
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (doctor == null)
+            {
+                return new HttpResponseData<MedicalRecordDTO>
+                {
+                    StatusCode = 404,
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .DoctorNotFound,
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // GET APPOINTMENT
+            // =================================================
+
+            var appointment =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id == appointmentId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (appointment == null)
+            {
+                return new HttpResponseData<MedicalRecordDTO>
+                {
+                    StatusCode = 404,
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .AppointmentNotFound,
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK APPOINTMENT BELONGS TO CURRENT DOCTOR
+            // =================================================
+
+            if (appointment.DoctorId != doctor.Id)
+            {
+                return new HttpResponseData<MedicalRecordDTO>
+                {
+                    StatusCode = 403,
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .AppointmentNotBelongToDoctor,
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK APPOINTMENT STATUS
+            //
+            // Bắt đầu khám chỉ khi bệnh nhân đã CheckIn.
+            // =================================================
+
+            if (
+                appointment.Status !=
+                (byte)AppointmentStatus.CheckedIn
+            )
+            {
+                return new HttpResponseData<MedicalRecordDTO>
+                {
+                    StatusCode = 400,
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .AppointmentNotCheckedIn,
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // CHECK EXISTING MEDICAL RECORD
+            //
+            // UNIQUE appointment_id
+            // 1 appointment = 1 medical record
+            // =================================================
+
+            var existingRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        r =>
+                            r.AppointmentId ==
+                            appointmentId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // IF ALREADY EXISTS
+            //
+            // Không tạo record thứ hai.
+            // Trả lại record hiện tại.
+            // =================================================
+
+            if (existingRecord != null)
+            {
+                var existingResult =
+                    new MedicalRecordDTO
+                    {
+                        Id =
+                            existingRecord.Id,
+
+                        AppointmentId =
+                            existingRecord.AppointmentId,
+
+                        DoctorName =
+                            doctor.FullName,
+
+                        Symptoms =
+                            existingRecord.Symptoms,
+
+                        Diagnosis =
+                            existingRecord.Diagnosis,
+
+                        Icd10Code =
+                            existingRecord.Icd10Code,
+
+                        TreatmentPlan =
+                            existingRecord.TreatmentPlan,
+
+                        Note =
+                            existingRecord.Note,
+
+                        FollowUpDate =
+                            existingRecord.FollowUpDate,
+
+                        Status =
+                            existingRecord.Status,
+
+                        FinalizedAt =
+                            existingRecord.FinalizedAt,
+
+                        CreatedAt =
+                            existingRecord.CreatedAt
+                    };
+
+
+                return new HttpResponseData<MedicalRecordDTO>
+                {
+                    StatusCode = 200,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .StartExamSuccess,
+
+                    Content = existingResult
+                };
+            }
+
+
+            // =================================================
+            // CREATE MEDICAL RECORD
+            // =================================================
+
+            var now =
+                DateTime.Now;
+
+            var medicalRecord =
+                new MedicalRecord
+                {
+                    AppointmentId =
+                        appointment.Id,
+
+                    PatientId =
+                        appointment.PatientId,
+
+                    DoctorId =
+                        doctor.Id,
+
+                    Symptoms = null,
+
+                    Diagnosis = null,
+
+                    Icd10Code = null,
+
+                    TreatmentPlan = null,
+
+                    Note = null,
+
+                    FollowUpDate = null,
+
+                    Status = 0,
+
+                    FinalizedAt = null,
+
+                    CreatedAt = now,
+
+                    UpdatedAt = null
+                };
+
+
+            // =================================================
+            // TRANSACTION
+            // =================================================
+
+            await _unitOfWork.BeginTransactionAsync();
+
+            var transactionStarted = true;
+
+            try
+            {
+                // =================================================
+                // ADD MEDICAL RECORD
+                // =================================================
+
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .AddAsync(medicalRecord);
+
+
+                // =================================================
+                // SAVE
+                // =================================================
+
+                await _unitOfWork
+                    .SaveChangesAsync();
+
+
+                // =================================================
+                // COMMIT
+                // =================================================
+
+                await _unitOfWork
+                    .CommitTransactionAsync();
+
+                transactionStarted = false;
+            }
+            catch
+            {
+                if (transactionStarted)
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+
+                throw;
+            }
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new MedicalRecordDTO
+                {
+                    Id =
+                        medicalRecord.Id,
+
+                    AppointmentId =
+                        medicalRecord.AppointmentId,
+
+                    DoctorName =
+                        doctor.FullName,
+
+                    Symptoms =
+                        medicalRecord.Symptoms,
+
+                    Diagnosis =
+                        medicalRecord.Diagnosis,
+
+                    Icd10Code =
+                        medicalRecord.Icd10Code,
+
+                    TreatmentPlan =
+                        medicalRecord.TreatmentPlan,
+
+                    Note =
+                        medicalRecord.Note,
+
+                    FollowUpDate =
+                        medicalRecord.FollowUpDate,
+
+                    Status =
+                        medicalRecord.Status,
+
+                    FinalizedAt =
+                        medicalRecord.FinalizedAt,
+
+                    CreatedAt =
+                        medicalRecord.CreatedAt
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<MedicalRecordDTO>
+            {
+                StatusCode = 200,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .StartExamSuccess,
+
+                Content = result
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to start exam. " +
+                "AppointmentId: {AppointmentId}, " +
+                "UserId: {UserId}",
+                appointmentId,
+                currentUserId
+            );
+
+            return new HttpResponseData<MedicalRecordDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .StartExamFailed,
+
+                Content = null
+            };
+        }
+    }
+
+    // =====================================================
     // GET MY DOCTOR QUEUE
-    //
-    // VC-12
-    //
-    // Doctor đăng nhập
-    //      ↓
-    // currentUserId
-    //      ↓
-    // Doctor.UserId
-    //      ↓
-    // Doctor.Id
-    //      ↓
-    // Queue
-    //
-    // Response:
-    // List<DoctorQueueItemDTO>
     // =====================================================
 
     public async Task<
