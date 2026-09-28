@@ -10,13 +10,10 @@ namespace ClinicManagementSystem.Api.Controllers;
 public class PatientController : ControllerBase
 {
     private readonly IPatientService _patientService;
-    private readonly IAppointmentService _appointmentService;
 
-
-    public PatientController(IPatientService patientService, IAppointmentService appointmentService)
+    public PatientController(IPatientService patientService)
     {
         _patientService = patientService;
-        _appointmentService = appointmentService;
     }
 
     [HttpGet("lookup")]
@@ -165,7 +162,7 @@ public class PatientController : ControllerBase
         int id)
     {
         var result =
-            await _patientService .GetPatientRecordsAsync(id);
+            await _patientService.GetPatientRecordsAsync(id);
 
         return StatusCode(
             result.StatusCode,
