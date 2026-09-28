@@ -7,7 +7,9 @@
 @using Microsoft.AspNetCore.Authorization
 @using ClinicManagementSystem.Application.DTOs.Invoice
 @using ClinicManagementSystem.Application.DTOs.Payment
+@using Microsoft.JSInterop
 
+@inject IJSRuntime JS
 @inject ReceptionInvoiceStateService ReceptionInvoiceStateService
 
 @implements IDisposable
@@ -100,6 +102,19 @@
                         @GetStatusText(invoice.Status)
                     </span>
 
+                    <button type="button" class="invoice-action-button invoice-action-print" @onclick="PrintInvoiceAsync"
+                            disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                        @if (ReceptionInvoiceStateService.IsSubmitting)
+                        {
+                            <span>Đang xử lý...</span>
+                        }
+                        else
+                        {
+                            <span>In hóa đơn</span>
+                        }
+
+                    </button>
 
                     @if (invoice.Status != 3 &&
                          invoice.RemainingAmount > 0)
@@ -1083,6 +1098,23 @@
     public void Dispose()
     {
         ReceptionInvoiceStateService.OnChange -= HandleStateChanged;
+    }
+
+    private async Task PrintInvoiceAsync()
+    {
+        var pdfBytes =
+            await ReceptionInvoiceStateService
+                .GetInvoicePdfAsync(InvoiceId);
+
+        if (pdfBytes == null || pdfBytes.Length == 0)
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync(
+            "invoicePrint.printPdf",
+            pdfBytes
+        );
     }
 
     // open cancel modal
