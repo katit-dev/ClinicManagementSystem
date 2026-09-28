@@ -1646,29 +1646,173 @@ public class AppointmentService : IAppointmentService
                             new ReceptionAppointmentDTO
                             {
                                 Id = a.Id,
-                                AppointmentCode = a.AppointmentCode,
 
-                                StartTime = a.StartTime,
-                                EndTime = a.EndTime,
+                                AppointmentCode =
+                                    a.AppointmentCode,
 
-                                Status = a.Status,
-                                QueueNumber = a.QueueNumber,
-                                CheckedInAt = a.CheckedInAt,
-                                Reason = a.Reason,
+                                StartTime =
+                                    a.StartTime,
 
-                                PatientId = a.PatientId,
-                                PatientCode = a.Patient.PatientCode,
-                                PatientName = a.Patient.FullName,
+                                EndTime =
+                                    a.EndTime,
 
-                                DoctorId = a.DoctorId,
-                                DoctorName = a.Doctor.FullName,
+                                Status =
+                                    a.Status,
 
-                                SpecialtyId = a.Doctor.SpecialtyId,
-                                SpecialtyName = a.Doctor.Specialty.Name
+                                QueueNumber =
+                                    a.QueueNumber,
+
+                                CheckedInAt =
+                                    a.CheckedInAt,
+
+                                Reason =
+                                    a.Reason,
+
+                                PatientId =
+                                    a.PatientId,
+
+                                PatientCode =
+                                    a.Patient.PatientCode,
+
+                                PatientName =
+                                    a.Patient.FullName,
+
+                                DoctorId =
+                                    a.DoctorId,
+
+                                DoctorName =
+                                    a.Doctor.FullName,
+
+                                SpecialtyId =
+                                    a.Doctor.SpecialtyId,
+
+                                SpecialtyName =
+                                    a.Doctor.Specialty.Name
                             }
                     )
                     .ToListAsync();
 
+
+            // =================================================
+            // GET INVOICES
+            //
+            // Invoice được liên kết với Appointment bằng:
+            // Invoice.AppointmentId
+            // =================================================
+
+            if (appointments.Count > 0)
+            {
+                var appointmentIds =
+                    appointments
+                        .Select(a => a.Id)
+                        .ToList();
+
+
+                var invoices =
+                    await _unitOfWork
+                        .InvoiceRepository
+                        .WhereSql(
+                            i =>
+                                i.AppointmentId.HasValue &&
+                                appointmentIds.Contains(
+                                    i.AppointmentId.Value
+                                )
+                        )
+                        .Select(
+                            i =>
+                                new
+                                {
+                                    i.Id,
+
+                                    AppointmentId =
+                                        i.AppointmentId!.Value,
+
+                                    i.Status,
+
+                                    i.TotalAmount,
+
+                                    i.TaxAmount,
+
+                                    i.DiscountAmount,
+
+                                    i.InsuranceAmount,
+
+                                    i.PaidAmount
+                                }
+                        )
+                        .ToListAsync();
+
+
+                // =================================================
+                // MAP INVOICE TO APPOINTMENT
+                // =================================================
+
+                foreach (var appointment in appointments)
+                {
+                    var invoice =
+                        invoices
+                            .FirstOrDefault(
+                                i =>
+                                    i.AppointmentId ==
+                                    appointment.Id
+                            );
+
+
+                    if (invoice == null)
+                    {
+                        continue;
+                    }
+
+
+                    // =================================================
+                    // INVOICE
+                    // =================================================
+
+                    appointment.InvoiceId =
+                        invoice.Id;
+
+                    appointment.InvoiceStatus =
+                        invoice.Status;
+
+
+                    // =================================================
+                    // CALCULATE REMAINING
+                    //
+                    // Giống cách InvoiceService đang tính:
+                    //
+                    // Total
+                    // + Tax
+                    // - Discount
+                    // - Insurance
+                    // - Paid
+                    // =================================================
+
+                    var payableAmount =
+                        invoice.TotalAmount
+                        + invoice.TaxAmount
+                        - invoice.DiscountAmount
+                        - invoice.InsuranceAmount;
+
+
+                    var remainingAmount =
+                        payableAmount
+                        - invoice.PaidAmount;
+
+
+                    // =================================================
+                    // PROTECT AGAINST NEGATIVE VALUE
+                    // =================================================
+
+                    if (remainingAmount < 0)
+                    {
+                        remainingAmount = 0;
+                    }
+
+
+                    appointment.InvoiceRemainingAmount =
+                        remainingAmount;
+                }
+            }
 
             // =================================================
             // SUCCESS
