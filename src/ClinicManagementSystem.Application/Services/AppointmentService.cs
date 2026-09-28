@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Infrastructure.Models;
 using ClinicManagementSystem.Application.DTOs.Queue;
+using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -41,6 +42,12 @@ public interface IAppointmentService
     Task<HttpResponseData<QueueItemDTO>> RecallQueueAsync(int appointmentId);
 
     Task<HttpResponseData<QueueItemDTO>> DeferQueueAsync(int appointmentId, int currentUserId);
+
+    // =====================================================
+    // START EXAM
+    // =====================================================
+
+    Task<HttpResponseData<MedicalRecordDTO>> StartExamAsync(int appointmentId, int currentUserId);
 
 
 
