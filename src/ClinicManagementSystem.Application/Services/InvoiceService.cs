@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Infrastructure.Models;
 using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Infrastructure.Repositories;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -1367,8 +1371,690 @@ InvoiceResponseMessageDTO.RefundMustUseRefundFunction);
         }
     }
 
-    public Task<byte[]?> GetInvoicePdfAsync(int invoiceId)
+    // =====================================================
+    // GET INVOICE PDF
+    // =====================================================
+
+    public async Task<byte[]?> GetInvoicePdfAsync(
+        int invoiceId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // =================================================
+            // VALIDATE ID
+            // =================================================
+
+            if (invoiceId <= 0)
+            {
+                return null;
+            }
+
+
+            // =================================================
+            // GET INVOICE DATA
+            // =================================================
+
+            var invoiceResponse =
+                await GetInvoiceAsync(invoiceId);
+
+
+            if (invoiceResponse.StatusCode != 200 ||
+                invoiceResponse.Content == null)
+            {
+                return null;
+            }
+
+
+            var invoice =
+                invoiceResponse.Content;
+
+
+            // =================================================
+            // GENERATE PDF
+            // =================================================
+
+            var document =
+                Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+
+                        page.Margin(
+                            20,
+                            Unit.Millimetre
+                        );
+
+                        page.DefaultTextStyle(
+                            x => x.FontSize(10)
+                        );
+
+
+                        // =============================================
+                        // HEADER
+                        // =============================================
+
+                        page.Header()
+                            .Column(column =>
+                            {
+                                column.Spacing(4);
+
+                                column.Item()
+                                    .AlignCenter()
+                                    .Text("HÓA ĐƠN THANH TOÁN")
+                                    .FontSize(20)
+                                    .Bold();
+
+                                column.Item()
+                                    .AlignCenter()
+                                    .Text(invoice.InvoiceNo)
+                                    .FontSize(12)
+                                    .SemiBold();
+
+                                column.Item()
+                                    .PaddingVertical(8)
+                                    .LineHorizontal(1);
+                            });
+
+
+                        // =============================================
+                        // CONTENT
+                        // =============================================
+
+                        page.Content()
+                            .Column(column =>
+                            {
+                                column.Spacing(14);
+
+
+                                // -----------------------------------------
+                                // PATIENT INFORMATION
+                                // -----------------------------------------
+
+                                column.Item()
+                                    .Text("THÔNG TIN HÓA ĐƠN")
+                                    .FontSize(12)
+                                    .Bold();
+
+                                column.Item()
+                                    .Border(1)
+                                    .BorderColor(
+                                        Colors.Grey.Lighten2
+                                    )
+                                    .Padding(10)
+                                    .Column(info =>
+                                    {
+                                        info.Spacing(5);
+
+                                        info.Item()
+                                            .Text(
+                                                $"Bệnh nhân: {invoice.PatientName}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Mã bệnh nhân: {invoice.PatientId}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Ngày tạo: {invoice.CreatedAt:dd/MM/yyyy HH:mm}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Mã lịch hẹn: " +
+                                                $"{invoice.AppointmentId?.ToString() ?? "—"}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Trạng thái: " +
+                                                $"{GetInvoiceStatusText(invoice.Status)}"
+                                            );
+                                    });
+
+
+                                // -----------------------------------------
+                                // ITEMS
+                                // -----------------------------------------
+
+                                column.Item()
+                                    .Text("CHI TIẾT HÓA ĐƠN")
+                                    .FontSize(12)
+                                    .Bold();
+
+                                if (invoice.Items == null ||
+                                    invoice.Items.Count == 0)
+                                {
+                                    column.Item()
+                                        .Text(
+                                            "Hóa đơn chưa có khoản mục."
+                                        )
+                                        .Italic()
+                                        .FontColor(
+                                            Colors.Grey.Darken1
+                                        );
+                                }
+                                else
+                                {
+                                    column.Item()
+                                        .Table(table =>
+                                        {
+                                            table.ColumnsDefinition(
+                                                columns =>
+                                                {
+                                                    columns.ConstantColumn(30);
+                                                    columns.RelativeColumn(3);
+                                                    columns.ConstantColumn(65);
+                                                    columns.ConstantColumn(50);
+                                                    columns.ConstantColumn(80);
+                                                    columns.ConstantColumn(80);
+                                                    columns.ConstantColumn(90);
+                                                }
+                                            );
+
+
+                                            // HEADER
+
+                                            table.Header(header =>
+                                            {
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("STT");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("Nội dung");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("Loại");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("SL");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text("Đơn giá");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text("Giảm giá");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text("Thành tiền");
+                                            });
+
+
+                                            var index = 1;
+
+                                            foreach (var item in invoice.Items)
+                                            {
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .Text(
+                                                        index.ToString()
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .Text(
+                                                        item.Description ?? "—"
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .Text(
+                                                        GetInvoiceItemTypeText(
+                                                            item
+                                                        )
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .AlignCenter()
+                                                    .Text(
+                                                        item.Quantity
+                                                            .ToString()
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text(
+                                                        FormatMoney(
+                                                            item.UnitPrice
+                                                        )
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text(
+                                                        FormatMoney(
+                                                            item.DiscountAmount
+                                                        )
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text(
+                                                        FormatMoney(
+                                                            item.Amount
+                                                        )
+                                                    );
+
+                                                index++;
+                                            }
+                                        });
+                                }
+
+
+                                // -----------------------------------------
+                                // TOTALS
+                                // -----------------------------------------
+
+                                column.Item()
+                                    .AlignRight()
+                                    .Column(summary =>
+                                    {
+                                        summary.Spacing(4);
+
+                                        AddSummaryRow(
+                                            summary,
+                                            "Tạm tính",
+                                            invoice.TotalAmount
+                                        );
+
+                                        AddSummaryRow(
+                                            summary,
+                                            "Giảm giá",
+                                            invoice.DiscountAmount
+                                        );
+
+                                        AddSummaryRow(
+                                            summary,
+                                            "Thuế",
+                                            invoice.TaxAmount
+                                        );
+
+                                        AddSummaryRow(
+                                            summary,
+                                            "Bảo hiểm",
+                                            invoice.InsuranceAmount
+                                        );
+
+                                        summary.Item()
+                                            .PaddingVertical(5)
+                                            .LineHorizontal(1);
+
+                                        summary.Item()
+                                            .Text(
+                                                text =>
+                                                {
+                                                    text.Span(
+                                                        "Đã thanh toán: "
+                                                    )
+                                                    .Bold();
+
+                                                    text.Span(
+                                                        FormatMoney(
+                                                            invoice.PaidAmount
+                                                        )
+                                                    )
+                                                    .Bold();
+                                                }
+                                            );
+
+                                        summary.Item()
+                                            .Text(
+                                                text =>
+                                                {
+                                                    text.Span(
+                                                        "Còn phải thu: "
+                                                    )
+                                                    .Bold();
+
+                                                    text.Span(
+                                                        FormatMoney(
+                                                            invoice.RemainingAmount
+                                                        )
+                                                    )
+                                                    .Bold();
+                                                }
+                                            );
+                                    });
+
+
+                                // -----------------------------------------
+                                // PAYMENT HISTORY
+                                // -----------------------------------------
+
+                                column.Item()
+                                    .Text("LỊCH SỬ THANH TOÁN")
+                                    .FontSize(12)
+                                    .Bold();
+
+                                if (invoice.Payments == null ||
+                                    invoice.Payments.Count == 0)
+                                {
+                                    column.Item()
+                                        .Text(
+                                            "Chưa có giao dịch thanh toán."
+                                        )
+                                        .Italic()
+                                        .FontColor(
+                                            Colors.Grey.Darken1
+                                        );
+                                }
+                                else
+                                {
+                                    column.Item()
+                                        .Table(table =>
+                                        {
+                                            table.ColumnsDefinition(
+                                                columns =>
+                                                {
+                                                    columns.ConstantColumn(30);
+                                                    columns.ConstantColumn(110);
+                                                    columns.ConstantColumn(90);
+                                                    columns.ConstantColumn(100);
+                                                    columns.RelativeColumn();
+                                                }
+                                            );
+
+
+                                            table.Header(header =>
+                                            {
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("STT");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("Thời gian");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("Loại");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text("Số tiền");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        InvoicePdfHeaderCell
+                                                    )
+                                                    .Text("Mã tham chiếu");
+                                            });
+
+
+                                            var paymentIndex = 1;
+
+                                            foreach (var payment
+                                                     in invoice.Payments)
+                                            {
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .Text(
+                                                        paymentIndex.ToString()
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .Text(
+                                                        $"{payment.PaidAt:dd/MM/yyyy HH:mm}"
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .Text(
+                                                        payment.IsRefund
+                                                            ? "Hoàn tiền"
+                                                            : "Thu tiền"
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .AlignRight()
+                                                    .Text(
+                                                        FormatMoney(
+                                                            payment.Amount
+                                                        )
+                                                    );
+
+                                                table.Cell()
+                                                    .Element(
+                                                        InvoicePdfBodyCell
+                                                    )
+                                                    .Text(
+                                                        payment.ReferenceCode
+                                                        ?? "—"
+                                                    );
+
+                                                paymentIndex++;
+                                            }
+                                        });
+                                }
+
+
+                                // -----------------------------------------
+                                // CANCEL INFORMATION
+                                // -----------------------------------------
+
+                                if (invoice.Status == 3)
+                                {
+                                    column.Item()
+                                        .Border(1)
+                                        .BorderColor(
+                                            Colors.Grey.Lighten2
+                                        )
+                                        .Padding(10)
+                                        .Column(cancel =>
+                                        {
+                                            cancel.Spacing(4);
+
+                                            cancel.Item()
+                                                .Text("HÓA ĐƠN ĐÃ HỦY")
+                                                .Bold();
+
+                                            if (invoice.CancelledAt
+                                                    .HasValue)
+                                            {
+                                                cancel.Item()
+                                                    .Text(
+                                                        $"Thời gian: " +
+                                                        $"{invoice.CancelledAt.Value:dd/MM/yyyy HH:mm}"
+                                                    );
+                                            }
+
+                                            if (!string.IsNullOrWhiteSpace(
+                                                    invoice.CancelReason))
+                                            {
+                                                cancel.Item()
+                                                    .Text(
+                                                        $"Lý do: " +
+                                                        $"{invoice.CancelReason}"
+                                                    );
+                                            }
+                                        });
+                                }
+                            });
+
+
+                        // =============================================
+                        // FOOTER
+                        // =============================================
+
+                        page.Footer()
+                            .AlignCenter()
+                            .Text(
+                                text =>
+                                {
+                                    text.Span("Trang ");
+                                    text.CurrentPageNumber();
+                                    text.Span(" / ");
+                                    text.TotalPages();
+                                }
+                            );
+                    });
+                });
+
+
+            // =================================================
+            // RETURN PDF
+            // =================================================
+
+            return document.GeneratePdf();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to generate invoice PDF. " +
+                "InvoiceId: {InvoiceId}",
+                invoiceId
+            );
+
+            return null;
+        }
+    }
+
+    // =====================================================
+    // PDF HELPERS
+    // =====================================================
+
+    private static string FormatMoney(decimal amount)
+    {
+        return $"{amount:N0} đ";
+    }
+
+
+    private static string GetInvoiceStatusText(byte status)
+    {
+        return status switch
+        {
+            0 => "Chưa thanh toán",
+            1 => "Thanh toán một phần",
+            2 => "Đã thanh toán",
+            3 => "Đã hủy",
+            _ => "Không xác định"
+        };
+    }
+
+
+    private static string GetInvoiceItemTypeText(
+        InvoiceItemDTO item)
+    {
+        if (item.MedicineId.HasValue)
+        {
+            return "Thuốc";
+        }
+
+        if (item.MedicalRecordServiceId.HasValue)
+        {
+            return "Dịch vụ";
+        }
+
+        return "Không xác định";
+    }
+
+
+    private static IContainer InvoicePdfHeaderCell(
+        IContainer container)
+    {
+        return container
+            .Border(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .Background(Colors.Grey.Lighten3)
+            .Padding(6)
+            .AlignMiddle()
+            .DefaultTextStyle(
+                x => x.Bold()
+            );
+    }
+
+
+    private static IContainer InvoicePdfBodyCell(
+        IContainer container)
+    {
+        return container
+            .Border(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .Padding(6)
+            .AlignMiddle();
+    }
+
+
+    private static void AddSummaryRow(
+        ColumnDescriptor column,
+        string label,
+        decimal amount)
+    {
+        column.Item()
+            .Row(row =>
+            {
+                row.RelativeItem()
+                    .Text(label);
+
+                row.ConstantItem(110)
+                    .AlignRight()
+                    .Text(
+                        FormatMoney(amount)
+                    );
+            });
     }
 }
