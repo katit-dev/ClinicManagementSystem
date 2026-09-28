@@ -312,7 +312,8 @@ public class AppointmentService : IAppointmentService
 
                     FollowUpDate = null,
 
-                    Status = 0,
+                    Status =
+            (byte)MedicalRecordStatus.Draft,
 
                     FinalizedAt = null,
 

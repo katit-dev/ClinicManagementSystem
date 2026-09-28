@@ -249,4 +249,54 @@ public class AppointmentController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    // =====================================================
+    // START EXAM
+    //
+    // POST:
+    // /api/appointments/{id}/start-exam
+    //
+    // Doctor bắt đầu khám bệnh nhân.
+    // =====================================================
+
+    [HttpPost("{id}/start-exam")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> StartExam(
+        int id)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // START EXAM
+        // =================================================
+
+        var result =
+            await _appointmentService
+                .StartExamAsync(
+                    id,
+                    currentUserId
+                );
+
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }

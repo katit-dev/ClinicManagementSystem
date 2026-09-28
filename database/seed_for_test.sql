@@ -1666,3 +1666,39 @@ BEGIN CATCH
     THROW;
 
 END CATCH;
+
+
+---------------------- test start exam doctor
+USE ClinicManagementSystem
+
+SELECT
+    Id,
+    appointment_code,
+    patient_id,
+    doctor_id,
+    Status,
+    start_time,
+    checked_in_at
+FROM scheduling.appointments
+WHERE Id = 9;
+
+
+SELECT
+    Id,
+    appointment_id,
+    patient_id,
+    doctor_id,
+    Status,
+    created_at,
+    finalized_at
+FROM clinical.medical_records
+WHERE appointment_id = 9;
+
+SELECT
+    Id,
+    appointment_id,
+    from_status,
+    to_status
+FROM scheduling.appointment_status_history
+WHERE appointment_id = 9
+ORDER BY Id;
