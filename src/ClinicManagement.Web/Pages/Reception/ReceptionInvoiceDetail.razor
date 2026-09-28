@@ -94,18 +94,35 @@
                     </h2>
                 </div>
 
-                <span class="reception-invoice-status @GetStatusClass(invoice.Status)">
-                    @GetStatusText(invoice.Status)
-                </span>
+                <div class="reception-invoice-header-actions">
 
-                @if (invoice.Status != 3 &&
-                     invoice.RemainingAmount > 0)
-                {
-                    <button type="button" class="invoice-action-button invoice-action-primary" @onclick="OpenPaymentModal">
+                    <span class="reception-invoice-status @GetStatusClass(invoice.Status)">
+                        @GetStatusText(invoice.Status)
+                    </span>
 
-                        Thu tiền
-                    </button>
-                }
+
+                    @if (invoice.Status != 3 &&
+                         invoice.RemainingAmount > 0)
+                    {
+                        <button type="button" class="invoice-action-button invoice-action-primary" @onclick="OpenPaymentModal">
+
+                            Thu tiền
+
+                        </button>
+                    }
+
+
+                    @if (invoice.Status != 3 &&
+                         invoice.PaidAmount > 0)
+                    {
+                        <button type="button" class="invoice-action-button invoice-action-refund" @onclick="OpenRefundModal">
+
+                            Hoàn tiền
+
+                        </button>
+                    }
+
+                </div>
 
             </div>
 
@@ -612,6 +629,220 @@
     </div>
 }
 
+@* =====================================================
+   REFUND MODAL
+   ===================================================== *@
+
+@if (ShowRefundModal)
+{
+    <div class="invoice-modal-backdrop">
+
+        <div class="invoice-modal">
+
+            <div class="invoice-modal-header">
+
+                <div>
+
+                    <div class="invoice-modal-label">
+                        HOÀN TIỀN
+                    </div>
+
+                    <h3>
+                        Hoàn tiền hóa đơn
+                    </h3>
+
+                </div>
+
+
+                <button type="button" class="invoice-modal-close" @onclick="CloseRefundModal"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <div class="invoice-modal-body">
+
+                @if (ReceptionInvoiceStateService.Invoice != null)
+                {
+                    <div class="invoice-payment-summary">
+
+                        <div>
+
+                            <span>
+                                Hóa đơn
+                            </span>
+
+                            <strong>
+                                @ReceptionInvoiceStateService
+                                .Invoice
+                                .InvoiceNo
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Đã thanh toán
+                            </span>
+
+                            <strong>
+                                @ReceptionInvoiceStateService
+                                .Invoice
+                                .PaidAmount
+                                .ToString("N0") đ
+                            </strong>
+
+                        </div>
+
+                    </div>
+                }
+
+
+                @* =============================================
+                   AMOUNT
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Số tiền hoàn
+                    </label>
+
+                    <input type="number" step="1000" min="0" class="invoice-form-input" @bind="RefundAmount"
+                           disabled="@ReceptionInvoiceStateService.IsSubmitting" />
+
+                </div>
+
+
+                @* =============================================
+                   METHOD
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Phương thức hoàn tiền
+                    </label>
+
+                    <select class="invoice-form-input" @bind="RefundMethod"
+                            disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                        <option value="0">
+                            Tiền mặt
+                        </option>
+
+                        <option value="1">
+                            Thẻ
+                        </option>
+
+                        <option value="2">
+                            Chuyển khoản
+                        </option>
+
+                        <option value="3">
+                            Ví điện tử
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                @* =============================================
+                   REFERENCE CODE
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Mã tham chiếu
+                        <span>(không bắt buộc)</span>
+                    </label>
+
+                    <input type="text" maxlength="200" class="invoice-form-input" @bind="RefundReferenceCode"
+                           disabled="@ReceptionInvoiceStateService.IsSubmitting" />
+
+                </div>
+
+
+                @* =============================================
+                   NOTE
+                   ============================================= *@
+
+                <div class="invoice-form-group">
+
+                    <label>
+                        Ghi chú
+                        <span>(không bắt buộc)</span>
+                    </label>
+
+                    <textarea class="invoice-form-input invoice-form-textarea" rows="3" @bind="RefundNote"
+                              disabled="@ReceptionInvoiceStateService.IsSubmitting">
+                    </textarea>
+
+                </div>
+
+
+                @* =============================================
+                   VALIDATION
+                   ============================================= *@
+
+                @if (!string.IsNullOrWhiteSpace(
+                    RefundValidationMessage))
+                {
+                    <div class="invoice-form-validation">
+                        @RefundValidationMessage
+                    </div>
+                }
+
+            </div>
+
+
+            @* =============================================
+               FOOTER
+               ============================================= *@
+
+            <div class="invoice-modal-footer">
+
+                <button type="button" class="invoice-modal-button invoice-modal-secondary" @onclick="CloseRefundModal"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    Hủy
+
+                </button>
+
+
+                <button type="button" class="invoice-modal-button invoice-modal-refund" @onclick="SubmitRefundAsync"
+                        disabled="@ReceptionInvoiceStateService.IsSubmitting">
+
+                    @if (ReceptionInvoiceStateService.IsSubmitting)
+                    {
+                        <span>
+                            Đang xử lý...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            Xác nhận hoàn tiền
+                        </span>
+                    }
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
 
 @code
 {
@@ -663,6 +894,136 @@
         ReceptionInvoiceStateService.OnChange -= HandleStateChanged;
     }
 
+    // =====================================================
+    // REFUND MODAL
+    // =====================================================
+
+    private bool ShowRefundModal { get; set; }
+
+
+    private decimal RefundAmount { get; set; }
+
+
+    private byte RefundMethod { get; set; }
+
+
+    private string RefundReferenceCode { get; set; } =
+        string.Empty;
+
+
+    private string RefundNote { get; set; } =
+        string.Empty;
+
+
+    private string RefundValidationMessage { get; set; } =
+        string.Empty;
+
+    // mo refund modal
+    private void OpenRefundModal()
+    {
+        var invoice =
+            ReceptionInvoiceStateService.Invoice;
+
+        if (invoice == null)
+        {
+            return;
+        }
+
+
+        RefundAmount =
+            invoice.PaidAmount;
+
+        RefundMethod = 0;
+
+        RefundReferenceCode =
+            string.Empty;
+
+        RefundNote =
+            string.Empty;
+
+        RefundValidationMessage =
+            string.Empty;
+
+        ShowRefundModal = true;
+    }
+
+    // close refund modal
+    private void CloseRefundModal()
+    {
+        if (ReceptionInvoiceStateService.IsSubmitting)
+        {
+            return;
+        }
+
+        ShowRefundModal = false;
+
+        RefundValidationMessage =
+            string.Empty;
+    }
+
+    // submit refund
+    private async Task SubmitRefundAsync()
+    {
+        var invoice =
+            ReceptionInvoiceStateService.Invoice;
+
+        if (invoice == null)
+        {
+            return;
+        }
+
+
+        // =====================================================
+        // VALIDATE AMOUNT
+        // =====================================================
+
+        if (RefundAmount <= 0)
+        {
+            RefundValidationMessage =
+                "Số tiền hoàn phải lớn hơn 0.";
+
+            return;
+        }
+
+
+        if (RefundAmount >
+            invoice.PaidAmount)
+        {
+            RefundValidationMessage =
+                "Số tiền hoàn không được vượt quá số tiền đã thanh toán.";
+
+            return;
+        }
+
+
+        // =====================================================
+        // CLEAR VALIDATION
+        // =====================================================
+
+        RefundValidationMessage =
+            string.Empty;
+
+
+        // =====================================================
+        // CALL REFUND API
+        // =====================================================
+
+        var success =
+            await ReceptionInvoiceStateService
+                .RefundInvoiceAsync(
+                    RefundAmount,
+                    RefundMethod,
+                    RefundReferenceCode,
+                    RefundNote
+                );
+
+
+        if (success)
+        {
+            ShowRefundModal = false;
+        }
+    }
+
     // Open Modal
     private void OpenPaymentModal()
     {
@@ -707,66 +1068,66 @@
 
     // submit
     private async Task SubmitPaymentAsync()
-{
-    var invoice =
-        ReceptionInvoiceStateService.Invoice;
-
-    if (invoice == null)
     {
-        return;
-    }
+        var invoice =
+            ReceptionInvoiceStateService.Invoice;
+
+        if (invoice == null)
+        {
+            return;
+        }
 
 
-    // =====================================================
-    // VALIDATE AMOUNT
-    // =====================================================
+        // =====================================================
+        // VALIDATE AMOUNT
+        // =====================================================
 
-    if (PaymentAmount <= 0)
-    {
+        if (PaymentAmount <= 0)
+        {
+            PaymentValidationMessage =
+                "Số tiền thanh toán phải lớn hơn 0.";
+
+            return;
+        }
+
+
+        if (PaymentAmount >
+            invoice.RemainingAmount)
+        {
+            PaymentValidationMessage =
+                "Số tiền thanh toán vượt quá số tiền còn phải thu.";
+
+            return;
+        }
+
+
+        // =====================================================
+        // CLEAR VALIDATION
+        // =====================================================
+
         PaymentValidationMessage =
-            "Số tiền thanh toán phải lớn hơn 0.";
+            string.Empty;
 
-        return;
+
+        // =====================================================
+        // CALL STATE SERVICE
+        // =====================================================
+
+        var success =
+            await ReceptionInvoiceStateService
+                .CreatePaymentAsync(
+                    PaymentAmount,
+                    PaymentMethod,
+                    PaymentReferenceCode,
+                    PaymentNote
+                );
+
+
+        if (success)
+        {
+            ShowPaymentModal = false;
+        }
     }
-
-
-    if (PaymentAmount >
-        invoice.RemainingAmount)
-    {
-        PaymentValidationMessage =
-            "Số tiền thanh toán vượt quá số tiền còn phải thu.";
-
-        return;
-    }
-
-
-    // =====================================================
-    // CLEAR VALIDATION
-    // =====================================================
-
-    PaymentValidationMessage =
-        string.Empty;
-
-
-    // =====================================================
-    // CALL STATE SERVICE
-    // =====================================================
-
-    var success =
-        await ReceptionInvoiceStateService
-            .CreatePaymentAsync(
-                PaymentAmount,
-                PaymentMethod,
-                PaymentReferenceCode,
-                PaymentNote
-            );
-
-
-    if (success)
-    {
-        ShowPaymentModal = false;
-    }
-}
 
     // =====================================================
     // INVOICE STATUS
