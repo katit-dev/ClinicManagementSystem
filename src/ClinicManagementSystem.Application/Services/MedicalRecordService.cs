@@ -20,7 +20,7 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientMedicalRecordsAsync(int patientId, int currentUserId);
 
-    Task<HttpResponseData<MedicalRecordDraftResponseDTO>>UpdateMedicalRecordDraftAsync(int medicalRecordId, int currentUserId, MedicalRecordDraftRequestDTO request);
+    Task<HttpResponseData<MedicalRecordDraftResponseDTO>> UpdateMedicalRecordDraftAsync(int medicalRecordId, int currentUserId, MedicalRecordDraftRequestDTO request);
 
 }
 
@@ -49,6 +49,444 @@ public class MedicalRecordService
 
         _logger =
             logger;
+    }
+
+    // =====================================================
+    // UPDATE MEDICAL RECORD DRAFT
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<MedicalRecordDraftResponseDTO>>
+        UpdateMedicalRecordDraftAsync(
+            int medicalRecordId,
+            int currentUserId,
+            MedicalRecordDraftRequestDTO request)
+    {
+        bool transactionStarted = false;
+
+        try
+        {
+            // =================================================
+            // VALIDATE MEDICAL RECORD ID
+            // =================================================
+
+            if (medicalRecordId <= 0)
+            {
+                return DraftResponse(
+                    400,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // VALIDATE USER
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return DraftResponse(
+                    401,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordAccessDenied
+                );
+            }
+
+
+            // =================================================
+            // VALIDATE REQUEST
+            // =================================================
+
+            if (request == null)
+            {
+                return DraftResponse(
+                    400,
+                    MedicalRecordResponseMessageDTO
+                        .SaveDraftFailed
+                );
+            }
+
+
+            // =================================================
+            // GET CURRENT DOCTOR
+            //
+            // UserId trong JWT
+            //       ↓
+            // Doctor.UserId
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // DOCTOR NOT FOUND
+            // =================================================
+
+            if (doctor == null)
+            {
+                return DraftResponse(
+                    403,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordAccessDenied
+                );
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id == medicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MEDICAL RECORD NOT FOUND
+            // =================================================
+
+            if (medicalRecord == null)
+            {
+                return DraftResponse(
+                    404,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK DOCTOR OWNERSHIP
+            // =================================================
+
+            if (
+                medicalRecord.DoctorId !=
+                doctor.Id
+            )
+            {
+                return DraftResponse(
+                    403,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordAccessDenied
+                );
+            }
+
+
+            // =================================================
+            // CHECK STATUS
+            //
+            // Chỉ Draft mới được sửa.
+            // =================================================
+
+            if (
+                medicalRecord.Status !=
+                (byte)MedicalRecordStatus.Draft
+            )
+            {
+                return DraftResponse(
+                    409,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotDraft
+                );
+            }
+
+
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
+            // UPDATE MEDICAL RECORD
+            // =================================================
+
+            medicalRecord.Symptoms =
+                request.Symptoms;
+
+            medicalRecord.Diagnosis =
+                request.Diagnosis;
+
+            medicalRecord.Icd10Code =
+                request.Icd10Code;
+
+            medicalRecord.TreatmentPlan =
+                request.TreatmentPlan;
+
+            medicalRecord.Note =
+                request.Note;
+
+            medicalRecord.FollowUpDate =
+                request.FollowUpDate;
+
+
+            // =================================================
+            // UPSERT PATIENT VITALS
+            //
+            // Nếu request không có vitals:
+            // → giữ nguyên dữ liệu hiện tại.
+            //
+            // Nếu có vitals:
+            // → có record → UPDATE
+            // → chưa có → INSERT
+            // =================================================
+
+            PatientVital? patientVital = null;
+
+
+            if (request.Vitals != null)
+            {
+                patientVital =
+                    await _unitOfWork
+                        .PatientVitalRepository
+                        .WhereSql(
+                            v =>
+                                v.MedicalRecordId ==
+                                medicalRecord.Id
+                        )
+                        .FirstOrDefaultAsync();
+
+
+                // =================================================
+                // INSERT VITAL
+                // =================================================
+
+                if (patientVital == null)
+                {
+                    patientVital =
+                        new PatientVital
+                        {
+                            MedicalRecordId =
+                                medicalRecord.Id,
+
+                            Temperature =
+                                request.Vitals.Temperature,
+
+                            Pulse =
+                                request.Vitals.Pulse,
+
+                            BloodPressure =
+                                request.Vitals.BloodPressure,
+
+                            Weight =
+                                request.Vitals.Weight,
+
+                            Height =
+                                request.Vitals.Height
+                        };
+
+
+                    await _unitOfWork
+                        .PatientVitalRepository
+                        .AddAsync(
+                            patientVital
+                        );
+                }
+
+
+                // =================================================
+                // UPDATE VITAL
+                // =================================================
+
+                else
+                {
+                    patientVital.Temperature =
+                        request.Vitals.Temperature;
+
+                    patientVital.Pulse =
+                        request.Vitals.Pulse;
+
+                    patientVital.BloodPressure =
+                        request.Vitals.BloodPressure;
+
+                    patientVital.Weight =
+                        request.Vitals.Weight;
+
+                    patientVital.Height =
+                        request.Vitals.Height;
+                }
+            }
+
+
+            // =================================================
+            // SAVE CHANGES
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // GET VITALS AFTER SAVE
+            // =================================================
+
+            var savedVital =
+                await _unitOfWork
+                    .PatientVitalRepository
+                    .WhereSql(
+                        v =>
+                            v.MedicalRecordId ==
+                            medicalRecord.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new MedicalRecordDraftResponseDTO
+                {
+                    Id =
+                        medicalRecord.Id,
+
+                    AppointmentId =
+                        medicalRecord.AppointmentId,
+
+                    DoctorName =
+                        doctor.FullName,
+
+                    Symptoms =
+                        medicalRecord.Symptoms,
+
+                    Diagnosis =
+                        medicalRecord.Diagnosis,
+
+                    Icd10Code =
+                        medicalRecord.Icd10Code,
+
+                    TreatmentPlan =
+                        medicalRecord.TreatmentPlan,
+
+                    Note =
+                        medicalRecord.Note,
+
+                    FollowUpDate =
+                        medicalRecord.FollowUpDate,
+
+                    Status =
+                        medicalRecord.Status,
+
+                    FinalizedAt =
+                        medicalRecord.FinalizedAt,
+
+                    CreatedAt =
+                        medicalRecord.CreatedAt,
+
+                    Vitals =
+                        savedVital == null
+                            ? null
+                            : new PatientVitalResponseDTO
+                            {
+                                Id =
+                                    savedVital.Id,
+
+                                MedicalRecordId =
+                                    savedVital.MedicalRecordId,
+
+                                Temperature =
+                                    savedVital.Temperature,
+
+                                Pulse =
+                                    savedVital.Pulse,
+
+                                BloodPressure =
+                                    savedVital.BloodPressure,
+
+                                Weight =
+                                    savedVital.Weight,
+
+                                Height =
+                                    savedVital.Height
+                            }
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return DraftResponse(
+                200,
+                MedicalRecordResponseMessageDTO
+                    .SaveDraftSuccess,
+                result
+            );
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // ROLLBACK
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback medical record draft update. " +
+                        "MedicalRecordId: {MedicalRecordId}",
+                        medicalRecordId
+                    );
+                }
+            }
+
+
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to update medical record draft. " +
+                "MedicalRecordId: {MedicalRecordId}, " +
+                "UserId: {UserId}",
+                medicalRecordId,
+                currentUserId
+            );
+
+
+            return DraftResponse(
+                500,
+                MedicalRecordResponseMessageDTO
+                    .SaveDraftFailed
+            );
+        }
     }
 
 
@@ -500,4 +938,29 @@ public class MedicalRecordService
                 content
         };
     }
+
+    // =====================================================
+    // DRAFT RESPONSE
+    // =====================================================
+
+    private static
+        HttpResponseData<MedicalRecordDraftResponseDTO>
+        DraftResponse(
+            int statusCode,
+            string message,
+            MedicalRecordDraftResponseDTO? content = null)
+    {
+        return new HttpResponseData<MedicalRecordDraftResponseDTO>
+        {
+            StatusCode =
+                statusCode,
+
+            Message =
+                message,
+
+            Content =
+                content
+        };
+    }
+
 }
