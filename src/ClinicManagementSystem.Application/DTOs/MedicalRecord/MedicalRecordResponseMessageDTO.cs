@@ -52,4 +52,20 @@ public static class MedicalRecordResponseMessageDTO
 
     public const string HistoryFailed =
         "Lấy lịch sử khám thất bại.";
+
+    // =====================================================
+    // SAVE DRAFT
+    // =====================================================
+
+    public const string SaveDraftSuccess =
+        "Lưu nháp bệnh án thành công.";
+
+    public const string SaveDraftFailed =
+        "Lưu nháp bệnh án thất bại.";
+
+    public const string MedicalRecordNotDraft =
+        "Bệnh án không ở trạng thái nháp, không thể chỉnh sửa.";
+
+    public const string MedicalRecordAccessDenied =
+        "Bạn không có quyền chỉnh sửa bệnh án này.";
 }

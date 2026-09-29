@@ -20,6 +20,8 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientMedicalRecordsAsync(int patientId, int currentUserId);
 
+    Task<HttpResponseData<MedicalRecordDraftResponseDTO>>UpdateMedicalRecordDraftAsync(int medicalRecordId, int currentUserId, MedicalRecordDraftRequestDTO request);
+
 }
 
 // =====================================================
