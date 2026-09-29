@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 
 using ClinicManagementSystem.Application.DTOs;
-using ClinicManagementSystem.Application.DTOs.Doctor;
 using ClinicManagementSystem.Application.DTOs.Queue;
 
 namespace ClinicManagementSystem.Web.Services;
@@ -15,17 +14,6 @@ public class DoctorQueueStateService
 {
     private readonly AuthorizedApiService
         _authorizedApiService;
-
-
-    // =====================================================
-    // DOCTOR
-    // =====================================================
-
-    public DoctorDTO? CurrentDoctor
-    {
-        get;
-        private set;
-    }
 
 
     // =====================================================
@@ -47,7 +35,9 @@ public class DoctorQueueStateService
     {
         get;
         private set;
-    } = DateOnly.FromDateTime(DateTime.Now);
+    } = DateOnly.FromDateTime(
+        DateTime.Now
+    );
 
 
     // =====================================================
@@ -92,7 +82,12 @@ public class DoctorQueueStateService
 
 
     // =====================================================
-    // LOAD DOCTOR QUEUE
+    // LOAD MY QUEUE
+    //
+    // GET:
+    // /api/doctors/me/queue?date=2026-09-29
+    //
+    // DoctorId được backend lấy từ JWT.
     // =====================================================
 
     public async Task<bool> LoadQueueAsync(
@@ -118,112 +113,44 @@ public class DoctorQueueStateService
         try
         {
             // =================================================
-            // GET CURRENT DOCTOR
-            //
-            // GET:
-            // /api/doctors/me
-            // =================================================
-
-            var doctorResponse =
-                await _authorizedApiService
-                    .GetAsync(
-                        "/api/doctors/me"
-                    );
-
-
-            // =================================================
-            // READ DOCTOR RESPONSE
-            // =================================================
-
-            var doctorResponseData =
-                await doctorResponse.Content
-                    .ReadFromJsonAsync<
-                        HttpResponseData<DoctorDTO>>();
-
-
-            // =================================================
-            // DOCTOR API FAILED
-            // =================================================
-
-            if (!doctorResponse.IsSuccessStatusCode ||
-                doctorResponseData == null ||
-                doctorResponseData.StatusCode < 200 ||
-                doctorResponseData.StatusCode >= 300)
-            {
-                ErrorMessage =
-                    doctorResponseData?.Message
-                    ?? "Không thể lấy thông tin bác sĩ.";
-
-                return false;
-            }
-
-
-            // =================================================
-            // DOCTOR CONTENT EMPTY
-            // =================================================
-
-            if (doctorResponseData.Content == null)
-            {
-                ErrorMessage =
-                    "Không tìm thấy thông tin bác sĩ.";
-
-                return false;
-            }
-
-
-            // =================================================
-            // UPDATE CURRENT DOCTOR
-            // =================================================
-
-            CurrentDoctor =
-                doctorResponseData.Content;
-
-
-            // =================================================
-            // BUILD QUEUE ENDPOINT
-            //
-            // GET:
-            // /api/appointments/queue
-            // ?doctorId=5
-            // &date=2026-09-29
+            // BUILD ENDPOINT
             // =================================================
 
             var endpoint =
-                $"/api/appointments/queue" +
-                $"?doctorId={CurrentDoctor.Id}" +
-                $"&date={date:yyyy-MM-dd}";
+                $"/api/doctors/me/queue" +
+                $"?date={date:yyyy-MM-dd}";
 
 
             // =================================================
-            // CALL QUEUE API
+            // CALL API
             // =================================================
 
-            var queueResponse =
+            var response =
                 await _authorizedApiService
                     .GetAsync(endpoint);
 
 
             // =================================================
-            // READ QUEUE RESPONSE
+            // READ RESPONSE
             // =================================================
 
-            var queueResponseData =
-                await queueResponse.Content
+            var responseData =
+                await response.Content
                     .ReadFromJsonAsync<
                         HttpResponseData<QueueDTO>>();
 
 
             // =================================================
-            // QUEUE API FAILED
+            // API FAILED
             // =================================================
 
-            if (!queueResponse.IsSuccessStatusCode ||
-                queueResponseData == null ||
-                queueResponseData.StatusCode < 200 ||
-                queueResponseData.StatusCode >= 300)
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
             {
                 ErrorMessage =
-                    queueResponseData?.Message
+                    responseData?.Message
                     ?? "Không thể tải hàng chờ.";
 
                 return false;
@@ -231,10 +158,10 @@ public class DoctorQueueStateService
 
 
             // =================================================
-            // QUEUE CONTENT EMPTY
+            // CONTENT EMPTY
             // =================================================
 
-            if (queueResponseData.Content == null)
+            if (responseData.Content == null)
             {
                 ErrorMessage =
                     "Không nhận được dữ liệu hàng chờ.";
@@ -244,11 +171,11 @@ public class DoctorQueueStateService
 
 
             // =================================================
-            // UPDATE QUEUE
+            // UPDATE STATE
             // =================================================
 
             Queue =
-                queueResponseData.Content;
+                responseData.Content;
 
 
             // =================================================
@@ -279,8 +206,6 @@ public class DoctorQueueStateService
 
     public void Reset()
     {
-        CurrentDoctor = null;
-
         Queue = null;
 
         SelectedDate =

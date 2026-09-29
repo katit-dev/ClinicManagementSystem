@@ -1,4 +1,4 @@
-@page "/doctor/queue"
+@page "/doctor/doctor-queue"
 
 @using ClinicManagementSystem.Application.DTOs.Queue
 @using Microsoft.AspNetCore.Authorization
@@ -28,12 +28,12 @@
 
             <h1>Hàng chờ khám</h1>
 
-            @if (DoctorQueueStateService.CurrentDoctor != null)
+            @if (DoctorQueueStateService.Queue != null)
             {
                 <p>
                     Bác sĩ:
                     <strong>
-                        @DoctorQueueStateService.CurrentDoctor.FullName
+                        @DoctorQueueStateService.Queue.DoctorName
                     </strong>
                 </p>
             }
@@ -46,11 +46,8 @@
                 Ngày khám
             </label>
 
-            <InputDate
-                id="doctor-queue-date"
-                @bind-Value="_selectedDate"
-                @bind-Value:after="OnDateChangedAsync"
-                class="doctor-queue-date-input" />
+            <InputDate id="doctor-queue-date" @bind-Value="_selectedDate" @bind-Value:after="OnDateChangedAsync"
+                       class="doctor-queue-date-input" />
 
         </div>
 
