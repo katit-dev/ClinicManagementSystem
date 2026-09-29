@@ -18,6 +18,12 @@ public interface IDoctorService
         GetAvailableSlotsAsync(
             int doctorId,
             DateOnly date);
+
+    // GET CURRENT DOCTOR
+    Task<HttpResponseData<DoctorDTO>>
+    GetCurrentDoctorAsync(
+        int currentUserId);
+
 }
 
 
@@ -39,6 +45,157 @@ public class DoctorService : IDoctorService
         _unitOfWork = unitOfWork;
 
         _logger = logger;
+    }
+
+    // =====================================================
+    // GET CURRENT DOCTOR
+    //
+    // Lấy Doctor tương ứng với User đang đăng nhập.
+    //
+    // currentUserId:
+    // ClaimTypes.NameIdentifier
+    //
+    // Quan hệ:
+    // User.Id
+    //     ↓
+    // Doctor.UserId
+    //     ↓
+    // Doctor.Id
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<DoctorDTO>>
+        GetCurrentDoctorAsync(
+            int currentUserId)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE USER ID
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return new HttpResponseData<DoctorDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        DoctorResponseMessageDTO
+                            .DoctorNotFound,
+
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // GET CURRENT DOCTOR
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .Select(
+                        d =>
+                            new DoctorDTO
+                            {
+                                Id =
+                                    d.Id,
+
+                                SpecialtyId =
+                                    d.SpecialtyId,
+
+                                FullName =
+                                    d.FullName,
+
+                                Title =
+                                    d.Title,
+
+                                Room =
+                                    d.Room,
+
+                                ConsultationFee =
+                                    d.ConsultationFee,
+
+                                AvatarUrl =
+                                    d.AvatarUrl,
+
+                                ExperienceYears =
+                                    d.ExperienceYears
+                            }
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // DOCTOR NOT FOUND
+            // =================================================
+
+            if (doctor == null)
+            {
+                return new HttpResponseData<DoctorDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        DoctorResponseMessageDTO
+                            .DoctorNotFound,
+
+                    Content = null
+                };
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<DoctorDTO>
+            {
+                StatusCode = 200,
+
+                Message =
+                    DoctorResponseMessageDTO
+                        .GetCurrentDoctorSuccess,
+
+                Content = doctor
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to get current doctor. " +
+                "UserId: {UserId}",
+                currentUserId
+            );
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            return new HttpResponseData<DoctorDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    DoctorResponseMessageDTO
+                        .GetCurrentDoctorFailed,
+
+                Content = null
+            };
+        }
     }
 
 

@@ -125,4 +125,39 @@ public class DoctorController : ControllerBase
         );
     }
 
+    // =====================================================
+    // GET CURRENT DOCTOR
+    //
+    // GET:
+    // /api/doctors/me
+    // =====================================================
+
+    [HttpGet("me")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> GetCurrentDoctor()
+    {
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var result =
+            await _doctorService
+                .GetCurrentDoctorAsync(
+                    currentUserId
+                );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }
