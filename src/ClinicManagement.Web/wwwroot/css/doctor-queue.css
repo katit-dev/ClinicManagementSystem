@@ -1,0 +1,435 @@
+/* =====================================================
+   DOCTOR QUEUE
+   ===================================================== */
+
+.doctor-queue-page {
+    padding: 24px;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.doctor-queue-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+
+    margin-bottom: 24px;
+}
+
+.doctor-queue-label {
+    margin-bottom: 6px;
+
+    color: #0284c7;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.doctor-queue-header h1 {
+    margin: 0;
+
+    color: #16324f;
+
+    font-size: 28px;
+}
+
+.doctor-queue-header p {
+    margin: 6px 0 0;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+.doctor-queue-header p strong {
+    color: #334155;
+}
+
+
+/* =====================================================
+   DATE
+   ===================================================== */
+
+.doctor-queue-date {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    min-width: 180px;
+}
+
+.doctor-queue-date label {
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.doctor-queue-date-input {
+    box-sizing: border-box;
+
+    width: 100%;
+
+    padding: 10px 12px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+.doctor-queue-date-input:focus {
+    border-color: #0284c7;
+}
+
+
+/* =====================================================
+   CARD
+   ===================================================== */
+
+.doctor-queue-card {
+    overflow: hidden;
+
+    margin-bottom: 20px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    background: #ffffff;
+}
+
+.doctor-queue-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 20px 24px;
+
+    border-bottom: 1px solid #eef2f6;
+}
+
+.doctor-queue-card-label {
+    color: #94a3b8;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.doctor-queue-card-header h2 {
+    margin: 4px 0 0;
+
+    color: #16324f;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   COUNT
+   ===================================================== */
+
+.doctor-queue-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 34px;
+
+    padding: 0 12px;
+
+    border-radius: 999px;
+
+    background: #e0f2fe;
+
+    color: #0369a1;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   CURRENT
+   ===================================================== */
+
+.doctor-queue-current {
+    display: grid;
+
+    grid-template-columns:
+        auto
+        minmax(180px, 1fr)
+        minmax(140px, auto)
+        minmax(120px, auto);
+
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 24px;
+}
+
+.doctor-queue-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 58px;
+    height: 58px;
+
+    border-radius: 12px;
+
+    background: #0284c7;
+
+    color: #ffffff;
+
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.doctor-queue-patient {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    min-width: 0;
+}
+
+.doctor-queue-patient-name {
+    color: #334155;
+
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.doctor-queue-patient-code {
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+.doctor-queue-current-info,
+.doctor-queue-next-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.doctor-queue-current-info span,
+.doctor-queue-next-info span {
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+.doctor-queue-current-info strong,
+.doctor-queue-next-info strong {
+    color: #334155;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   NEXT
+   ===================================================== */
+
+.doctor-queue-next {
+    display: grid;
+
+    grid-template-columns:
+        auto
+        minmax(180px, 1fr)
+        minmax(140px, auto)
+        minmax(120px, auto);
+
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 24px;
+}
+
+.doctor-queue-next .doctor-queue-number {
+    background: #f1f5f9;
+
+    color: #475569;
+}
+
+
+/* =====================================================
+   WAITING TABLE
+   ===================================================== */
+
+.doctor-queue-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+.doctor-queue-table {
+    width: 100%;
+
+    min-width: 760px;
+
+    border-collapse: collapse;
+}
+
+.doctor-queue-table th {
+    padding: 12px 14px;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    background: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: left;
+}
+
+.doctor-queue-table td {
+    padding: 14px;
+
+    border-bottom: 1px solid #eef2f6;
+
+    color: #475569;
+
+    font-size: 13px;
+}
+
+.doctor-queue-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.doctor-queue-number-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 30px;
+    height: 30px;
+
+    padding: 0 8px;
+
+    border-radius: 8px;
+
+    background: #f1f5f9;
+
+    color: #334155;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+/* =====================================================
+   EMPTY / STATE
+   ===================================================== */
+
+.doctor-queue-empty,
+.doctor-queue-state {
+    padding: 30px;
+
+    color: #64748b;
+
+    text-align: center;
+
+    font-size: 14px;
+}
+
+.doctor-queue-message {
+    margin-bottom: 20px;
+
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+}
+
+.doctor-queue-error {
+    background: #fee2e2;
+
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+    .doctor-queue-current,
+    .doctor-queue-next {
+        grid-template-columns:
+            auto
+            minmax(0, 1fr);
+
+        align-items: start;
+    }
+
+    .doctor-queue-current-info,
+    .doctor-queue-next-info {
+        padding-left: 78px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .doctor-queue-page {
+        padding: 16px;
+    }
+
+    .doctor-queue-header {
+        align-items: stretch;
+
+        flex-direction: column;
+
+        gap: 16px;
+    }
+
+    .doctor-queue-date {
+        width: 100%;
+    }
+
+    .doctor-queue-card-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 12px;
+
+        padding: 18px;
+    }
+
+    .doctor-queue-current,
+    .doctor-queue-next {
+        grid-template-columns: 1fr;
+
+        padding: 18px;
+    }
+
+    .doctor-queue-current-info,
+    .doctor-queue-next-info {
+        padding-left: 0;
+    }
+}
