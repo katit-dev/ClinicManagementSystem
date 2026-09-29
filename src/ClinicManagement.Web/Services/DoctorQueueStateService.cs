@@ -17,18 +17,18 @@ public class DoctorQueueStateService
 
 
     // =====================================================
-    // QUEUE
+    // QUEUE ITEMS
     // =====================================================
 
-    public QueueDTO? Queue
+    public List<DoctorQueueItemDTO> QueueItems
     {
         get;
         private set;
-    }
+    } = new();
 
 
     // =====================================================
-    // DATE
+    // SELECTED DATE
     // =====================================================
 
     public DateOnly SelectedDate
@@ -87,7 +87,11 @@ public class DoctorQueueStateService
     // GET:
     // /api/doctors/me/queue?date=2026-09-29
     //
-    // DoctorId được backend lấy từ JWT.
+    // DoctorId:
+    // Backend lấy từ JWT
+    //
+    // Response:
+    // HttpResponseData<List<DoctorQueueItemDTO>>
     // =====================================================
 
     public async Task<bool> LoadQueueAsync(
@@ -99,15 +103,13 @@ public class DoctorQueueStateService
 
         IsLoading = true;
 
-        ErrorMessage =
-            string.Empty;
+        ErrorMessage = string.Empty;
 
-        Queue = null;
+        QueueItems = new();
 
-        SelectedDate =
-            date;
+        SelectedDate = date;
 
-        StateHasChanged();
+        NotifyStateChanged();
 
 
         try
@@ -131,37 +133,38 @@ public class DoctorQueueStateService
 
 
             // =================================================
-            // READ RESPONSE
+            // HTTP ERROR
             // =================================================
 
-            var responseData =
-                await response.Content
-                    .ReadFromJsonAsync<
-                        HttpResponseData<QueueDTO>>();
-
-
-            // =================================================
-            // API FAILED
-            // =================================================
-
-            if (!response.IsSuccessStatusCode ||
-                responseData == null ||
-                responseData.StatusCode < 200 ||
-                responseData.StatusCode >= 300)
+            if (!response.IsSuccessStatusCode)
             {
                 ErrorMessage =
-                    responseData?.Message
-                    ?? "Không thể tải hàng chờ.";
+                    $"Không thể tải hàng chờ. " +
+                    $"HTTP {(int)response.StatusCode} " +
+                    $"({response.StatusCode}).";
 
                 return false;
             }
 
 
             // =================================================
-            // CONTENT EMPTY
+            // READ RESPONSE
             // =================================================
 
-            if (responseData.Content == null)
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<DoctorQueueItemDTO>
+                        >
+                    >();
+
+
+            // =================================================
+            // INVALID RESPONSE
+            // =================================================
+
+            if (responseData == null)
             {
                 ErrorMessage =
                     "Không nhận được dữ liệu hàng chờ.";
@@ -171,11 +174,27 @@ public class DoctorQueueStateService
 
 
             // =================================================
-            // UPDATE STATE
+            // API RESPONSE FAILED
             // =================================================
 
-            Queue =
-                responseData.Content;
+            if (responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData.Message
+                    ?? "Lấy hàng chờ thất bại.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // CONTENT
+            // =================================================
+
+            QueueItems =
+                responseData.Content
+                ?? new List<DoctorQueueItemDTO>();
 
 
             // =================================================
@@ -184,10 +203,15 @@ public class DoctorQueueStateService
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            // =================================================
+            // TEMPORARY DEBUG
+            // =================================================
+
             ErrorMessage =
-                "Không thể kết nối đến hệ thống.";
+                $"Không thể kết nối đến hệ thống: " +
+                $"{ex.Message}";
 
             return false;
         }
@@ -195,7 +219,7 @@ public class DoctorQueueStateService
         {
             IsLoading = false;
 
-            StateHasChanged();
+            NotifyStateChanged();
         }
     }
 
@@ -206,7 +230,7 @@ public class DoctorQueueStateService
 
     public void Reset()
     {
-        Queue = null;
+        QueueItems = new();
 
         SelectedDate =
             DateOnly.FromDateTime(
@@ -215,18 +239,17 @@ public class DoctorQueueStateService
 
         IsLoading = false;
 
-        ErrorMessage =
-            string.Empty;
+        ErrorMessage = string.Empty;
 
-        StateHasChanged();
+        NotifyStateChanged();
     }
 
 
     // =====================================================
-    // STATE HAS CHANGED
+    // NOTIFY
     // =====================================================
 
-    private void StateHasChanged()
+    private void NotifyStateChanged()
     {
         OnChange?.Invoke();
     }
