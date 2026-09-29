@@ -23,4 +23,11 @@ public static class DoctorResponseMessageDTO
 
     public const string InvalidAppointmentDate =
         "Ngày khám không hợp lệ.";
+
+    public const string GetCurrentDoctorSuccess =
+    "Lấy thông tin bác sĩ thành công.";
+
+public const string GetCurrentDoctorFailed =
+    "Không thể lấy thông tin bác sĩ.";
+
 }
