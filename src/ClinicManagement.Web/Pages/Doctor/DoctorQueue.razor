@@ -68,6 +68,22 @@
         </div>
     }
 
+    @if (!string.IsNullOrWhiteSpace(
+    DoctorQueueStateService.ActionMessage))
+    {
+        <div class="doctor-queue-message doctor-queue-success">
+            @DoctorQueueStateService.ActionMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(
+        DoctorQueueStateService.ActionErrorMessage))
+    {
+        <div class="doctor-queue-message doctor-queue-error">
+            @DoctorQueueStateService.ActionErrorMessage
+        </div>
+    }
+
 
     @* =====================================================
        LOADING
@@ -180,10 +196,18 @@
 
                         <tbody>
 
-                            @foreach (
-                                var item
-                                in DoctorQueueStateService.QueueItems)
+                            @for (var index = 0; index < DoctorQueueStateService.QueueItems.Count; index++)
                             {
+                                var item =
+                                    DoctorQueueStateService.QueueItems[index];
+
+                                var isFirst =
+                                    index == 0;
+
+                                var isStarting =
+                                    DoctorQueueStateService.IsStartingExam &&
+                                    DoctorQueueStateService.StartingAppointmentId ==
+                                        item.AppointmentId;
                                 <tr>
 
                                     @* =================================
@@ -286,6 +310,37 @@
 
                                     </td>
 
+                                    <td class="doctor-queue-action-cell">
+
+                                        @if (isFirst)
+                                        {
+                                            <button type="button" class="doctor-queue-start-button" disabled="@isStarting"
+                                                    @onclick="() => HandleStartExam(item.AppointmentId)">
+
+                                                @if (isStarting)
+                                                {
+                                                    <span>
+                                                        Đang bắt đầu...
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>
+                                                        Bắt đầu khám
+                                                    </span>
+                                                }
+
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="doctor-queue-waiting-label">
+                                                Chờ
+                                            </span>
+                                        }
+
+                                    </td>
+
                                 </tr>
                             }
 
@@ -329,6 +384,18 @@
             );
     }
 
+    // =====================================================
+    // START EXAM
+    // =====================================================
+
+    private async Task HandleStartExam(
+        int appointmentId)
+    {
+        await DoctorQueueStateService
+            .StartExamAsync(
+                appointmentId
+            );
+    }
 
     // =====================================================
     // DATE CHANGED

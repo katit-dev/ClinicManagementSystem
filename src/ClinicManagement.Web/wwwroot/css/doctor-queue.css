@@ -433,3 +433,59 @@
         padding-left: 0;
     }
 }
+
+/* =====================================================
+   ACTION
+   ===================================================== */
+
+.doctor-queue-action-cell {
+    min-width: 150px;
+
+    text-align: center;
+}
+
+.doctor-queue-start-button {
+    min-width: 130px;
+
+    padding: 9px 14px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #0284c7;
+
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.doctor-queue-start-button:hover:not(:disabled) {
+    background: #0369a1;
+}
+
+.doctor-queue-start-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+.doctor-queue-waiting-label {
+    color: #94a3b8;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   SUCCESS MESSAGE
+   ===================================================== */
+
+.doctor-queue-success {
+    background: #dcfce7;
+
+    color: #166534;
+}

@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 
 using ClinicManagementSystem.Application.DTOs;
+using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 using ClinicManagementSystem.Application.DTOs.Queue;
 
 namespace ClinicManagementSystem.Web.Services;
@@ -52,6 +53,40 @@ public class DoctorQueueStateService
 
 
     public string ErrorMessage
+    {
+        get;
+        private set;
+    } = string.Empty;
+
+    // =====================================================
+    // START EXAM STATE
+    // =====================================================
+
+    public bool IsStartingExam
+    {
+        get;
+        private set;
+    }
+
+    public int? StartingAppointmentId
+    {
+        get;
+        private set;
+    }
+
+    public MedicalRecordDTO? MedicalRecord
+    {
+        get;
+        private set;
+    }
+
+    public string ActionMessage
+    {
+        get;
+        private set;
+    } = string.Empty;
+
+    public string ActionErrorMessage
     {
         get;
         private set;
@@ -223,6 +258,134 @@ public class DoctorQueueStateService
         }
     }
 
+    // =====================================================
+    // START EXAM
+    //
+    // POST:
+    // /api/appointments/{id}/start-exam
+    //
+    // Response:
+    // MedicalRecordDTO
+    // =====================================================
+
+    public async Task<bool> StartExamAsync(
+        int appointmentId)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsStartingExam)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // RESET STATE
+        // =================================================
+
+        IsStartingExam = true;
+
+        StartingAppointmentId =
+            appointmentId;
+
+        MedicalRecord = null;
+
+        ActionMessage = string.Empty;
+
+        ActionErrorMessage = string.Empty;
+
+        NotifyStateChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        $"/api/appointments/{appointmentId}/start-exam",
+                        new StringContent(string.Empty)
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<MedicalRecordDTO>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể bắt đầu khám.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // CHECK CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Không nhận được thông tin bệnh án.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE MEDICAL RECORD
+            // =================================================
+
+            MedicalRecord =
+                responseData.Content;
+
+
+            // =================================================
+            // SUCCESS MESSAGE
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsStartingExam = false;
+
+            StartingAppointmentId = null;
+
+            NotifyStateChanged();
+        }
+    }
 
     // =====================================================
     // RESET
@@ -240,6 +403,16 @@ public class DoctorQueueStateService
         IsLoading = false;
 
         ErrorMessage = string.Empty;
+
+        IsStartingExam = false;
+
+        StartingAppointmentId = null;
+
+        MedicalRecord = null;
+
+        ActionMessage = string.Empty;
+
+        ActionErrorMessage = string.Empty;
 
         NotifyStateChanged();
     }
