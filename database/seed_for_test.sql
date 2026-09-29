@@ -1716,3 +1716,18 @@ SELECT TOP 10
 FROM auth.audit_logs
 WHERE Action = 'VIEW_PATIENT_MEDICAL_RECORDS'
 ORDER BY Id DESC;
+
+
+
+USE ClinicManagementSystem
+
+--- test start-exam
+SELECT
+    Id,
+    appointment_id,
+    patient_id,
+    doctor_id,
+    [status],
+    created_at
+FROM clinical.medical_records
+WHERE appointment_id = 26

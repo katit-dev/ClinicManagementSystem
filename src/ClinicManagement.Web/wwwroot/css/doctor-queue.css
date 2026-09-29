@@ -1,9 +1,14 @@
 /* =====================================================
-   DOCTOR QUEUE
+   DOCTOR QUEUE PAGE
    ===================================================== */
 
 .doctor-queue-page {
-    padding: 24px;
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 28px 32px 40px;
+
+    color: #1e293b;
 }
 
 
@@ -15,9 +20,14 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 24px;
+
+    gap: 32px;
 
     margin-bottom: 24px;
+}
+
+.doctor-queue-header-content {
+    min-width: 0;
 }
 
 .doctor-queue-label {
@@ -25,30 +35,35 @@
 
     color: #0284c7;
 
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
 
-    letter-spacing: 1px;
+    letter-spacing: 1.4px;
 }
 
 .doctor-queue-header h1 {
     margin: 0;
 
-    color: #16324f;
+    padding: 0;
 
-    font-size: 28px;
+    border: 0;
+    outline: 0;
+
+    color: #17324d;
+
+    font-size: 34px;
+    font-weight: 750;
+
+    line-height: 1.2;
 }
 
 .doctor-queue-header p {
-    margin: 6px 0 0;
+    margin: 8px 0 0;
 
     color: #64748b;
 
-    font-size: 14px;
-}
-
-.doctor-queue-header p strong {
-    color: #334155;
+    font-size: 15px;
+    line-height: 1.5;
 }
 
 
@@ -59,27 +74,28 @@
 .doctor-queue-date {
     display: flex;
     flex-direction: column;
+
     gap: 6px;
 
-    min-width: 180px;
+    width: 220px;
+    flex-shrink: 0;
 }
 
 .doctor-queue-date label {
     color: #64748b;
 
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
 }
 
 .doctor-queue-date-input {
-    box-sizing: border-box;
-
     width: 100%;
+    box-sizing: border-box;
 
     padding: 10px 12px;
 
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border-radius: 9px;
 
     background: #ffffff;
 
@@ -88,27 +104,73 @@
     font-size: 14px;
 
     outline: none;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .doctor-queue-date-input:focus {
     border-color: #0284c7;
+
+    box-shadow:
+        0 0 0 3px rgba(2, 132, 199, 0.12);
 }
 
 
 /* =====================================================
-   CARD
+   MESSAGE
+   ===================================================== */
+
+.doctor-queue-message {
+    margin-bottom: 18px;
+
+    padding: 12px 15px;
+
+    border-radius: 9px;
+
+    font-size: 14px;
+}
+
+.doctor-queue-error {
+    border: 1px solid #fecaca;
+
+    background: #fef2f2;
+
+    color: #b91c1c;
+}
+
+.doctor-queue-success {
+    border: 1px solid #bbf7d0;
+
+    background: #f0fdf4;
+
+    color: #15803d;
+}
+
+
+/* =====================================================
+   MAIN CARD
    ===================================================== */
 
 .doctor-queue-card {
+    width: 100%;
+
     overflow: hidden;
 
-    margin-bottom: 20px;
-
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
+    border: 1px solid #dbe3ea;
+    border-radius: 14px;
 
     background: #ffffff;
+
+    box-shadow:
+        0 3px 12px rgba(15, 23, 42, 0.05);
 }
+
+
+/* =====================================================
+   CARD HEADER
+   ===================================================== */
 
 .doctor-queue-card-header {
     display: flex;
@@ -117,162 +179,64 @@
 
     gap: 20px;
 
-    padding: 20px 24px;
+    padding: 18px 22px;
 
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid #e5eaf0;
+
+    background: #ffffff;
 }
 
 .doctor-queue-card-label {
+    margin-bottom: 4px;
+
     color: #94a3b8;
 
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 0.9px;
 }
 
 .doctor-queue-card-header h2 {
-    margin: 4px 0 0;
+    margin: 0;
 
-    color: #16324f;
+    color: #17324d;
 
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 750;
 }
 
 
 /* =====================================================
-   COUNT
+   PATIENT COUNT
    ===================================================== */
 
 .doctor-queue-count {
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
-    min-height: 34px;
+    min-height: 32px;
 
-    padding: 0 12px;
+    padding: 0 13px;
 
+    border: 1px solid #bae6fd;
     border-radius: 999px;
 
-    background: #e0f2fe;
+    background: #f0f9ff;
 
     color: #0369a1;
 
     font-size: 13px;
     font-weight: 700;
+
+    white-space: nowrap;
 }
 
 
 /* =====================================================
-   CURRENT
-   ===================================================== */
-
-.doctor-queue-current {
-    display: grid;
-
-    grid-template-columns:
-        auto
-        minmax(180px, 1fr)
-        minmax(140px, auto)
-        minmax(120px, auto);
-
-    align-items: center;
-
-    gap: 20px;
-
-    padding: 24px;
-}
-
-.doctor-queue-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 58px;
-    height: 58px;
-
-    border-radius: 12px;
-
-    background: #0284c7;
-
-    color: #ffffff;
-
-    font-size: 22px;
-    font-weight: 800;
-}
-
-.doctor-queue-patient {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-
-    min-width: 0;
-}
-
-.doctor-queue-patient-name {
-    color: #334155;
-
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.doctor-queue-patient-code {
-    color: #94a3b8;
-
-    font-size: 12px;
-}
-
-.doctor-queue-current-info,
-.doctor-queue-next-info {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.doctor-queue-current-info span,
-.doctor-queue-next-info span {
-    color: #94a3b8;
-
-    font-size: 12px;
-}
-
-.doctor-queue-current-info strong,
-.doctor-queue-next-info strong {
-    color: #334155;
-
-    font-size: 13px;
-}
-
-
-/* =====================================================
-   NEXT
-   ===================================================== */
-
-.doctor-queue-next {
-    display: grid;
-
-    grid-template-columns:
-        auto
-        minmax(180px, 1fr)
-        minmax(140px, auto)
-        minmax(120px, auto);
-
-    align-items: center;
-
-    gap: 20px;
-
-    padding: 24px;
-}
-
-.doctor-queue-next .doctor-queue-number {
-    background: #f1f5f9;
-
-    color: #475569;
-}
-
-
-/* =====================================================
-   WAITING TABLE
+   TABLE
    ===================================================== */
 
 .doctor-queue-table-wrapper {
@@ -284,13 +248,18 @@
 .doctor-queue-table {
     width: 100%;
 
-    min-width: 760px;
-
     border-collapse: collapse;
+
+    table-layout: auto;
 }
 
+
+/* =====================================================
+   TABLE HEADER
+   ===================================================== */
+
 .doctor-queue-table th {
-    padding: 12px 14px;
+    padding: 12px 18px;
 
     border-bottom: 1px solid #e2e8f0;
 
@@ -299,177 +268,234 @@
     color: #64748b;
 
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 800;
 
     text-align: left;
+
+    white-space: nowrap;
 }
 
+.doctor-queue-table th:first-child {
+    width: 70px;
+}
+
+.doctor-queue-table th:nth-child(3) {
+    width: 70px;
+}
+
+.doctor-queue-table th:nth-child(4) {
+    width: 100px;
+}
+
+.doctor-queue-table th:last-child {
+    width: 150px;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   TABLE BODY
+   ===================================================== */
+
 .doctor-queue-table td {
-    padding: 14px;
+    padding: 15px 18px;
 
     border-bottom: 1px solid #eef2f6;
 
     color: #475569;
 
-    font-size: 13px;
+    font-size: 14px;
+
+    vertical-align: middle;
 }
 
 .doctor-queue-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-.doctor-queue-number-small {
+.doctor-queue-table tbody tr {
+    transition: background 0.12s ease;
+}
+
+.doctor-queue-table tbody tr:hover {
+    background: #f8fbfd;
+}
+
+
+/* =====================================================
+   QUEUE NUMBER
+   ===================================================== */
+
+.doctor-queue-number {
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
-    min-width: 30px;
-    height: 30px;
+    width: 38px;
+    height: 38px;
 
-    padding: 0 8px;
+    border-radius: 9px;
 
-    border-radius: 8px;
+    background: #0284c7;
 
-    background: #f1f5f9;
+    color: #ffffff;
 
-    color: #334155;
-
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 800;
 }
 
 
 /* =====================================================
-   EMPTY / STATE
+   PATIENT
    ===================================================== */
 
-.doctor-queue-empty,
-.doctor-queue-state {
-    padding: 30px;
+.doctor-queue-patient {
+    display: flex;
+    flex-direction: column;
 
-    color: #64748b;
+    gap: 3px;
 
-    text-align: center;
-
-    font-size: 14px;
+    min-width: 190px;
 }
 
-.doctor-queue-message {
-    margin-bottom: 20px;
+.doctor-queue-patient-name {
+    color: #1e293b;
 
-    padding: 12px 14px;
-
-    border-radius: 10px;
-
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 700;
 }
 
-.doctor-queue-error {
-    background: #fee2e2;
+.doctor-queue-patient-code {
+    color: #94a3b8;
 
-    color: #b91c1c;
+    font-size: 12px;
 }
 
 
 /* =====================================================
-   RESPONSIVE
+   TIME
    ===================================================== */
 
-@media (max-width: 900px) {
+.doctor-queue-time {
+    color: #334155;
 
-    .doctor-queue-current,
-    .doctor-queue-next {
-        grid-template-columns:
-            auto
-            minmax(0, 1fr);
+    font-weight: 700;
 
-        align-items: start;
-    }
-
-    .doctor-queue-current-info,
-    .doctor-queue-next-info {
-        padding-left: 78px;
-    }
+    white-space: nowrap;
 }
 
 
-@media (max-width: 600px) {
+/* =====================================================
+   MUTED
+   ===================================================== */
 
-    .doctor-queue-page {
-        padding: 16px;
-    }
-
-    .doctor-queue-header {
-        align-items: stretch;
-
-        flex-direction: column;
-
-        gap: 16px;
-    }
-
-    .doctor-queue-date {
-        width: 100%;
-    }
-
-    .doctor-queue-card-header {
-        align-items: flex-start;
-
-        flex-direction: column;
-
-        gap: 12px;
-
-        padding: 18px;
-    }
-
-    .doctor-queue-current,
-    .doctor-queue-next {
-        grid-template-columns: 1fr;
-
-        padding: 18px;
-    }
-
-    .doctor-queue-current-info,
-    .doctor-queue-next-info {
-        padding-left: 0;
-    }
+.doctor-queue-muted {
+    color: #94a3b8;
 }
+
+
+/* =====================================================
+   ALLERGY
+   ===================================================== */
+
+.doctor-queue-allergy {
+    display: inline-flex;
+
+    align-items: center;
+
+    max-width: 180px;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    background: #fef2f2;
+
+    color: #b91c1c;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    line-height: 1.3;
+}
+
 
 /* =====================================================
    ACTION
    ===================================================== */
 
 .doctor-queue-action-cell {
-    min-width: 150px;
+    width: 150px;
 
     text-align: center;
 }
 
 .doctor-queue-start-button {
-    min-width: 130px;
+    display: inline-flex;
 
-    padding: 9px 14px;
+    align-items: center;
+    justify-content: center;
 
-    border: none;
+    min-width: 126px;
+    height: 36px;
+
+    padding: 0 14px;
+
+    border: 1px solid #0284c7;
     border-radius: 8px;
 
     background: #0284c7;
 
     color: #ffffff;
 
+    font-family: inherit;
+
     font-size: 13px;
     font-weight: 700;
 
+    line-height: 1;
+
     cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.1s ease;
 }
 
 .doctor-queue-start-button:hover:not(:disabled) {
+    border-color: #0369a1;
+
     background: #0369a1;
+
+    box-shadow:
+        0 3px 8px rgba(3, 105, 161, 0.2);
+}
+
+.doctor-queue-start-button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.doctor-queue-start-button:focus {
+    outline: none;
+}
+
+.doctor-queue-start-button:focus-visible {
+    box-shadow:
+        0 0 0 3px rgba(2, 132, 199, 0.18);
 }
 
 .doctor-queue-start-button:disabled {
-    opacity: 0.6;
+    border-color: #94a3b8;
+
+    background: #94a3b8;
 
     cursor: not-allowed;
+
+    box-shadow: none;
 }
 
 .doctor-queue-waiting-label {
@@ -481,11 +507,130 @@
 
 
 /* =====================================================
-   SUCCESS MESSAGE
+   EMPTY
    ===================================================== */
 
-.doctor-queue-success {
-    background: #dcfce7;
+.doctor-queue-empty-card {
+    display: flex;
 
-    color: #166534;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 320px;
+
+    padding: 32px;
+
+    border: 1px solid #dbe3ea;
+    border-radius: 14px;
+
+    background: #ffffff;
+
+    text-align: center;
+}
+
+.doctor-queue-empty-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 64px;
+    height: 64px;
+
+    margin-bottom: 14px;
+
+    border-radius: 50%;
+
+    background: #f1f5f9;
+
+    font-size: 28px;
+}
+
+.doctor-queue-empty-card h2 {
+    margin: 0;
+
+    color: #1e293b;
+
+    font-size: 21px;
+}
+
+.doctor-queue-empty-card p {
+    margin: 8px 0 0;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+.doctor-queue-state {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 280px;
+
+    border: 1px solid #dbe3ea;
+    border-radius: 14px;
+
+    background: #ffffff;
+}
+
+.doctor-queue-loading {
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 1000px) {
+
+    .doctor-queue-page {
+        padding: 24px;
+    }
+
+    .doctor-queue-header {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .doctor-queue-date {
+        width: 240px;
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .doctor-queue-page {
+        padding: 16px;
+    }
+
+    .doctor-queue-header h1 {
+        font-size: 28px;
+    }
+
+    .doctor-queue-card-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding: 16px;
+    }
+
+    .doctor-queue-table {
+        min-width: 900px;
+    }
 }

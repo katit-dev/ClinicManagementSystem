@@ -103,6 +103,34 @@ public class DoctorQueueStateService
         set;
     }
 
+    // =====================================================
+    // PATIENT MEDICAL HISTORY
+    // =====================================================
+
+    public List<MedicalRecordDTO> PatientMedicalRecords
+    {
+        get;
+        private set;
+    } = new();
+
+    public int? PatientHistoryPatientId
+    {
+        get;
+        private set;
+    }
+
+    public bool IsLoadingPatientHistory
+    {
+        get;
+        private set;
+    }
+
+    public string PatientHistoryErrorMessage
+    {
+        get;
+        private set;
+    } = string.Empty;
+
 
     // =====================================================
     // CONSTRUCTOR
@@ -113,6 +141,126 @@ public class DoctorQueueStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+
+    // =====================================================
+    // LOAD PATIENT MEDICAL HISTORY
+    //
+    // GET:
+    // /api/medical-records/patient/{patientId}
+    //
+    // Response:
+    // MedicalRecordDTO[]
+    // =====================================================
+
+    public async Task<bool> LoadPatientHistoryAsync(
+        int patientId)
+    {
+        PatientMedicalRecords.Clear();
+
+        PatientHistoryPatientId =
+            patientId;
+
+        PatientHistoryErrorMessage =
+            string.Empty;
+
+        IsLoadingPatientHistory =
+            true;
+
+        NotifyStateChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/medical-records/patient/{patientId}"
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<MedicalRecordDTO>
+                        >
+                    >();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                PatientHistoryErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải lịch sử bệnh nhân.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            //
+            // [] là hợp lệ:
+            // bệnh nhân chưa có bệnh án Finalized.
+            // =================================================
+
+            PatientMedicalRecords =
+                responseData.Content
+                ?? new List<MedicalRecordDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            PatientHistoryErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsLoadingPatientHistory =
+                false;
+
+            NotifyStateChanged();
+        }
+    }
+
+    // =====================================================
+    // CLEAR PATIENT MEDICAL HISTORY
+    // =====================================================
+
+    public void ClearPatientHistory()
+    {
+        PatientMedicalRecords.Clear();
+
+        PatientHistoryPatientId = null;
+
+        PatientHistoryErrorMessage =
+            string.Empty;
+
+        IsLoadingPatientHistory =
+            false;
+
+        NotifyStateChanged();
     }
 
 
@@ -413,6 +561,16 @@ public class DoctorQueueStateService
         ActionMessage = string.Empty;
 
         ActionErrorMessage = string.Empty;
+
+        PatientMedicalRecords.Clear();
+
+        PatientHistoryPatientId = null;
+
+        PatientHistoryErrorMessage =
+            string.Empty;
+
+        IsLoadingPatientHistory =
+            false;
 
         NotifyStateChanged();
     }
