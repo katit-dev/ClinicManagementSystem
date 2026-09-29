@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 using ClinicManagementSystem.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -83,6 +84,67 @@ public class MedicalRecordController : ControllerBase
                     patientId,
                     currentUserId
                 );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
+    // =====================================================
+    // SAVE MEDICAL RECORD DRAFT
+    //
+    // PUT:
+    // /api/medical-records/{id}
+    //
+    // id:
+    // MedicalRecord.Id
+    //
+    // Request:
+    // MedicalRecordDraftRequestDTO
+    //
+    // DoctorId lấy từ JWT
+    // =====================================================
+
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> UpdateMedicalRecordDraft(
+        int id,
+        [FromBody] MedicalRecordDraftRequestDTO request)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // UPDATE MEDICAL RECORD DRAFT
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .UpdateMedicalRecordDraftAsync(
+                    id,
+                    currentUserId,
+                    request
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
 
         return StatusCode(
             result.StatusCode,
