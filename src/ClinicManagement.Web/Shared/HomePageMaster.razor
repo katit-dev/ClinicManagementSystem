@@ -187,6 +187,28 @@
                 </NavLink>
             }
 
+            @* =====================================================
+   DOCTOR MENU
+   ===================================================== *@
+
+            @if (HasRole("Doctor"))
+            {
+                @* =================================================
+       DOCTOR QUEUE
+       ================================================= *@
+
+                <NavLink href="/doctor/doctor-queue" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
+
+                    <i class="fas fa-user-md"></i>
+
+                    <span>
+                        Hàng chờ bệnh nhân
+                    </span>
+
+                </NavLink>
+            }
+
         </nav>
 
     </aside>

@@ -627,4 +627,92 @@
 
         padding: 20px 16px;
     }
+
+    /* =====================================================
+   DOCTOR SIDEBAR
+   ===================================================== */
+
+.master-sidebar-section {
+    width: 100%;
 }
+
+.master-sidebar-title {
+    margin: 0 0 14px 20px;
+
+    color: #64748b;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    letter-spacing: 0.8px;
+}
+
+
+.master-sidebar-item {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 11px 16px;
+
+    margin-bottom: 4px;
+
+    border-radius: 9px;
+
+    color: #1e293b;
+
+    text-decoration: none;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+
+.master-sidebar-item:hover {
+    background: #f1f5f9;
+
+    color: #075985;
+}
+
+
+.master-sidebar-item.active {
+    background: #dff3ff;
+
+    color: #075985;
+}
+
+
+.master-sidebar-code {
+    min-width: 48px;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.master-sidebar-item.active
+.master-sidebar-code {
+    color: #075985;
+}
+
+
+.master-sidebar-text {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+.master-sidebar-item.active
+.master-sidebar-text {
+    font-weight: 750;
+}
+}
+

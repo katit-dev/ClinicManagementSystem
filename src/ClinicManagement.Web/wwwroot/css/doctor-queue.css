@@ -6,7 +6,7 @@
     width: 100%;
     box-sizing: border-box;
 
-    padding: 28px 32px 40px;
+    padding: 28px 24px 40px;
 
     color: #1e293b;
 }
@@ -18,12 +18,13 @@
 
 .doctor-queue-header {
     display: flex;
+
     align-items: flex-end;
     justify-content: space-between;
 
-    gap: 32px;
+    gap: 24px;
 
-    margin-bottom: 24px;
+    margin-bottom: 22px;
 }
 
 .doctor-queue-header-content {
@@ -43,7 +44,6 @@
 
 .doctor-queue-header h1 {
     margin: 0;
-
     padding: 0;
 
     border: 0;
@@ -73,11 +73,13 @@
 
 .doctor-queue-date {
     display: flex;
+
     flex-direction: column;
 
     gap: 6px;
 
-    width: 220px;
+    width: 200px;
+
     flex-shrink: 0;
 }
 
@@ -90,6 +92,7 @@
 
 .doctor-queue-date-input {
     width: 100%;
+
     box-sizing: border-box;
 
     padding: 10px 12px;
@@ -174,6 +177,7 @@
 
 .doctor-queue-card-header {
     display: flex;
+
     align-items: center;
     justify-content: space-between;
 
@@ -195,6 +199,8 @@
     font-weight: 800;
 
     letter-spacing: 0.9px;
+
+    line-height: 1.3;
 }
 
 .doctor-queue-card-header h2 {
@@ -204,6 +210,8 @@
 
     font-size: 20px;
     font-weight: 750;
+
+    line-height: 1.3;
 }
 
 
@@ -236,7 +244,7 @@
 
 
 /* =====================================================
-   TABLE
+   TABLE WRAPPER
    ===================================================== */
 
 .doctor-queue-table-wrapper {
@@ -245,12 +253,57 @@
     overflow-x: auto;
 }
 
+
+/* =====================================================
+   TABLE
+   ===================================================== */
+
 .doctor-queue-table {
     width: 100%;
 
     border-collapse: collapse;
 
-    table-layout: auto;
+    table-layout: fixed;
+}
+
+
+/* =====================================================
+   TABLE COLUMN WIDTHS
+   ===================================================== */
+
+.doctor-queue-table th:nth-child(1),
+.doctor-queue-table td:nth-child(1) {
+    width: 58px;
+}
+
+.doctor-queue-table th:nth-child(2),
+.doctor-queue-table td:nth-child(2) {
+    width: 220px;
+}
+
+.doctor-queue-table th:nth-child(3),
+.doctor-queue-table td:nth-child(3) {
+    width: 60px;
+}
+
+.doctor-queue-table th:nth-child(4),
+.doctor-queue-table td:nth-child(4) {
+    width: 85px;
+}
+
+.doctor-queue-table th:nth-child(5),
+.doctor-queue-table td:nth-child(5) {
+    width: 170px;
+}
+
+.doctor-queue-table th:nth-child(6),
+.doctor-queue-table td:nth-child(6) {
+    width: 150px;
+}
+
+.doctor-queue-table th:nth-child(7),
+.doctor-queue-table td:nth-child(7) {
+    width: 180px;
 }
 
 
@@ -259,7 +312,7 @@
    ===================================================== */
 
 .doctor-queue-table th {
-    padding: 12px 18px;
+    padding: 12px 14px;
 
     border-bottom: 1px solid #e2e8f0;
 
@@ -267,8 +320,12 @@
 
     color: #64748b;
 
+    font-family: inherit;
+
     font-size: 12px;
     font-weight: 800;
+
+    line-height: 1.3;
 
     text-align: left;
 
@@ -276,20 +333,15 @@
 }
 
 .doctor-queue-table th:first-child {
-    width: 70px;
+    text-align: center;
 }
 
-.doctor-queue-table th:nth-child(3) {
-    width: 70px;
-}
-
+.doctor-queue-table th:nth-child(3),
 .doctor-queue-table th:nth-child(4) {
-    width: 100px;
+    text-align: center;
 }
 
 .doctor-queue-table th:last-child {
-    width: 150px;
-
     text-align: center;
 }
 
@@ -299,15 +351,28 @@
    ===================================================== */
 
 .doctor-queue-table td {
-    padding: 15px 18px;
+    padding: 15px 14px;
 
     border-bottom: 1px solid #eef2f6;
 
     color: #475569;
 
+    font-family: inherit;
+
     font-size: 14px;
 
+    line-height: 1.4;
+
     vertical-align: middle;
+}
+
+.doctor-queue-table td:first-child {
+    text-align: center;
+}
+
+.doctor-queue-table td:nth-child(3),
+.doctor-queue-table td:nth-child(4) {
+    text-align: center;
 }
 
 .doctor-queue-table tbody tr:last-child td {
@@ -344,6 +409,8 @@
 
     font-size: 15px;
     font-weight: 800;
+
+    line-height: 1;
 }
 
 
@@ -353,24 +420,58 @@
 
 .doctor-queue-patient {
     display: flex;
+
     flex-direction: column;
 
     gap: 3px;
 
-    min-width: 190px;
+    min-width: 0;
+
+    max-width: 100%;
 }
 
 .doctor-queue-patient-name {
+    overflow: hidden;
+
     color: #1e293b;
 
     font-size: 15px;
     font-weight: 700;
+
+    line-height: 1.3;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
 }
 
 .doctor-queue-patient-code {
+    overflow: hidden;
+
     color: #94a3b8;
 
     font-size: 12px;
+
+    line-height: 1.3;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   AGE
+   ===================================================== */
+
+.doctor-queue-age {
+    color: #475569;
+
+    font-size: 14px;
+
+    text-align: center;
+
+    white-space: nowrap;
 }
 
 
@@ -397,6 +498,23 @@
 
 
 /* =====================================================
+   REASON
+   ===================================================== */
+
+.doctor-queue-reason {
+    overflow: hidden;
+
+    max-width: 100%;
+
+    color: #475569;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
    ALLERGY
    ===================================================== */
 
@@ -405,9 +523,9 @@
 
     align-items: center;
 
-    max-width: 180px;
+    max-width: 130px;
 
-    padding: 5px 9px;
+    padding: 5px 8px;
 
     border-radius: 999px;
 
@@ -419,6 +537,12 @@
     font-weight: 700;
 
     line-height: 1.3;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
 }
 
 
@@ -427,10 +551,28 @@
    ===================================================== */
 
 .doctor-queue-action-cell {
-    width: 150px;
+    width: 180px;
 
     text-align: center;
+
+    white-space: nowrap;
 }
+
+.doctor-queue-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   START EXAM BUTTON
+   ===================================================== */
 
 .doctor-queue-start-button {
     display: inline-flex;
@@ -438,10 +580,13 @@
     align-items: center;
     justify-content: center;
 
-    min-width: 126px;
+    width: 128px;
+    min-width: 128px;
     height: 36px;
 
-    padding: 0 14px;
+    box-sizing: border-box;
+
+    padding: 0 12px;
 
     border: 1px solid #0284c7;
     border-radius: 8px;
@@ -458,6 +603,8 @@
     line-height: 1;
 
     cursor: pointer;
+
+    white-space: nowrap;
 
     transition:
         background 0.15s ease,
@@ -498,11 +645,66 @@
     box-shadow: none;
 }
 
+
+/* =====================================================
+   HISTORY BUTTON
+   ===================================================== */
+
+.doctor-queue-history-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 72px;
+    min-width: 72px;
+    height: 36px;
+
+    box-sizing: border-box;
+
+    padding: 0 10px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #475569;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.doctor-queue-history-button:hover {
+    border-color: #94a3b8;
+
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   WAITING
+   ===================================================== */
+
 .doctor-queue-waiting-label {
     color: #94a3b8;
 
     font-size: 13px;
     font-weight: 600;
+
+    white-space: nowrap;
 }
 
 
@@ -554,6 +756,7 @@
     color: #1e293b;
 
     font-size: 21px;
+    font-weight: 750;
 }
 
 .doctor-queue-empty-card p {
@@ -591,192 +794,6 @@
 
 
 /* =====================================================
-   RESPONSIVE
-   ===================================================== */
-
-@media (max-width: 1000px) {
-
-    .doctor-queue-page {
-        padding: 24px;
-    }
-
-    .doctor-queue-header {
-        align-items: stretch;
-
-        flex-direction: column;
-    }
-
-    .doctor-queue-date {
-        width: 240px;
-    }
-}
-
-
-@media (max-width: 700px) {
-
-    .doctor-queue-page {
-        padding: 16px;
-    }
-
-    .doctor-queue-header h1 {
-        font-size: 28px;
-    }
-
-    .doctor-queue-card-header {
-        align-items: flex-start;
-
-        flex-direction: column;
-
-        padding: 16px;
-    }
-
-    .doctor-queue-table {
-        min-width: 900px;
-    }
-}
-
-/* =====================================================
-   ACTION COLUMN
-   ===================================================== */
-
-.doctor-queue-table th:last-child {
-    width: 220px;
-    min-width: 220px;
-
-    text-align: center;
-
-    font-size: 12px;
-}
-
-.doctor-queue-table td:last-child {
-    width: 220px;
-    min-width: 220px;
-
-    padding: 12px 14px;
-
-    text-align: center;
-}
-
-.doctor-queue-action-cell {
-    width: 220px;
-    min-width: 220px;
-
-    text-align: center;
-}
-
-.doctor-queue-actions {
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    gap: 8px;
-
-    white-space: nowrap;
-}
-
-
-/* =====================================================
-   START EXAM BUTTON
-   ===================================================== */
-
-.doctor-queue-start-button {
-    display: inline-flex !important;
-
-    align-items: center !important;
-    justify-content: center !important;
-
-    width: 130px !important;
-    min-width: 130px !important;
-    height: 38px !important;
-
-    padding: 0 12px !important;
-
-    box-sizing: border-box !important;
-
-    border: 1px solid #0284c7 !important;
-    border-radius: 8px !important;
-
-    background: #0284c7 !important;
-    color: #ffffff !important;
-
-    font-family: inherit !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-
-    line-height: 1 !important;
-
-    cursor: pointer;
-
-    white-space: nowrap;
-}
-
-.doctor-queue-start-button:hover:not(:disabled) {
-    background: #0369a1 !important;
-    border-color: #0369a1 !important;
-}
-
-.doctor-queue-start-button:disabled {
-    background: #94a3b8 !important;
-    border-color: #94a3b8 !important;
-
-    cursor: not-allowed;
-}
-
-
-/* =====================================================
-   HISTORY BUTTON
-   ===================================================== */
-
-.doctor-queue-history-button {
-    display: inline-flex !important;
-
-    align-items: center !important;
-    justify-content: center !important;
-
-    width: 72px !important;
-    min-width: 72px !important;
-    height: 38px !important;
-
-    padding: 0 10px !important;
-
-    box-sizing: border-box !important;
-
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
-
-    background: #ffffff !important;
-    color: #475569 !important;
-
-    font-family: inherit !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-
-    line-height: 1 !important;
-
-    cursor: pointer;
-
-    white-space: nowrap;
-}
-
-.doctor-queue-history-button:hover {
-    background: #f8fafc !important;
-    border-color: #94a3b8 !important;
-}
-
-
-/* =====================================================
-   WAITING
-   ===================================================== */
-
-.doctor-queue-waiting-label {
-    color: #94a3b8;
-
-    font-size: 13px !important;
-    font-weight: 600;
-}
-
-/* =====================================================
    PATIENT HISTORY OVERLAY
    ===================================================== */
 
@@ -799,7 +816,7 @@
 
 
 /* =====================================================
-   MODAL
+   PATIENT HISTORY MODAL
    ===================================================== */
 
 .doctor-history-modal {
@@ -850,9 +867,15 @@
     color: #17324d;
 
     font-size: 21px;
+    font-weight: 750;
 }
 
 .doctor-history-close {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
     width: 34px;
     height: 34px;
 
@@ -870,6 +893,9 @@
     line-height: 1;
 
     cursor: pointer;
+
+    transition:
+        background 0.15s ease;
 }
 
 .doctor-history-close:hover {
@@ -878,7 +904,7 @@
 
 
 /* =====================================================
-   CONTENT
+   HISTORY CONTENT
    ===================================================== */
 
 .doctor-history-list {
@@ -903,6 +929,11 @@
 .doctor-history-item:last-child {
     margin-bottom: 0;
 }
+
+
+/* =====================================================
+   HISTORY ITEM HEADER
+   ===================================================== */
 
 .doctor-history-item-header {
     display: flex;
@@ -948,6 +979,8 @@
 
     font-size: 11px !important;
     font-weight: 700;
+
+    white-space: nowrap;
 }
 
 
@@ -988,7 +1021,7 @@
 
 
 /* =====================================================
-   STATES
+   HISTORY STATES
    ===================================================== */
 
 .doctor-history-loading,
@@ -1009,13 +1042,123 @@
 
 
 /* =====================================================
-   RESPONSIVE
+   RESPONSIVE - QUEUE
+   ===================================================== */
+
+@media (max-width: 1100px) {
+
+    .doctor-queue-page {
+        padding: 24px 20px 32px;
+    }
+
+    .doctor-queue-header {
+        gap: 18px;
+    }
+
+    .doctor-queue-date {
+        width: 190px;
+    }
+
+    .doctor-queue-table {
+        min-width: 900px;
+    }
+
+    .doctor-queue-table-wrapper {
+        overflow-x: auto;
+    }
+}
+
+
+@media (max-width: 800px) {
+
+    .doctor-queue-page {
+        padding: 20px 16px 28px;
+    }
+
+    .doctor-queue-header {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .doctor-queue-header h1 {
+        font-size: 30px;
+    }
+
+    .doctor-queue-date {
+        width: 100%;
+    }
+
+    .doctor-queue-card-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding: 16px;
+    }
+
+    .doctor-queue-count {
+        align-self: flex-start;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .doctor-queue-page {
+        padding: 16px 12px 24px;
+    }
+
+    .doctor-queue-label {
+        font-size: 12px;
+    }
+
+    .doctor-queue-header h1 {
+        font-size: 27px;
+    }
+
+    .doctor-queue-header p {
+        font-size: 14px;
+    }
+
+    .doctor-queue-card {
+        border-radius: 12px;
+    }
+
+    .doctor-queue-card-header {
+        padding: 14px;
+    }
+
+    .doctor-queue-card-header h2 {
+        font-size: 18px;
+    }
+
+    .doctor-queue-table {
+        min-width: 900px;
+    }
+
+    .doctor-queue-actions {
+        flex-direction: column;
+
+        gap: 6px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - HISTORY
    ===================================================== */
 
 @media (max-width: 700px) {
 
     .doctor-history-overlay {
         padding: 12px;
+    }
+
+    .doctor-history-modal {
+        max-height: 90vh;
+
+        border-radius: 12px;
     }
 
     .doctor-history-content {
@@ -1030,9 +1173,13 @@
         padding: 16px;
     }
 
-    .doctor-queue-actions {
+    .doctor-history-header h2 {
+        font-size: 19px;
+    }
+
+    .doctor-history-item-header {
+        align-items: flex-start;
+
         flex-direction: column;
     }
 }
-
-
