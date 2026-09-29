@@ -68,4 +68,26 @@ public static class MedicalRecordResponseMessageDTO
 
     public const string MedicalRecordAccessDenied =
         "Bạn không có quyền chỉnh sửa bệnh án này.";
+
+    // =====================================================
+// FINALIZE MEDICAL RECORD
+// =====================================================
+
+public const string FinalizeSuccess =
+    "Chốt bệnh án thành công.";
+
+public const string FinalizeFailed =
+    "Không thể chốt bệnh án.";
+
+public const string DiagnosisRequired =
+    "Chẩn đoán là bắt buộc để chốt bệnh án.";
+
+public const string MedicalRecordAlreadyFinalized =
+    "Bệnh án đã được chốt.";
+
+
+public const string MedicalRecordServicesNotCompleted =
+    "Các chỉ định cận lâm sàng phải hoàn tất hoặc hủy trước khi chốt bệnh án.";
+
+
 }
