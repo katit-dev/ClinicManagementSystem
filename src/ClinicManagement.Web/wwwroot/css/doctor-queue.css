@@ -636,8 +636,33 @@
 }
 
 /* =====================================================
-   ACTIONS
+   ACTION COLUMN
    ===================================================== */
+
+.doctor-queue-table th:last-child {
+    width: 220px;
+    min-width: 220px;
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+.doctor-queue-table td:last-child {
+    width: 220px;
+    min-width: 220px;
+
+    padding: 12px 14px;
+
+    text-align: center;
+}
+
+.doctor-queue-action-cell {
+    width: 220px;
+    min-width: 220px;
+
+    text-align: center;
+}
 
 .doctor-queue-actions {
     display: flex;
@@ -646,43 +671,110 @@
     justify-content: center;
 
     gap: 8px;
+
+    white-space: nowrap;
 }
 
-.doctor-queue-history-button {
-    display: inline-flex;
 
-    align-items: center;
-    justify-content: center;
+/* =====================================================
+   START EXAM BUTTON
+   ===================================================== */
 
-    height: 36px;
+.doctor-queue-start-button {
+    display: inline-flex !important;
 
-    padding: 0 12px;
+    align-items: center !important;
+    justify-content: center !important;
 
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    width: 130px !important;
+    min-width: 130px !important;
+    height: 38px !important;
 
-    background: #ffffff;
+    padding: 0 12px !important;
 
-    color: #475569;
+    box-sizing: border-box !important;
 
-    font-family: inherit;
+    border: 1px solid #0284c7 !important;
+    border-radius: 8px !important;
 
-    font-size: 13px;
-    font-weight: 700;
+    background: #0284c7 !important;
+    color: #ffffff !important;
+
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+
+    line-height: 1 !important;
 
     cursor: pointer;
 
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.doctor-queue-start-button:hover:not(:disabled) {
+    background: #0369a1 !important;
+    border-color: #0369a1 !important;
+}
+
+.doctor-queue-start-button:disabled {
+    background: #94a3b8 !important;
+    border-color: #94a3b8 !important;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   HISTORY BUTTON
+   ===================================================== */
+
+.doctor-queue-history-button {
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 72px !important;
+    min-width: 72px !important;
+    height: 38px !important;
+
+    padding: 0 10px !important;
+
+    box-sizing: border-box !important;
+
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+
+    background: #ffffff !important;
+    color: #475569 !important;
+
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+
+    line-height: 1 !important;
+
+    cursor: pointer;
+
+    white-space: nowrap;
 }
 
 .doctor-queue-history-button:hover {
-    border-color: #94a3b8;
-
-    background: #f8fafc;
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
 }
 
+
+/* =====================================================
+   WAITING
+   ===================================================== */
+
+.doctor-queue-waiting-label {
+    color: #94a3b8;
+
+    font-size: 13px !important;
+    font-weight: 600;
+}
 
 /* =====================================================
    PATIENT HISTORY OVERLAY
@@ -942,3 +1034,5 @@
         flex-direction: column;
     }
 }
+
+
