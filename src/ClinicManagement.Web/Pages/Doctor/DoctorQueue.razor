@@ -21,24 +21,26 @@
 
     <div class="doctor-queue-header">
 
-        <div>
+        <div class="doctor-queue-header-content">
+
             <div class="doctor-queue-label">
                 DOCTOR QUEUE
             </div>
 
-            <h1>Hàng chờ khám</h1>
+            <h1>
+                Hàng chờ khám
+            </h1>
 
-            @if (DoctorQueueStateService.Queue != null)
-            {
-                <p>
-                    Bác sĩ:
-                    <strong>
-                        @DoctorQueueStateService.Queue.DoctorName
-                    </strong>
-                </p>
-            }
+            <p>
+                Danh sách bệnh nhân đang chờ bác sĩ khám.
+            </p>
+
         </div>
 
+
+        @* =================================================
+           DATE
+           ================================================= *@
 
         <div class="doctor-queue-date">
 
@@ -74,256 +76,214 @@
     @if (DoctorQueueStateService.IsLoading)
     {
         <div class="doctor-queue-state">
-            Đang tải hàng chờ...
-        </div>
-    }
-    else if (DoctorQueueStateService.Queue == null)
-    {
-        <div class="doctor-queue-state">
-            Chưa có dữ liệu hàng chờ.
+
+            <div class="doctor-queue-loading">
+                Đang tải hàng chờ...
+            </div>
+
         </div>
     }
     else
     {
-        var queue =
-            DoctorQueueStateService.Queue;
-
-
         @* =================================================
-           CURRENT
+           QUEUE
            ================================================= *@
 
-        <section class="doctor-queue-card">
+        @if (DoctorQueueStateService.QueueItems.Count == 0)
+        {
+            <div class="doctor-queue-empty-card">
 
-            <div class="doctor-queue-card-header">
-
-                <div>
-                    <div class="doctor-queue-card-label">
-                        ĐANG KHÁM
-                    </div>
-
-                    <h2>
-                        Bệnh nhân hiện tại
-                    </h2>
+                <div class="doctor-queue-empty-icon">
+                    <span>👥</span>
                 </div>
+
+                <h2>
+                    Chưa có dữ liệu hàng chờ
+                </h2>
+
+                <p>
+                    Danh sách bệnh nhân chờ khám sẽ được hiển thị tại đây.
+                </p>
 
             </div>
+        }
+        else
+        {
+            <div class="doctor-queue-card">
 
+                @* =============================================
+                   CARD HEADER
+                   ============================================= *@
 
-            @if (queue.Current == null)
-            {
-                <div class="doctor-queue-empty">
-                    Hiện tại chưa có bệnh nhân đang khám.
-                </div>
-            }
-            else
-            {
-                <div class="doctor-queue-current">
+                <div class="doctor-queue-card-header">
 
-                    <div class="doctor-queue-number">
-                        @queue.Current.QueueNumber
-                    </div>
+                    <div>
 
-                    <div class="doctor-queue-patient">
-
-                        <div class="doctor-queue-patient-name">
-                            @queue.Current.PatientName
+                        <div class="doctor-queue-card-label">
+                            APPOINTMENTS STATUS = CHECKEDIN
                         </div>
 
-                        <div class="doctor-queue-patient-code">
-                            @queue.Current.PatientCode
-                        </div>
+                        <h2>
+                            Hàng chờ bệnh nhân
+                        </h2>
 
                     </div>
 
-                    <div class="doctor-queue-current-info">
 
-                        <span>
-                            Mã lịch:
-                        </span>
-
-                        <strong>
-                            @queue.Current.AppointmentCode
-                        </strong>
-
-                    </div>
-
-                    <div class="doctor-queue-current-info">
-
-                        <span>
-                            Giờ hẹn:
-                        </span>
-
-                        <strong>
-                            @queue.Current.StartTime.ToString("HH:mm")
-                        </strong>
-
+                    <div class="doctor-queue-count">
+                        @DoctorQueueStateService.QueueItems.Count bệnh nhân
                     </div>
 
                 </div>
-            }
-
-        </section>
 
 
-        @* =================================================
-           NEXT
-           ================================================= *@
+                @* =============================================
+                   TABLE
+                   ============================================= *@
 
-        <section class="doctor-queue-card">
-
-            <div class="doctor-queue-card-header">
-
-                <div>
-                    <div class="doctor-queue-card-label">
-                        TIẾP THEO
-                    </div>
-
-                    <h2>
-                        Bệnh nhân tiếp theo
-                    </h2>
-                </div>
-
-            </div>
-
-
-            @if (queue.Next == null)
-            {
-                <div class="doctor-queue-empty">
-                    Không có bệnh nhân tiếp theo.
-                </div>
-            }
-            else
-            {
-                <div class="doctor-queue-next">
-
-                    <div class="doctor-queue-number">
-                        @queue.Next.QueueNumber
-                    </div>
-
-                    <div class="doctor-queue-patient">
-
-                        <div class="doctor-queue-patient-name">
-                            @queue.Next.PatientName
-                        </div>
-
-                        <div class="doctor-queue-patient-code">
-                            @queue.Next.PatientCode
-                        </div>
-
-                    </div>
-
-                    <div class="doctor-queue-next-info">
-
-                        <span>
-                            Mã lịch:
-                        </span>
-
-                        <strong>
-                            @queue.Next.AppointmentCode
-                        </strong>
-
-                    </div>
-
-                    <div class="doctor-queue-next-info">
-
-                        <span>
-                            Giờ hẹn:
-                        </span>
-
-                        <strong>
-                            @queue.Next.StartTime.ToString("HH:mm")
-                        </strong>
-
-                    </div>
-
-                </div>
-            }
-
-        </section>
-
-
-        @* =================================================
-           WAITING
-           ================================================= *@
-
-        <section class="doctor-queue-card">
-
-            <div class="doctor-queue-card-header">
-
-                <div>
-                    <div class="doctor-queue-card-label">
-                        ĐANG CHỜ
-                    </div>
-
-                    <h2>
-                        Danh sách chờ
-                    </h2>
-                </div>
-
-                <span class="doctor-queue-count">
-                    @queue.WaitingCount bệnh nhân
-                </span>
-
-            </div>
-
-
-            @if (queue.Waiting == null ||
-                 queue.Waiting.Count == 0)
-            {
-                <div class="doctor-queue-empty">
-                    Không có bệnh nhân đang chờ.
-                </div>
-            }
-            else
-            {
                 <div class="doctor-queue-table-wrapper">
 
                     <table class="doctor-queue-table">
 
                         <thead>
+
                             <tr>
-                                <th>STT</th>
-                                <th>Bệnh nhân</th>
-                                <th>Mã bệnh nhân</th>
-                                <th>Mã lịch</th>
-                                <th>Giờ hẹn</th>
-                                <th>Check-in</th>
+
+                                <th>
+                                    STT
+                                </th>
+
+                                <th>
+                                    Bệnh nhân
+                                </th>
+
+                                <th>
+                                    Tuổi
+                                </th>
+
+                                <th>
+                                    Giờ hẹn
+                                </th>
+
+                                <th>
+                                    Lý do khám
+                                </th>
+
+                                <th>
+                                    Cảnh báo
+                                </th>
+
                             </tr>
+
                         </thead>
+
 
                         <tbody>
 
-                            @foreach (var item in queue.Waiting)
+                            @foreach (
+                                var item
+                                in DoctorQueueStateService.QueueItems)
                             {
                                 <tr>
 
+                                    @* =================================
+                                       QUEUE NUMBER
+                                       ================================= *@
+
                                     <td>
-                                        <span class="doctor-queue-number-small">
+
+                                        <span class="doctor-queue-number">
                                             @item.QueueNumber
                                         </span>
+
                                     </td>
 
-                                    <td>
-                                        <strong>
-                                            @item.PatientName
-                                        </strong>
-                                    </td>
+
+                                    @* =================================
+                                       PATIENT
+                                       ================================= *@
 
                                     <td>
-                                        @item.PatientCode
+
+                                        <div class="doctor-queue-patient">
+
+                                            <div class="doctor-queue-patient-name">
+                                                @item.PatientName
+                                            </div>
+
+                                            <div class="doctor-queue-patient-code">
+                                                @item.PatientCode
+                                            </div>
+
+                                        </div>
+
                                     </td>
 
-                                    <td>
-                                        @item.AppointmentCode
-                                    </td>
+
+                                    @* =================================
+                                       AGE
+                                       ================================= *@
 
                                     <td>
-                                        @item.StartTime.ToString("HH:mm")
+                                        @item.Age
                                     </td>
 
+
+                                    @* =================================
+                                       APPOINTMENT TIME
+                                       ================================= *@
+
                                     <td>
-                                        @(item.CheckedInAt?.ToString("HH:mm") ?? "-")
+
+                                        <span class="doctor-queue-time">
+                                            @item.StartTime.ToString("HH:mm")
+                                        </span>
+
+                                    </td>
+
+
+                                    @* =================================
+                                       REASON
+                                       ================================= *@
+
+                                    <td>
+
+                                        @if (string.IsNullOrWhiteSpace(item.Reason))
+                                        {
+                                            <span class="doctor-queue-muted">
+                                                —
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>
+                                                @item.Reason
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    @* =================================
+                                       ALLERGY WARNING
+                                       ================================= *@
+
+                                    <td>
+
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            item.AllergyWarning))
+                                        {
+                                            <span class="doctor-queue-allergy">
+                                                @item.AllergyWarning
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="doctor-queue-muted">
+                                                —
+                                            </span>
+                                        }
+
                                     </td>
 
                                 </tr>
@@ -334,9 +294,9 @@
                     </table>
 
                 </div>
-            }
 
-        </section>
+            </div>
+        }
     }
 
 </div>
@@ -344,9 +304,17 @@
 
 @code {
 
+    // =====================================================
+    // SELECTED DATE
+    // =====================================================
+
     private DateTime _selectedDate =
         DateTime.Today;
 
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
 
     protected override async Task OnInitializedAsync()
     {
@@ -362,6 +330,10 @@
     }
 
 
+    // =====================================================
+    // DATE CHANGED
+    // =====================================================
+
     private async Task OnDateChangedAsync()
     {
         await DoctorQueueStateService
@@ -373,8 +345,13 @@
     }
 
 
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
     public void Dispose()
     {
-        DoctorQueueStateService.OnChange = null;
+        DoctorQueueStateService.OnChange =
+            null;
     }
 }
