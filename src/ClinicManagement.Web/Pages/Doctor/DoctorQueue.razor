@@ -290,34 +290,35 @@
 
                                     </td>
 
+                                    // thao tac
                                     <td class="doctor-queue-action-cell">
 
-                                        @if (isFirst)
-                                        {
-                                            <button type="button" class="doctor-queue-start-button" disabled="@isStarting"
-                                                    @onclick="() => HandleStartExam(item.AppointmentId)">
+                                        <div class="doctor-queue-actions">
 
-                                                @if (isStarting)
-                                                {
-                                                    <span>
-                                                        Đang bắt đầu...
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span>
-                                                        Bắt đầu khám
-                                                    </span>
-                                                }
+                                            @if (isFirst)
+                                            {
+                                                <button type="button" class="doctor-queue-start-button" disabled="@isStarting"
+                                                        @onclick="() => HandleStartExam(item.AppointmentId)">
 
+                                                    @if (isStarting)
+                                                    {
+                                                        <span>Đang bắt đầu...</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Bắt đầu khám</span>
+                                                    }
+
+                                                </button>
+                                            }
+
+                                            <button type="button" class="doctor-queue-history-button"
+                                                    @onclick="() => HandleViewHistory(item.PatientId)">
+
+                                                Lịch sử
                                             </button>
-                                        }
-                                        else
-                                        {
-                                            <span class="doctor-queue-waiting-label">
-                                                Chờ
-                                            </span>
-                                        }
+
+                                        </div>
 
                                     </td>
 
@@ -335,6 +336,153 @@
     }
 
 </div>
+
+@if (DoctorQueueStateService.PatientHistoryPatientId != null)
+{
+    <div class="doctor-history-overlay" @onclick="ClosePatientHistory">
+
+        <div class="doctor-history-modal" @onclick:stopPropagation="true">
+
+            <div class="doctor-history-header">
+
+                <div>
+                    <div class="doctor-history-label">
+                        PATIENT HISTORY
+                    </div>
+
+                    <h2>
+                        Lịch sử khám bệnh
+                    </h2>
+                </div>
+
+                <button type="button" class="doctor-history-close" @onclick="ClosePatientHistory">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            @if (DoctorQueueStateService.IsLoadingPatientHistory)
+            {
+                <div class="doctor-history-loading">
+                    Đang tải lịch sử khám...
+                </div>
+            }
+            else if (
+                !string.IsNullOrWhiteSpace(
+                    DoctorQueueStateService.PatientHistoryErrorMessage))
+            {
+                <div class="doctor-history-error">
+                    @DoctorQueueStateService.PatientHistoryErrorMessage
+                </div>
+            }
+            else if (
+                DoctorQueueStateService.PatientMedicalRecords.Count == 0)
+            {
+                <div class="doctor-history-empty">
+                    Chưa có lịch sử khám đã hoàn tất.
+                </div>
+            }
+            else
+            {
+                <div class="doctor-history-list">
+
+                    @foreach (
+                        var record
+                        in DoctorQueueStateService.PatientMedicalRecords)
+                    {
+                        <div class="doctor-history-item">
+
+                            <div class="doctor-history-item-header">
+
+                                <div>
+                                    <strong>
+                                        @record.DoctorName
+                                    </strong>
+
+                                    <span>
+                                        @record.CreatedAt.ToString(
+                                            "dd/MM/yyyy HH:mm")
+                                    </span>
+                                </div>
+
+                                <span class="doctor-history-finalized">
+                                    Đã hoàn tất
+                                </span>
+
+                            </div>
+
+
+                            <div class="doctor-history-content">
+
+                                <div>
+                                    <label>
+                                        Chẩn đoán
+                                    </label>
+
+                                    <p>
+                                        @(string.IsNullOrWhiteSpace(
+                                            record.Diagnosis)
+                                            ? "—"
+                                            : record.Diagnosis)
+                                    </p>
+                                </div>
+
+
+                                <div>
+                                    <label>
+                                        ICD-10
+                                    </label>
+
+                                    <p>
+                                        @(string.IsNullOrWhiteSpace(
+                                            record.Icd10Code)
+                                            ? "—"
+                                            : record.Icd10Code)
+                                    </p>
+                                </div>
+
+
+                                <div>
+                                    <label>
+                                        Kế hoạch điều trị
+                                    </label>
+
+                                    <p>
+                                        @(string.IsNullOrWhiteSpace(
+                                            record.TreatmentPlan)
+                                            ? "—"
+                                            : record.TreatmentPlan)
+                                    </p>
+                                </div>
+
+
+                                <div>
+                                    <label>
+                                        Ngày tái khám
+                                    </label>
+
+                                    <p>
+                                        @(record.FollowUpDate?.ToString(
+                                            "dd/MM/yyyy")
+                                            ?? "—")
+                                    </p>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+}
 
 
 @code {
@@ -362,6 +510,29 @@
                     _selectedDate
                 )
             );
+    }
+
+    // =====================================================
+    // VIEW PATIENT HISTORY
+    // =====================================================
+
+    private async Task HandleViewHistory(
+        int patientId)
+    {
+        await DoctorQueueStateService
+            .LoadPatientHistoryAsync(
+                patientId
+            );
+    }
+
+    // =====================================================
+    // CLOSE PATIENT HISTORY
+    // =====================================================
+
+    private void ClosePatientHistory()
+    {
+        DoctorQueueStateService
+            .ClearPatientHistory();
     }
 
     // =====================================================
