@@ -117,5 +117,27 @@ public static class MedicalRecordResponseMessageDTO
     public const string CancelServiceFailed =
         "Không thể hủy chỉ định cận lâm sàng.";
 
+    //add medical record service result
+    public const string InvalidLabResultRequest =
+    "Dữ liệu kết quả cận lâm sàng không hợp lệ.";
+
+    public const string LabResultValueRequired =
+        "Kết quả cận lâm sàng không được để trống.";
+
+    public const string MedicalRecordServiceCancelled =
+        "Chỉ định cận lâm sàng đã bị hủy.";
+
+    public const string MedicalRecordServiceCompleted =
+        "Chỉ định cận lâm sàng đã hoàn tất.";
+
+    public const string LabResultAlreadyExists =
+        "Chỉ định cận lâm sàng đã có kết quả.";
+
+    public const string AddLabResultSuccess =
+        "Nhập kết quả cận lâm sàng thành công.";
+
+    public const string AddLabResultFailed =
+        "Không thể nhập kết quả cận lâm sàng.";
+
 
 }

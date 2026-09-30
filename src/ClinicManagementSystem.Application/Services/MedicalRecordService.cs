@@ -464,7 +464,7 @@ public async Task<
                             labResult.Conclusion,
 
                         ResultedAt =
-                            labResult.ResultedAt
+                            labResult.CreatedAt
                     }
             };
 
