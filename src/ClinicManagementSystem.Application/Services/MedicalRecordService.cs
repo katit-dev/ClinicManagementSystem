@@ -34,6 +34,8 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<MedicalRecordServiceDTO>> AddMedicalRecordServiceAsync(int medicalRecordId, int currentUserId, MedicalRecordServiceRequestDTO request);
 
+    Task<HttpResponseData<MedicalRecordServiceDTO>> CancelMedicalRecordServiceAsync(int medicalRecordServiceId, int currentUserId);
+
 }
 
 // =====================================================
@@ -67,6 +69,313 @@ public class MedicalRecordService
 
         _logger =
             logger;
+    }
+
+    // =====================================================
+    // CANCEL MEDICAL RECORD SERVICE
+    //
+    // PATCH:
+    // /api/medical-record-services/{id}/cancel
+    //
+    // Chỉ được hủy khi:
+    // MedicalRecordService.Status = Ordered
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<MedicalRecordServiceDTO>>
+        CancelMedicalRecordServiceAsync(
+            int medicalRecordServiceId,
+            int currentUserId)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE ID
+            // =================================================
+
+            if (medicalRecordServiceId <= 0)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordServiceNotFound
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE USER
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 401,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // GET CURRENT DOCTOR
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // DOCTOR NOT FOUND
+            // =================================================
+
+            if (doctor == null)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 403,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD SERVICE
+            //
+            // Load luôn Service để map response.
+            // =================================================
+
+            var medicalRecordService =
+                await _unitOfWork
+                    .MedicalRecordServiceRepository
+                    .WhereSql(
+                        s =>
+                            s.Id == medicalRecordServiceId
+                    )
+                    .Include(
+                        s => s.Service
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // SERVICE NOT FOUND
+            // =================================================
+
+            if (medicalRecordService == null)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordServiceNotFound
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id ==
+                            medicalRecordService.MedicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MEDICAL RECORD NOT FOUND
+            // =================================================
+
+            if (medicalRecord == null)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
+            }
+
+
+            // =================================================
+            // CHECK DOCTOR OWNERSHIP
+            // =================================================
+
+            if (
+                medicalRecord.DoctorId !=
+                doctor.Id
+            )
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 403,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // CHECK MEDICAL RECORD STATUS
+            //
+            // Finalized = đã khóa bệnh án.
+            // =================================================
+
+            if (
+                medicalRecord.Status !=
+                (byte)MedicalRecordStatus.Draft
+            )
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotDraft
+                };
+            }
+
+
+            // =================================================
+            // CHECK SERVICE STATUS
+            //
+            // Chỉ Ordered mới được hủy.
+            // =================================================
+
+            if (
+                medicalRecordService.Status !=
+                (byte)MedicalRecordServiceStatus.Ordered
+            )
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordServiceNotOrdered
+                };
+            }
+
+
+            // =================================================
+            // CANCEL
+            // =================================================
+
+            medicalRecordService.Status =
+                (byte)MedicalRecordServiceStatus.Cancelled;
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new MedicalRecordServiceDTO
+                {
+                    Id =
+                        medicalRecordService.Id,
+
+                    ServiceId =
+                        medicalRecordService.ServiceId,
+
+                    ServiceName =
+                        medicalRecordService.Service?.Name
+                        ?? string.Empty,
+
+                    Quantity =
+                        medicalRecordService.Quantity,
+
+                    UnitPriceSnapshot =
+                        medicalRecordService
+                            .UnitPriceSnapshot,
+
+                    Status =
+                        medicalRecordService.Status,
+
+                    OrderedAt =
+                        medicalRecordService.OrderedAt,
+
+                    CompletedAt =
+                        medicalRecordService.CompletedAt,
+
+                    Result = null
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<MedicalRecordServiceDTO>
+            {
+                StatusCode = 200,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .CancelServiceSuccess,
+
+                Content =
+                    result
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to cancel medical record service. " +
+                "MedicalRecordServiceId: {MedicalRecordServiceId}, " +
+                "UserId: {UserId}",
+                medicalRecordServiceId,
+                currentUserId
+            );
+
+            return new HttpResponseData<MedicalRecordServiceDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .CancelServiceFailed
+            };
+        }
     }
 
     // =====================================================
