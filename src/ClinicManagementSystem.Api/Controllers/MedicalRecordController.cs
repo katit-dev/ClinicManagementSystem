@@ -152,4 +152,58 @@ public class MedicalRecordController : ControllerBase
         );
     }
 
+    // =====================================================
+    // FINALIZE MEDICAL RECORD
+    //
+    // POST:
+    // /api/medical-records/{id}/finalize
+    //
+    // Doctor hiện tại lấy từ JWT.
+    // =====================================================
+
+    [HttpPost("{id}/finalize")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> FinalizeMedicalRecord(
+        int id)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // FINALIZE MEDICAL RECORD
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .FinalizeMedicalRecordAsync(
+                    id,
+                    currentUserId
+                );
+
+
+        // =================================================
+        // RETURN RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }
