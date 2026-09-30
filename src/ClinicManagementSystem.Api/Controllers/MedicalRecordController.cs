@@ -322,4 +322,55 @@ public class MedicalRecordController : ControllerBase
         );
     }
 
+    // =====================================================
+    // CANCEL MEDICAL RECORD SERVICE
+    //
+    // PATCH:
+    // /api/medical-record-services/{id}/cancel
+    // =====================================================
+
+    [HttpPatch("~/api/medical-record-services/{id:int}/cancel")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> CancelMedicalRecordService(
+        int id)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // CANCEL
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .CancelMedicalRecordServiceAsync(
+                    id,
+                    currentUserId
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }
