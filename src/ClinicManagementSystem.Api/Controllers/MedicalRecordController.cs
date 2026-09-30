@@ -428,4 +428,89 @@ public class MedicalRecordController : ControllerBase
         );
     }
 
+    // =====================================================
+    // UPLOAD MEDICAL RECORD ATTACHMENT
+    //
+    // POST:
+    // /api/medical-records/{id}/attachments
+    //
+    // Request:
+    // multipart/form-data
+    // =====================================================
+
+    [HttpPost("{id:int}/attachments")]
+    [Authorize(Roles = "Doctor")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<IActionResult> UploadMedicalRecordAttachment(
+        int id,
+        IFormFile file)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // VALIDATE FILE
+        // =================================================
+
+        if (file == null)
+        {
+            return BadRequest(
+                new
+                {
+                    statusCode = 400,
+                    message =
+                        MedicalRecordResponseMessageDTO
+                            .AttachmentFileRequired
+                }
+            );
+        }
+
+
+        // =================================================
+        // OPEN FILE STREAM
+        // =================================================
+
+        await using var fileStream =
+            file.OpenReadStream();
+
+
+        // =================================================
+        // CALL SERVICE
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .UploadMedicalRecordAttachmentAsync(
+                    id,
+                    currentUserId,
+                    fileStream,
+                    file.FileName,
+                    file.ContentType
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }
