@@ -607,18 +607,25 @@
     // =====================================================
     // SELECT DoctorAsync
     // =====================================================
+
     private async Task SelectDoctorAsync(
     ChangeEventArgs e)
     {
-        if (int.TryParse(
+        if (!int.TryParse(
             e.Value?.ToString(),
             out var doctorId))
         {
-            ReceptionBookingStateService
-                .SelectDoctor(doctorId);
-
-            await Task.CompletedTask;
+            return;
         }
+
+        ReceptionBookingStateService
+            .SelectDoctor(doctorId);
+
+        await ReceptionBookingStateService
+            .LoadSlotsAsync(
+                doctorId,
+                ReceptionBookingStateService.SelectedDate
+            );
     }
 
     // =====================================================
