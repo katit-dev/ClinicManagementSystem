@@ -105,5 +105,17 @@ public static class MedicalRecordResponseMessageDTO
     public const string AddServiceFailed =
         "Không thể chỉ định dịch vụ cận lâm sàng.";
 
+    public const string MedicalRecordServiceNotFound =
+    "Không tìm thấy chỉ định cận lâm sàng.";
+
+    public const string MedicalRecordServiceNotOrdered =
+        "Chỉ có thể hủy chỉ định đang ở trạng thái Ordered.";
+
+    public const string CancelServiceSuccess =
+        "Hủy chỉ định cận lâm sàng thành công.";
+
+    public const string CancelServiceFailed =
+        "Không thể hủy chỉ định cận lâm sàng.";
+
 
 }
