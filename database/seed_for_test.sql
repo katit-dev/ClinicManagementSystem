@@ -1756,3 +1756,32 @@ VALUES
     '2026-09-30',
     NULL
 );
+
+
+------------------------------
+SELECT
+    Id,
+    appointment_id,
+    doctor_id,
+    Symptoms,
+    Diagnosis,
+    icd10_code,
+    treatment_plan,
+    Note,
+    follow_up_date,
+    Status,
+    finalized_at,
+    updated_at
+FROM clinical.medical_records
+WHERE Id = 5
+
+SELECT
+    Id,
+    medical_record_id,
+    Temperature,
+    Pulse,
+    blood_pressure,
+    Weight,
+    Height
+FROM clinical.patient_vitals
+WHERE medical_record_id = 5
