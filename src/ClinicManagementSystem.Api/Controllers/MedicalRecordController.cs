@@ -206,4 +206,62 @@ public class MedicalRecordController : ControllerBase
         );
     }
 
+    // =====================================================
+    // GET MEDICAL RECORD BY ID - DOCTOR
+    //
+    // GET:
+    // /api/medical-records/{id}
+    //
+    // Doctor hiện tại lấy từ JWT.
+    //
+    // Cho phép đọc:
+    // - Draft
+    // - Finalized
+    // =====================================================
+
+    [HttpGet("{id:int}")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> GetMedicalRecordByIdForDoctor(
+        int id)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // GET MEDICAL RECORD
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .GetMedicalRecordByIdForDoctorAsync(
+                    id,
+                    currentUserId
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }
