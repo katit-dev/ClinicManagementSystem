@@ -1785,3 +1785,19 @@ SELECT
     Height
 FROM clinical.patient_vitals
 WHERE medical_record_id = 5
+
+
+
+----------------------------------------
+SELECT
+    id,
+    medical_record_id,
+    service_id,
+    quantity,
+    unit_price_snapshot,
+    status,
+    ordered_at,
+    completed_at
+FROM clinical.medical_record_services
+WHERE medical_record_id = 4
+ORDER BY id DESC;
