@@ -496,11 +496,10 @@
                        FINALIZE
                        ================================================= *@
 
-                    <button type="button" class="doctor-exam-finalize-button"
-                            disabled="@(IsFinalized || DoctorExamStateService.IsFinalizing)"
+                    <button type="button" class="doctor-exam-finalize-button" disabled="@(IsFinalized || IsFinalizingExam)"
                             @onclick="FinalizeMedicalRecordAsync">
 
-                        @(DoctorExamStateService.IsFinalizing
+                        @(IsFinalizingExam
                             ? "Đang chốt..."
                             : "Hoàn tất & chốt bệnh án")
 
@@ -531,6 +530,8 @@
     // =====================================================
 
     private readonly DoctorExamFormModel Form = new();
+
+    private bool IsFinalizingExam;
 
 
     // =====================================================
@@ -573,36 +574,57 @@
 
     // =====================================================
     // FINALIZE MEDICAL RECORD
+    //
+    // FLOW:
+    //
+    // Form
+    // ↓
+    // Save Draft
+    // ↓
+    // PUT /api/medical-records/{id}
+    // ↓
+    // Save success?
+    // ↓
+    // POST /api/medical-records/{id}/finalize
     // =====================================================
 
     private async Task FinalizeMedicalRecordAsync()
     {
-        // =================================================
-        // DO NOT FINALIZE AGAIN
-        // =================================================
-
-        if (IsFinalized)
+        if (IsFinalized ||
+            IsFinalizingExam)
         {
             return;
         }
 
+        IsFinalizingExam = true;
 
-        // =================================================
-        // CALL STATE SERVICE
-        // =================================================
+        try
+        {
+            var saved =
+                await SaveDraftAsync();
 
-        await DoctorExamStateService
-            .FinalizeMedicalRecordAsync(
-                MedicalRecordId
-            );
+            if (!saved)
+            {
+                return;
+            }
+
+            await DoctorExamStateService
+                .FinalizeMedicalRecordAsync(
+                    MedicalRecordId
+                );
+        }
+        finally
+        {
+            IsFinalizingExam = false;
+        }
     }
-
-
+    
+    
     // =====================================================
     // SAVE DRAFT
     // =====================================================
 
-    private async Task SaveDraftAsync()
+    private async Task<bool> SaveDraftAsync()
     {
         // =================================================
         // DO NOT SAVE FINALIZED RECORD
@@ -610,7 +632,7 @@
 
         if (IsFinalized)
         {
-            return;
+            return false;
         }
 
 
@@ -645,7 +667,7 @@
 
 
         // =================================================
-        // CALL STATE SERVICE
+        // SAVE DRAFT
         // =================================================
 
         var success =
@@ -664,8 +686,10 @@
                 DoctorExamStateService.MedicalRecord
             );
         }
-    }
 
+
+        return success;
+    }
 
     // =====================================================
     // BUILD PATIENT VITAL REQUEST
