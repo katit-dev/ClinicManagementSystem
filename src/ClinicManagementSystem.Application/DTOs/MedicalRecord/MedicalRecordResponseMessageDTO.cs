@@ -139,5 +139,17 @@ public static class MedicalRecordResponseMessageDTO
     public const string AddLabResultFailed =
         "Không thể nhập kết quả cận lâm sàng.";
 
+    // upload attachment
+    public const string AttachmentFileRequired =
+    "Vui lòng chọn file.";
+
+    public const string AttachmentFileTypeNotAllowed =
+        "Định dạng file không được hỗ trợ. Chỉ chấp nhận jpg, png, pdf, dicom.";
+
+    public const string AttachmentUploadSuccess =
+        "Đính kèm file thành công.";
+
+    public const string AttachmentUploadFailed =
+        "Không thể đính kèm file.";
 
 }
