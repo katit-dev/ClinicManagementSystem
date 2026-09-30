@@ -31,6 +31,8 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<MedicalRecordExamDTO>> GetMedicalRecordByIdForDoctorAsync(int medicalRecordId, int currentUserId);
 
+    Task<HttpResponseData<MedicalRecordServiceDTO>> AddMedicalRecordServiceAsync(int medicalRecordId, int currentUserId, MedicalRecordServiceRequestDTO request);
+
 }
 
 // =====================================================
@@ -65,6 +67,8 @@ public class MedicalRecordService
         _logger =
             logger;
     }
+
+    
 
     // =====================================================
     // GET MEDICAL RECORD BY ID - DOCTOR

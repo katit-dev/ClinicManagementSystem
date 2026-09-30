@@ -70,24 +70,40 @@ public static class MedicalRecordResponseMessageDTO
         "Bạn không có quyền chỉnh sửa bệnh án này.";
 
     // =====================================================
-// FINALIZE MEDICAL RECORD
-// =====================================================
+    // FINALIZE MEDICAL RECORD
+    // =====================================================
 
-public const string FinalizeSuccess =
-    "Chốt bệnh án thành công.";
+    public const string FinalizeSuccess =
+        "Chốt bệnh án thành công.";
 
-public const string FinalizeFailed =
-    "Không thể chốt bệnh án.";
+    public const string FinalizeFailed =
+        "Không thể chốt bệnh án.";
 
-public const string DiagnosisRequired =
-    "Chẩn đoán là bắt buộc để chốt bệnh án.";
+    public const string DiagnosisRequired =
+        "Chẩn đoán là bắt buộc để chốt bệnh án.";
 
-public const string MedicalRecordAlreadyFinalized =
-    "Bệnh án đã được chốt.";
+    public const string MedicalRecordAlreadyFinalized =
+        "Bệnh án đã được chốt.";
 
 
-public const string MedicalRecordServicesNotCompleted =
-    "Các chỉ định cận lâm sàng phải hoàn tất hoặc hủy trước khi chốt bệnh án.";
+    public const string MedicalRecordServicesNotCompleted =
+        "Các chỉ định cận lâm sàng phải hoàn tất hoặc hủy trước khi chốt bệnh án.";
+
+    // VC 14- CLS 
+    public const string InvalidMedicalRecordServiceRequest =
+        "Dữ liệu chỉ định dịch vụ không hợp lệ.";
+
+    public const string ServiceNotFound =
+        "Không tìm thấy dịch vụ.";
+
+    public const string InvalidServiceQuantity =
+        "Số lượng dịch vụ phải lớn hơn 0.";
+
+    public const string AddServiceSuccess =
+        "Chỉ định dịch vụ cận lâm sàng thành công.";
+
+    public const string AddServiceFailed =
+        "Không thể chỉ định dịch vụ cận lâm sàng.";
 
 
 }
