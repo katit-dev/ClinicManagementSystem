@@ -1,11 +1,14 @@
 /* =====================================================
-   DOCTOR EXAM
+   DOCTOR EXAM PAGE
    ===================================================== */
 
 .doctor-exam-page {
     width: 100%;
-    padding: 28px 32px 40px;
     box-sizing: border-box;
+
+    padding: 24px 32px 40px;
+
+    color: #334155;
 }
 
 
@@ -17,25 +20,39 @@
     margin-bottom: 24px;
 }
 
+.doctor-exam-header > div {
+    min-width: 0;
+}
+
 .doctor-exam-label {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    opacity: 0.65;
     margin-bottom: 6px;
+
+    color: #0284c7;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    letter-spacing: 0.08em;
 }
 
 .doctor-exam-header h1 {
     margin: 0;
-    font-size: 28px;
+
+    color: #16324f;
+
+    font-size: 32px;
     font-weight: 700;
+
+    line-height: 1.2;
 }
 
 .doctor-exam-header p {
     margin: 8px 0 0;
-    font-size: 14px;
-    opacity: 0.7;
+
+    color: #64748b;
+
+    font-size: 15px;
+    line-height: 1.5;
 }
 
 
@@ -44,45 +61,70 @@
    ===================================================== */
 
 .doctor-exam-message {
-    padding: 13px 16px;
+    margin-bottom: 16px;
+
+    padding: 12px 14px;
+
     border-radius: 10px;
-    margin-bottom: 18px;
+
     font-size: 14px;
+    font-weight: 500;
+}
+
+.doctor-exam-success {
+    border: 1px solid #bbf7d0;
+
+    background: #f0fdf4;
+    color: #15803d;
 }
 
 .doctor-exam-error {
-    border: 1px solid #f1c4c4;
-    background: #fff5f5;
-    color: #b42318;
+    border: 1px solid #fecaca;
+
+    background: #fef2f2;
+    color: #b91c1c;
 }
 
 
 /* =====================================================
-   LOADING / EMPTY
+   LOADING / EMPTY STATE
    ===================================================== */
 
 .doctor-exam-state {
-    min-height: 240px;
     display: flex;
+
     align-items: center;
     justify-content: center;
-    border: 1px solid #e6e8ec;
-    border-radius: 14px;
+
+    min-height: 280px;
+
+    padding: 30px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
     background: #ffffff;
+
+    color: #64748b;
+
     font-size: 14px;
-    opacity: 0.7;
+
+    text-align: center;
 }
 
 
 /* =====================================================
-   MAIN CARD
+   MEDICAL RECORD CARD
    ===================================================== */
 
 .doctor-exam-card {
     width: 100%;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
     background: #ffffff;
-    border: 1px solid #e6e8ec;
-    border-radius: 16px;
+
     overflow: hidden;
 }
 
@@ -93,24 +135,36 @@
 
 .doctor-exam-card-header {
     display: flex;
+
     align-items: center;
     justify-content: space-between;
+
     gap: 20px;
-    padding: 22px 24px;
-    border-bottom: 1px solid #e9ebef;
+
+    padding: 18px;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    background: #f8fafc;
 }
 
 .doctor-exam-card-label {
+    margin-bottom: 4px;
+
+    color: #64748b;
+
     font-size: 11px;
     font-weight: 700;
+
     letter-spacing: 0.08em;
-    text-transform: uppercase;
-    opacity: 0.6;
 }
 
 .doctor-exam-card-header h2 {
-    margin: 4px 0 0;
-    font-size: 22px;
+    margin: 0;
+
+    color: #16324f;
+
+    font-size: 20px;
     font-weight: 700;
 }
 
@@ -120,28 +174,35 @@
    ===================================================== */
 
 .doctor-exam-status {
-    flex-shrink: 0;
+    display: flex;
+
+    align-items: center;
 }
 
-.doctor-exam-status-draft,
-.doctor-exam-status-finalized {
+.doctor-exam-status-finalized,
+.doctor-exam-status-draft {
     display: inline-flex;
+
     align-items: center;
-    min-height: 32px;
-    padding: 0 12px;
+
+    padding: 6px 10px;
+
     border-radius: 999px;
+
     font-size: 12px;
     font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.doctor-exam-status-finalized {
+    background: #dcfce7;
+    color: #15803d;
 }
 
 .doctor-exam-status-draft {
-    background: #fff7e6;
-    color: #9a6700;
-}
-
-.doctor-exam-status-finalized {
-    background: #eaf7ef;
-    color: #18794e;
+    background: #fef3c7;
+    color: #92400e;
 }
 
 
@@ -150,7 +211,7 @@
    ===================================================== */
 
 .doctor-exam-content {
-    padding: 24px;
+    padding: 18px;
 }
 
 
@@ -159,101 +220,197 @@
    ===================================================== */
 
 .doctor-exam-section {
-    padding-bottom: 26px;
-    margin-bottom: 26px;
-    border-bottom: 1px solid #eceef2;
+    margin-bottom: 18px;
+
+    padding: 18px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    background: #ffffff;
 }
 
 .doctor-exam-section:last-child {
     margin-bottom: 0;
-    border-bottom: 0;
 }
 
 .doctor-exam-section-title {
-    margin-bottom: 18px;
-    font-size: 15px;
+    margin-bottom: 16px;
+
+    color: #16324f;
+
+    font-size: 17px;
     font-weight: 700;
 }
 
 
 /* =====================================================
-   INFORMATION GRID
+   BASIC INFORMATION GRID
    ===================================================== */
 
 .doctor-exam-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 24px;
-}
 
-.doctor-exam-field {
-    min-width: 0;
-}
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
-.doctor-exam-field-full {
-    grid-column: 1 / -1;
-}
-
-.doctor-exam-field label {
-    display: block;
-    margin-bottom: 7px;
-    font-size: 12px;
-    font-weight: 600;
-    opacity: 0.65;
-}
-
-.doctor-exam-field > div {
-    min-height: 20px;
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
+    gap: 16px;
 }
 
 
 /* =====================================================
-   VITAL
+   FORM GROUP
    ===================================================== */
 
-.doctor-exam-vital-grid {
-    display: grid;
-    grid-template-columns:
-        repeat(5, minmax(0, 1fr));
-    gap: 12px;
+.doctor-exam-form-group,
+.doctor-exam-field {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
 }
 
-.doctor-exam-vital-item {
-    padding: 16px;
-    border: 1px solid #e7e9ed;
-    border-radius: 12px;
-    background: #fafbfc;
+.doctor-exam-field-full,
+.doctor-exam-form-group.doctor-exam-field-full {
+    grid-column: 1 / -1;
 }
 
-.doctor-exam-vital-item span {
-    display: block;
-    margin-bottom: 7px;
-    font-size: 12px;
-    opacity: 0.65;
+.doctor-exam-field label,
+.doctor-exam-form-group label {
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 600;
 }
 
-.doctor-exam-vital-item strong {
-    display: block;
-    font-size: 16px;
+.doctor-exam-field > div:not(.doctor-exam-input-unit) {
+    min-height: 40px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding: 10px 12px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+
+    background: #f8fafc;
+
+    color: #334155;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   REQUIRED
+   ===================================================== */
+
+.required {
+    color: #dc2626;
+
     font-weight: 700;
 }
 
 
 /* =====================================================
-   EMPTY
+   INPUT
    ===================================================== */
 
-.doctor-exam-empty {
-    padding: 18px;
-    border: 1px dashed #d9dce2;
+.doctor-exam-input {
+    width: 100%;
+
+    min-height: 40px;
+
+    box-sizing: border-box;
+
+    padding: 9px 12px;
+
+    border: 1px solid #dbe3ec;
     border-radius: 10px;
-    text-align: center;
+
+    background: #ffffff;
+    color: #334155;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.doctor-exam-input:focus {
+    border-color: #38bdf8;
+
+    box-shadow:
+        0 0 0 3px rgba(56, 189, 248, 0.12);
+}
+
+.doctor-exam-input:disabled {
+    background: #f1f5f9;
+
+    color: #94a3b8;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   TEXTAREA
+   ===================================================== */
+
+.doctor-exam-textarea {
+    min-height: 100px;
+
+    resize: vertical;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   VITAL FORM
+   ===================================================== */
+
+.doctor-exam-vital-form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+
+/* =====================================================
+   INPUT WITH UNIT
+   ===================================================== */
+
+.doctor-exam-input-unit {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+.doctor-exam-input-unit .doctor-exam-input {
+    min-width: 0;
+}
+
+.doctor-exam-input-unit span {
+    flex-shrink: 0;
+
+    color: #64748b;
+
     font-size: 13px;
-    opacity: 0.65;
+    font-weight: 600;
 }
 
 
@@ -263,217 +420,264 @@
 
 .doctor-exam-actions {
     display: flex;
+
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
+
     gap: 10px;
-    padding-top: 4px;
-}
 
-.doctor-exam-actions button {
-    min-height: 40px;
-    padding: 0 16px;
-    border-radius: 9px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition:
-        background-color 0.15s ease,
-        border-color 0.15s ease,
-        opacity 0.15s ease;
-}
+    margin-top: 18px;
 
-.doctor-exam-secondary-button {
-    border: 1px solid #d9dce2;
-    background: #ffffff;
-}
+    padding-top: 18px;
 
-.doctor-exam-secondary-button:hover {
-    background: #f7f8fa;
-}
-
-.doctor-exam-primary-button {
-    border: 1px solid #d9dce2;
-    background: #f7f8fa;
-}
-
-.doctor-exam-primary-button:hover {
-    background: #eef0f3;
-}
-
-.doctor-exam-finalize-button {
-    border: 1px solid #1f2937;
-    background: #1f2937;
-    color: #ffffff;
-}
-
-.doctor-exam-finalize-button:hover {
-    opacity: 0.9;
+    border-top: 1px solid #e2e8f0;
 }
 
 
 /* =====================================================
-   RESPONSIVE
+   SECONDARY BUTTON
+   ===================================================== */
+
+.doctor-exam-secondary-button {
+    min-height: 40px;
+
+    padding: 9px 16px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #16324f;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.doctor-exam-secondary-button:hover:not(:disabled) {
+    border-color: #94a3b8;
+
+    background: #f8fafc;
+}
+
+.doctor-exam-secondary-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   SAVE DRAFT BUTTON
+   ===================================================== */
+
+.doctor-exam-primary-button {
+    min-height: 40px;
+
+    padding: 9px 18px;
+
+    border: 1px solid #0ea5e9;
+    border-radius: 9px;
+
+    background: #0ea5e9;
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.doctor-exam-primary-button:hover:not(:disabled) {
+    border-color: #0284c7;
+
+    background: #0284c7;
+
+    box-shadow:
+        0 3px 8px rgba(3, 105, 161, 0.16);
+}
+
+.doctor-exam-primary-button:disabled {
+    border-color: #94a3b8;
+
+    background: #94a3b8;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   FINALIZE BUTTON
+   ===================================================== */
+
+.doctor-exam-finalize-button {
+    min-height: 40px;
+
+    padding: 9px 18px;
+
+    border: 1px solid #16324f;
+    border-radius: 9px;
+
+    background: #16324f;
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.doctor-exam-finalize-button:hover:not(:disabled) {
+    border-color: #0f2438;
+
+    background: #0f2438;
+
+    box-shadow:
+        0 3px 8px rgba(15, 36, 56, 0.16);
+}
+
+.doctor-exam-finalize-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET
    ===================================================== */
 
 @media (max-width: 1100px) {
 
-    .doctor-exam-vital-grid {
+    .doctor-exam-page {
+        padding: 24px;
+    }
+
+    .doctor-exam-vital-form-grid {
         grid-template-columns:
             repeat(3, minmax(0, 1fr));
     }
 }
 
 
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
 @media (max-width: 768px) {
 
     .doctor-exam-page {
-        padding: 20px 16px 32px;
+        padding: 16px;
+    }
+
+    .doctor-exam-header h1 {
+        font-size: 27px;
+    }
+
+    .doctor-exam-header p {
+        font-size: 14px;
     }
 
     .doctor-exam-card-header {
         align-items: flex-start;
+
         flex-direction: column;
+
+        padding: 16px;
+    }
+
+    .doctor-exam-content {
+        padding: 16px;
+    }
+
+    .doctor-exam-section {
+        padding: 16px;
     }
 
     .doctor-exam-grid {
         grid-template-columns: 1fr;
     }
 
-    .doctor-exam-field-full {
+    .doctor-exam-field-full,
+    .doctor-exam-form-group.doctor-exam-field-full {
         grid-column: auto;
     }
 
-    .doctor-exam-vital-grid {
+    .doctor-exam-vital-form-grid {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
 
     .doctor-exam-actions {
-        justify-content: stretch;
-    }
+        align-items: stretch;
 
-    .doctor-exam-actions button {
-        flex: 1 1 auto;
-    }
-}
-
-
-@media (max-width: 480px) {
-
-    .doctor-exam-vital-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .doctor-exam-actions {
         flex-direction: column;
     }
 
-    .doctor-exam-actions button {
+    .doctor-exam-secondary-button,
+    .doctor-exam-primary-button,
+    .doctor-exam-finalize-button {
         width: 100%;
     }
 }
 
+
 /* =====================================================
-   FORM
+   RESPONSIVE - SMALL MOBILE
    ===================================================== */
 
-.doctor-exam-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.doctor-exam-form-group label {
-    display: block;
-    margin-bottom: 0;
-    color: #334155;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.doctor-exam-form-group label .required {
-    color: #dc2626;
-}
-
-.doctor-exam-input {
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 42px;
-    padding: 9px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    background: #ffffff;
-    color: #334155;
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-}
-
-.doctor-exam-input:focus {
-    border-color: #0284c7;
-}
-
-.doctor-exam-input:disabled {
-    background: #f8fafc;
-    color: #64748b;
-    cursor: not-allowed;
-}
-
-.doctor-exam-textarea {
-    min-height: 90px;
-    resize: vertical;
-}
-
-.doctor-exam-vital-form-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.doctor-exam-input-unit {
-    position: relative;
-}
-
-.doctor-exam-input-unit .doctor-exam-input {
-    padding-right: 48px;
-}
-
-.doctor-exam-input-unit span {
-    position: absolute;
-    top: 50%;
-    right: 12px;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    font-size: 12px;
-    pointer-events: none;
-}
-
-@media (max-width: 1100px) {
-    .doctor-exam-vital-form-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 700px) {
-    .doctor-exam-vital-form-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
 @media (max-width: 480px) {
+
+    .doctor-exam-page {
+        padding: 12px;
+    }
+
+    .doctor-exam-header h1 {
+        font-size: 24px;
+    }
+
+    .doctor-exam-content {
+        padding: 12px;
+    }
+
+    .doctor-exam-section {
+        padding: 14px;
+    }
+
     .doctor-exam-vital-form-grid {
         grid-template-columns: 1fr;
     }
-}
 
-/* =====================================================
-   SUCCESS MESSAGE
-   ===================================================== */
-
-.doctor-exam-success {
-    border: 1px solid #b7dfc8;
-    background: #f0faf4;
-    color: #18794e;
+    .doctor-exam-input-unit {
+        align-items: stretch;
+    }
 }
