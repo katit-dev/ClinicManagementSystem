@@ -36,6 +36,8 @@ public class MedicalRecordService
 {
     private readonly IUnitOfWork _unitOfWork;
 
+    private readonly IInvoiceService _invoiceService;
+
     private readonly ILogger<MedicalRecordService> _logger;
 
 
@@ -44,11 +46,15 @@ public class MedicalRecordService
     // =====================================================
 
     public MedicalRecordService(
-        IUnitOfWork unitOfWork,
-        ILogger<MedicalRecordService> logger)
+    IUnitOfWork unitOfWork,
+    IInvoiceService invoiceService,
+    ILogger<MedicalRecordService> logger)
     {
         _unitOfWork =
             unitOfWork;
+
+        _invoiceService =
+            invoiceService;
 
         _logger =
             logger;
@@ -265,18 +271,16 @@ public class MedicalRecordService
             // → chưa thể chốt bệnh án.
             // =================================================
 
-            const byte completedServiceStatus = 2;
-            const byte cancelledServiceStatus = 3;
-
             var invalidService =
-                medicalRecordServices
-                    .FirstOrDefault(
-                        s =>
-                            s.Status !=
-                                completedServiceStatus &&
-                            s.Status !=
-                                cancelledServiceStatus
-                    );
+    medicalRecordServices
+        .FirstOrDefault(
+            s =>
+                s.Status !=
+                    (byte)MedicalRecordServiceStatus.Completed
+                &&
+                s.Status !=
+                    (byte)MedicalRecordServiceStatus.Cancelled
+        );
 
 
             if (invalidService != null)
@@ -345,8 +349,7 @@ public class MedicalRecordService
                 medicalRecordServices
                     .Where(
                         s =>
-                            s.Status ==
-                            completedServiceStatus
+                            s.Status == (byte)MedicalRecordServiceStatus.Completed
                     )
                     .ToList();
 
@@ -706,25 +709,20 @@ public class MedicalRecordService
             // =================================================
 
             var result =
-                await GetInvoiceAsync(
-                    invoice.Id
-                );
-
+    await _invoiceService
+        .GetInvoiceAsync(
+            invoice.Id
+        );
 
             if (result.StatusCode != 200)
             {
                 return result;
             }
 
-
-            // =================================================
-            // FINALIZE SUCCESS MESSAGE
-            // =================================================
-
+            // success
             result.Message =
                 MedicalRecordResponseMessageDTO
                     .FinalizeSuccess;
-
 
             return result;
         }
