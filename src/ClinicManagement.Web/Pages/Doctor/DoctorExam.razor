@@ -57,6 +57,26 @@
         </div>
     }
 
+    @if (!string.IsNullOrWhiteSpace(
+    DoctorExamStateService.ActionMessage))
+    {
+        <div class="doctor-exam-message doctor-exam-success">
+
+            @DoctorExamStateService.ActionMessage
+
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(
+        DoctorExamStateService.ActionErrorMessage))
+    {
+        <div class="doctor-exam-message doctor-exam-error">
+
+            @DoctorExamStateService.ActionErrorMessage
+
+        </div>
+    }
+
 
     @* =====================================================
        LOADING
@@ -184,11 +204,8 @@
                                 Triệu chứng
                             </label>
 
-                            <textarea
-                                class="doctor-exam-input doctor-exam-textarea"
-                                rows="4"
-                                @bind="Form.Symptoms"
-                                disabled="@IsFinalized">
+                            <textarea class="doctor-exam-input doctor-exam-textarea" rows="4" @bind="Form.Symptoms"
+                                      disabled="@IsFinalized">
                             </textarea>
 
                         </div>
@@ -207,11 +224,8 @@
                                 </span>
                             </label>
 
-                            <textarea
-                                class="doctor-exam-input doctor-exam-textarea"
-                                rows="4"
-                                @bind="Form.Diagnosis"
-                                disabled="@IsFinalized">
+                            <textarea class="doctor-exam-input doctor-exam-textarea" rows="4" @bind="Form.Diagnosis"
+                                      disabled="@IsFinalized">
                             </textarea>
 
                         </div>
@@ -227,11 +241,7 @@
                                 Mã ICD-10
                             </label>
 
-                            <input
-                                type="text"
-                                class="doctor-exam-input"
-                                @bind="Form.Icd10Code"
-                                disabled="@IsFinalized" />
+                            <input type="text" class="doctor-exam-input" @bind="Form.Icd10Code" disabled="@IsFinalized" />
 
                         </div>
 
@@ -246,11 +256,8 @@
                                 Ngày tái khám
                             </label>
 
-                            <input
-                                type="date"
-                                class="doctor-exam-input"
-                                @bind="Form.FollowUpDate"
-                                disabled="@IsFinalized" />
+                            <input type="date" class="doctor-exam-input" @bind="Form.FollowUpDate"
+                                   disabled="@IsFinalized" />
 
                         </div>
 
@@ -265,11 +272,8 @@
                                 Hướng điều trị
                             </label>
 
-                            <textarea
-                                class="doctor-exam-input doctor-exam-textarea"
-                                rows="4"
-                                @bind="Form.TreatmentPlan"
-                                disabled="@IsFinalized">
+                            <textarea class="doctor-exam-input doctor-exam-textarea" rows="4" @bind="Form.TreatmentPlan"
+                                      disabled="@IsFinalized">
                             </textarea>
 
                         </div>
@@ -285,11 +289,8 @@
                                 Ghi chú
                             </label>
 
-                            <textarea
-                                class="doctor-exam-input doctor-exam-textarea"
-                                rows="3"
-                                @bind="Form.Note"
-                                disabled="@IsFinalized">
+                            <textarea class="doctor-exam-input doctor-exam-textarea" rows="3" @bind="Form.Note"
+                                      disabled="@IsFinalized">
                             </textarea>
 
                         </div>
@@ -322,12 +323,8 @@
 
                             <div class="doctor-exam-input-unit">
 
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    class="doctor-exam-input"
-                                    @bind="Form.Temperature"
-                                    disabled="@IsFinalized" />
+                                <input type="number" step="0.1" class="doctor-exam-input" @bind="Form.Temperature"
+                                       disabled="@IsFinalized" />
 
                                 <span>
                                     °C
@@ -348,11 +345,7 @@
 
                             <div class="doctor-exam-input-unit">
 
-                                <input
-                                    type="number"
-                                    class="doctor-exam-input"
-                                    @bind="Form.Pulse"
-                                    disabled="@IsFinalized" />
+                                <input type="number" class="doctor-exam-input" @bind="Form.Pulse" disabled="@IsFinalized" />
 
                                 <span>
                                     bpm
@@ -371,12 +364,8 @@
                                 Huyết áp
                             </label>
 
-                            <input
-                                type="text"
-                                class="doctor-exam-input"
-                                placeholder="120/80"
-                                @bind="Form.BloodPressure"
-                                disabled="@IsFinalized" />
+                            <input type="text" class="doctor-exam-input" placeholder="120/80" @bind="Form.BloodPressure"
+                                   disabled="@IsFinalized" />
 
                         </div>
 
@@ -391,12 +380,8 @@
 
                             <div class="doctor-exam-input-unit">
 
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    class="doctor-exam-input"
-                                    @bind="Form.Weight"
-                                    disabled="@IsFinalized" />
+                                <input type="number" step="0.1" class="doctor-exam-input" @bind="Form.Weight"
+                                       disabled="@IsFinalized" />
 
                                 <span>
                                     kg
@@ -417,12 +402,8 @@
 
                             <div class="doctor-exam-input-unit">
 
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    class="doctor-exam-input"
-                                    @bind="Form.Height"
-                                    disabled="@IsFinalized" />
+                                <input type="number" step="0.1" class="doctor-exam-input" @bind="Form.Height"
+                                       disabled="@IsFinalized" />
 
                                 <span>
                                     cm
@@ -443,40 +424,31 @@
 
                 <div class="doctor-exam-actions">
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized">
 
                         Chỉ định cận lâm sàng
 
                     </button>
 
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized">
 
                         Kê đơn thuốc
 
                     </button>
 
 
-                    <button
-                        type="button"
-                        class="doctor-exam-primary-button"
-                        disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-primary-button"
+                            disabled="@(IsFinalized || DoctorExamStateService.IsSubmitting)" @onclick="SaveDraftAsync">
 
-                        Lưu nháp
+                        @(DoctorExamStateService.IsSubmitting
+                            ? "Đang lưu..."
+                            : "Lưu nháp")
 
                     </button>
 
 
-                    <button
-                        type="button"
-                        class="doctor-exam-finalize-button"
-                        disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-finalize-button" disabled="@IsFinalized">
 
                         Hoàn tất & chốt bệnh án
 
@@ -545,6 +517,136 @@
                 DoctorExamStateService.MedicalRecord
             );
         }
+    }
+
+    // =====================================================
+    // SAVE DRAFT
+    // =====================================================
+
+    private async Task SaveDraftAsync()
+    {
+        // =================================================
+        // DO NOT SAVE FINALIZED RECORD
+        // =================================================
+
+        if (IsFinalized)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // CREATE REQUEST
+        // =================================================
+
+        var request =
+            new MedicalRecordDraftRequestDTO
+            {
+                Symptoms =
+                    Form.Symptoms,
+
+                Diagnosis =
+                    Form.Diagnosis,
+
+                Icd10Code =
+                    Form.Icd10Code,
+
+                TreatmentPlan =
+                    Form.TreatmentPlan,
+
+                Note =
+                    Form.Note,
+
+                FollowUpDate =
+                    Form.FollowUpDate,
+
+                Vitals =
+                    BuildVitalRequest()
+            };
+
+
+        // =================================================
+        // CALL STATE SERVICE
+        // =================================================
+
+        var success =
+            await DoctorExamStateService
+                .SaveDraftAsync(request);
+
+
+        // =================================================
+        // UPDATE FORM FROM RESPONSE
+        // =================================================
+
+        if (success &&
+            DoctorExamStateService.MedicalRecord != null)
+        {
+            MapMedicalRecordToForm(
+                DoctorExamStateService.MedicalRecord
+            );
+        }
+    }
+
+    // =====================================================
+    // BUILD PATIENT VITAL REQUEST
+    // =====================================================
+
+    private PatientVitalRequestDTO? BuildVitalRequest()
+    {
+        var existingVital =
+            DoctorExamStateService
+                .MedicalRecord?
+                .Vital;
+
+
+        // =================================================
+        // NO VITAL DATA
+        //
+        // Nếu chưa từng có Vital và tất cả field đều rỗng
+        // → không gửi Vitals.
+        // =================================================
+
+        var hasVitalInput =
+            Form.Temperature.HasValue ||
+            Form.Pulse.HasValue ||
+            !string.IsNullOrWhiteSpace(
+                Form.BloodPressure
+            ) ||
+            Form.Weight.HasValue ||
+            Form.Height.HasValue;
+
+
+        if (!hasVitalInput &&
+            existingVital == null)
+        {
+            return null;
+        }
+
+
+        // =================================================
+        // BUILD REQUEST
+        //
+        // Nếu đã có Vital nhưng Doctor xóa hết dữ liệu,
+        // vẫn gửi object để backend update thành null.
+        // =================================================
+
+        return new PatientVitalRequestDTO
+        {
+            Temperature =
+                Form.Temperature,
+
+            Pulse =
+                Form.Pulse,
+
+            BloodPressure =
+                Form.BloodPressure,
+
+            Weight =
+                Form.Weight,
+
+            Height =
+                Form.Height
+        };
     }
 
 

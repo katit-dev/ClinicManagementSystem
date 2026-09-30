@@ -467,3 +467,13 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* =====================================================
+   SUCCESS MESSAGE
+   ===================================================== */
+
+.doctor-exam-success {
+    border: 1px solid #b7dfc8;
+    background: #f0faf4;
+    color: #18794e;
+}
