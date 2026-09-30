@@ -1,7 +1,9 @@
 using System.Net.Http.Json;
 
 using ClinicManagementSystem.Application.DTOs;
+using ClinicManagementSystem.Application.DTOs.Invoice;
 using ClinicManagementSystem.Application.DTOs.MedicalRecord;
+using ClinicManagementSystem.Application.Enums;
 
 namespace ClinicManagementSystem.Web.Services;
 
@@ -75,6 +77,23 @@ public class DoctorExamStateService
         private set;
     } = string.Empty;
 
+    // =====================================================
+    // FINALIZE STATE
+    // =====================================================
+
+    public bool IsFinalizing
+    {
+        get;
+        private set;
+    }
+
+
+    public InvoiceDTO? FinalizedInvoice
+    {
+        get;
+        private set;
+    }
+
 
     // =====================================================
     // STATE CHANGE
@@ -92,6 +111,192 @@ public class DoctorExamStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // FINALIZE MEDICAL RECORD
+    //
+    // POST:
+    // /api/medical-records/{id}/finalize
+    //
+    // Response:
+    // InvoiceDTO
+    //
+    // Không gửi request body.
+    // Backend tự validate:
+    // - Diagnosis
+    // - CLS
+    // - MedicalRecord status
+    // - tạo Invoice
+    // - finalize MedicalRecord
+    // - complete Appointment
+    // =====================================================
+
+    public async Task<bool> FinalizeMedicalRecordAsync(
+        int medicalRecordId)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsFinalizing)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE ID
+        // =================================================
+
+        if (medicalRecordId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được bệnh án.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // PREVENT FINALIZE AGAIN
+        // =================================================
+
+        if (MedicalRecord != null &&
+            MedicalRecord.Status ==
+                (byte)MedicalRecordStatus.Finalized)
+        {
+            ActionErrorMessage =
+                "Bệnh án đã được chốt.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START FINALIZE
+        // =================================================
+
+        IsFinalizing = true;
+
+        FinalizedInvoice = null;
+
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        $"/api/medical-records/{medicalRecordId}/finalize",
+                        new StringContent(string.Empty)
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<InvoiceDTO?>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể chốt bệnh án.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // CHECK INVOICE
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Chốt bệnh án thành công nhưng không nhận được hóa đơn.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SAVE FINALIZED INVOICE
+            // =================================================
+
+            FinalizedInvoice =
+                responseData.Content;
+
+
+            // =================================================
+            // UPDATE LOCAL MEDICAL RECORD STATE
+            //
+            // API đã finalize thành công.
+            //
+            // Đổi state local để UI:
+            // - hiển thị "Đã chốt"
+            // - khóa form
+            // - khóa Save Draft
+            // - khóa Finalize
+            // =================================================
+
+            if (MedicalRecord != null)
+            {
+                MedicalRecord.Status =
+                    (byte)MedicalRecordStatus.Finalized;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsFinalizing = false;
+
+            StateHasChanged();
+        }
     }
 
 
