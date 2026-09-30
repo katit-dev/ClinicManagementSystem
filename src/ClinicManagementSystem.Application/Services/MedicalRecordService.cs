@@ -153,23 +153,36 @@ public class MedicalRecordService
             // Include:
             // - Doctor
             // - PatientVital
+            // - service
             // =================================================
 
             var medicalRecord =
-                await _unitOfWork
-                    .MedicalRecordRepository
-                    .WhereSql(
-                        m =>
-                            m.Id == medicalRecordId &&
-                            m.DoctorId == doctor.Id
-                    )
-                    .Include(
-                        m => m.Doctor
-                    )
-                    .Include(
-                        m => m.PatientVital
-                    )
-                    .FirstOrDefaultAsync();
+    await _unitOfWork
+        .MedicalRecordRepository
+        .WhereSql(
+            m =>
+                m.Id == medicalRecordId &&
+                m.DoctorId == doctor.Id
+        )
+        .Include(
+            m => m.Doctor
+        )
+        .Include(
+            m => m.PatientVital
+        )
+        .Include(
+            m => m.MedicalRecordServices
+        )
+        .ThenInclude(
+            s => s.Service
+        )
+        .Include(
+            m => m.MedicalRecordServices
+        )
+        .ThenInclude(
+            s => s.LabResult
+        )
+        .FirstOrDefaultAsync();
 
 
             // =================================================
@@ -229,6 +242,65 @@ public class MedicalRecordService
                     };
             }
 
+            // =====================================================
+            // MAP MEDICAL RECORD SERVICES
+            // =====================================================
+
+            var serviceDtos =
+                medicalRecord.MedicalRecordServices
+                    .OrderBy(s => s.Id)
+                    .Select(
+                        s => new MedicalRecordServiceDTO
+                        {
+                            Id =
+                                s.Id,
+
+                            ServiceId =
+                                s.ServiceId,
+
+                            ServiceName =
+                                s.Service?.Name
+                                ?? string.Empty,
+
+                            Quantity =
+                                s.Quantity,
+
+                            UnitPriceSnapshot =
+                                s.UnitPriceSnapshot,
+
+                            Status =
+                                s.Status,
+
+                            OrderedAt =
+                                s.OrderedAt,
+
+                            CompletedAt =
+                                s.CompletedAt,
+
+                            Result =
+                                s.LabResult == null
+                                    ? null
+                                    : new LabResultDTO
+                                    {
+                                        Id =
+                                            s.LabResult.Id,
+
+                                        ResultValue =
+                                            s.LabResult.ResultValue,
+
+                                        ReferenceRange =
+                                            s.LabResult.ReferenceRange,
+
+                                        Conclusion =
+                                            s.LabResult.Conclusion,
+
+                                        ResultedAt =
+                                            s.LabResult.CreatedAt
+                                    }
+                        }
+                    )
+                    .ToList();
+
 
             // =================================================
             // MAP MEDICAL RECORD EXAM DTO
@@ -274,8 +346,9 @@ public class MedicalRecordService
                     CreatedAt =
                         medicalRecord.CreatedAt,
 
-                    Vital =
-                        vital
+                    Vital = vital,
+
+                    Services = serviceDtos
                 };
 
 

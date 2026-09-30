@@ -41,4 +41,6 @@ public class MedicalRecordExamDTO
     // =================================================
 
     public PatientVitalDTO? Vital { get; set; }
+
+    public List<MedicalRecordServiceDTO> Services { get; set; } = new(); // for vc 14 only
 }
