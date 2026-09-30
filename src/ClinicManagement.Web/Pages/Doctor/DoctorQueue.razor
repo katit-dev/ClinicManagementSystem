@@ -9,6 +9,7 @@
 @attribute [Authorize(Roles = "Doctor")]
 
 @inject DoctorQueueStateService DoctorQueueStateService
+@inject NavigationManager NavigationManager
 
 @implements IDisposable
 
@@ -537,14 +538,55 @@
     // =====================================================
     // START EXAM
     // =====================================================
+    // =====================================================
+    // START EXAM
+    // =====================================================
 
     private async Task HandleStartExam(
         int appointmentId)
     {
-        await DoctorQueueStateService
-            .StartExamAsync(
-                appointmentId
-            );
+        var success =
+            await DoctorQueueStateService
+                .StartExamAsync(
+                    appointmentId
+                );
+
+
+        // =================================================
+        // START EXAM FAILED
+        // =================================================
+
+        if (!success)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // GET MEDICAL RECORD
+        // =================================================
+
+        var medicalRecord =
+            DoctorQueueStateService.MedicalRecord;
+
+
+        if (medicalRecord == null)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // NAVIGATE TO DOCTOR EXAM
+        //
+        // MedicalRecordDTO.Id
+        // = MedicalRecord.Id
+        // = MedicalRecordId
+        // =================================================
+
+        NavigationManager.NavigateTo(
+            $"/doctor/exam/{medicalRecord.Id}"
+        );
     }
 
     // =====================================================
