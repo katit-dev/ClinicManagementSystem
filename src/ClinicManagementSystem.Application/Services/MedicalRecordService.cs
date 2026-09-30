@@ -38,6 +38,8 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<MedicalRecordServiceDTO>> AddMedicalRecordServiceResultAsync(int medicalRecordServiceId, int currentUserId, LabResultRequestDTO request);
 
+    Task<HttpResponseData<AttachmentDTO>> UploadMedicalRecordAttachmentAsync(int medicalRecordId, int currentUserId, Stream fileStream, string fileName, string contentType);
+
 }
 
 // =====================================================
@@ -53,6 +55,8 @@ public class MedicalRecordService
 
     private readonly ILogger<MedicalRecordService> _logger;
 
+    private readonly IFileStorageService _fileStorageService;
+
 
     // =====================================================
     // CONSTRUCTOR
@@ -61,6 +65,7 @@ public class MedicalRecordService
     public MedicalRecordService(
     IUnitOfWork unitOfWork,
     IInvoiceService invoiceService,
+    IFileStorageService fileStorageService,
     ILogger<MedicalRecordService> logger)
     {
         _unitOfWork =
@@ -69,47 +74,53 @@ public class MedicalRecordService
         _invoiceService =
             invoiceService;
 
+        _fileStorageService =
+            fileStorageService;
+
         _logger =
             logger;
     }
 
     // =====================================================
-// ADD MEDICAL RECORD SERVICE RESULT
+// UPLOAD MEDICAL RECORD ATTACHMENT
 //
 // POST:
-// /api/medical-record-services/{id}/result
+// /api/medical-records/{id}/attachments
 //
-// Khi nhập kết quả:
-// - Tạo LabResult
-// - MedicalRecordService.Status = Completed
-// - CompletedAt = thời điểm hiện tại
-// - PerformedBy = UserId hiện tại
+// Request:
+// multipart/form-data
+//
+// Allowed:
+// jpg
+// png
+// pdf
+// dicom
 // =====================================================
 
 public async Task<
-    HttpResponseData<MedicalRecordServiceDTO>>
-    AddMedicalRecordServiceResultAsync(
-        int medicalRecordServiceId,
+    HttpResponseData<AttachmentDTO>>
+    UploadMedicalRecordAttachmentAsync(
+        int medicalRecordId,
         int currentUserId,
-        LabResultRequestDTO request)
+        Stream fileStream,
+        string fileName,
+        string contentType)
 {
-    bool transactionStarted = false;
-
     try
     {
         // =================================================
-        // VALIDATE ID
+        // VALIDATE MEDICAL RECORD ID
         // =================================================
 
-        if (medicalRecordServiceId <= 0)
+        if (medicalRecordId <= 0)
         {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+            return new HttpResponseData<AttachmentDTO>
             {
                 StatusCode = 400,
 
                 Message =
                     MedicalRecordResponseMessageDTO
-                        .MedicalRecordServiceNotFound
+                        .MedicalRecordNotFound
             };
         }
 
@@ -120,7 +131,7 @@ public async Task<
 
         if (currentUserId <= 0)
         {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+            return new HttpResponseData<AttachmentDTO>
             {
                 StatusCode = 401,
 
@@ -132,73 +143,90 @@ public async Task<
 
 
         // =================================================
-        // VALIDATE REQUEST
+        // VALIDATE FILE
         // =================================================
 
-        if (request == null)
+        if (fileStream == null ||
+            fileStream.Length <= 0 ||
+            string.IsNullOrWhiteSpace(fileName))
         {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+            return new HttpResponseData<AttachmentDTO>
             {
                 StatusCode = 400,
 
                 Message =
                     MedicalRecordResponseMessageDTO
-                        .InvalidLabResultRequest
+                        .AttachmentFileRequired
             };
         }
 
 
         // =================================================
-        // VALIDATE RESULT VALUE
+        // VALIDATE FILE TYPE
         // =================================================
 
-        if (string.IsNullOrWhiteSpace(
-            request.ResultValue))
+        var extension =
+            Path.GetExtension(fileName)
+                .ToLowerInvariant();
+
+        var allowedExtensions =
+            new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".pdf",
+                ".dcm",
+                ".dicom"
+            };
+
+        if (!allowedExtensions.Contains(
+            extension))
         {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+            return new HttpResponseData<AttachmentDTO>
             {
                 StatusCode = 400,
 
                 Message =
                     MedicalRecordResponseMessageDTO
-                        .LabResultValueRequired
+                        .AttachmentFileTypeNotAllowed
             };
         }
 
 
         // =================================================
-        // GET MEDICAL RECORD SERVICE
+        // GET CURRENT DOCTOR
         //
-        // Load Service để map response.
+        // JWT UserId
+        //      ↓
+        // Doctor.UserId
         // =================================================
 
-        var medicalRecordService =
+        var doctor =
             await _unitOfWork
-                .MedicalRecordServiceRepository
+                .DoctorRepository
                 .WhereSql(
-                    s =>
-                        s.Id ==
-                        medicalRecordServiceId
-                )
-                .Include(
-                    s => s.Service
+                    d =>
+                        d.UserId == currentUserId &&
+                        d.IsActive
                 )
                 .FirstOrDefaultAsync();
 
 
         // =================================================
-        // NOT FOUND
+        // DOCTOR NOT FOUND
         // =================================================
 
-        if (medicalRecordService == null)
+        if (doctor == null)
         {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+            return new HttpResponseData<AttachmentDTO>
             {
-                StatusCode = 404,
+                StatusCode = 403,
 
                 Message =
                     MedicalRecordResponseMessageDTO
-                        .MedicalRecordServiceNotFound
+                        .MedicalRecordAccessDenied
             };
         }
 
@@ -212,8 +240,7 @@ public async Task<
                 .MedicalRecordRepository
                 .WhereSql(
                     m =>
-                        m.Id ==
-                        medicalRecordService.MedicalRecordId
+                        m.Id == medicalRecordId
                 )
                 .FirstOrDefaultAsync();
 
@@ -224,7 +251,7 @@ public async Task<
 
         if (medicalRecord == null)
         {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+            return new HttpResponseData<AttachmentDTO>
             {
                 StatusCode = 404,
 
@@ -236,9 +263,29 @@ public async Task<
 
 
         // =================================================
-        // MEDICAL RECORD MUST STILL BE DRAFT
+        // CHECK DOCTOR OWNERSHIP
+        // =================================================
+
+        if (
+            medicalRecord.DoctorId !=
+            doctor.Id
+        )
+        {
+            return new HttpResponseData<AttachmentDTO>
+            {
+                StatusCode = 403,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordAccessDenied
+            };
+        }
+
+
+        // =================================================
+        // CHECK MEDICAL RECORD STATUS
         //
-        // Finalized = đã khóa.
+        // Chỉ Draft mới được thêm attachment.
         // =================================================
 
         if (
@@ -246,7 +293,7 @@ public async Task<
             (byte)MedicalRecordStatus.Draft
         )
         {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+            return new HttpResponseData<AttachmentDTO>
             {
                 StatusCode = 409,
 
@@ -258,161 +305,58 @@ public async Task<
 
 
         // =================================================
-        // CHECK SERVICE STATUS
-        //
-        // Không được nhập kết quả cho service đã Cancelled.
-        // Không tạo lại kết quả cho service đã Completed.
+        // UPLOAD FILE
         // =================================================
 
-        if (
-            medicalRecordService.Status ==
-            (byte)MedicalRecordServiceStatus.Cancelled
-        )
-        {
-            return new HttpResponseData<MedicalRecordServiceDTO>
+        var fileUrl =
+            await _fileStorageService
+                .UploadAsync(
+                    fileStream,
+                    fileName,
+                    contentType,
+                    medicalRecordId
+                );
+
+
+        // =================================================
+        // CREATE ATTACHMENT
+        // =================================================
+
+        var attachment =
+            new Attachment
             {
-                StatusCode = 409,
+                MedicalRecordId =
+                    medicalRecord.Id,
 
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordServiceCancelled
+                FileUrl =
+                    fileUrl,
+
+                FileType =
+                    string.IsNullOrWhiteSpace(
+                        contentType)
+                        ? null
+                        : contentType,
+
+                UploadedAt =
+                    DateTime.UtcNow,
+
+                UploadedBy =
+                    currentUserId
             };
-        }
-
-
-        if (
-            medicalRecordService.Status ==
-            (byte)MedicalRecordServiceStatus.Completed
-        )
-        {
-            return new HttpResponseData<MedicalRecordServiceDTO>
-            {
-                StatusCode = 409,
-
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordServiceCompleted
-            };
-        }
 
 
         // =================================================
-        // CHECK EXISTING RESULT
-        // =================================================
-
-        var existingResult =
-            await _unitOfWork
-                .LabResultRepository
-                .WhereSql(
-                    r =>
-                        r.MedicalRecordServiceId ==
-                        medicalRecordService.Id
-                )
-                .FirstOrDefaultAsync();
-
-
-        if (existingResult != null)
-        {
-            return new HttpResponseData<MedicalRecordServiceDTO>
-            {
-                StatusCode = 409,
-
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .LabResultAlreadyExists
-            };
-        }
-
-
-        // =================================================
-        // BEGIN TRANSACTION
+        // SAVE ATTACHMENT
         // =================================================
 
         await _unitOfWork
-            .BeginTransactionAsync();
-
-        transactionStarted = true;
-
-
-        // =================================================
-        // CURRENT TIME
-        // =================================================
-
-        var now =
-            DateTime.UtcNow;
-
-
-        // =================================================
-        // CREATE LAB RESULT
-        // =================================================
-
-        var labResult =
-            new LabResult
-            {
-                MedicalRecordServiceId =
-                    medicalRecordService.Id,
-
-                ResultValue =
-                    request.ResultValue.Trim(),
-
-                ReferenceRange =
-                    string.IsNullOrWhiteSpace(
-                        request.ReferenceRange)
-                        ? null
-                        : request.ReferenceRange.Trim(),
-
-                Conclusion =
-                    string.IsNullOrWhiteSpace(
-                        request.Conclusion)
-                        ? null
-                        : request.Conclusion.Trim(),
-
-                ResultedAt =
-                    request.ResultedAt
-            };
-
-
-        // =================================================
-        // ADD LAB RESULT
-        // =================================================
-
-        await _unitOfWork
-            .LabResultRepository
+            .AttachmentRepository
             .AddAsync(
-                labResult
+                attachment
             );
-
-
-        // =================================================
-        // UPDATE MEDICAL RECORD SERVICE
-        // =================================================
-
-        medicalRecordService.Status =
-            (byte)MedicalRecordServiceStatus.Completed;
-
-        medicalRecordService.PerformedBy =
-            currentUserId;
-
-        medicalRecordService.CompletedAt =
-            now;
-
-
-        // =================================================
-        // SAVE
-        // =================================================
 
         await _unitOfWork
             .SaveChangesAsync();
-
-
-        // =================================================
-        // COMMIT
-        // =================================================
-
-        await _unitOfWork
-            .CommitTransactionAsync();
-
-        transactionStarted = false;
 
 
         // =================================================
@@ -420,52 +364,25 @@ public async Task<
         // =================================================
 
         var result =
-            new MedicalRecordServiceDTO
+            new AttachmentDTO
             {
                 Id =
-                    medicalRecordService.Id,
+                    attachment.Id,
 
-                ServiceId =
-                    medicalRecordService.ServiceId,
+                MedicalRecordId =
+                    attachment.MedicalRecordId,
 
-                ServiceName =
-                    medicalRecordService.Service?.Name
-                    ?? string.Empty,
+                FileUrl =
+                    attachment.FileUrl,
 
-                Quantity =
-                    medicalRecordService.Quantity,
+                FileType =
+                    attachment.FileType,
 
-                UnitPriceSnapshot =
-                    medicalRecordService
-                        .UnitPriceSnapshot,
+                UploadedAt =
+                    attachment.UploadedAt,
 
-                Status =
-                    medicalRecordService.Status,
-
-                OrderedAt =
-                    medicalRecordService.OrderedAt,
-
-                CompletedAt =
-                    medicalRecordService.CompletedAt,
-
-                Result =
-                    new LabResultDTO
-                    {
-                        Id =
-                            labResult.Id,
-
-                        ResultValue =
-                            labResult.ResultValue,
-
-                        ReferenceRange =
-                            labResult.ReferenceRange,
-
-                        Conclusion =
-                            labResult.Conclusion,
-
-                        ResultedAt =
-                            labResult.CreatedAt
-                    }
+                UploadedBy =
+                    attachment.UploadedBy
             };
 
 
@@ -473,13 +390,13 @@ public async Task<
         // SUCCESS
         // =================================================
 
-        return new HttpResponseData<MedicalRecordServiceDTO>
+        return new HttpResponseData<AttachmentDTO>
         {
             StatusCode = 200,
 
             Message =
                 MedicalRecordResponseMessageDTO
-                    .AddLabResultSuccess,
+                    .AttachmentUploadSuccess,
 
             Content =
                 result
@@ -487,53 +404,487 @@ public async Task<
     }
     catch (Exception ex)
     {
-        // =================================================
-        // ROLLBACK
-        // =================================================
-
-        if (transactionStarted)
-        {
-            try
-            {
-                await _unitOfWork
-                    .RollbackTransactionAsync();
-            }
-            catch (Exception rollbackEx)
-            {
-                _logger.LogError(
-                    rollbackEx,
-                    "Failed to rollback adding lab result. " +
-                    "MedicalRecordServiceId: {MedicalRecordServiceId}",
-                    medicalRecordServiceId
-                );
-            }
-        }
-
-
-        // =================================================
-        // LOG ERROR
-        // =================================================
-
         _logger.LogError(
             ex,
-            "Failed to add lab result. " +
-            "MedicalRecordServiceId: {MedicalRecordServiceId}, " +
+            "Failed to upload medical record attachment. " +
+            "MedicalRecordId: {MedicalRecordId}, " +
             "UserId: {UserId}",
-            medicalRecordServiceId,
+            medicalRecordId,
             currentUserId
         );
 
-
-        return new HttpResponseData<MedicalRecordServiceDTO>
+        return new HttpResponseData<AttachmentDTO>
         {
             StatusCode = 500,
 
             Message =
                 MedicalRecordResponseMessageDTO
-                    .AddLabResultFailed
+                    .AttachmentUploadFailed
         };
     }
 }
+
+    // =====================================================
+    // ADD MEDICAL RECORD SERVICE RESULT
+    //
+    // POST:
+    // /api/medical-record-services/{id}/result
+    //
+    // Khi nhập kết quả:
+    // - Tạo LabResult
+    // - MedicalRecordService.Status = Completed
+    // - CompletedAt = thời điểm hiện tại
+    // - PerformedBy = UserId hiện tại
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<MedicalRecordServiceDTO>>
+        AddMedicalRecordServiceResultAsync(
+            int medicalRecordServiceId,
+            int currentUserId,
+            LabResultRequestDTO request)
+    {
+        bool transactionStarted = false;
+
+        try
+        {
+            // =================================================
+            // VALIDATE ID
+            // =================================================
+
+            if (medicalRecordServiceId <= 0)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordServiceNotFound
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE USER
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 401,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE REQUEST
+            // =================================================
+
+            if (request == null)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .InvalidLabResultRequest
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE RESULT VALUE
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(
+                request.ResultValue))
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .LabResultValueRequired
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD SERVICE
+            //
+            // Load Service để map response.
+            // =================================================
+
+            var medicalRecordService =
+                await _unitOfWork
+                    .MedicalRecordServiceRepository
+                    .WhereSql(
+                        s =>
+                            s.Id ==
+                            medicalRecordServiceId
+                    )
+                    .Include(
+                        s => s.Service
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // NOT FOUND
+            // =================================================
+
+            if (medicalRecordService == null)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordServiceNotFound
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id ==
+                            medicalRecordService.MedicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MEDICAL RECORD NOT FOUND
+            // =================================================
+
+            if (medicalRecord == null)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
+            }
+
+
+            // =================================================
+            // MEDICAL RECORD MUST STILL BE DRAFT
+            //
+            // Finalized = đã khóa.
+            // =================================================
+
+            if (
+                medicalRecord.Status !=
+                (byte)MedicalRecordStatus.Draft
+            )
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotDraft
+                };
+            }
+
+
+            // =================================================
+            // CHECK SERVICE STATUS
+            //
+            // Không được nhập kết quả cho service đã Cancelled.
+            // Không tạo lại kết quả cho service đã Completed.
+            // =================================================
+
+            if (
+                medicalRecordService.Status ==
+                (byte)MedicalRecordServiceStatus.Cancelled
+            )
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordServiceCancelled
+                };
+            }
+
+
+            if (
+                medicalRecordService.Status ==
+                (byte)MedicalRecordServiceStatus.Completed
+            )
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordServiceCompleted
+                };
+            }
+
+
+            // =================================================
+            // CHECK EXISTING RESULT
+            // =================================================
+
+            var existingResult =
+                await _unitOfWork
+                    .LabResultRepository
+                    .WhereSql(
+                        r =>
+                            r.MedicalRecordServiceId ==
+                            medicalRecordService.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (existingResult != null)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .LabResultAlreadyExists
+                };
+            }
+
+
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
+            // CURRENT TIME
+            // =================================================
+
+            var now =
+                DateTime.UtcNow;
+
+
+            // =================================================
+            // CREATE LAB RESULT
+            // =================================================
+
+            var labResult =
+                new LabResult
+                {
+                    MedicalRecordServiceId =
+                        medicalRecordService.Id,
+
+                    ResultValue =
+                        request.ResultValue.Trim(),
+
+                    ReferenceRange =
+                        string.IsNullOrWhiteSpace(
+                            request.ReferenceRange)
+                            ? null
+                            : request.ReferenceRange.Trim(),
+
+                    Conclusion =
+                        string.IsNullOrWhiteSpace(
+                            request.Conclusion)
+                            ? null
+                            : request.Conclusion.Trim(),
+
+                    ResultedAt =
+                        request.ResultedAt
+                };
+
+
+            // =================================================
+            // ADD LAB RESULT
+            // =================================================
+
+            await _unitOfWork
+                .LabResultRepository
+                .AddAsync(
+                    labResult
+                );
+
+
+            // =================================================
+            // UPDATE MEDICAL RECORD SERVICE
+            // =================================================
+
+            medicalRecordService.Status =
+                (byte)MedicalRecordServiceStatus.Completed;
+
+            medicalRecordService.PerformedBy =
+                currentUserId;
+
+            medicalRecordService.CompletedAt =
+                now;
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new MedicalRecordServiceDTO
+                {
+                    Id =
+                        medicalRecordService.Id,
+
+                    ServiceId =
+                        medicalRecordService.ServiceId,
+
+                    ServiceName =
+                        medicalRecordService.Service?.Name
+                        ?? string.Empty,
+
+                    Quantity =
+                        medicalRecordService.Quantity,
+
+                    UnitPriceSnapshot =
+                        medicalRecordService
+                            .UnitPriceSnapshot,
+
+                    Status =
+                        medicalRecordService.Status,
+
+                    OrderedAt =
+                        medicalRecordService.OrderedAt,
+
+                    CompletedAt =
+                        medicalRecordService.CompletedAt,
+
+                    Result =
+                        new LabResultDTO
+                        {
+                            Id =
+                                labResult.Id,
+
+                            ResultValue =
+                                labResult.ResultValue,
+
+                            ReferenceRange =
+                                labResult.ReferenceRange,
+
+                            Conclusion =
+                                labResult.Conclusion,
+
+                            ResultedAt =
+                                labResult.CreatedAt
+                        }
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<MedicalRecordServiceDTO>
+            {
+                StatusCode = 200,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .AddLabResultSuccess,
+
+                Content =
+                    result
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // ROLLBACK
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback adding lab result. " +
+                        "MedicalRecordServiceId: {MedicalRecordServiceId}",
+                        medicalRecordServiceId
+                    );
+                }
+            }
+
+
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to add lab result. " +
+                "MedicalRecordServiceId: {MedicalRecordServiceId}, " +
+                "UserId: {UserId}",
+                medicalRecordServiceId,
+                currentUserId
+            );
+
+
+            return new HttpResponseData<MedicalRecordServiceDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .AddLabResultFailed
+            };
+        }
+    }
 
     // =====================================================
     // CANCEL MEDICAL RECORD SERVICE
