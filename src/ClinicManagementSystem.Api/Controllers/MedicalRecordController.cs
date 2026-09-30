@@ -214,9 +214,12 @@ public class MedicalRecordController : ControllerBase
     //
     // Doctor hiện tại lấy từ JWT.
     //
-    // Cho phép đọc:
-    // - Draft
-    // - Finalized
+    // Response:
+    // MedicalRecordExamDTO
+    //
+    // Bao gồm:
+    // - Medical Record
+    // - Patient Vital
     // =====================================================
 
     [HttpGet("{id:int}")]
@@ -232,7 +235,6 @@ public class MedicalRecordController : ControllerBase
             User.FindFirstValue(
                 ClaimTypes.NameIdentifier
             );
-
 
         if (!int.TryParse(
             userIdValue,
