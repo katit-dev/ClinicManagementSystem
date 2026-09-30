@@ -51,6 +51,30 @@ public class DoctorExamStateService
         private set;
     } = string.Empty;
 
+    // =====================================================
+    // ACTION STATE
+    // =====================================================
+
+    public bool IsSubmitting
+    {
+        get;
+        private set;
+    }
+
+
+    public string ActionMessage
+    {
+        get;
+        private set;
+    } = string.Empty;
+
+
+    public string ActionErrorMessage
+    {
+        get;
+        private set;
+    } = string.Empty;
+
 
     // =====================================================
     // STATE CHANGE
@@ -204,6 +228,174 @@ public class DoctorExamStateService
         }
     }
 
+    // =====================================================
+    // SAVE MEDICAL RECORD DRAFT
+    //
+    // PUT:
+    // /api/medical-records/{id}
+    //
+    // Request:
+    // MedicalRecordDraftRequestDTO
+    //
+    // Response:
+    // MedicalRecordDraftResponseDTO
+    //
+    // Bao gồm:
+    // - Medical Record
+    // - Patient Vital
+    // =====================================================
+
+    public async Task<bool> SaveDraftAsync(
+        MedicalRecordDraftRequestDTO request)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // CHECK MEDICAL RECORD
+        // =================================================
+
+        if (MedicalRecordId == null ||
+            MedicalRecordId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được bệnh án.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CREATE REQUEST CONTENT
+            // =================================================
+
+            var content =
+                JsonContent.Create(request);
+
+
+            // =================================================
+            // CALL API
+            //
+            // PUT:
+            // /api/medical-records/{id}
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PutAsync(
+                        $"/api/medical-records/{MedicalRecordId}",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            MedicalRecordDraftResponseDTO?>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể lưu bệnh án.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // EMPTY CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Không nhận được dữ liệu bệnh án sau khi lưu.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE STATE
+            //
+            // Backend trả:
+            // MedicalRecordDraftResponseDTO
+            //
+            // State đang dùng:
+            // MedicalRecordExamDTO
+            //
+            // → map response sang Exam DTO
+            // =================================================
+
+            MedicalRecord =
+                MapDraftResponseToExam(
+                    responseData.Content
+                );
+
+
+            // =================================================
+            // SUCCESS MESSAGE
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
 
     // =====================================================
     // CLEAR MEDICAL RECORD
@@ -230,5 +422,80 @@ public class DoctorExamStateService
     private void StateHasChanged()
     {
         OnChange?.Invoke();
+    }
+
+    // =====================================================
+    // MAP DRAFT RESPONSE → EXAM DTO
+    // =====================================================
+
+    private static MedicalRecordExamDTO
+        MapDraftResponseToExam(
+            MedicalRecordDraftResponseDTO draft)
+    {
+        return new MedicalRecordExamDTO
+        {
+            Id =
+                draft.Id,
+
+            AppointmentId =
+                draft.AppointmentId,
+
+            DoctorName =
+                draft.DoctorName,
+
+            Symptoms =
+                draft.Symptoms,
+
+            Diagnosis =
+                draft.Diagnosis,
+
+            Icd10Code =
+                draft.Icd10Code,
+
+            TreatmentPlan =
+                draft.TreatmentPlan,
+
+            Note =
+                draft.Note,
+
+            FollowUpDate =
+                draft.FollowUpDate,
+
+            Status =
+                draft.Status,
+
+            FinalizedAt =
+                draft.FinalizedAt,
+
+            CreatedAt =
+                draft.CreatedAt,
+
+            Vital =
+                draft.Vitals == null
+                    ? null
+                    : new PatientVitalDTO
+                    {
+                        Id =
+                            draft.Vitals.Id,
+
+                        MedicalRecordId =
+                            draft.Vitals.MedicalRecordId,
+
+                        Temperature =
+                            draft.Vitals.Temperature,
+
+                        Pulse =
+                            draft.Vitals.Pulse,
+
+                        BloodPressure =
+                            draft.Vitals.BloodPressure,
+
+                        Weight =
+                            draft.Vitals.Weight,
+
+                        Height =
+                            draft.Vitals.Height
+                    }
+        };
     }
 }
