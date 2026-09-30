@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Infrastructure.Models;
+using ClinicManagementSystem.Application.DTOs.Invoice;
 
 
 namespace ClinicManagementSystem.Application.Services;
@@ -21,6 +22,8 @@ public interface IMedicalRecordService
     Task<HttpResponseData<List<MedicalRecordDTO>>> GetPatientMedicalRecordsAsync(int patientId, int currentUserId);
 
     Task<HttpResponseData<MedicalRecordDraftResponseDTO>> UpdateMedicalRecordDraftAsync(int medicalRecordId, int currentUserId, MedicalRecordDraftRequestDTO request);
+
+    Task<HttpResponseData<InvoiceDTO>> FinalizeMedicalRecordAsync(int medicalRecordId, int currentUserId);
 
 }
 
@@ -49,6 +52,727 @@ public class MedicalRecordService
 
         _logger =
             logger;
+    }
+
+    // =====================================================
+    // FINALIZE MEDICAL RECORD
+    // =====================================================
+
+    public async Task<HttpResponseData<InvoiceDTO>>
+        FinalizeMedicalRecordAsync(
+            int medicalRecordId,
+            int currentUserId)
+    {
+        bool transactionStarted = false;
+
+        try
+        {
+            // =================================================
+            // VALIDATE ID
+            // =================================================
+
+            if (medicalRecordId <= 0)
+            {
+                return InvoiceResponse(
+                    400,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // VALIDATE USER
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return InvoiceResponse(
+                    401,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordAccessDenied
+                );
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id == medicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MEDICAL RECORD NOT FOUND
+            // =================================================
+
+            if (medicalRecord == null)
+            {
+                return InvoiceResponse(
+                    404,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK DOCTOR OWNERSHIP
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.Id == medicalRecord.DoctorId &&
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (doctor == null)
+            {
+                return InvoiceResponse(
+                    403,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordAccessDenied
+                );
+            }
+
+
+            // =================================================
+            // CHECK MEDICAL RECORD STATUS
+            //
+            // Chỉ Draft mới được chốt.
+            // =================================================
+
+            if (
+                medicalRecord.Status !=
+                (byte)MedicalRecordStatus.Draft
+            )
+            {
+                return InvoiceResponse(
+                    409,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordAlreadyFinalized
+                );
+            }
+
+
+            // =================================================
+            // CHECK DIAGNOSIS
+            // =================================================
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    medicalRecord.Diagnosis
+                )
+            )
+            {
+                return InvoiceResponse(
+                    400,
+                    MedicalRecordResponseMessageDTO
+                        .DiagnosisRequired
+                );
+            }
+
+
+            // =================================================
+            // GET APPOINTMENT
+            // =================================================
+
+            var appointment =
+                await _unitOfWork
+                    .AppointmentRepository
+                    .WhereSql(
+                        a =>
+                            a.Id ==
+                            medicalRecord.AppointmentId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (appointment == null)
+            {
+                return InvoiceResponse(
+                    404,
+                    MedicalRecordResponseMessageDTO
+                        .AppointmentNotFound
+                );
+            }
+
+
+            // =================================================
+            // GET PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            p.Id ==
+                            medicalRecord.PatientId &&
+                            p.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (patient == null)
+            {
+                return InvoiceResponse(
+                    404,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD SERVICES
+            // =================================================
+
+            var medicalRecordServices =
+                await _unitOfWork
+                    .MedicalRecordServiceRepository
+                    .WhereSql(
+                        s =>
+                            s.MedicalRecordId ==
+                            medicalRecord.Id
+                    )
+                    .OrderBy(
+                        s => s.Id
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // VALIDATE CLS STATUS
+            //
+            // Completed = 2
+            // Cancelled = 3
+            //
+            // Các status khác:
+            // → chưa thể chốt bệnh án.
+            // =================================================
+
+            const byte completedServiceStatus = 2;
+            const byte cancelledServiceStatus = 3;
+
+            var invalidService =
+                medicalRecordServices
+                    .FirstOrDefault(
+                        s =>
+                            s.Status !=
+                                completedServiceStatus &&
+                            s.Status !=
+                                cancelledServiceStatus
+                    );
+
+
+            if (invalidService != null)
+            {
+                return InvoiceResponse(
+                    409,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordServicesNotCompleted
+                );
+            }
+
+
+            // =================================================
+            // GET PRESCRIPTION
+            // =================================================
+
+            var prescription =
+                await _unitOfWork
+                    .PrescriptionRepository
+                    .WhereSql(
+                        p =>
+                            p.MedicalRecordId ==
+                            medicalRecord.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // GET PRESCRIPTION ITEMS
+            // =================================================
+
+            var prescriptionItems =
+                new List<PrescriptionItem>();
+
+
+            if (prescription != null)
+            {
+                prescriptionItems =
+                    await _unitOfWork
+                        .PrescriptionItemRepository
+                        .WhereSql(
+                            i =>
+                                i.PrescriptionId ==
+                                prescription.Id
+                        )
+                        .OrderBy(
+                            i => i.Id
+                        )
+                        .ToListAsync();
+            }
+
+
+            // =================================================
+            // CALCULATE CONSULTATION FEE
+            // =================================================
+
+            var consultationFee =
+                appointment.FeeSnapshot;
+
+
+            // =================================================
+            // CALCULATE COMPLETED SERVICES
+            // =================================================
+
+            var completedServices =
+                medicalRecordServices
+                    .Where(
+                        s =>
+                            s.Status ==
+                            completedServiceStatus
+                    )
+                    .ToList();
+
+
+            var serviceTotal =
+                completedServices
+                    .Sum(
+                        s =>
+                            s.Quantity *
+                            s.UnitPriceSnapshot
+                    );
+
+
+            // =================================================
+            // CALCULATE MEDICINE TOTAL
+            // =================================================
+
+            var medicineTotal =
+                prescriptionItems
+                    .Sum(
+                        i =>
+                            i.Quantity *
+                            i.UnitPriceSnapshot
+                    );
+
+
+            // =================================================
+            // CALCULATE INVOICE TOTAL
+            //
+            // Phí khám
+            // + CLS Completed
+            // + Thuốc
+            // =================================================
+
+            var totalAmount =
+                consultationFee +
+                serviceTotal +
+                medicineTotal;
+
+
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            var now =
+                DateTime.Now;
+
+
+            // =================================================
+            // CREATE INVOICE
+            // =================================================
+
+            var invoice =
+                new Invoice
+                {
+                    PatientId =
+                        patient.Id,
+
+                    AppointmentId =
+                        appointment.Id,
+
+                    MedicalRecordId =
+                        medicalRecord.Id,
+
+                    PatientName =
+                        patient.FullName,
+
+                    TotalAmount =
+                        totalAmount,
+
+                    DiscountAmount =
+                        0,
+
+                    TaxAmount =
+                        0,
+
+                    PaidAmount =
+                        0,
+
+                    InsuranceAmount =
+                        0,
+
+                    Status =
+                        (byte)InvoiceStatus.Unpaid,
+
+                    CreatedBy =
+                        currentUserId,
+
+                    CreatedAt =
+                        now,
+
+                    InvoiceNo =
+                        "INV" +
+                        Guid.NewGuid()
+                            .ToString("N")[..17]
+                            .ToUpperInvariant()
+                };
+
+
+            await _unitOfWork
+                .InvoiceRepository
+                .AddAsync(
+                    invoice
+                );
+
+
+            // =================================================
+            // SAVE INVOICE FIRST
+            //
+            // Lấy Invoice.Id trước khi tạo InvoiceItem.
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // CREATE CLS INVOICE ITEMS
+            // =================================================
+
+            foreach (var medicalRecordService
+                in completedServices)
+            {
+                var service =
+                    await _unitOfWork
+                        .ServiceRepository
+                        .WhereSql(
+                            s =>
+                                s.Id ==
+                                medicalRecordService.ServiceId
+                        )
+                        .FirstOrDefaultAsync();
+
+
+                var amount =
+                    medicalRecordService.Quantity *
+                    medicalRecordService.UnitPriceSnapshot;
+
+
+                var invoiceItem =
+                    new InvoiceItem
+                    {
+                        InvoiceId =
+                            invoice.Id,
+
+                        MedicineId =
+                            null,
+
+                        MedicalRecordServiceId =
+                            medicalRecordService.Id,
+
+                        Description =
+                            service?.Name ??
+                            $"Dịch vụ #{medicalRecordService.ServiceId}",
+
+                        Quantity =
+                            medicalRecordService.Quantity,
+
+                        UnitPrice =
+                            medicalRecordService.UnitPriceSnapshot,
+
+                        Amount =
+                            amount,
+
+                        DiscountAmount =
+                            0
+                    };
+
+
+                await _unitOfWork
+                    .InvoiceItemRepository
+                    .AddAsync(
+                        invoiceItem
+                    );
+            }
+
+
+            // =================================================
+            // CREATE MEDICINE INVOICE ITEMS
+            // =================================================
+
+            foreach (var prescriptionItem
+                in prescriptionItems)
+            {
+                var amount =
+                    prescriptionItem.Quantity *
+                    prescriptionItem.UnitPriceSnapshot;
+
+
+                var invoiceItem =
+                    new InvoiceItem
+                    {
+                        InvoiceId =
+                            invoice.Id,
+
+                        MedicineId =
+                            prescriptionItem.MedicineId,
+
+                        MedicalRecordServiceId =
+                            null,
+
+                        Description =
+                            prescriptionItem.MedicineNameSnapshot,
+
+                        Quantity =
+                            prescriptionItem.Quantity,
+
+                        UnitPrice =
+                            prescriptionItem.UnitPriceSnapshot,
+
+                        Amount =
+                            amount,
+
+                        DiscountAmount =
+                            0
+                    };
+
+
+                await _unitOfWork
+                    .InvoiceItemRepository
+                    .AddAsync(
+                        invoiceItem
+                    );
+            }
+
+
+            // =================================================
+            // FINALIZE MEDICAL RECORD
+            // =================================================
+
+            medicalRecord.Status =
+                (byte)MedicalRecordStatus.Finalized;
+
+            medicalRecord.FinalizedAt =
+                now;
+
+            medicalRecord.UpdatedAt =
+                now;
+
+
+            // =================================================
+            // UPDATE APPOINTMENT
+            // =================================================
+
+            var fromAppointmentStatus =
+                appointment.Status;
+
+            appointment.Status =
+                (byte)AppointmentStatus.Completed;
+
+            appointment.UpdatedAt =
+                now;
+
+
+            // =================================================
+            // APPOINTMENT STATUS HISTORY
+            // =================================================
+
+            var appointmentHistory =
+                new AppointmentStatusHistory
+                {
+                    AppointmentId =
+                        appointment.Id,
+
+                    FromStatus =
+                        fromAppointmentStatus,
+
+                    ToStatus =
+                        (byte)AppointmentStatus.Completed,
+
+                    ChangedBy =
+                        currentUserId,
+
+                    Reason =
+                        "Chốt bệnh án.",
+
+                    ChangedAt =
+                        now
+                };
+
+
+            await _unitOfWork
+                .AppointmentStatusHistoryRepository
+                .AddAsync(
+                    appointmentHistory
+                );
+
+
+            // =================================================
+            // AUDIT LOG
+            // =================================================
+
+            var auditLog =
+                new AuditLog
+                {
+                    UserId =
+                        currentUserId,
+
+                    Action =
+                        "FINALIZE_MEDICAL_RECORD",
+
+                    EntityName =
+                        "MedicalRecord",
+
+                    EntityId =
+                        medicalRecord.Id,
+
+                    Details =
+                        $"Chốt bệnh án #{medicalRecord.Id}. " +
+                        $"Hóa đơn: {invoice.InvoiceNo}. " +
+                        $"Tổng tiền: {invoice.TotalAmount:N0}.",
+
+                    IpAddress =
+                        null,
+
+                    Succeeded =
+                        true,
+
+                    OccurredAt =
+                        now
+                };
+
+
+            await _unitOfWork
+                .AuditLogRepository
+                .AddAsync(
+                    auditLog
+                );
+
+
+            // =================================================
+            // SAVE ALL
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // GET FINALIZED INVOICE
+            // =================================================
+
+            var result =
+                await GetInvoiceAsync(
+                    invoice.Id
+                );
+
+
+            if (result.StatusCode != 200)
+            {
+                return result;
+            }
+
+
+            // =================================================
+            // FINALIZE SUCCESS MESSAGE
+            // =================================================
+
+            result.Message =
+                MedicalRecordResponseMessageDTO
+                    .FinalizeSuccess;
+
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // ROLLBACK
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback medical record finalize transaction. " +
+                        "MedicalRecordId: {MedicalRecordId}",
+                        medicalRecordId
+                    );
+                }
+            }
+
+
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to finalize medical record. " +
+                "MedicalRecordId: {MedicalRecordId}, " +
+                "UserId: {UserId}",
+                medicalRecordId,
+                currentUserId
+            );
+
+
+            return InvoiceResponse(
+                500,
+                MedicalRecordResponseMessageDTO
+                    .FinalizeFailed
+            );
+        }
     }
 
     // =====================================================
@@ -951,6 +1675,29 @@ public class MedicalRecordService
             MedicalRecordDraftResponseDTO? content = null)
     {
         return new HttpResponseData<MedicalRecordDraftResponseDTO>
+        {
+            StatusCode =
+                statusCode,
+
+            Message =
+                message,
+
+            Content =
+                content
+        };
+    }
+
+    // =====================================================
+    // INVOICE RESPONSE
+    // =====================================================
+
+    private static HttpResponseData<InvoiceDTO>
+        InvoiceResponse(
+            int statusCode,
+            string message,
+            InvoiceDTO? content = null)
+    {
+        return new HttpResponseData<InvoiceDTO>
         {
             StatusCode =
                 statusCode,
