@@ -9,6 +9,7 @@
 @using Microsoft.AspNetCore.Authorization
 
 @inject DoctorExamStateService DoctorExamStateService
+@inject NavigationManager NavigationManager
 
 @implements IDisposable
 
@@ -460,7 +461,8 @@
                        CLS
                        ================================================= *@
 
-                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized"
+                            @onclick="OpenServices">
 
                         Chỉ định cận lâm sàng
 
@@ -471,7 +473,8 @@
                        PRESCRIPTION
                        ================================================= *@
 
-                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized"
+                            @onclick="OpenPrescription">
 
                         Kê đơn thuốc
 
@@ -571,6 +574,20 @@
             );
         }
     }
+
+    private void OpenServices()
+{
+    NavigationManager.NavigateTo(
+        $"/doctor/exam/{MedicalRecordId}/services"
+    );
+}
+
+private void OpenPrescription()
+{
+    NavigationManager.NavigateTo(
+        $"/doctor/exam/{MedicalRecordId}/prescription"
+    );
+}
 
     // =====================================================
     // FINALIZE MEDICAL RECORD
