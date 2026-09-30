@@ -374,3 +374,96 @@
         width: 100%;
     }
 }
+
+/* =====================================================
+   FORM
+   ===================================================== */
+
+.doctor-exam-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.doctor-exam-form-group label {
+    display: block;
+    margin-bottom: 0;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.doctor-exam-form-group label .required {
+    color: #dc2626;
+}
+
+.doctor-exam-input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.doctor-exam-input:focus {
+    border-color: #0284c7;
+}
+
+.doctor-exam-input:disabled {
+    background: #f8fafc;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.doctor-exam-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.doctor-exam-vital-form-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.doctor-exam-input-unit {
+    position: relative;
+}
+
+.doctor-exam-input-unit .doctor-exam-input {
+    padding-right: 48px;
+}
+
+.doctor-exam-input-unit span {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+    .doctor-exam-vital-form-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .doctor-exam-vital-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .doctor-exam-vital-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

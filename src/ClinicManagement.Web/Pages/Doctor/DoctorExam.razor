@@ -4,8 +4,9 @@
 
 @attribute [Authorize(Roles = "Doctor")]
 
-@using Microsoft.AspNetCore.Authorization
 @using ClinicManagementSystem.Application.DTOs.MedicalRecord
+@using ClinicManagementSystem.Application.Enums
+@using Microsoft.AspNetCore.Authorization
 
 @inject DoctorExamStateService DoctorExamStateService
 
@@ -34,7 +35,7 @@
             </h1>
 
             <p>
-                Xem và cập nhật thông tin khám bệnh của bệnh nhân.
+                Thực hiện khám và cập nhật bệnh án của bệnh nhân.
             </p>
 
         </div>
@@ -84,10 +85,14 @@
 
 
         @* =================================================
-           PATIENT / MEDICAL RECORD INFORMATION
+           MEDICAL RECORD
            ================================================= *@
 
         <section class="doctor-exam-card">
+
+            @* =================================================
+               CARD HEADER
+               ================================================= *@
 
             <div class="doctor-exam-card-header">
 
@@ -103,9 +108,10 @@
 
                 </div>
 
+
                 <div class="doctor-exam-status">
 
-                    @if (record.FinalizedAt.HasValue)
+                    @if (IsFinalized)
                     {
                         <span class="doctor-exam-status-finalized">
                             Đã chốt
@@ -138,6 +144,8 @@
 
                     <div class="doctor-exam-grid">
 
+                        @* DOCTOR *@
+
                         <div class="doctor-exam-field">
 
                             <label>
@@ -151,10 +159,12 @@
                         </div>
 
 
+                        @* APPOINTMENT *@
+
                         <div class="doctor-exam-field">
 
                             <label>
-                                Appointment ID
+                                Mã lịch hẹn
                             </label>
 
                             <div>
@@ -164,32 +174,123 @@
                         </div>
 
 
-                        <div class="doctor-exam-field doctor-exam-field-full">
+                        @* =================================================
+                           SYMPTOMS
+                           ================================================= *@
+
+                        <div class="doctor-exam-form-group doctor-exam-field-full">
 
                             <label>
                                 Triệu chứng
                             </label>
 
-                            <div>
-                                @(string.IsNullOrWhiteSpace(record.Symptoms)
-                                    ? "Chưa có"
-                                    : record.Symptoms)
-                            </div>
+                            <textarea
+                                class="doctor-exam-input doctor-exam-textarea"
+                                rows="4"
+                                @bind="Form.Symptoms"
+                                disabled="@IsFinalized">
+                            </textarea>
 
                         </div>
 
 
-                        <div class="doctor-exam-field doctor-exam-field-full">
+                        @* =================================================
+                           DIAGNOSIS
+                           ================================================= *@
+
+                        <div class="doctor-exam-form-group doctor-exam-field-full">
 
                             <label>
                                 Chẩn đoán
+                                <span class="required">
+                                    *
+                                </span>
                             </label>
 
-                            <div>
-                                @(string.IsNullOrWhiteSpace(record.Diagnosis)
-                                    ? "Chưa có"
-                                    : record.Diagnosis)
-                            </div>
+                            <textarea
+                                class="doctor-exam-input doctor-exam-textarea"
+                                rows="4"
+                                @bind="Form.Diagnosis"
+                                disabled="@IsFinalized">
+                            </textarea>
+
+                        </div>
+
+
+                        @* =================================================
+                           ICD10
+                           ================================================= *@
+
+                        <div class="doctor-exam-form-group">
+
+                            <label>
+                                Mã ICD-10
+                            </label>
+
+                            <input
+                                type="text"
+                                class="doctor-exam-input"
+                                @bind="Form.Icd10Code"
+                                disabled="@IsFinalized" />
+
+                        </div>
+
+
+                        @* =================================================
+                           FOLLOW UP
+                           ================================================= *@
+
+                        <div class="doctor-exam-form-group">
+
+                            <label>
+                                Ngày tái khám
+                            </label>
+
+                            <input
+                                type="date"
+                                class="doctor-exam-input"
+                                @bind="Form.FollowUpDate"
+                                disabled="@IsFinalized" />
+
+                        </div>
+
+
+                        @* =================================================
+                           TREATMENT PLAN
+                           ================================================= *@
+
+                        <div class="doctor-exam-form-group doctor-exam-field-full">
+
+                            <label>
+                                Hướng điều trị
+                            </label>
+
+                            <textarea
+                                class="doctor-exam-input doctor-exam-textarea"
+                                rows="4"
+                                @bind="Form.TreatmentPlan"
+                                disabled="@IsFinalized">
+                            </textarea>
+
+                        </div>
+
+
+                        @* =================================================
+                           NOTE
+                           ================================================= *@
+
+                        <div class="doctor-exam-form-group doctor-exam-field-full">
+
+                            <label>
+                                Ghi chú
+                            </label>
+
+                            <textarea
+                                class="doctor-exam-input doctor-exam-textarea"
+                                rows="3"
+                                @bind="Form.Note"
+                                disabled="@IsFinalized">
+                            </textarea>
 
                         </div>
 
@@ -199,7 +300,7 @@
 
 
                 @* =================================================
-                   VITAL
+                   PATIENT VITAL
                    ================================================= *@
 
                 <div class="doctor-exam-section">
@@ -209,152 +310,124 @@
                     </div>
 
 
-                    @if (record.Vital == null)
-                    {
-                        <div class="doctor-exam-empty">
-                            Chưa có thông tin sinh hiệu.
-                        </div>
-                    }
-                    else
-                    {
-                        var vital = record.Vital;
+                    <div class="doctor-exam-vital-form-grid">
 
-                        <div class="doctor-exam-vital-grid">
+                        @* TEMPERATURE *@
 
-                            <div class="doctor-exam-vital-item">
-
-                                <span>
-                                    Nhiệt độ
-                                </span>
-
-                                <strong>
-                                    @(vital.Temperature.HasValue
-                                        ? $"{vital.Temperature} °C"
-                                        : "--")
-                                </strong>
-
-                            </div>
-
-
-                            <div class="doctor-exam-vital-item">
-
-                                <span>
-                                    Mạch
-                                </span>
-
-                                <strong>
-                                    @(vital.Pulse.HasValue
-                                        ? $"{vital.Pulse} bpm"
-                                        : "--")
-                                </strong>
-
-                            </div>
-
-
-                            <div class="doctor-exam-vital-item">
-
-                                <span>
-                                    Huyết áp
-                                </span>
-
-                                <strong>
-                                    @(string.IsNullOrWhiteSpace(
-                                        vital.BloodPressure)
-                                        ? "--"
-                                        : vital.BloodPressure)
-                                </strong>
-
-                            </div>
-
-
-                            <div class="doctor-exam-vital-item">
-
-                                <span>
-                                    Cân nặng
-                                </span>
-
-                                <strong>
-                                    @(vital.Weight.HasValue
-                                        ? $"{vital.Weight} kg"
-                                        : "--")
-                                </strong>
-
-                            </div>
-
-
-                            <div class="doctor-exam-vital-item">
-
-                                <span>
-                                    Chiều cao
-                                </span>
-
-                                <strong>
-                                    @(vital.Height.HasValue
-                                        ? $"{vital.Height} cm"
-                                        : "--")
-                                </strong>
-
-                            </div>
-
-                        </div>
-                    }
-
-                </div>
-
-
-                @* =================================================
-                   OTHER MEDICAL INFORMATION
-                   ================================================= *@
-
-                <div class="doctor-exam-section">
-
-                    <div class="doctor-exam-section-title">
-                        Thông tin điều trị
-                    </div>
-
-
-                    <div class="doctor-exam-grid">
-
-                        <div class="doctor-exam-field doctor-exam-field-full">
+                        <div class="doctor-exam-form-group">
 
                             <label>
-                                Mã ICD-10
+                                Nhiệt độ
                             </label>
 
-                            <div>
-                                @(string.IsNullOrWhiteSpace(record.Icd10Code)
-                                    ? "Chưa có"
-                                    : record.Icd10Code)
+                            <div class="doctor-exam-input-unit">
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    class="doctor-exam-input"
+                                    @bind="Form.Temperature"
+                                    disabled="@IsFinalized" />
+
+                                <span>
+                                    °C
+                                </span>
+
                             </div>
 
                         </div>
 
 
-                        <div class="doctor-exam-field doctor-exam-field-full">
+                        @* PULSE *@
+
+                        <div class="doctor-exam-form-group">
 
                             <label>
-                                Hướng điều trị
+                                Mạch
                             </label>
 
-                            <div>
-                                @(string.IsNullOrWhiteSpace(record.TreatmentPlan)
-                                    ? "Chưa có"
-                                    : record.TreatmentPlan)
+                            <div class="doctor-exam-input-unit">
+
+                                <input
+                                    type="number"
+                                    class="doctor-exam-input"
+                                    @bind="Form.Pulse"
+                                    disabled="@IsFinalized" />
+
+                                <span>
+                                    bpm
+                                </span>
+
                             </div>
 
                         </div>
 
 
-                        <div class="doctor-exam-field doctor-exam-field-full">
+                        @* BLOOD PRESSURE *@
+
+                        <div class="doctor-exam-form-group">
 
                             <label>
-                                Ghi chú
+                                Huyết áp
                             </label>
 
-                            <div>
-                                @(string.IsNullOrWhiteSpace(record.Note)
-                                    ? "Chưa có"
-                                    : record.Note)
+                            <input
+                                type="text"
+                                class="doctor-exam-input"
+                                placeholder="120/80"
+                                @bind="Form.BloodPressure"
+                                disabled="@IsFinalized" />
+
+                        </div>
+
+
+                        @* WEIGHT *@
+
+                        <div class="doctor-exam-form-group">
+
+                            <label>
+                                Cân nặng
+                            </label>
+
+                            <div class="doctor-exam-input-unit">
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    class="doctor-exam-input"
+                                    @bind="Form.Weight"
+                                    disabled="@IsFinalized" />
+
+                                <span>
+                                    kg
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        @* HEIGHT *@
+
+                        <div class="doctor-exam-form-group">
+
+                            <label>
+                                Chiều cao
+                            </label>
+
+                            <div class="doctor-exam-input-unit">
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    class="doctor-exam-input"
+                                    @bind="Form.Height"
+                                    disabled="@IsFinalized" />
+
+                                <span>
+                                    cm
+                                </span>
+
                             </div>
 
                         </div>
@@ -372,7 +445,8 @@
 
                     <button
                         type="button"
-                        class="doctor-exam-secondary-button">
+                        class="doctor-exam-secondary-button"
+                        disabled="@IsFinalized">
 
                         Chỉ định cận lâm sàng
 
@@ -381,7 +455,8 @@
 
                     <button
                         type="button"
-                        class="doctor-exam-secondary-button">
+                        class="doctor-exam-secondary-button"
+                        disabled="@IsFinalized">
 
                         Kê đơn thuốc
 
@@ -390,7 +465,8 @@
 
                     <button
                         type="button"
-                        class="doctor-exam-primary-button">
+                        class="doctor-exam-primary-button"
+                        disabled="@IsFinalized">
 
                         Lưu nháp
 
@@ -399,7 +475,8 @@
 
                     <button
                         type="button"
-                        class="doctor-exam-finalize-button">
+                        class="doctor-exam-finalize-button"
+                        disabled="@IsFinalized">
 
                         Hoàn tất & chốt bệnh án
 
@@ -418,7 +495,7 @@
 @code {
 
     // =====================================================
-    // ROUTE PARAMETER
+    // ROUTE
     // =====================================================
 
     [Parameter]
@@ -426,20 +503,24 @@
 
 
     // =====================================================
+    // FORM
+    // =====================================================
+
+    private readonly DoctorExamFormModel Form = new();
+
+
+    // =====================================================
+    // FINALIZED
+    // =====================================================
+
+    private bool IsFinalized =>
+        DoctorExamStateService.MedicalRecord != null &&
+        DoctorExamStateService.MedicalRecord.Status ==
+            (byte)MedicalRecordStatus.Finalized;
+
+
+    // =====================================================
     // INITIALIZE
-    // =====================================================
-
-    protected override async Task OnParametersSetAsync()
-    {
-        await DoctorExamStateService
-            .LoadMedicalRecordAsync(
-                MedicalRecordId
-            );
-    }
-
-
-    // =====================================================
-    // STATE CHANGE
     // =====================================================
 
     protected override void OnInitialized()
@@ -449,9 +530,87 @@
     }
 
 
+    protected override async Task OnParametersSetAsync()
+    {
+        var loaded =
+            await DoctorExamStateService
+                .LoadMedicalRecordAsync(
+                    MedicalRecordId
+                );
+
+        if (loaded &&
+            DoctorExamStateService.MedicalRecord != null)
+        {
+            MapMedicalRecordToForm(
+                DoctorExamStateService.MedicalRecord
+            );
+        }
+    }
+
+
+    // =====================================================
+    // MAP RESPONSE → FORM
+    // =====================================================
+
+    private void MapMedicalRecordToForm(
+        MedicalRecordExamDTO record)
+    {
+        Form.Symptoms =
+            record.Symptoms;
+
+        Form.Diagnosis =
+            record.Diagnosis;
+
+        Form.Icd10Code =
+            record.Icd10Code;
+
+        Form.TreatmentPlan =
+            record.TreatmentPlan;
+
+        Form.Note =
+            record.Note;
+
+        Form.FollowUpDate =
+            record.FollowUpDate;
+
+
+        if (record.Vital != null)
+        {
+            Form.Temperature =
+                record.Vital.Temperature;
+
+            Form.Pulse =
+                record.Vital.Pulse;
+
+            Form.BloodPressure =
+                record.Vital.BloodPressure;
+
+            Form.Weight =
+                record.Vital.Weight;
+
+            Form.Height =
+                record.Vital.Height;
+        }
+        else
+        {
+            Form.Temperature = null;
+            Form.Pulse = null;
+            Form.BloodPressure = null;
+            Form.Weight = null;
+            Form.Height = null;
+        }
+    }
+
+
+    // =====================================================
+    // STATE CHANGE
+    // =====================================================
+
     private void HandleStateChanged()
     {
-        InvokeAsync(StateHasChanged);
+        InvokeAsync(
+            StateHasChanged
+        );
     }
 
 
@@ -463,6 +622,36 @@
     {
         DoctorExamStateService.OnChange -=
             HandleStateChanged;
+    }
+
+
+    // =====================================================
+    // FORM MODEL
+    // =====================================================
+
+    private sealed class DoctorExamFormModel
+    {
+        public string? Symptoms { get; set; }
+
+        public string? Diagnosis { get; set; }
+
+        public string? Icd10Code { get; set; }
+
+        public string? TreatmentPlan { get; set; }
+
+        public string? Note { get; set; }
+
+        public DateOnly? FollowUpDate { get; set; }
+
+        public decimal? Temperature { get; set; }
+
+        public int? Pulse { get; set; }
+
+        public string? BloodPressure { get; set; }
+
+        public decimal? Weight { get; set; }
+
+        public decimal? Height { get; set; }
     }
 
 }
