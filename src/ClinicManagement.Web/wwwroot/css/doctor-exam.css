@@ -278,10 +278,12 @@
 
 .doctor-exam-field label,
 .doctor-exam-form-group label {
-    color: #64748b;
+    color: #334155;
 
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
+
+    line-height: 1.4;
 }
 
 .doctor-exam-field > div:not(.doctor-exam-input-unit) {
