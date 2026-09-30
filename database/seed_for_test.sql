@@ -1731,3 +1731,28 @@ SELECT
     created_at
 FROM clinical.medical_records
 WHERE appointment_id = 26
+
+
+-------------- seeding gio kham cho doctor(doctorId = 5)
+INSERT INTO scheduling.doctor_schedules
+(
+    doctor_id,
+    day_of_week,
+    start_time,
+    end_time,
+    slot_minutes,
+    is_active,
+    effective_from,
+    effective_to
+)
+VALUES
+(
+    5,
+    3,              -- Wednesday
+    '08:00:00',
+    '17:00:00',
+    30,
+    1,
+    '2026-09-30',
+    NULL
+);
