@@ -25,6 +25,12 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<InvoiceDTO>> FinalizeMedicalRecordAsync(int medicalRecordId, int currentUserId);
 
+    // =====================================================
+    // GET MEDICAL RECORD BY ID - DOCTOR
+    // =====================================================
+
+    Task<HttpResponseData<MedicalRecordDTO>> GetMedicalRecordByIdForDoctorAsync(int medicalRecordId, int currentUserId);
+
 }
 
 // =====================================================
@@ -59,6 +65,192 @@ public class MedicalRecordService
         _logger =
             logger;
     }
+
+    // =====================================================
+    // GET MEDICAL RECORD BY ID - DOCTOR
+    //
+    // GET:
+    // /api/medical-records/{id}
+    //
+    // Doctor hiện tại lấy từ JWT.
+    //
+    // Cho phép Doctor đọc:
+    // - Draft
+    // - Finalized
+    //
+    // Chỉ được đọc bệnh án thuộc Doctor hiện tại.
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<MedicalRecordDTO>>
+        GetMedicalRecordByIdForDoctorAsync(
+            int medicalRecordId,
+            int currentUserId)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE MEDICAL RECORD ID
+            // =================================================
+
+            if (medicalRecordId <= 0)
+            {
+                return Response(
+                    400,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // GET CURRENT DOCTOR
+            //
+            // JWT UserId
+            //      ↓
+            // Doctor.UserId
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // DOCTOR NOT FOUND
+            // =================================================
+
+            if (doctor == null)
+            {
+                return Response(
+                    404,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            //
+            // Chỉ lấy bệnh án thuộc Doctor hiện tại.
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id == medicalRecordId &&
+                            m.DoctorId == doctor.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MEDICAL RECORD NOT FOUND
+            // =================================================
+
+            if (medicalRecord == null)
+            {
+                return Response(
+                    404,
+                    MedicalRecordResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new MedicalRecordDTO
+                {
+                    Id =
+                        medicalRecord.Id,
+
+                    AppointmentId =
+                        medicalRecord.AppointmentId,
+
+                    DoctorName =
+                        doctor.FullName,
+
+                    Symptoms =
+                        medicalRecord.Symptoms,
+
+                    Diagnosis =
+                        medicalRecord.Diagnosis,
+
+                    Icd10Code =
+                        medicalRecord.Icd10Code,
+
+                    TreatmentPlan =
+                        medicalRecord.TreatmentPlan,
+
+                    Note =
+                        medicalRecord.Note,
+
+                    FollowUpDate =
+                        medicalRecord.FollowUpDate,
+
+                    Status =
+                        medicalRecord.Status,
+
+                    FinalizedAt =
+                        medicalRecord.FinalizedAt,
+
+                    CreatedAt =
+                        medicalRecord.CreatedAt
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return Response(
+                200,
+                MedicalRecordResponseMessageDTO
+                    .GetSuccess,
+                result
+            );
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to get medical record for doctor. " +
+                "MedicalRecordId: {MedicalRecordId}, " +
+                "UserId: {UserId}",
+                medicalRecordId,
+                currentUserId
+            );
+
+
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
+
+            return Response(
+                500,
+                MedicalRecordResponseMessageDTO
+                    .GetFailed
+            );
+        }
+    }
+
 
     // =====================================================
     // FINALIZE MEDICAL RECORD
