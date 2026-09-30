@@ -2051,4 +2051,8 @@ public class MedicalRecordService
         };
     }
 
+    public Task<HttpResponseData<MedicalRecordServiceDTO>> AddMedicalRecordServiceAsync(int medicalRecordId, int currentUserId, MedicalRecordServiceRequestDTO request)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -266,4 +266,60 @@ public class MedicalRecordController : ControllerBase
         );
     }
 
+    // =====================================================
+    // ADD MEDICAL RECORD SERVICE
+    //
+    // POST:
+    // /api/medical-records/{id}/services
+    //
+    // Doctor hiện tại lấy từ JWT.
+    // =====================================================
+
+    [HttpPost("{id:int}/services")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> AddMedicalRecordService(
+        int id,
+        [FromBody] MedicalRecordServiceRequestDTO request)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // ADD SERVICE
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .AddMedicalRecordServiceAsync(
+                    id,
+                    currentUserId,
+                    request
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }
