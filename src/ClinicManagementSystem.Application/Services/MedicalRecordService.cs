@@ -29,7 +29,7 @@ public interface IMedicalRecordService
     // GET MEDICAL RECORD BY ID - DOCTOR
     // =====================================================
 
-    Task<HttpResponseData<MedicalRecordDTO>> GetMedicalRecordByIdForDoctorAsync(int medicalRecordId, int currentUserId);
+    Task<HttpResponseData<MedicalRecordExamDTO>> GetMedicalRecordByIdForDoctorAsync(int medicalRecordId, int currentUserId);
 
 }
 
@@ -74,15 +74,18 @@ public class MedicalRecordService
     //
     // Doctor hiện tại lấy từ JWT.
     //
-    // Cho phép Doctor đọc:
+    // Cho phép đọc:
     // - Draft
     // - Finalized
     //
-    // Chỉ được đọc bệnh án thuộc Doctor hiện tại.
+    // Response gồm:
+    // - MedicalRecord
+    // - Doctor
+    // - PatientVital
     // =====================================================
 
     public async Task<
-        HttpResponseData<MedicalRecordDTO>>
+        HttpResponseData<MedicalRecordExamDTO>>
         GetMedicalRecordByIdForDoctorAsync(
             int medicalRecordId,
             int currentUserId)
@@ -95,11 +98,14 @@ public class MedicalRecordService
 
             if (medicalRecordId <= 0)
             {
-                return Response(
-                    400,
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordNotFound
-                );
+                return new HttpResponseData<MedicalRecordExamDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
             }
 
 
@@ -128,18 +134,25 @@ public class MedicalRecordService
 
             if (doctor == null)
             {
-                return Response(
-                    404,
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordNotFound
-                );
+                return new HttpResponseData<MedicalRecordExamDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
             }
 
 
             // =================================================
             // GET MEDICAL RECORD
             //
-            // Chỉ lấy bệnh án thuộc Doctor hiện tại.
+            // Chỉ lấy MedicalRecord thuộc Doctor hiện tại.
+            //
+            // Include:
+            // - Doctor
+            // - PatientVital
             // =================================================
 
             var medicalRecord =
@@ -150,6 +163,12 @@ public class MedicalRecordService
                             m.Id == medicalRecordId &&
                             m.DoctorId == doctor.Id
                     )
+                    .Include(
+                        m => m.Doctor
+                    )
+                    .Include(
+                        m => m.PatientVital
+                    )
                     .FirstOrDefaultAsync();
 
 
@@ -159,20 +178,64 @@ public class MedicalRecordService
 
             if (medicalRecord == null)
             {
-                return Response(
-                    404,
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordNotFound
-                );
+                return new HttpResponseData<MedicalRecordExamDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
             }
 
 
             // =================================================
-            // MAP RESPONSE
+            // MAP PATIENT VITAL
+            // =================================================
+
+            PatientVitalDTO? vital = null;
+
+            if (medicalRecord.PatientVital != null)
+            {
+                vital =
+                    new PatientVitalDTO
+                    {
+                        Id =
+                            medicalRecord.PatientVital.Id,
+
+                        MedicalRecordId =
+                            medicalRecord.PatientVital
+                                .MedicalRecordId,
+
+                        Temperature =
+                            medicalRecord.PatientVital
+                                .Temperature,
+
+                        Pulse =
+                            medicalRecord.PatientVital
+                                .Pulse,
+
+                        BloodPressure =
+                            medicalRecord.PatientVital
+                                .BloodPressure,
+
+                        Weight =
+                            medicalRecord.PatientVital
+                                .Weight,
+
+                        Height =
+                            medicalRecord.PatientVital
+                                .Height
+                    };
+            }
+
+
+            // =================================================
+            // MAP MEDICAL RECORD EXAM DTO
             // =================================================
 
             var result =
-                new MedicalRecordDTO
+                new MedicalRecordExamDTO
                 {
                     Id =
                         medicalRecord.Id,
@@ -181,7 +244,8 @@ public class MedicalRecordService
                         medicalRecord.AppointmentId,
 
                     DoctorName =
-                        doctor.FullName,
+                        medicalRecord.Doctor?.FullName
+                        ?? string.Empty,
 
                     Symptoms =
                         medicalRecord.Symptoms,
@@ -208,7 +272,10 @@ public class MedicalRecordService
                         medicalRecord.FinalizedAt,
 
                     CreatedAt =
-                        medicalRecord.CreatedAt
+                        medicalRecord.CreatedAt,
+
+                    Vital =
+                        vital
                 };
 
 
@@ -216,12 +283,17 @@ public class MedicalRecordService
             // SUCCESS
             // =================================================
 
-            return Response(
-                200,
-                MedicalRecordResponseMessageDTO
-                    .GetSuccess,
-                result
-            );
+            return new HttpResponseData<MedicalRecordExamDTO>
+            {
+                StatusCode = 200,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .GetSuccess,
+
+                Content =
+                    result
+            };
         }
         catch (Exception ex)
         {
@@ -243,14 +315,16 @@ public class MedicalRecordService
             // ERROR RESPONSE
             // =================================================
 
-            return Response(
-                500,
-                MedicalRecordResponseMessageDTO
-                    .GetFailed
-            );
+            return new HttpResponseData<MedicalRecordExamDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .GetFailed
+            };
         }
     }
-
 
     // =====================================================
     // FINALIZE MEDICAL RECORD
