@@ -97,6 +97,7 @@ builder.Services.AddScoped<IPatientInvoiceService, PatientInvoiceService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
 
+
 // ============================================================
 // DI Serilog
 // ============================================================

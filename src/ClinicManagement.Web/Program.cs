@@ -94,6 +94,7 @@ builder.Services.AddScoped<ReceptionBookingStateService>();
 builder.Services.AddScoped<ReceptionQueueStateService>();
 builder.Services.AddScoped<ReceptionInvoiceStateService>();
 builder.Services.AddScoped<DoctorQueueStateService>();
+builder.Services.AddScoped<DoctorExamStateService>();
 
 
 
