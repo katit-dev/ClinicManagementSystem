@@ -1,0 +1,468 @@
+@page "/doctor/exam/{MedicalRecordId:int}"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Doctor")]
+
+@using Microsoft.AspNetCore.Authorization
+@using ClinicManagementSystem.Application.DTOs.MedicalRecord
+
+@inject DoctorExamStateService DoctorExamStateService
+
+@implements IDisposable
+
+
+<PageTitle>Khám bệnh</PageTitle>
+
+
+<div class="doctor-exam-page">
+
+    @* =====================================================
+       HEADER
+       ===================================================== *@
+
+    <div class="doctor-exam-header">
+
+        <div>
+
+            <div class="doctor-exam-label">
+                KHÁM BỆNH
+            </div>
+
+            <h1>
+                Màn hình khám bệnh
+            </h1>
+
+            <p>
+                Xem và cập nhật thông tin khám bệnh của bệnh nhân.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    @* =====================================================
+       ERROR
+       ===================================================== *@
+
+    @if (!string.IsNullOrWhiteSpace(
+        DoctorExamStateService.ErrorMessage))
+    {
+        <div class="doctor-exam-message doctor-exam-error">
+
+            @DoctorExamStateService.ErrorMessage
+
+        </div>
+    }
+
+
+    @* =====================================================
+       LOADING
+       ===================================================== *@
+
+    @if (DoctorExamStateService.IsLoading)
+    {
+        <div class="doctor-exam-state">
+
+            Đang tải thông tin bệnh án...
+
+        </div>
+    }
+    else if (DoctorExamStateService.MedicalRecord == null)
+    {
+        <div class="doctor-exam-state">
+
+            Không tìm thấy thông tin bệnh án.
+
+        </div>
+    }
+    else
+    {
+        var record =
+            DoctorExamStateService.MedicalRecord;
+
+
+        @* =================================================
+           PATIENT / MEDICAL RECORD INFORMATION
+           ================================================= *@
+
+        <section class="doctor-exam-card">
+
+            <div class="doctor-exam-card-header">
+
+                <div>
+
+                    <div class="doctor-exam-card-label">
+                        BỆNH ÁN
+                    </div>
+
+                    <h2>
+                        #@record.Id
+                    </h2>
+
+                </div>
+
+                <div class="doctor-exam-status">
+
+                    @if (record.FinalizedAt.HasValue)
+                    {
+                        <span class="doctor-exam-status-finalized">
+                            Đã chốt
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="doctor-exam-status-draft">
+                            Nháp
+                        </span>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <div class="doctor-exam-content">
+
+                @* =================================================
+                   BASIC INFORMATION
+                   ================================================= *@
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-section-title">
+                        Thông tin khám
+                    </div>
+
+
+                    <div class="doctor-exam-grid">
+
+                        <div class="doctor-exam-field">
+
+                            <label>
+                                Bác sĩ
+                            </label>
+
+                            <div>
+                                @record.DoctorName
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field">
+
+                            <label>
+                                Appointment ID
+                            </label>
+
+                            <div>
+                                @record.AppointmentId
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field doctor-exam-field-full">
+
+                            <label>
+                                Triệu chứng
+                            </label>
+
+                            <div>
+                                @(string.IsNullOrWhiteSpace(record.Symptoms)
+                                    ? "Chưa có"
+                                    : record.Symptoms)
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field doctor-exam-field-full">
+
+                            <label>
+                                Chẩn đoán
+                            </label>
+
+                            <div>
+                                @(string.IsNullOrWhiteSpace(record.Diagnosis)
+                                    ? "Chưa có"
+                                    : record.Diagnosis)
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                @* =================================================
+                   VITAL
+                   ================================================= *@
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-section-title">
+                        Sinh hiệu
+                    </div>
+
+
+                    @if (record.Vital == null)
+                    {
+                        <div class="doctor-exam-empty">
+                            Chưa có thông tin sinh hiệu.
+                        </div>
+                    }
+                    else
+                    {
+                        var vital = record.Vital;
+
+                        <div class="doctor-exam-vital-grid">
+
+                            <div class="doctor-exam-vital-item">
+
+                                <span>
+                                    Nhiệt độ
+                                </span>
+
+                                <strong>
+                                    @(vital.Temperature.HasValue
+                                        ? $"{vital.Temperature} °C"
+                                        : "--")
+                                </strong>
+
+                            </div>
+
+
+                            <div class="doctor-exam-vital-item">
+
+                                <span>
+                                    Mạch
+                                </span>
+
+                                <strong>
+                                    @(vital.Pulse.HasValue
+                                        ? $"{vital.Pulse} bpm"
+                                        : "--")
+                                </strong>
+
+                            </div>
+
+
+                            <div class="doctor-exam-vital-item">
+
+                                <span>
+                                    Huyết áp
+                                </span>
+
+                                <strong>
+                                    @(string.IsNullOrWhiteSpace(
+                                        vital.BloodPressure)
+                                        ? "--"
+                                        : vital.BloodPressure)
+                                </strong>
+
+                            </div>
+
+
+                            <div class="doctor-exam-vital-item">
+
+                                <span>
+                                    Cân nặng
+                                </span>
+
+                                <strong>
+                                    @(vital.Weight.HasValue
+                                        ? $"{vital.Weight} kg"
+                                        : "--")
+                                </strong>
+
+                            </div>
+
+
+                            <div class="doctor-exam-vital-item">
+
+                                <span>
+                                    Chiều cao
+                                </span>
+
+                                <strong>
+                                    @(vital.Height.HasValue
+                                        ? $"{vital.Height} cm"
+                                        : "--")
+                                </strong>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                @* =================================================
+                   OTHER MEDICAL INFORMATION
+                   ================================================= *@
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-section-title">
+                        Thông tin điều trị
+                    </div>
+
+
+                    <div class="doctor-exam-grid">
+
+                        <div class="doctor-exam-field doctor-exam-field-full">
+
+                            <label>
+                                Mã ICD-10
+                            </label>
+
+                            <div>
+                                @(string.IsNullOrWhiteSpace(record.Icd10Code)
+                                    ? "Chưa có"
+                                    : record.Icd10Code)
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field doctor-exam-field-full">
+
+                            <label>
+                                Hướng điều trị
+                            </label>
+
+                            <div>
+                                @(string.IsNullOrWhiteSpace(record.TreatmentPlan)
+                                    ? "Chưa có"
+                                    : record.TreatmentPlan)
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field doctor-exam-field-full">
+
+                            <label>
+                                Ghi chú
+                            </label>
+
+                            <div>
+                                @(string.IsNullOrWhiteSpace(record.Note)
+                                    ? "Chưa có"
+                                    : record.Note)
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                @* =================================================
+                   ACTIONS
+                   ================================================= *@
+
+                <div class="doctor-exam-actions">
+
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button">
+
+                        Chỉ định cận lâm sàng
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button">
+
+                        Kê đơn thuốc
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="doctor-exam-primary-button">
+
+                        Lưu nháp
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="doctor-exam-finalize-button">
+
+                        Hoàn tất & chốt bệnh án
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+    }
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // ROUTE PARAMETER
+    // =====================================================
+
+    [Parameter]
+    public int MedicalRecordId { get; set; }
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await DoctorExamStateService
+            .LoadMedicalRecordAsync(
+                MedicalRecordId
+            );
+    }
+
+
+    // =====================================================
+    // STATE CHANGE
+    // =====================================================
+
+    protected override void OnInitialized()
+    {
+        DoctorExamStateService.OnChange +=
+            HandleStateChanged;
+    }
+
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        DoctorExamStateService.OnChange -=
+            HandleStateChanged;
+    }
+
+}
