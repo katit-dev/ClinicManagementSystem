@@ -373,4 +373,59 @@ public class MedicalRecordController : ControllerBase
         );
     }
 
+    // =====================================================
+    // ADD LAB RESULT
+    //
+    // POST:
+    // /api/medical-record-services/{id}/result
+    // =====================================================
+
+    [HttpPost(
+        "~/api/medical-record-services/{id:int}/result"
+    )]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> AddMedicalRecordServiceResult(
+        int id,
+        [FromBody] LabResultRequestDTO request)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // ADD RESULT
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .AddMedicalRecordServiceResultAsync(
+                    id,
+                    currentUserId,
+                    request
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 }
