@@ -97,6 +97,7 @@ builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IPatientInvoiceService, PatientInvoiceService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
+builder.Services.AddScoped< IMedicineService, MedicineService>();
 
 // file storage
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
