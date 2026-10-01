@@ -82,15 +82,15 @@
             DoctorExamStateService.MedicalRecord;
 
 
-        <!-- =================================================
+        <!-- =====================================================
              MEDICAL RECORD SERVICES
-             ================================================= -->
+             ===================================================== -->
 
         <section class="doctor-exam-card">
 
-            <!-- =============================================
+            <!-- =================================================
                  CARD HEADER
-                 ============================================= -->
+                 ================================================= -->
 
             <div class="doctor-exam-card-header">
 
@@ -113,25 +113,31 @@
 
                 <div class="doctor-exam-section">
 
+                    <!-- =============================================
+                         SECTION HEADER
+                         ============================================= -->
+
                     <div class="doctor-exam-section-header">
+
                         <div class="doctor-exam-section-title">
                             Dịch vụ cận lâm sàng
                         </div>
 
-                        <button type="button" class="doctor-exam-primary-button" @onclick="AddService"
-                                disabled="@DoctorExamStateService.IsSubmitting">
+                        <button
+                            type="button"
+                            class="doctor-exam-primary-button"
+                            @onclick="OpenAddServiceModal">
 
-                            @(DoctorExamStateService.IsSubmitting
-                                ? "Đang thêm..."
-                                : "Thêm")
+                            + Thêm chỉ định
 
                         </button>
+
                     </div>
 
 
-                    <!-- =====================================
+                    <!-- =============================================
                          EMPTY
-                         ===================================== -->
+                         ============================================= -->
 
                     @if (record.Services == null ||
                          record.Services.Count == 0)
@@ -144,9 +150,9 @@
                     }
                     else
                     {
-                        <!-- =================================
+                        <!-- =========================================
                              SERVICES TABLE
-                             ================================= -->
+                             ========================================= -->
 
                         <div class="doctor-exam-table-wrapper">
 
@@ -197,65 +203,68 @@
                                     {
                                         <tr>
 
-                                            <!-- =====================
+                                            <!-- =================================
                                                  ID
-                                                 ===================== -->
+                                                 ================================= -->
 
                                             <td>
                                                 #@service.Id
                                             </td>
 
 
-                                            <!-- =====================
+                                            <!-- =================================
                                                  SERVICE NAME
-                                                 ===================== -->
+                                                 ================================= -->
 
                                             <td>
+
                                                 <strong>
                                                     @service.ServiceName
                                                 </strong>
+
                                             </td>
 
 
-                                            <!-- =====================
+                                            <!-- =================================
                                                  QUANTITY
-                                                 ===================== -->
+                                                 ================================= -->
 
                                             <td>
                                                 @service.Quantity
                                             </td>
 
 
-                                            <!-- =====================
+                                            <!-- =================================
                                                  PRICE
-                                                 ===================== -->
+                                                 ================================= -->
 
                                             <td>
-                                                @service.UnitPriceSnapshot.ToString("N0")đ
+                                                @service.UnitPriceSnapshot.ToString("N0") đ
                                             </td>
 
 
-                                            <!-- =====================
+                                            <!-- =================================
                                                  STATUS
-                                                 ===================== -->
+                                                 ================================= -->
 
                                             <td>
                                                 @service.Status
                                             </td>
 
 
-                                            <!-- =====================
+                                            <!-- =================================
                                                  ORDERED AT
-                                                 ===================== -->
+                                                 ================================= -->
 
                                             <td>
-                                                @service.OrderedAt.ToString("dd/MM/yyyy HH:mm")
+                                                @service.OrderedAt.ToString(
+                                                    "dd/MM/yyyy HH:mm")
                                             </td>
 
 
-                                            <!-- =====================
+                                            <!-- =================================
                                                  RESULT
-                                                 ===================== -->
+                                                 ================================= -->
 
                                             <td>
 
@@ -293,7 +302,10 @@
 
                 <div class="doctor-exam-actions">
 
-                    <button type="button" class="doctor-exam-secondary-button" @onclick="GoBack">
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button"
+                        @onclick="GoBack">
 
                         Quay lại khám bệnh
 
@@ -306,27 +318,40 @@
         </section>
     }
 
+
+    <!-- =====================================================
+         ADD SERVICE MODAL
+         ===================================================== -->
+
     @if (IsAddServiceModalOpen)
     {
         <div class="doctor-exam-modal-backdrop">
 
             <div class="doctor-exam-modal">
 
-                <!-- =====================================================
-                 MODAL HEADER
-                 ===================================================== -->
+                <!-- =================================================
+                     MODAL HEADER
+                     ================================================= -->
 
                 <div class="doctor-exam-modal-header">
 
                     <div>
-                        <span>CHỈ ĐỊNH CẬN LÂM SÀNG</span>
+
+                        <span>
+                            CHỈ ĐỊNH CẬN LÂM SÀNG
+                        </span>
 
                         <h3>
                             Thêm chỉ định
                         </h3>
+
                     </div>
 
-                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseAddServiceModal">
+
+                    <button
+                        type="button"
+                        class="doctor-exam-modal-close"
+                        @onclick="CloseAddServiceModal">
 
                         ×
 
@@ -335,19 +360,30 @@
                 </div>
 
 
-                <!-- =====================================================
-                 MODAL BODY
-                 ===================================================== -->
+                <!-- =================================================
+                     MODAL BODY
+                     ================================================= -->
 
                 <div class="doctor-exam-modal-body">
-                    @if (!string.IsNullOrWhiteSpace(AddServiceErrorMessage))
+
+                    <!-- =============================================
+                         ERROR
+                         ============================================= -->
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        AddServiceErrorMessage))
                     {
                         <div class="doctor-exam-message doctor-exam-error">
+
                             @AddServiceErrorMessage
+
                         </div>
                     }
 
-                    <!-- SERVICE -->
+
+                    <!-- =============================================
+                         SERVICE
+                         ============================================= -->
 
                     <div class="doctor-exam-form-group">
 
@@ -355,7 +391,10 @@
                             Dịch vụ
                         </label>
 
-                        <select id="service" class="doctor-exam-form-control" @bind="SelectedServiceId">
+                        <select
+                            id="service"
+                            class="doctor-exam-form-control"
+                            @bind="SelectedServiceId">
 
                             <option value="0">
                                 Chọn dịch vụ
@@ -375,7 +414,9 @@
                     </div>
 
 
-                    <!-- QUANTITY -->
+                    <!-- =============================================
+                         QUANTITY
+                         ============================================= -->
 
                     <div class="doctor-exam-form-group">
 
@@ -383,29 +424,43 @@
                             Số lượng
                         </label>
 
-                        <input id="quantity" type="number" min="1" class="doctor-exam-form-control"
-                               @bind="ServiceQuantity" />
+                        <input
+                            id="quantity"
+                            type="number"
+                            min="1"
+                            class="doctor-exam-form-control"
+                            @bind="ServiceQuantity" />
 
                     </div>
 
                 </div>
 
 
-                <!-- =====================================================
-                 MODAL FOOTER
-                 ===================================================== -->
+                <!-- =================================================
+                     MODAL FOOTER
+                     ================================================= -->
 
                 <div class="doctor-exam-modal-footer">
 
-                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseAddServiceModal">
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button"
+                        @onclick="CloseAddServiceModal">
 
                         Hủy
 
                     </button>
 
-                    <button type="button" class="doctor-exam-primary-button">
 
-                        Thêm
+                    <button
+                        type="button"
+                        class="doctor-exam-primary-button"
+                        @onclick="AddService"
+                        disabled="@DoctorExamStateService.IsSubmitting">
+
+                        @(DoctorExamStateService.IsSubmitting
+                            ? "Đang thêm..."
+                            : "Thêm")
 
                     </button>
 
@@ -419,8 +474,8 @@
 </div>
 
 
-@code {
-    
+@code
+{
 
     // =====================================================
     // ROUTE
@@ -428,6 +483,7 @@
 
     [Parameter]
     public int MedicalRecordId { get; set; }
+
 
     // =====================================================
     // ADD SERVICE MODAL
@@ -456,6 +512,7 @@
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
     }
+
 
     // =====================================================
     // ADD SERVICE
@@ -493,6 +550,7 @@
         CloseAddServiceModal();
     }
 
+
     // =====================================================
     // OPEN ADD SERVICE MODAL
     // =====================================================
@@ -502,6 +560,9 @@
         SelectedServiceId = 0;
 
         ServiceQuantity = 1;
+
+        AddServiceErrorMessage =
+            string.Empty;
 
         IsAddServiceModalOpen = true;
     }
@@ -518,6 +579,9 @@
         SelectedServiceId = 0;
 
         ServiceQuantity = 1;
+
+        AddServiceErrorMessage =
+            string.Empty;
     }
 
 
