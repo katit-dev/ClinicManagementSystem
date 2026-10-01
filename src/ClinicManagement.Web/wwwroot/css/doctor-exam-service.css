@@ -832,3 +832,79 @@
     background: #eff6ff;
     color: #1d4ed8;
 }
+
+/* =====================================================
+   RESULT BUTTON
+   ===================================================== */
+
+.doctor-exam-result-button {
+    padding: 6px 12px;
+
+    border: 1px solid #16324f;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #16324f;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+}
+
+.doctor-exam-result-button:hover {
+    background: #f1f5f9;
+}
+
+
+/* =====================================================
+   RESULT EXISTS
+   ===================================================== */
+
+.doctor-exam-result-exists {
+    color: #047857;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   READONLY VALUE
+   ===================================================== */
+
+.doctor-exam-readonly-value {
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 9px 12px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+
+    background: #f8fafc;
+    color: #475569;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   TEXTAREA
+   ===================================================== */
+
+.doctor-exam-textarea {
+    resize: vertical;
+
+    min-height: 80px;
+
+    font-family: inherit;
+}

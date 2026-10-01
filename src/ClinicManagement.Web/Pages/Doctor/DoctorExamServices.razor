@@ -9,6 +9,7 @@
 @using ClinicManagementSystem.Application.Enums
 @using ClinicManagementSystem.Application.DTOs.MedicalRecord
 @using Microsoft.AspNetCore.Authorization
+@using ClinicManagementSystem.Application.Enums
 
 @inject DoctorExamStateService DoctorExamStateService
 @inject NavigationManager NavigationManager
@@ -274,16 +275,27 @@
 
                                             <td>
 
-                                                @if (service.Result == null)
+                                                @if (service.Result == null &&
+                                                     service.Status !=
+                                                         (byte)MedicalRecordServiceStatus.Cancelled)
                                                 {
-                                                    <span>
-                                                        Chưa có kết quả
+                                                    <button type="button" class="doctor-exam-result-button"
+                                                            @onclick="() => OpenResultModal(service)">
+
+                                                        Nhập kết quả
+
+                                                    </button>
+                                                }
+                                                else if (service.Result != null)
+                                                {
+                                                    <span class="doctor-exam-result-exists">
+                                                        Đã có kết quả
                                                     </span>
                                                 }
                                                 else
                                                 {
                                                     <span>
-                                                        Đã có kết quả
+                                                        —
                                                     </span>
                                                 }
 
@@ -587,6 +599,158 @@
         </div>
     }
 
+    @if (IsResultModalOpen &&
+     SelectedServiceForResult != null)
+    {
+        <div class="doctor-exam-modal-backdrop">
+
+            <div class="doctor-exam-modal">
+
+                <!-- =================================================
+                 MODAL HEADER
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-header">
+
+                    <div>
+
+                        <span>
+                            KẾT QUẢ CẬN LÂM SÀNG
+                        </span>
+
+                        <h3>
+                            Nhập kết quả
+                        </h3>
+
+                    </div>
+
+                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseResultModal">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <!-- =================================================
+                 MODAL BODY
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-body">
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        ResultErrorMessage))
+                    {
+                        <div class="doctor-exam-message doctor-exam-error">
+
+                            @ResultErrorMessage
+
+                        </div>
+                    }
+
+
+                    <!-- SERVICE -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label>
+                            Dịch vụ
+                        </label>
+
+                        <div class="doctor-exam-readonly-value">
+
+                            @SelectedServiceForResult.ServiceName
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- RESULT VALUE -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="resultValue">
+                            Kết quả
+                        </label>
+
+                        <textarea id="resultValue" class="doctor-exam-form-control doctor-exam-textarea" rows="4"
+                                  @bind="ResultValue" placeholder="Nhập kết quả xét nghiệm...">
+                    </textarea>
+
+                    </div>
+
+
+                    <!-- REFERENCE RANGE -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="referenceRange">
+                            Khoảng tham chiếu
+                        </label>
+
+                        <input id="referenceRange" type="text" class="doctor-exam-form-control" @bind="ReferenceRange"
+                               placeholder="Ví dụ: 4.0 - 10.0" />
+
+                    </div>
+
+
+                    <!-- CONCLUSION -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="conclusion">
+                            Kết luận
+                        </label>
+
+                        <textarea id="conclusion" class="doctor-exam-form-control doctor-exam-textarea" rows="3"
+                                  @bind="Conclusion" placeholder="Nhập kết luận...">
+                    </textarea>
+
+                    </div>
+
+
+                    <!-- RESULTED AT -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="resultedAt">
+                            Thời gian kết quả
+                        </label>
+
+                        <input id="resultedAt" type="datetime-local" class="doctor-exam-form-control" @bind="ResultedAt" />
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                 MODAL FOOTER
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-footer">
+
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseResultModal">
+
+                        Hủy
+
+                    </button>
+
+                    <button type="button" class="doctor-exam-primary-button">
+
+                        Lưu kết quả
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
 </div>
 
 
@@ -623,6 +787,25 @@
 
     private string CancelServiceErrorMessage = string.Empty;
 
+    // =====================================================
+    // RESULT MODAL
+    // =====================================================
+
+    private bool IsResultModalOpen;
+
+    private MedicalRecordServiceDTO? SelectedServiceForResult;
+
+    private string ResultValue = string.Empty;
+
+    private string? ReferenceRange;
+
+    private string? Conclusion;
+
+    private DateTime ResultedAt = DateTime.Now;
+
+    private string ResultErrorMessage = string.Empty;
+
+
 
     // =====================================================
     // INITIALIZE
@@ -637,6 +820,64 @@
 
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
+    }
+
+    // =====================================================
+    // OPEN RESULT MODAL
+    // =====================================================
+
+    private void OpenResultModal(
+        MedicalRecordServiceDTO service)
+    {
+        SelectedServiceForResult =
+            service;
+
+        ResultValue =
+            string.Empty;
+
+        ReferenceRange =
+            null;
+
+        Conclusion =
+            null;
+
+        ResultedAt =
+            DateTime.Now;
+
+        ResultErrorMessage =
+            string.Empty;
+
+        IsResultModalOpen =
+            true;
+    }
+
+
+    // =====================================================
+    // CLOSE RESULT MODAL
+    // =====================================================
+
+    private void CloseResultModal()
+    {
+        IsResultModalOpen =
+            false;
+
+        SelectedServiceForResult =
+            null;
+
+        ResultValue =
+            string.Empty;
+
+        ReferenceRange =
+            null;
+
+        Conclusion =
+            null;
+
+        ResultedAt =
+            DateTime.Now;
+
+        ResultErrorMessage =
+            string.Empty;
     }
 
     // =====================================================
