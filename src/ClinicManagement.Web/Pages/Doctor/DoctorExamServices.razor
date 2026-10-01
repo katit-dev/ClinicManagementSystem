@@ -240,7 +240,7 @@
 
                                             <td>
                                                 @service.OrderedAt
-                                                    .ToString("dd/MM/yyyy HH:mm")
+                                                .ToString("dd/MM/yyyy HH:mm")
                                             </td>
 
 
@@ -284,10 +284,7 @@
 
                 <div class="doctor-exam-actions">
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        @onclick="GoBack">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="GoBack">
 
                         Quay lại khám bệnh
 
@@ -323,6 +320,9 @@
             .LoadMedicalRecordAsync(
                 MedicalRecordId
             );
+
+        await DoctorExamStateService
+            .LoadAvailableServicesAsync();
     }
 
 

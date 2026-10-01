@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Invoice;
 using ClinicManagementSystem.Application.DTOs.MedicalRecord;
+using ClinicManagementSystem.Application.DTOs.Service;
 using ClinicManagementSystem.Application.Enums;
 
 namespace ClinicManagementSystem.Web.Services;
@@ -34,6 +35,16 @@ public class DoctorExamStateService
         get;
         private set;
     }
+
+    // =====================================================
+    // SERVICE CATALOG
+    // =====================================================
+
+    public List<ServiceDTO> AvailableServices
+    {
+        get;
+        private set;
+    } = new();
 
 
     // =====================================================
@@ -111,6 +122,64 @@ public class DoctorExamStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // LOAD SERVICE CATALOG
+    //
+    // GET:
+    // /api/services
+    //
+    // Chỉ lấy các service active từ backend.
+    // =====================================================
+
+    public async Task<bool> LoadAvailableServicesAsync()
+    {
+        try
+        {
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        "/api/services"
+                    );
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<ServiceDTO>?>>();
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải danh sách dịch vụ.";
+
+                StateHasChanged();
+
+                return false;
+            }
+
+            AvailableServices =
+                responseData.Content
+                ?? new List<ServiceDTO>();
+
+            StateHasChanged();
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            StateHasChanged();
+
+            return false;
+        }
     }
 
     // =====================================================
