@@ -4,6 +4,7 @@ using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Invoice;
 using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 using ClinicManagementSystem.Application.DTOs.Medicine;
+using ClinicManagementSystem.Application.DTOs.Prescription;
 using ClinicManagementSystem.Application.DTOs.Service;
 using ClinicManagementSystem.Application.Enums;
 
@@ -63,6 +64,25 @@ public class DoctorExamStateService
         get;
         private set;
     } = new();
+
+
+
+    // =====================================================
+    // PRESCRIPTION
+    // =====================================================
+
+    public PrescriptionResponseDTO? Prescription
+    {
+        get;
+        private set;
+    }
+
+
+    public bool IsSavingPrescription
+    {
+        get;
+        private set;
+    }
 
 
     // =====================================================
@@ -140,6 +160,177 @@ public class DoctorExamStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // SAVE PRESCRIPTION
+    //
+    // PUT:
+    // /api/medical-records/{id}/prescription
+    //
+    // Request:
+    // PrescriptionRequestDTO
+    //
+    // Response:
+    // PrescriptionResponseDTO
+    // =====================================================
+
+    public async Task<bool> SavePrescriptionAsync(
+        PrescriptionRequestDTO request)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSavingPrescription)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // CHECK MEDICAL RECORD
+        // =================================================
+
+        if (MedicalRecordId == null ||
+            MedicalRecordId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được bệnh án.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // CHECK REQUEST
+        // =================================================
+
+        if (request == null ||
+            request.Items == null ||
+            request.Items.Count == 0)
+        {
+            ActionErrorMessage =
+                "Đơn thuốc phải có ít nhất một thuốc.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSavingPrescription = true;
+
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CREATE REQUEST CONTENT
+            // =================================================
+
+            var content =
+                JsonContent.Create(request);
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PutAsync(
+                        $"/api/medical-records/{MedicalRecordId}/prescription",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            PrescriptionResponseDTO?
+                        >
+                    >();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể lưu đơn thuốc.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // EMPTY CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Không nhận được dữ liệu đơn thuốc sau khi lưu.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE PRESCRIPTION STATE
+            // =================================================
+
+            Prescription =
+                responseData.Content;
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSavingPrescription = false;
+
+            StateHasChanged();
+        }
     }
 
     // =====================================================
