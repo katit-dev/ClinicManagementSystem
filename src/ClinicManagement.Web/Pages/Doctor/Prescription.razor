@@ -10,6 +10,9 @@
 @using Microsoft.AspNetCore.Authorization
 @using ClinicManagementSystem.Application.DTOs.Medicine
 @using ClinicManagementSystem.Application.DTOs.Prescription
+@using Microsoft.JSInterop
+
+@inject IJSRuntime JS
 
 
 @inject DoctorExamStateService DoctorExamStateService
@@ -608,9 +611,11 @@
                     <!-- PRINT -->
 
                     <button type="button" class="doctor-exam-secondary-button" @onclick="PrintPrescription"
-                            disabled="@(PrescriptionId == null)">
+                            disabled="@(PrescriptionId == null || IsPrintingPrescription)">
 
-                        In đơn
+                        @(IsPrintingPrescription
+                            ? "Đang tạo..."
+                            : "In đơn")
 
                     </button>
 
@@ -962,6 +967,8 @@
 
     private string PrescriptionModalErrorMessage =
     string.Empty;
+
+    private bool IsPrintingPrescription;
 
 
     // =====================================================
@@ -1431,20 +1438,88 @@
     //
     // TODO:
     // GET /api/prescriptions/{id}/pdf
-    // =====================================================
-
-    private void PrintPrescription()
+    private async Task PrintPrescription()
     {
-        if (PrescriptionId == null)
+        if (PrescriptionId == null ||
+            IsPrintingPrescription)
         {
             return;
         }
 
+        IsPrintingPrescription = true;
 
-        // Chưa gọi API.
+        DoctorExamStateService
+            .ClearActionMessage();
+
+        StateHasChanged();
+
+        try
+        {
+            var response =
+                await DoctorExamStateService
+                    .GetPrescriptionPdfAsync(
+                        PrescriptionId.Value
+                    );
+
+            if (response == null)
+            {
+                DoctorExamStateService
+                    .SetActionErrorMessage(
+                        "Không thể tải đơn thuốc."
+                    );
+
+                return;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                DoctorExamStateService
+                    .SetActionErrorMessage(
+                        "Không thể tải đơn thuốc."
+                    );
+
+                return;
+            }
+
+            var pdfBytes =
+                await response.Content
+                    .ReadAsByteArrayAsync();
+
+            if (pdfBytes.Length == 0)
+            {
+                DoctorExamStateService
+                    .SetActionErrorMessage(
+                        "Đơn thuốc không có dữ liệu PDF."
+                    );
+
+                return;
+            }
+
+            using var stream =
+                new MemoryStream(pdfBytes);
+
+            await JS.InvokeVoidAsync(
+                "downloadFileFromStream",
+                $"prescription-{PrescriptionId.Value}.pdf",
+                new DotNetStreamReference(stream)
+            );
+        }
+        catch
+        {
+            DoctorExamStateService
+                .SetActionErrorMessage(
+                    "Không thể tải đơn thuốc."
+                );
+        }
+        finally
+        {
+            IsPrintingPrescription = false;
+
+            StateHasChanged();
+        }
     }
 
-
+    
     // =====================================================
     // BACK
     // =====================================================

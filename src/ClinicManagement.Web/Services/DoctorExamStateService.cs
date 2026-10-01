@@ -162,6 +162,59 @@ public class DoctorExamStateService
             authorizedApiService;
     }
 
+    public void ClearActionMessage()
+    {
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+    }
+
+    // =====================================================
+    // GET PRESCRIPTION PDF
+    //
+    // GET:
+    // /api/prescriptions/{id}/pdf
+    // =====================================================
+
+    public async Task<HttpResponseMessage?>
+        GetPrescriptionPdfAsync(
+            int prescriptionId)
+    {
+        if (prescriptionId <= 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await _authorizedApiService
+                .GetAsync(
+                    $"/api/prescriptions/{prescriptionId}/pdf"
+                );
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    // =====================================================
+    // SET ACTION ERROR
+    // =====================================================
+
+    public void SetActionErrorMessage(
+        string message)
+    {
+        ActionErrorMessage =
+            message;
+
+        StateHasChanged();
+    }
+
     // =====================================================
     // SAVE PRESCRIPTION
     //
