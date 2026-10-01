@@ -1,0 +1,877 @@
+/* =====================================================
+   PAGE
+   ===================================================== */
+
+.doctor-exam-service-page {
+    padding: 24px;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.doctor-exam-service-header {
+    margin-bottom: 24px;
+}
+
+.doctor-exam-service-header h1 {
+    margin: 0 0 6px;
+
+    color: #16324f;
+
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.doctor-exam-service-header p {
+    margin: 0;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   PATIENT / MEDICAL RECORD INFO
+   ===================================================== */
+
+.doctor-exam-service-info {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.doctor-exam-service-info-item {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    padding: 14px 16px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    background: #f8fafc;
+}
+
+.doctor-exam-service-info-item span {
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.doctor-exam-service-info-item strong {
+    color: #16324f;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   SUMMARY
+   ===================================================== */
+
+.doctor-exam-service-summary {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.doctor-exam-service-summary-card {
+    padding: 18px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    background: #ffffff;
+}
+
+.doctor-exam-service-summary-card strong {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #16324f;
+
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.doctor-exam-service-summary-card span {
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   SERVICES SECTION
+   ===================================================== */
+
+.doctor-exam-service-section {
+    padding: 18px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    background: #ffffff;
+}
+
+.doctor-exam-service-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 16px;
+}
+
+.doctor-exam-service-section-header h3 {
+    margin: 0;
+
+    color: #16324f;
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.doctor-exam-service-section-header span {
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+   ===================================================== */
+
+.doctor-exam-service-empty {
+    padding: 30px;
+
+    color: #64748b;
+
+    text-align: center;
+}
+
+.doctor-exam-service-empty strong {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #16324f;
+
+    font-size: 15px;
+}
+
+.doctor-exam-service-empty span {
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   TABLE WRAPPER
+   ===================================================== */
+
+.doctor-exam-service-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+
+/* =====================================================
+   SERVICE TABLE
+   ===================================================== */
+
+.doctor-exam-service-table {
+    width: 100%;
+
+    min-width: 1000px;
+
+    border-collapse: collapse;
+}
+
+.doctor-exam-service-table th {
+    padding: 14px 16px;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    background: #f8fafc;
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+.doctor-exam-service-table td {
+    padding: 16px;
+
+    border-bottom: 1px solid #eef2f6;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    vertical-align: middle;
+}
+
+.doctor-exam-service-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.doctor-exam-service-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   SERVICE NAME
+   ===================================================== */
+
+.doctor-exam-service-name {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.doctor-exam-service-name strong {
+    color: #16324f;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.doctor-exam-service-name span {
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   QUANTITY
+   ===================================================== */
+
+.doctor-exam-service-quantity {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 36px;
+
+    padding: 6px 9px;
+
+    border-radius: 8px;
+
+    background: #f1f5f9;
+    color: #334155;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   PRICE
+   ===================================================== */
+
+.doctor-exam-service-price {
+    color: #16324f;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   DATE / TIME
+   ===================================================== */
+
+.doctor-exam-service-datetime {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.doctor-exam-service-datetime strong {
+    color: #334155;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.doctor-exam-service-datetime span {
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.doctor-exam-service-status {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.doctor-exam-service-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.doctor-exam-service-status.in-progress {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.doctor-exam-service-status.completed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.doctor-exam-service-status.cancelled {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.doctor-exam-service-status.failed {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   RESULT
+   ===================================================== */
+
+.doctor-exam-service-result {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.doctor-exam-service-result strong {
+    color: #16324f;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.doctor-exam-service-result span {
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+.doctor-exam-service-result-empty {
+    color: #94a3b8;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   ACTION COLUMN
+   ===================================================== */
+
+.doctor-exam-service-table th:last-child,
+.doctor-exam-service-table td:last-child {
+    min-width: 150px;
+}
+
+
+/* =====================================================
+   ROW ACTIONS
+   ===================================================== */
+
+.doctor-exam-service-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    flex-wrap: nowrap;
+}
+
+
+/* =====================================================
+   VIEW RESULT BUTTON
+   ===================================================== */
+
+.doctor-exam-service-view-button {
+    min-height: 36px;
+
+    padding: 7px 14px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #16324f;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.doctor-exam-service-view-button:hover {
+    border-color: #94a3b8;
+
+    background: #f1f5f9;
+}
+
+
+/* =====================================================
+   COMPLETE BUTTON
+   ===================================================== */
+
+.doctor-exam-service-complete-button {
+    min-height: 36px;
+
+    padding: 7px 14px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #0ea5e9;
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition: background 0.2s ease;
+}
+
+.doctor-exam-service-complete-button:hover:not(:disabled) {
+    background: #0284c7;
+}
+
+.doctor-exam-service-complete-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   ACTION MESSAGE
+   ===================================================== */
+
+.doctor-exam-service-action-message {
+    margin-bottom: 16px;
+
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.doctor-exam-service-action-success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.doctor-exam-service-action-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+.doctor-exam-service-loading {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 180px;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   ERROR
+   ===================================================== */
+
+.doctor-exam-service-error {
+    padding: 14px 16px;
+
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+
+    background: #fff1f2;
+    color: #b91c1c;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   MODAL
+   ===================================================== */
+
+.doctor-exam-service-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.doctor-exam-service-modal {
+    width: 100%;
+    max-width: 680px;
+
+    max-height: calc(100vh - 48px);
+
+    overflow-y: auto;
+
+    padding: 24px;
+
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 24px 70px rgba(15, 23, 42, 0.25);
+}
+
+
+/* =====================================================
+   MODAL HEADER
+   ===================================================== */
+
+.doctor-exam-service-modal-header {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 18px;
+}
+
+.doctor-exam-service-modal-header span {
+    color: #64748b;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+}
+
+.doctor-exam-service-modal-header h3 {
+    margin: 4px 0 0;
+
+    color: #16324f;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   MODAL CLOSE
+   ===================================================== */
+
+.doctor-exam-service-modal-close {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #f1f5f9;
+    color: #64748b;
+
+    font-size: 22px;
+
+    cursor: pointer;
+}
+
+.doctor-exam-service-modal-close:hover {
+    background: #e2e8f0;
+}
+
+
+/* =====================================================
+   RESULT DETAIL
+   ===================================================== */
+
+.doctor-exam-service-result-detail {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.doctor-exam-service-result-detail-item {
+    padding: 14px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+
+    background: #f8fafc;
+}
+
+.doctor-exam-service-result-detail-item span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.doctor-exam-service-result-detail-item strong {
+    color: #16324f;
+
+    font-size: 14px;
+}
+
+.doctor-exam-service-result-detail-item p {
+    margin: 6px 0 0;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   MODAL FOOTER
+   ===================================================== */
+
+.doctor-exam-service-modal-footer {
+    display: flex;
+
+    justify-content: flex-end;
+
+    margin-top: 20px;
+}
+
+.doctor-exam-service-modal-close-button {
+    min-height: 38px;
+
+    padding: 8px 18px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #16324f;
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.doctor-exam-service-modal-close-button:hover {
+    background: #0f2438;
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 1200px) {
+
+    .doctor-exam-service-info {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .doctor-exam-service-summary {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .doctor-exam-service-page {
+        padding: 16px;
+    }
+
+    .doctor-exam-service-header h1 {
+        font-size: 24px;
+    }
+
+    .doctor-exam-service-header p {
+        font-size: 14px;
+    }
+
+
+    /* INFO */
+
+    .doctor-exam-service-info {
+        grid-template-columns: 1fr;
+    }
+
+
+    /* SUMMARY */
+
+    .doctor-exam-service-summary {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    /* SECTION */
+
+    .doctor-exam-service-section {
+        overflow: hidden;
+
+        padding: 16px;
+    }
+
+
+    /* TABLE */
+
+    .doctor-exam-service-table-wrapper {
+        overflow-x: auto;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .doctor-exam-service-table {
+        min-width: 1000px;
+    }
+
+
+    /* ACTIONS */
+
+    .doctor-exam-service-actions {
+        flex-wrap: wrap;
+    }
+
+
+    /* MODAL */
+
+    .doctor-exam-service-modal-backdrop {
+        padding: 12px;
+    }
+
+    .doctor-exam-service-modal {
+        max-height: calc(100vh - 24px);
+
+        padding: 18px;
+    }
+}
+
+
+/* =====================================================
+   RESPONSIVE - SMALL MOBILE
+   ===================================================== */
+
+@media (max-width: 480px) {
+
+    .doctor-exam-service-page {
+        padding: 12px;
+    }
+
+
+    /* SUMMARY */
+
+    .doctor-exam-service-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .doctor-exam-service-summary-card {
+        padding: 16px;
+    }
+
+    .doctor-exam-service-summary-card strong {
+        font-size: 24px;
+    }
+
+
+    /* ACTIONS */
+
+    .doctor-exam-service-actions {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+    .doctor-exam-service-view-button,
+    .doctor-exam-service-complete-button {
+        width: 100%;
+    }
+}
