@@ -1822,3 +1822,10 @@ VALUES
     100,
     1000
 );
+
+-------------------------------check test medical record service
+USE ClinicManagementSystem
+
+SELECT *
+FROM billing.invoices
+WHERE medical_record_id = 8
