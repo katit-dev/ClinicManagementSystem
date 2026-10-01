@@ -359,572 +359,720 @@
             </div>
 
         </section>
-    }
-
 
     <!-- =====================================================
+             ATTACHMENTS
+             ===================================================== -->
+
+    <section class="doctor-exam-card">
+
+        <div class="doctor-exam-card-header">
+
+            <div>
+
+                <div class="doctor-exam-card-label">
+                    HỒ SƠ ĐÍNH KÈM
+                </div>
+
+                <h2>
+                    Đính kèm file
+                </h2>
+
+                <p>
+                    Tải hình ảnh hoặc tài liệu liên quan đến bệnh án.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="doctor-exam-content">
+
+            <!-- =================================================
+                     ERROR
+                     ================================================= -->
+
+            @if (!string.IsNullOrWhiteSpace(
+                AttachmentErrorMessage))
+            {
+                <div class="doctor-exam-message doctor-exam-error">
+
+                    @AttachmentErrorMessage
+
+                </div>
+            }
+
+
+            <!-- =================================================
+                     SUCCESS
+                     ================================================= -->
+
+            @if (!string.IsNullOrWhiteSpace(
+                AttachmentSuccessMessage))
+            {
+                <div class="doctor-exam-message doctor-exam-success">
+
+                    @AttachmentSuccessMessage
+
+                </div>
+            }
+
+
+            <!-- =================================================
+                     FILE PICKER
+                     ================================================= -->
+
+            <div class="doctor-exam-attachment-upload">
+
+                <div class="doctor-exam-attachment-picker">
+
+                    <div>
+
+                        <div class="doctor-exam-attachment-title">
+                            Chọn file
+                        </div>
+
+                        <div class="doctor-exam-attachment-hint">
+                            JPG, PNG, PDF, DICOM · Tối đa 10 MB
+                        </div>
+
+                    </div>
+
+
+                    <InputFile @key="AttachmentInputKey" OnChange="OnAttachmentSelected"
+                               accept=".jpg,.jpeg,.png,.pdf,.dcm,.dicom" class="doctor-exam-file-input" />
+
+                </div>
+
+
+                <!-- =================================================
+                         SELECTED FILE
+                         ================================================= -->
+
+                @if (SelectedAttachmentFile != null)
+                {
+                    <div class="doctor-exam-selected-file">
+
+                        <div>
+
+                            <div class="doctor-exam-selected-file-name">
+
+                                @SelectedAttachmentFile.Name
+
+                            </div>
+
+                            <div class="doctor-exam-selected-file-size">
+
+                                @FormatFileSize(
+                                    SelectedAttachmentFile.Size)
+
+                            </div>
+
+                        </div>
+
+
+                        <button type="button" class="doctor-exam-file-remove-button" @onclick="ClearSelectedAttachment">
+
+                            ×
+
+                        </button>
+
+                    </div>
+                }
+
+
+                <!-- =================================================
+                         UPLOAD
+                         ================================================= -->
+
+                <div class="doctor-exam-attachment-actions">
+
+                    <button type="button" class="doctor-exam-primary-button" @onclick="UploadAttachment" disabled="@(
+                            SelectedAttachmentFile == null ||
+                            DoctorExamStateService.IsSubmitting
+                        )">
+
+                        @(DoctorExamStateService.IsSubmitting
+                            ? "Đang tải lên..."
+                            : "Tải lên")
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+}
+
+
+
+<!-- =====================================================
          ADD SERVICE MODAL
          ===================================================== -->
 
-    @if (IsAddServiceModalOpen)
-    {
-        <div class="doctor-exam-modal-backdrop">
+@if (IsAddServiceModalOpen)
+{
+    <div class="doctor-exam-modal-backdrop">
 
-            <div class="doctor-exam-modal">
+        <div class="doctor-exam-modal">
 
-                <!-- =================================================
+            <!-- =================================================
                      MODAL HEADER
                      ================================================= -->
 
-                <div class="doctor-exam-modal-header">
+            <div class="doctor-exam-modal-header">
 
-                    <div>
+                <div>
 
-                        <span>
-                            CHỈ ĐỊNH CẬN LÂM SÀNG
-                        </span>
+                    <span>
+                        CHỈ ĐỊNH CẬN LÂM SÀNG
+                    </span>
 
-                        <h3>
-                            Thêm chỉ định
-                        </h3>
-
-                    </div>
-
-
-                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseAddServiceModal">
-
-                        ×
-
-                    </button>
+                    <h3>
+                        Thêm chỉ định
+                    </h3>
 
                 </div>
 
 
-                <!-- =================================================
+                <button type="button" class="doctor-exam-modal-close" @onclick="CloseAddServiceModal">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
                      MODAL BODY
                      ================================================= -->
 
-                <div class="doctor-exam-modal-body">
+            <div class="doctor-exam-modal-body">
 
-                    <!-- =============================================
+                <!-- =============================================
                          ERROR
                          ============================================= -->
 
-                    @if (!string.IsNullOrWhiteSpace(
-                        AddServiceErrorMessage))
-                    {
-                        <div class="doctor-exam-message doctor-exam-error">
+                @if (!string.IsNullOrWhiteSpace(
+                    AddServiceErrorMessage))
+                {
+                    <div class="doctor-exam-message doctor-exam-error">
 
-                            @AddServiceErrorMessage
+                        @AddServiceErrorMessage
 
-                        </div>
-                    }
+                    </div>
+                }
 
 
-                    <!-- =============================================
+                <!-- =============================================
                          SERVICE
                          ============================================= -->
 
-                    <div class="doctor-exam-form-group">
+                <div class="doctor-exam-form-group">
 
-                        <label for="service">
-                            Dịch vụ
-                        </label>
+                    <label for="service">
+                        Dịch vụ
+                    </label>
 
-                        <select id="service" class="doctor-exam-form-control" @bind="SelectedServiceId">
+                    <select id="service" class="doctor-exam-form-control" @bind="SelectedServiceId">
 
-                            <option value="0">
-                                Chọn dịch vụ
+                        <option value="0">
+                            Chọn dịch vụ
+                        </option>
+
+                        @foreach (
+                            var service
+                            in DoctorExamStateService.AvailableServices)
+                        {
+                            <option value="@service.Id">
+                                @service.Name
                             </option>
+                        }
 
-                            @foreach (
-                                var service
-                                in DoctorExamStateService.AvailableServices)
-                            {
-                                <option value="@service.Id">
-                                    @service.Name
-                                </option>
-                            }
+                    </select>
 
-                        </select>
-
-                    </div>
+                </div>
 
 
-                    <!-- =============================================
+                <!-- =============================================
                          QUANTITY
                          ============================================= -->
 
-                    <div class="doctor-exam-form-group">
+                <div class="doctor-exam-form-group">
 
-                        <label for="quantity">
-                            Số lượng
-                        </label>
+                    <label for="quantity">
+                        Số lượng
+                    </label>
 
-                        <input id="quantity" type="number" min="1" class="doctor-exam-form-control"
-                               @bind="ServiceQuantity" />
-
-                    </div>
+                    <input id="quantity" type="number" min="1" class="doctor-exam-form-control"
+                           @bind="ServiceQuantity" />
 
                 </div>
 
+            </div>
 
-                <!-- =================================================
+
+            <!-- =================================================
                      MODAL FOOTER
                      ================================================= -->
 
-                <div class="doctor-exam-modal-footer">
+            <div class="doctor-exam-modal-footer">
 
-                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseAddServiceModal">
+                <button type="button" class="doctor-exam-secondary-button" @onclick="CloseAddServiceModal">
 
-                        Hủy
+                    Hủy
 
-                    </button>
+                </button>
 
 
-                    <button type="button" class="doctor-exam-primary-button" @onclick="AddService"
-                            disabled="@DoctorExamStateService.IsSubmitting">
+                <button type="button" class="doctor-exam-primary-button" @onclick="AddService"
+                        disabled="@DoctorExamStateService.IsSubmitting">
 
-                        @(DoctorExamStateService.IsSubmitting
-                            ? "Đang thêm..."
-                            : "Thêm")
+                    @(DoctorExamStateService.IsSubmitting
+                        ? "Đang thêm..."
+                        : "Thêm")
 
-                    </button>
-
-                </div>
+                </button>
 
             </div>
 
         </div>
-    }
 
-    @if (IsCancelServiceModalOpen &&
-     SelectedServiceToCancel != null)
-    {
-        <div class="doctor-exam-modal-backdrop">
+    </div>
+}
 
-            <div class="doctor-exam-modal">
+@if (IsCancelServiceModalOpen &&
+ SelectedServiceToCancel != null)
+{
+    <div class="doctor-exam-modal-backdrop">
 
-                <!-- =================================================
+        <div class="doctor-exam-modal">
+
+            <!-- =================================================
                  MODAL HEADER
                  ================================================= -->
 
-                <div class="doctor-exam-modal-header">
+            <div class="doctor-exam-modal-header">
 
-                    <div>
-                        <h3>
-                            Hủy chỉ định
-                        </h3>
-
-                    </div>
-
-
-                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseCancelServiceModal">
-
-                        ×
-
-                    </button>
+                <div>
+                    <h3>
+                        Hủy chỉ định
+                    </h3>
 
                 </div>
 
 
-                <!-- =================================================
+                <button type="button" class="doctor-exam-modal-close" @onclick="CloseCancelServiceModal">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
                  MODAL BODY
                  ================================================= -->
 
-                <div class="doctor-exam-modal-body">
+            <div class="doctor-exam-modal-body">
 
-                    @if (!string.IsNullOrWhiteSpace(
-                        CancelServiceErrorMessage))
-                    {
-                        <div class="doctor-exam-message doctor-exam-error">
+                @if (!string.IsNullOrWhiteSpace(
+                    CancelServiceErrorMessage))
+                {
+                    <div class="doctor-exam-message doctor-exam-error">
 
-                            @CancelServiceErrorMessage
+                        @CancelServiceErrorMessage
 
-                        </div>
-                    }
+                    </div>
+                }
 
 
-                    <p class="doctor-exam-confirm-text">
+                <p class="doctor-exam-confirm-text">
 
-                        Bạn có chắc muốn hủy chỉ định
+                    Bạn có chắc muốn hủy chỉ định
 
+                    <strong>
+                        @SelectedServiceToCancel.ServiceName
+                    </strong>
+
+                    không?
+
+                </p>
+
+
+                <div class="doctor-exam-confirm-info">
+
+                    <div>
+                        Mã chỉ định:
                         <strong>
-                            @SelectedServiceToCancel.ServiceName
+                            #@SelectedServiceToCancel.Id
                         </strong>
-
-                        không?
-
-                    </p>
-
-
-                    <div class="doctor-exam-confirm-info">
-
-                        <div>
-                            Mã chỉ định:
-                            <strong>
-                                #@SelectedServiceToCancel.Id
-                            </strong>
-                        </div>
-
-                        <div>
-                            Số lượng:
-                            <strong>
-                                @SelectedServiceToCancel.Quantity
-                            </strong>
-                        </div>
-
                     </div>
 
-                </div>
-
-
-                <!-- =================================================
-                 MODAL FOOTER
-                 ================================================= -->
-
-                <div class="doctor-exam-modal-footer">
-
-                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseCancelServiceModal">
-
-                        Không
-
-                    </button>
-
-
-                    <button type="button" class="doctor-exam-danger-button" @onclick="CancelService"
-                            disabled="@DoctorExamStateService.IsSubmitting">
-
-                        @(DoctorExamStateService.IsSubmitting
-                            ? "Đang hủy..."
-                            : "Hủy chỉ định")
-
-                    </button>
+                    <div>
+                        Số lượng:
+                        <strong>
+                            @SelectedServiceToCancel.Quantity
+                        </strong>
+                    </div>
 
                 </div>
 
             </div>
 
-        </div>
-    }
 
-    @if (IsResultModalOpen &&
-     SelectedServiceForResult != null)
-    {
-        <div class="doctor-exam-modal-backdrop">
-
-            <div class="doctor-exam-modal">
-
-                <!-- =================================================
-                 MODAL HEADER
-                 ================================================= -->
-
-                <div class="doctor-exam-modal-header">
-
-                    <div>
-
-                        <span>
-                            KẾT QUẢ CẬN LÂM SÀNG
-                        </span>
-
-                        <h3>
-                            Nhập kết quả
-                        </h3>
-
-                    </div>
-
-                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseResultModal">
-
-                        ×
-
-                    </button>
-
-                </div>
-
-
-                <!-- =================================================
-                 MODAL BODY
-                 ================================================= -->
-
-                <div class="doctor-exam-modal-body">
-
-                    @if (!string.IsNullOrWhiteSpace(
-                        ResultErrorMessage))
-                    {
-                        <div class="doctor-exam-message doctor-exam-error">
-
-                            @ResultErrorMessage
-
-                        </div>
-                    }
-
-
-                    <!-- SERVICE -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label>
-                            Dịch vụ
-                        </label>
-
-                        <div class="doctor-exam-readonly-value">
-
-                            @SelectedServiceForResult.ServiceName
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- RESULT VALUE -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label for="resultValue">
-                            Kết quả
-                        </label>
-
-                        <textarea id="resultValue" class="doctor-exam-form-control doctor-exam-textarea" rows="4"
-                                  @bind="ResultValue" placeholder="Nhập kết quả xét nghiệm...">
-                    </textarea>
-
-                    </div>
-
-
-                    <!-- REFERENCE RANGE -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label for="referenceRange">
-                            Khoảng tham chiếu
-                        </label>
-
-                        <input id="referenceRange" type="text" class="doctor-exam-form-control" @bind="ReferenceRange"
-                               placeholder="Ví dụ: 4.0 - 10.0" />
-
-                    </div>
-
-
-                    <!-- CONCLUSION -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label for="conclusion">
-                            Kết luận
-                        </label>
-
-                        <textarea id="conclusion" class="doctor-exam-form-control doctor-exam-textarea" rows="3"
-                                  @bind="Conclusion" placeholder="Nhập kết luận...">
-                    </textarea>
-
-                    </div>
-
-
-                    <!-- RESULTED AT -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label for="resultedAt">
-                            Thời gian kết quả
-                        </label>
-
-                        <input id="resultedAt" type="datetime-local" class="doctor-exam-form-control" @bind="ResultedAt" />
-
-                    </div>
-
-                </div>
-
-
-                <!-- =================================================
+            <!-- =================================================
                  MODAL FOOTER
                  ================================================= -->
 
-                <div class="doctor-exam-modal-footer">
+            <div class="doctor-exam-modal-footer">
 
-                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseResultModal">
+                <button type="button" class="doctor-exam-secondary-button" @onclick="CloseCancelServiceModal">
 
-                        Hủy
+                    Không
 
-                    </button>
+                </button>
 
-                    <button type="button" class="doctor-exam-primary-button" @onclick="SaveResult"
-                            disabled="@DoctorExamStateService.IsSubmitting">
 
-                        @(DoctorExamStateService.IsSubmitting
-                            ? "Đang lưu..."
-                            : "Lưu kết quả")
+                <button type="button" class="doctor-exam-danger-button" @onclick="CancelService"
+                        disabled="@DoctorExamStateService.IsSubmitting">
 
-                    </button>
+                    @(DoctorExamStateService.IsSubmitting
+                        ? "Đang hủy..."
+                        : "Hủy chỉ định")
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+@if (IsResultModalOpen &&
+ SelectedServiceForResult != null)
+{
+    <div class="doctor-exam-modal-backdrop">
+
+        <div class="doctor-exam-modal">
+
+            <!-- =================================================
+                 MODAL HEADER
+                 ================================================= -->
+
+            <div class="doctor-exam-modal-header">
+
+                <div>
+
+                    <span>
+                        KẾT QUẢ CẬN LÂM SÀNG
+                    </span>
+
+                    <h3>
+                        Nhập kết quả
+                    </h3>
+
+                </div>
+
+                <button type="button" class="doctor-exam-modal-close" @onclick="CloseResultModal">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 MODAL BODY
+                 ================================================= -->
+
+            <div class="doctor-exam-modal-body">
+
+                @if (!string.IsNullOrWhiteSpace(
+                    ResultErrorMessage))
+                {
+                    <div class="doctor-exam-message doctor-exam-error">
+
+                        @ResultErrorMessage
+
+                    </div>
+                }
+
+
+                <!-- SERVICE -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label>
+                        Dịch vụ
+                    </label>
+
+                    <div class="doctor-exam-readonly-value">
+
+                        @SelectedServiceForResult.ServiceName
+
+                    </div>
+
+                </div>
+
+
+                <!-- RESULT VALUE -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label for="resultValue">
+                        Kết quả
+                    </label>
+
+                    <textarea id="resultValue" class="doctor-exam-form-control doctor-exam-textarea" rows="4"
+                              @bind="ResultValue" placeholder="Nhập kết quả xét nghiệm...">
+                    </textarea>
+
+                </div>
+
+
+                <!-- REFERENCE RANGE -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label for="referenceRange">
+                        Khoảng tham chiếu
+                    </label>
+
+                    <input id="referenceRange" type="text" class="doctor-exam-form-control" @bind="ReferenceRange"
+                           placeholder="Ví dụ: 4.0 - 10.0" />
+
+                </div>
+
+
+                <!-- CONCLUSION -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label for="conclusion">
+                        Kết luận
+                    </label>
+
+                    <textarea id="conclusion" class="doctor-exam-form-control doctor-exam-textarea" rows="3"
+                              @bind="Conclusion" placeholder="Nhập kết luận...">
+                    </textarea>
+
+                </div>
+
+
+                <!-- RESULTED AT -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label for="resultedAt">
+                        Thời gian kết quả
+                    </label>
+
+                    <input id="resultedAt" type="datetime-local" class="doctor-exam-form-control" @bind="ResultedAt" />
 
                 </div>
 
             </div>
 
+
+            <!-- =================================================
+                 MODAL FOOTER
+                 ================================================= -->
+
+            <div class="doctor-exam-modal-footer">
+
+                <button type="button" class="doctor-exam-secondary-button" @onclick="CloseResultModal">
+
+                    Hủy
+
+                </button>
+
+                <button type="button" class="doctor-exam-primary-button" @onclick="SaveResult"
+                        disabled="@DoctorExamStateService.IsSubmitting">
+
+                    @(DoctorExamStateService.IsSubmitting
+                        ? "Đang lưu..."
+                        : "Lưu kết quả")
+
+                </button>
+
+            </div>
+
         </div>
-    }
 
-    @if (IsViewResultModalOpen &&
-     SelectedServiceForView?.Result != null)
-    {
-        <div class="doctor-exam-modal-backdrop">
+    </div>
+}
 
-            <div class="doctor-exam-modal">
+@if (IsViewResultModalOpen &&
+ SelectedServiceForView?.Result != null)
+{
+    <div class="doctor-exam-modal-backdrop">
 
-                <!-- =================================================
+        <div class="doctor-exam-modal">
+
+            <!-- =================================================
                  MODAL HEADER
                  ================================================= -->
 
-                <div class="doctor-exam-modal-header">
+            <div class="doctor-exam-modal-header">
 
-                    <div>
+                <div>
 
-                        <span>
-                            KẾT QUẢ CẬN LÂM SÀNG
-                        </span>
+                    <span>
+                        KẾT QUẢ CẬN LÂM SÀNG
+                    </span>
 
-                        <h3>
-                            Kết quả xét nghiệm
-                        </h3>
-
-                    </div>
-
-
-                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseViewResultModal">
-
-                        ×
-
-                    </button>
+                    <h3>
+                        Kết quả xét nghiệm
+                    </h3>
 
                 </div>
 
 
-                <!-- =================================================
+                <button type="button" class="doctor-exam-modal-close" @onclick="CloseViewResultModal">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
                  MODAL BODY
                  ================================================= -->
 
-                <div class="doctor-exam-modal-body">
+            <div class="doctor-exam-modal-body">
 
-                    <!-- =============================================
+                <!-- =============================================
                      SERVICE
                      ============================================= -->
 
-                    <div class="doctor-exam-form-group">
+                <div class="doctor-exam-form-group">
 
-                        <label>
-                            Dịch vụ
-                        </label>
+                    <label>
+                        Dịch vụ
+                    </label>
 
-                        <div class="doctor-exam-readonly-value">
+                    <div class="doctor-exam-readonly-value">
 
-                            @SelectedServiceForView.ServiceName
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- =============================================
-                     RESULT VALUE
-                     ============================================= -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label>
-                            Kết quả
-                        </label>
-
-                        <div class="doctor-exam-result-detail">
-
-                            @SelectedServiceForView.Result.ResultValue
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- =============================================
-                     REFERENCE RANGE
-                     ============================================= -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label>
-                            Khoảng tham chiếu
-                        </label>
-
-                        <div class="doctor-exam-readonly-value">
-
-                            @(string.IsNullOrWhiteSpace(
-                                SelectedServiceForView.Result.ReferenceRange)
-                                ? "—"
-                                : SelectedServiceForView.Result.ReferenceRange)
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- =============================================
-                     CONCLUSION
-                     ============================================= -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label>
-                            Kết luận
-                        </label>
-
-                        <div class="doctor-exam-result-detail">
-
-                            @(string.IsNullOrWhiteSpace(
-                                SelectedServiceForView.Result.Conclusion)
-                                ? "—"
-                                : SelectedServiceForView.Result.Conclusion)
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- =============================================
-                     RESULTED AT
-                     ============================================= -->
-
-                    <div class="doctor-exam-form-group">
-
-                        <label>
-                            Thời gian kết quả
-                        </label>
-
-                        <div class="doctor-exam-readonly-value">
-
-                            @SelectedServiceForView.Result.ResultedAt.ToString("dd/MM/yyyy HH:mm")
-
-                        </div>
+                        @SelectedServiceForView.ServiceName
 
                     </div>
 
                 </div>
 
 
-                <!-- =================================================
-                 MODAL FOOTER
-                 ================================================= -->
+                <!-- =============================================
+                     RESULT VALUE
+                     ============================================= -->
 
-                <div class="doctor-exam-modal-footer">
+                <div class="doctor-exam-form-group">
 
-                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseViewResultModal">
+                    <label>
+                        Kết quả
+                    </label>
 
-                        Đóng
+                    <div class="doctor-exam-result-detail">
 
-                    </button>
+                        @SelectedServiceForView.Result.ResultValue
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     REFERENCE RANGE
+                     ============================================= -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label>
+                        Khoảng tham chiếu
+                    </label>
+
+                    <div class="doctor-exam-readonly-value">
+
+                        @(string.IsNullOrWhiteSpace(
+                            SelectedServiceForView.Result.ReferenceRange)
+                            ? "—"
+                            : SelectedServiceForView.Result.ReferenceRange)
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     CONCLUSION
+                     ============================================= -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label>
+                        Kết luận
+                    </label>
+
+                    <div class="doctor-exam-result-detail">
+
+                        @(string.IsNullOrWhiteSpace(
+                            SelectedServiceForView.Result.Conclusion)
+                            ? "—"
+                            : SelectedServiceForView.Result.Conclusion)
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     RESULTED AT
+                     ============================================= -->
+
+                <div class="doctor-exam-form-group">
+
+                    <label>
+                        Thời gian kết quả
+                    </label>
+
+                    <div class="doctor-exam-readonly-value">
+
+                        @SelectedServiceForView.Result.ResultedAt.ToString("dd/MM/yyyy HH:mm")
+
+                    </div>
 
                 </div>
 
             </div>
 
+
+            <!-- =================================================
+                 MODAL FOOTER
+                 ================================================= -->
+
+            <div class="doctor-exam-modal-footer">
+
+                <button type="button" class="doctor-exam-secondary-button" @onclick="CloseViewResultModal">
+
+                    Đóng
+
+                </button>
+
+            </div>
+
         </div>
-    }
+
+    </div>
+}
 
 </div>
 
@@ -988,6 +1136,23 @@
 
     private MedicalRecordServiceDTO? SelectedServiceForView;
 
+    // =====================================================
+    // ATTACHMENT
+    // =====================================================
+
+    private const long MaxAttachmentSize =
+        10 * 1024 * 1024;
+
+    private IBrowserFile? SelectedAttachmentFile;
+
+    private string AttachmentErrorMessage =
+        string.Empty;
+
+    private string AttachmentSuccessMessage =
+        string.Empty;
+
+    private int AttachmentInputKey;
+
 
 
     // =====================================================
@@ -1004,6 +1169,201 @@
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
     }
+
+    // =====================================================
+// SELECT ATTACHMENT
+// =====================================================
+
+private void OnAttachmentSelected(
+    InputFileChangeEventArgs e)
+{
+    AttachmentErrorMessage =
+        string.Empty;
+
+    AttachmentSuccessMessage =
+        string.Empty;
+
+    SelectedAttachmentFile =
+        e.File;
+
+
+    if (SelectedAttachmentFile == null)
+    {
+        return;
+    }
+
+
+    // =================================================
+    // VALIDATE SIZE
+    // =================================================
+
+    if (SelectedAttachmentFile.Size >
+        MaxAttachmentSize)
+    {
+        AttachmentErrorMessage =
+            "Dung lượng file không được vượt quá 10 MB.";
+
+        SelectedAttachmentFile =
+            null;
+
+        AttachmentInputKey++;
+
+        return;
+    }
+
+
+    // =================================================
+    // VALIDATE EXTENSION
+    //
+    // Backend cũng validate lại.
+    // =================================================
+
+    var extension =
+        Path.GetExtension(
+            SelectedAttachmentFile.Name)
+            .ToLowerInvariant();
+
+
+    var allowedExtensions =
+        new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".pdf",
+            ".dcm",
+            ".dicom"
+        };
+
+
+    if (!allowedExtensions.Contains(
+        extension))
+    {
+        AttachmentErrorMessage =
+            "Định dạng file không được hỗ trợ.";
+
+        SelectedAttachmentFile =
+            null;
+
+        AttachmentInputKey++;
+    }
+}
+
+// =====================================================
+// UPLOAD ATTACHMENT
+// =====================================================
+
+private async Task UploadAttachment()
+{
+    AttachmentErrorMessage =
+        string.Empty;
+
+    AttachmentSuccessMessage =
+        string.Empty;
+
+
+    if (SelectedAttachmentFile == null)
+    {
+        AttachmentErrorMessage =
+            "Vui lòng chọn file.";
+
+        return;
+    }
+
+
+    try
+    {
+        await using var fileStream =
+            SelectedAttachmentFile
+                .OpenReadStream(
+                    MaxAttachmentSize
+                );
+
+
+        var success =
+            await DoctorExamStateService
+                .UploadMedicalRecordAttachmentAsync(
+                    MedicalRecordId,
+                    fileStream,
+                    SelectedAttachmentFile.Name,
+                    SelectedAttachmentFile.ContentType
+                );
+
+
+        if (!success)
+        {
+            AttachmentErrorMessage =
+                DoctorExamStateService
+                    .ActionErrorMessage;
+
+            return;
+        }
+
+
+        // =================================================
+        // SUCCESS
+        // =================================================
+
+        AttachmentSuccessMessage =
+            DoctorExamStateService
+                .ActionMessage;
+
+
+        SelectedAttachmentFile =
+            null;
+
+        AttachmentInputKey++;
+    }
+    catch
+    {
+        AttachmentErrorMessage =
+            "Không thể tải file lên.";
+
+        SelectedAttachmentFile =
+            null;
+
+        AttachmentInputKey++;
+    }
+}
+
+// =====================================================
+// CLEAR SELECTED ATTACHMENT
+// =====================================================
+
+private void ClearSelectedAttachment()
+{
+    SelectedAttachmentFile =
+        null;
+
+    AttachmentErrorMessage =
+        string.Empty;
+
+    AttachmentSuccessMessage =
+        string.Empty;
+
+    AttachmentInputKey++;
+}
+
+// =====================================================
+// FORMAT FILE SIZE
+// =====================================================
+
+private static string FormatFileSize(
+    long bytes)
+{
+    if (bytes < 1024)
+    {
+        return $"{bytes} B";
+    }
+
+    if (bytes < 1024 * 1024)
+    {
+        return $"{bytes / 1024.0:N1} KB";
+    }
+
+    return $"{bytes / (1024.0 * 1024.0):N1} MB";
+}
 
     // =====================================================
     // OPEN VIEW RESULT MODAL

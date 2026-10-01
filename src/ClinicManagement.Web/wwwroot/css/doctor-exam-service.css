@@ -915,3 +915,131 @@
     gap: 8px;
     flex-wrap: nowrap;
 }
+
+/* =====================================================
+   ATTACHMENT
+   ===================================================== */
+
+.doctor-exam-attachment-upload {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+
+.doctor-exam-attachment-picker {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 18px;
+
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+
+    background: #f8fafc;
+}
+
+
+.doctor-exam-attachment-title {
+    color: #16324f;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+.doctor-exam-attachment-hint {
+    margin-top: 4px;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+
+.doctor-exam-file-input {
+    max-width: 300px;
+
+    font-size: 13px;
+}
+
+
+.doctor-exam-selected-file {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 12px 14px;
+
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+
+    background: #ffffff;
+}
+
+
+.doctor-exam-selected-file-name {
+    color: #334155;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    word-break: break-word;
+}
+
+
+.doctor-exam-selected-file-size {
+    margin-top: 3px;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+
+.doctor-exam-file-remove-button {
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #f1f5f9;
+    color: #64748b;
+
+    font-size: 20px;
+
+    cursor: pointer;
+}
+
+
+.doctor-exam-file-remove-button:hover {
+    background: #e2e8f0;
+}
+
+
+.doctor-exam-attachment-actions {
+    display: flex;
+
+    justify-content: flex-end;
+}
+
+
+.doctor-exam-success {
+    background: #ecfdf5;
+
+    border-color: #a7f3d0;
+
+    color: #047857;
+}
