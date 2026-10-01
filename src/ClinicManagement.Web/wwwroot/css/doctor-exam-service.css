@@ -1043,3 +1043,66 @@
 
     color: #047857;
 }
+
+/* =====================================================
+   FILE PICKER
+   ===================================================== */
+
+.doctor-exam-file-picker {
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+
+.doctor-exam-file-input {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+.doctor-exam-file-picker-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    padding: 0 18px;
+
+    border: 1px solid #16324f;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #16324f;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.doctor-exam-file-picker-button:hover {
+    background: #16324f;
+    color: #ffffff;
+}
+
+.doctor-exam-attachment-picker-info {
+    min-width: 0;
+}
