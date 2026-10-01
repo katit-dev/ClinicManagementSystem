@@ -1,0 +1,1045 @@
+@page "/doctor/exam/{MedicalRecordId:int}/prescription"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Doctor")]
+
+@using ClinicManagementSystem.Application.DTOs.MedicalRecord
+@using ClinicManagementSystem.Application.Enums
+@using ClinicManagementSystem.Web.Services
+@using Microsoft.AspNetCore.Authorization
+
+
+@inject DoctorExamStateService DoctorExamStateService
+@inject NavigationManager NavigationManager
+
+
+<PageTitle>Kê đơn thuốc</PageTitle>
+
+
+<div class="doctor-exam-page">
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <div class="doctor-exam-header">
+
+        <div>
+
+            <div class="doctor-exam-label">
+                VC-15
+            </div>
+
+            <h1>
+                Kê đơn thuốc
+            </h1>
+
+            <p>
+                Chọn thuốc, liều dùng; hệ thống cảnh báo dị ứng
+                và chặn thuốc hết tồn hoặc hết hạn.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ERROR
+         ===================================================== -->
+
+    @if (!string.IsNullOrWhiteSpace(
+        DoctorExamStateService.ErrorMessage))
+    {
+        <div class="doctor-exam-message doctor-exam-error">
+
+            @DoctorExamStateService.ErrorMessage
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         ACTION ERROR
+         ===================================================== -->
+
+    @if (!string.IsNullOrWhiteSpace(
+        DoctorExamStateService.ActionErrorMessage))
+    {
+        <div class="doctor-exam-message doctor-exam-error">
+
+            @DoctorExamStateService.ActionErrorMessage
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         ACTION SUCCESS
+         ===================================================== -->
+
+    @if (!string.IsNullOrWhiteSpace(
+        DoctorExamStateService.ActionMessage))
+    {
+        <div class="doctor-exam-message doctor-exam-success">
+
+            @DoctorExamStateService.ActionMessage
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
+
+    @if (DoctorExamStateService.IsLoading)
+    {
+        <div class="doctor-exam-state">
+
+            Đang tải thông tin bệnh án...
+
+        </div>
+    }
+    else if (DoctorExamStateService.MedicalRecord == null)
+    {
+        <div class="doctor-exam-state">
+
+            Không tìm thấy bệnh án.
+
+        </div>
+    }
+    else
+    {
+        var record =
+            DoctorExamStateService.MedicalRecord;
+
+
+        <!-- =================================================
+             PRESCRIPTION CARD
+             ================================================= -->
+
+        <section class="doctor-exam-card">
+
+
+            <!-- =============================================
+                 CARD HEADER
+                 ============================================= -->
+
+            <div class="doctor-exam-card-header">
+
+                <div>
+
+                    <div class="doctor-exam-card-label">
+                        BỆNH ÁN
+                    </div>
+
+                    <h2>
+                        #@record.Id
+                    </h2>
+
+                </div>
+
+
+                <div>
+
+                    @if (record.Status ==
+                        (byte)MedicalRecordStatus.Finalized)
+                    {
+                        <span class="doctor-exam-status-finalized">
+
+                            Đã chốt
+
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="doctor-exam-status-draft">
+
+                            Nháp
+
+                        </span>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <div class="doctor-exam-content">
+
+
+                <!-- =========================================
+                     MEDICINE SEARCH
+                     ========================================= -->
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-section-title">
+                        Kê đơn thuốc
+                    </div>
+
+
+                    <div class="prescription-search-grid">
+
+
+                        <!-- SEARCH -->
+
+                        <div class="doctor-exam-form-group">
+
+                            <label for="medicine-search">
+                                Tìm thuốc
+                            </label>
+
+                            <input
+                                id="medicine-search"
+                                type="text"
+                                class="doctor-exam-input"
+                                placeholder="Nhập tên thuốc..."
+                                @bind="MedicineKeyword"
+                                disabled="@IsFinalized" />
+
+                            <div class="prescription-search-hint">
+
+                                Gợi ý theo tên và hoạt chất
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- STOCK -->
+
+                        <div class="doctor-exam-form-group">
+
+                            <label>
+                                Tồn khả dụng
+                            </label>
+
+                            <div class="prescription-stock-box">
+
+                                @if (SelectedMedicine == null)
+                                {
+                                    <span>
+                                        Chưa chọn thuốc
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        @SelectedMedicine.AvailableQuantity
+                                        @SelectedMedicine.Unit
+                                    </span>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         SEARCH RESULT
+                         ===================================== -->
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        MedicineKeyword))
+                    {
+                        <div class="prescription-search-result">
+
+                            <div class="prescription-search-result-empty">
+
+                                Tìm kiếm thuốc sẽ được kết nối
+                                với API ở bước tiếp theo.
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- =========================================
+                     PRESCRIPTION ITEMS
+                     ========================================= -->
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-section-title">
+
+                        PRESCRIPTION_ITEMS
+
+                    </div>
+
+
+                    @if (PrescriptionItems.Count == 0)
+                    {
+                        <div class="doctor-exam-state">
+
+                            Chưa có thuốc trong đơn.
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="doctor-exam-table-wrapper">
+
+                            <table class="doctor-exam-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Thuốc
+                                        </th>
+
+                                        <th>
+                                            SL
+                                        </th>
+
+                                        <th>
+                                            Liều dùng
+                                        </th>
+
+                                        <th>
+                                            Hướng dẫn
+                                        </th>
+
+                                        <th>
+                                            Số ngày
+                                        </th>
+
+                                        <th>
+                                            Thao tác
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    @foreach (
+                                        var item
+                                        in PrescriptionItems)
+                                    {
+                                        <tr>
+
+                                            <td>
+
+                                                @item.MedicineName
+
+                                                @if (item.IsAllergy)
+                                                {
+                                                    <span class="prescription-allergy-badge">
+
+                                                        Cảnh báo dị ứng
+
+                                                    </span>
+                                                }
+
+                                            </td>
+
+
+                                            <td>
+                                                @item.Quantity
+                                            </td>
+
+
+                                            <td>
+                                                @item.Dosage
+                                            </td>
+
+
+                                            <td>
+                                                @item.Instruction
+                                            </td>
+
+
+                                            <td>
+                                                @(item.DurationDays?.ToString()
+                                                    ?? "—")
+                                            </td>
+
+
+                                            <td>
+
+                                                <button
+                                                    type="button"
+                                                    class="doctor-exam-danger-button"
+                                                    @onclick="() => RemovePrescriptionItem(item)"
+                                                    disabled="@IsFinalized">
+
+                                                    Xóa
+
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- =========================================
+                     NOTE
+                     ========================================= -->
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="prescription-note">
+                            Ghi chú
+                        </label>
+
+                        <textarea
+                            id="prescription-note"
+                            class="doctor-exam-input doctor-exam-textarea"
+                            rows="3"
+                            placeholder="Ghi chú cho đơn thuốc..."
+                            @bind="PrescriptionNote"
+                            disabled="@IsFinalized">
+                        </textarea>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     ACTIONS
+                     ========================================= -->
+
+                <div class="doctor-exam-actions">
+
+
+                    <!-- ADD MEDICINE -->
+
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button"
+                        @onclick="OpenAddMedicineModal"
+                        disabled="@IsFinalized">
+
+                        + Thêm thuốc
+
+                    </button>
+
+
+                    <!-- SAVE -->
+
+                    <button
+                        type="button"
+                        class="doctor-exam-primary-button"
+                        @onclick="SavePrescription"
+                        disabled="@(
+                            IsFinalized ||
+                            PrescriptionItems.Count == 0 ||
+                            IsSaving
+                        )">
+
+                        @(IsSaving
+                            ? "Đang lưu..."
+                            : "Lưu đơn thuốc")
+
+                    </button>
+
+
+                    <!-- PRINT -->
+
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button"
+                        @onclick="PrintPrescription"
+                        disabled="@(PrescriptionId == null)">
+
+                        In đơn
+
+                    </button>
+
+
+                    <!-- BACK -->
+
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button"
+                        @onclick="GoBack">
+
+                        Quay lại khám bệnh
+
+                    </button>
+
+                </div>
+
+
+                <!-- =========================================
+                     ALLERGY WARNING
+                     ========================================= -->
+
+                @if (HasAllergyWarning)
+                {
+                    <div class="prescription-warning">
+
+                        Thuốc thuộc nhóm bệnh nhân đã ghi nhận
+                        dị ứng phải cảnh báo và bắt bác sĩ xác nhận
+                        mới được kê.
+
+                    </div>
+                }
+
+
+            </div>
+
+        </section>
+    }
+
+
+    <!-- =====================================================
+         ADD MEDICINE MODAL
+         ===================================================== -->
+
+    @if (IsAddMedicineModalOpen)
+    {
+        <div class="doctor-exam-modal-backdrop">
+
+            <div class="doctor-exam-modal">
+
+
+                <!-- =========================================
+                     MODAL HEADER
+                     ========================================= -->
+
+                <div class="doctor-exam-modal-header">
+
+                    <div>
+
+                        <span>
+                            KÊ ĐƠN THUỐC
+                        </span>
+
+                        <h3>
+                            Thêm thuốc
+                        </h3>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="doctor-exam-modal-close"
+                        @onclick="CloseAddMedicineModal">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <!-- =========================================
+                     MODAL BODY
+                     ========================================= -->
+
+                <div class="doctor-exam-modal-body">
+
+
+                    <!-- MEDICINE -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label>
+                            Thuốc
+                        </label>
+
+                        <div class="prescription-modal-placeholder">
+
+                            Chọn thuốc từ kết quả tìm kiếm.
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- QUANTITY -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="medicine-quantity">
+                            Số lượng
+                        </label>
+
+                        <input
+                            id="medicine-quantity"
+                            type="number"
+                            min="1"
+                            class="doctor-exam-form-control"
+                            @bind="NewMedicineQuantity"
+                            disabled="@IsFinalized" />
+
+                    </div>
+
+
+                    <!-- DOSAGE -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="medicine-dosage">
+                            Liều dùng
+                        </label>
+
+                        <input
+                            id="medicine-dosage"
+                            type="text"
+                            class="doctor-exam-form-control"
+                            placeholder="Ví dụ: sáng 1 · chiều 1"
+                            @bind="NewMedicineDosage"
+                            disabled="@IsFinalized" />
+
+                    </div>
+
+
+                    <!-- INSTRUCTION -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="medicine-instruction">
+                            Hướng dẫn
+                        </label>
+
+                        <input
+                            id="medicine-instruction"
+                            type="text"
+                            class="doctor-exam-form-control"
+                            placeholder="Ví dụ: uống sau ăn"
+                            @bind="NewMedicineInstruction"
+                            disabled="@IsFinalized" />
+
+                    </div>
+
+
+                    <!-- DURATION -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="medicine-duration">
+                            Số ngày
+                        </label>
+
+                        <input
+                            id="medicine-duration"
+                            type="number"
+                            min="1"
+                            class="doctor-exam-form-control"
+                            @bind="NewMedicineDurationDays"
+                            disabled="@IsFinalized" />
+
+                    </div>
+
+
+                    <!-- ALLERGY -->
+
+                    @if (NewMedicineIsAllergy)
+                    {
+                        <div class="prescription-allergy-warning">
+
+                            <strong>
+                                Cảnh báo dị ứng
+                            </strong>
+
+                            <div>
+                                Thuốc này có hoạt chất trùng
+                                với nhóm dị ứng của bệnh nhân.
+                            </div>
+
+                            <label class="prescription-allergy-confirm">
+
+                                <input
+                                    type="checkbox"
+                                    @bind="NewMedicineAllergyConfirmed" />
+
+                                Tôi xác nhận vẫn kê thuốc này.
+
+                            </label>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- =========================================
+                     MODAL FOOTER
+                     ========================================= -->
+
+                <div class="doctor-exam-modal-footer">
+
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button"
+                        @onclick="CloseAddMedicineModal">
+
+                        Hủy
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="doctor-exam-primary-button"
+                        @onclick="AddMedicineToPrescription"
+                        disabled="@IsFinalized">
+
+                        Thêm
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // ROUTE
+    // =====================================================
+
+    [Parameter]
+    public int MedicalRecordId { get; set; }
+
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    private string MedicineKeyword =
+        string.Empty;
+
+    private string PrescriptionNote =
+        string.Empty;
+
+    private int? PrescriptionId;
+
+    private bool IsSaving;
+
+    private bool IsAddMedicineModalOpen;
+
+
+    // =====================================================
+    // NEW MEDICINE
+    // =====================================================
+
+    private int NewMedicineQuantity = 1;
+
+    private string NewMedicineDosage =
+        string.Empty;
+
+    private string NewMedicineInstruction =
+        string.Empty;
+
+    private int? NewMedicineDurationDays;
+
+    private bool NewMedicineIsAllergy;
+
+    private bool NewMedicineAllergyConfirmed;
+
+
+    // =====================================================
+    // LOCAL ITEMS
+    //
+    // UI ONLY
+    //
+    // Sẽ thay bằng DTO thật khi nối API.
+    // =====================================================
+
+    private readonly List<PrescriptionItemViewModel>
+        PrescriptionItems = new();
+
+
+    // =====================================================
+    // SELECTED MEDICINE
+    //
+    // UI ONLY
+    //
+    // Sẽ thay bằng DTO thật khi nối API search.
+    // =====================================================
+
+    private MedicineViewModel? SelectedMedicine;
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await DoctorExamStateService
+            .LoadMedicalRecordAsync(
+                MedicalRecordId
+            );
+    }
+
+
+    // =====================================================
+    // FINALIZED
+    // =====================================================
+
+    private bool IsFinalized =>
+        DoctorExamStateService.MedicalRecord != null &&
+        DoctorExamStateService.MedicalRecord.Status ==
+            (byte)MedicalRecordStatus.Finalized;
+
+
+    // =====================================================
+    // ALLERGY WARNING
+    // =====================================================
+
+    private bool HasAllergyWarning =>
+        PrescriptionItems.Any(
+            x => x.IsAllergy
+        );
+
+
+    // =====================================================
+    // OPEN ADD MEDICINE MODAL
+    // =====================================================
+
+    private void OpenAddMedicineModal()
+    {
+        NewMedicineQuantity = 1;
+
+        NewMedicineDosage =
+            string.Empty;
+
+        NewMedicineInstruction =
+            string.Empty;
+
+        NewMedicineDurationDays =
+            null;
+
+        NewMedicineIsAllergy =
+            false;
+
+        NewMedicineAllergyConfirmed =
+            false;
+
+        IsAddMedicineModalOpen =
+            true;
+    }
+
+
+    // =====================================================
+    // CLOSE ADD MEDICINE MODAL
+    // =====================================================
+
+    private void CloseAddMedicineModal()
+    {
+        IsAddMedicineModalOpen =
+            false;
+    }
+
+
+    // =====================================================
+    // ADD MEDICINE
+    //
+    // UI ONLY
+    //
+    // Chưa gọi API.
+    // =====================================================
+
+    private void AddMedicineToPrescription()
+    {
+        if (IsFinalized)
+        {
+            return;
+        }
+
+
+        if (SelectedMedicine == null)
+        {
+            return;
+        }
+
+
+        if (NewMedicineQuantity <= 0)
+        {
+            return;
+        }
+
+
+        if (string.IsNullOrWhiteSpace(
+            NewMedicineDosage))
+        {
+            return;
+        }
+
+
+        PrescriptionItems.Add(
+            new PrescriptionItemViewModel
+            {
+                MedicineId =
+                    SelectedMedicine.Id,
+
+                MedicineName =
+                    SelectedMedicine.Name,
+
+                Quantity =
+                    NewMedicineQuantity,
+
+                Dosage =
+                    NewMedicineDosage.Trim(),
+
+                Instruction =
+                    string.IsNullOrWhiteSpace(
+                        NewMedicineInstruction)
+                        ? "—"
+                        : NewMedicineInstruction.Trim(),
+
+                DurationDays =
+                    NewMedicineDurationDays,
+
+                IsAllergy =
+                    NewMedicineIsAllergy,
+
+                AllergyConfirmed =
+                    NewMedicineAllergyConfirmed
+            }
+        );
+
+
+        CloseAddMedicineModal();
+    }
+
+
+    // =====================================================
+    // REMOVE MEDICINE
+    // =====================================================
+
+    private void RemovePrescriptionItem(
+        PrescriptionItemViewModel item)
+    {
+        if (IsFinalized)
+        {
+            return;
+        }
+
+
+        PrescriptionItems.Remove(item);
+    }
+
+
+    // =====================================================
+    // SAVE PRESCRIPTION
+    //
+    // TODO:
+    // PUT /api/medical-records/{id}/prescription
+    // =====================================================
+
+    private void SavePrescription()
+    {
+        if (IsFinalized ||
+            PrescriptionItems.Count == 0)
+        {
+            return;
+        }
+
+
+        // Chưa gọi API.
+    }
+
+
+    // =====================================================
+    // PRINT
+    //
+    // TODO:
+    // GET /api/prescriptions/{id}/pdf
+    // =====================================================
+
+    private void PrintPrescription()
+    {
+        if (PrescriptionId == null)
+        {
+            return;
+        }
+
+
+        // Chưa gọi API.
+    }
+
+
+    // =====================================================
+    // BACK
+    // =====================================================
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo(
+            $"/doctor/exam/{MedicalRecordId}"
+        );
+    }
+
+
+    // =====================================================
+    // UI MODEL
+    // =====================================================
+
+    private sealed class PrescriptionItemViewModel
+    {
+        public int MedicineId { get; set; }
+
+        public string MedicineName { get; set; } =
+            string.Empty;
+
+        public int Quantity { get; set; }
+
+        public string Dosage { get; set; } =
+            string.Empty;
+
+        public string Instruction { get; set; } =
+            string.Empty;
+
+        public int? DurationDays { get; set; }
+
+        public bool IsAllergy { get; set; }
+
+        public bool AllergyConfirmed { get; set; }
+    }
+
+
+    // =====================================================
+    // MEDICINE UI MODEL
+    // =====================================================
+
+    private sealed class MedicineViewModel
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; } =
+            string.Empty;
+
+        public int AvailableQuantity { get; set; }
+
+        public string Unit { get; set; } =
+            string.Empty;
+    }
+
+}
