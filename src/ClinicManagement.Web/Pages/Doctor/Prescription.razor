@@ -236,6 +236,93 @@
 
                     </div>
 
+                    @if (DoctorExamStateService.IsSearchingMedicines)
+                    {
+                        <div class="prescription-search-result">
+
+                            <div class="prescription-search-result-empty">
+                                Đang tìm thuốc...
+                            </div>
+
+                        </div>
+                    }
+                    else if (
+                        !string.IsNullOrWhiteSpace(MedicineKeyword) &&
+                        DoctorExamStateService.MedicineSearchResults.Count > 0)
+                    {
+                        <div class="prescription-search-result">
+
+                            @foreach (
+                                var medicine
+                                in DoctorExamStateService.MedicineSearchResults)
+                            {
+                                <button type="button" class="prescription-medicine-result" @onclick="() => SelectMedicine(medicine)"
+                                        disabled="@(medicine.AvailableQuantity <= 0)">
+
+                                    <div class="prescription-medicine-info">
+
+                                        <div class="prescription-medicine-name">
+                                            @medicine.Name
+                                        </div>
+
+                                        <div class="prescription-medicine-detail">
+
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                medicine.Concentration))
+                                            {
+                                                @medicine.Concentration
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                medicine.ActiveIngredient))
+                                            {
+                                                <span>
+                                                    · @medicine.ActiveIngredient
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="prescription-medicine-stock">
+
+                                        @medicine.AvailableQuantity
+
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            medicine.Unit))
+                                        {
+                                            @($" {medicine.Unit}")
+                                        }
+
+                                    </div>
+
+
+                                    @if (medicine.HasAllergyWarning)
+                                    {
+                                        <span class="prescription-allergy-badge">
+                                            Cảnh báo dị ứng
+                                        </span>
+                                    }
+
+                                </button>
+                            }
+
+                        </div>
+                    }
+                    else if (
+                        !string.IsNullOrWhiteSpace(MedicineKeyword))
+                    {
+                        <div class="prescription-search-result">
+
+                            <div class="prescription-search-result-empty">
+                                Không tìm thấy thuốc phù hợp.
+                            </div>
+
+                        </div>
+                    }
+
 
                     <!-- =====================================
                          SEARCH RESULT
@@ -831,36 +918,32 @@
             return;
         }
 
-
         SelectedMedicine =
             medicine;
-
 
         MedicineKeyword =
             medicine.Name;
 
-
         NewMedicineIsAllergy =
             medicine.HasAllergyWarning;
-
 
         NewMedicineAllergyConfirmed =
             false;
     }
-
+    
+    
     // =====================================================
     // MEDICINE SEARCH INPUT
     // =====================================================
 
     private async Task HandleMedicineInput(
-        ChangeEventArgs e)
+    ChangeEventArgs e)
     {
         MedicineKeyword =
             e.Value?.ToString()
             ?? string.Empty;
 
-        SelectedMedicine =
-            null;
+        SelectedMedicine = null;
 
         await DoctorExamStateService
             .SearchMedicinesAsync(

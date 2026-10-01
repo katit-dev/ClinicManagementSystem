@@ -30,6 +30,23 @@ public class DoctorExamStateService
         private set;
     }
 
+    // =====================================================
+    // MEDICINE SEARCH
+    // =====================================================
+
+    public List<MedicineSearchDTO> MedicineSearchResults
+    {
+        get;
+        private set;
+    } = new();
+
+
+    public bool IsSearchingMedicines
+    {
+        get;
+        private set;
+    }
+
 
     public int? MedicalRecordId
     {
@@ -133,7 +150,6 @@ public class DoctorExamStateService
     //
     // Response:
     // MedicineSearchDTO[]
-    //
     // =====================================================
 
     public async Task<bool> SearchMedicinesAsync(
@@ -150,7 +166,7 @@ public class DoctorExamStateService
 
 
         // =================================================
-        // VALIDATE MEDICAL RECORD
+        // CHECK MEDICAL RECORD
         // =================================================
 
         if (MedicalRecord == null)
@@ -165,7 +181,7 @@ public class DoctorExamStateService
 
 
         // =================================================
-        // GET PATIENT ID
+        // CHECK PATIENT
         // =================================================
 
         if (MedicalRecord.PatientId <= 0)
@@ -277,22 +293,6 @@ public class DoctorExamStateService
         }
     }
 
-    // =====================================================
-    // MEDICINE SEARCH
-    // =====================================================
-
-    public List<MedicineSearchDTO> MedicineSearchResults
-    {
-        get;
-        private set;
-    } = new();
-
-
-    public bool IsSearchingMedicines
-    {
-        get;
-        private set;
-    }
 
     // =====================================================
     // UPLOAD MEDICAL RECORD ATTACHMENT
@@ -1675,4 +1675,7 @@ public class DoctorExamStateService
                     }
         };
     }
+
+
+
 }
