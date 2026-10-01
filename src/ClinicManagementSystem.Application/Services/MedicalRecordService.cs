@@ -8,6 +8,9 @@ using ClinicManagementSystem.Infrastructure.Models;
 using ClinicManagementSystem.Application.DTOs.Invoice;
 using MedicalRecordServiceEntity = ClinicManagementSystem.Infrastructure.Models.MedicalRecordService;
 using ClinicManagementSystem.Application.DTOs.Prescription;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 
 namespace ClinicManagementSystem.Application.Services;
@@ -42,6 +45,8 @@ public interface IMedicalRecordService
     Task<HttpResponseData<AttachmentDTO>> UploadMedicalRecordAttachmentAsync(int medicalRecordId, int currentUserId, Stream fileStream, string fileName, string contentType);
 
     Task<HttpResponseData<PrescriptionResponseDTO>> CreatePrescriptionAsync(int medicalRecordId, int currentUserId, PrescriptionRequestDTO request);
+
+    Task<byte[]?> GetPrescriptionPdfAsync(int prescriptionId);
 
 }
 
@@ -82,6 +87,546 @@ public class MedicalRecordService
 
         _logger =
             logger;
+    }
+
+    // =====================================================
+    // GET PRESCRIPTION PDF
+    //
+    // GET:
+    // /api/prescriptions/{id}/pdf
+    // =====================================================
+
+    public async Task<byte[]?> GetPrescriptionPdfAsync(
+        int prescriptionId)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE ID
+            // =================================================
+
+            if (prescriptionId <= 0)
+            {
+                return null;
+            }
+
+
+            // =================================================
+            // GET PRESCRIPTION
+            // =================================================
+
+            var prescription =
+                await _unitOfWork
+                    .PrescriptionRepository
+                    .WhereSql(
+                        p =>
+                            p.Id == prescriptionId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // PRESCRIPTION NOT FOUND
+            // =================================================
+
+            if (prescription == null)
+            {
+                return null;
+            }
+
+
+            // =================================================
+            // GET PRESCRIPTION ITEMS
+            // =================================================
+
+            var prescriptionItems =
+                await _unitOfWork
+                    .PrescriptionItemRepository
+                    .WhereSql(
+                        i =>
+                            i.PrescriptionId ==
+                            prescription.Id
+                    )
+                    .OrderBy(
+                        i => i.Id
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id ==
+                            prescription.MedicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (medicalRecord == null)
+            {
+                return null;
+            }
+
+
+            // =================================================
+            // GET PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            p.Id ==
+                            medicalRecord.PatientId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // GET DOCTOR
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.Id ==
+                            prescription.DoctorId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // GENERATE PDF
+            // =================================================
+
+            var document =
+                Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+
+                        page.Margin(
+                            20,
+                            Unit.Millimetre
+                        );
+
+                        page.DefaultTextStyle(
+                            x => x.FontSize(10)
+                        );
+
+
+                        // =============================================
+                        // HEADER
+                        // =============================================
+
+                        page.Header()
+                            .Column(column =>
+                            {
+                                column.Spacing(4);
+
+                                column.Item()
+                                    .AlignCenter()
+                                    .Text("ĐƠN THUỐC")
+                                    .FontSize(20)
+                                    .Bold();
+
+                                column.Item()
+                                    .AlignCenter()
+                                    .Text(
+                                        $"Mã đơn thuốc: " +
+                                        $"{prescription.Id}"
+                                    )
+                                    .FontSize(11)
+                                    .SemiBold();
+
+                                column.Item()
+                                    .PaddingVertical(8)
+                                    .LineHorizontal(1);
+                            });
+
+
+                        // =============================================
+                        // CONTENT
+                        // =============================================
+
+                        page.Content()
+                            .Column(column =>
+                            {
+                                column.Spacing(12);
+
+
+                                // -----------------------------------------
+                                // PATIENT INFORMATION
+                                // -----------------------------------------
+
+                                column.Item()
+                                    .Text(
+                                        "THÔNG TIN ĐƠN THUỐC"
+                                    )
+                                    .FontSize(12)
+                                    .Bold();
+
+
+                                column.Item()
+                                    .Border(1)
+                                    .BorderColor(
+                                        Colors.Grey.Lighten2
+                                    )
+                                    .Padding(10)
+                                    .Column(info =>
+                                    {
+                                        info.Spacing(5);
+
+                                        info.Item()
+                                            .Text(
+                                                $"Bệnh nhân: " +
+                                                $"{patient?.FullName ?? "—"}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Mã bệnh nhân: " +
+                                                $"{medicalRecord.PatientId}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Bác sĩ: " +
+                                                $"{doctor?.FullName ?? "—"}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Mã bệnh án: " +
+                                                $"{medicalRecord.Id}"
+                                            );
+
+                                        info.Item()
+                                            .Text(
+                                                $"Ngày kê đơn: " +
+                                                $"{prescription.CreatedAt:dd/MM/yyyy HH:mm}"
+                                            );
+                                    });
+
+
+                                // -----------------------------------------
+                                // PRESCRIPTION NOTE
+                                // -----------------------------------------
+
+                                if (
+                                    !string.IsNullOrWhiteSpace(
+                                        prescription.Note
+                                    )
+                                )
+                                {
+                                    column.Item()
+                                        .Text("GHI CHÚ")
+                                        .FontSize(12)
+                                        .Bold();
+
+                                    column.Item()
+                                        .Border(1)
+                                        .BorderColor(
+                                            Colors.Grey.Lighten2
+                                        )
+                                        .Padding(10)
+                                        .Text(
+                                            prescription.Note
+                                        );
+                                }
+
+
+                                // -----------------------------------------
+                                // MEDICINE ITEMS
+                                // -----------------------------------------
+
+                                column.Item()
+                                    .Text(
+                                        "CHI TIẾT THUỐC"
+                                    )
+                                    .FontSize(12)
+                                    .Bold();
+
+
+                                column.Item()
+                                    .Table(table =>
+                                    {
+                                        table.ColumnsDefinition(
+                                            columns =>
+                                            {
+                                                columns.ConstantColumn(
+                                                    35
+                                                );
+
+                                                columns.RelativeColumn(
+                                                    2
+                                                );
+
+                                                columns.ConstantColumn(
+                                                    60
+                                                );
+
+                                                columns.RelativeColumn(
+                                                    2
+                                                );
+
+                                                columns.RelativeColumn(
+                                                    2
+                                                );
+
+                                                columns.ConstantColumn(
+                                                    65
+                                                );
+                                            }
+                                        );
+
+
+                                        // =================================
+                                        // HEADER
+                                        // =================================
+
+                                        table.Header(
+                                            header =>
+                                            {
+                                                header.Cell()
+                                                    .Element(
+                                                        PrescriptionPdfHeaderCell
+                                                    )
+                                                    .AlignCenter()
+                                                    .Text("STT");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        PrescriptionPdfHeaderCell
+                                                    )
+                                                    .Text("Tên thuốc");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        PrescriptionPdfHeaderCell
+                                                    )
+                                                    .AlignCenter()
+                                                    .Text("SL");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        PrescriptionPdfHeaderCell
+                                                    )
+                                                    .Text("Liều dùng");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        PrescriptionPdfHeaderCell
+                                                    )
+                                                    .Text("Hướng dẫn");
+
+                                                header.Cell()
+                                                    .Element(
+                                                        PrescriptionPdfHeaderCell
+                                                    )
+                                                    .AlignCenter()
+                                                    .Text("Số ngày");
+                                            }
+                                        );
+
+
+                                        // =================================
+                                        // BODY
+                                        // =================================
+
+                                        var itemIndex = 1;
+
+
+                                        foreach (
+                                            var item
+                                            in prescriptionItems
+                                        )
+                                        {
+                                            table.Cell()
+                                                .Element(
+                                                    PrescriptionPdfBodyCell
+                                                )
+                                                .AlignCenter()
+                                                .Text(
+                                                    itemIndex
+                                                        .ToString()
+                                                );
+
+
+                                            table.Cell()
+                                                .Element(
+                                                    PrescriptionPdfBodyCell
+                                                )
+                                                .Text(
+                                                    item.MedicineNameSnapshot
+                                                );
+
+
+                                            table.Cell()
+                                                .Element(
+                                                    PrescriptionPdfBodyCell
+                                                )
+                                                .AlignCenter()
+                                                .Text(
+                                                    item.Quantity
+                                                        .ToString()
+                                                );
+
+
+                                            table.Cell()
+                                                .Element(
+                                                    PrescriptionPdfBodyCell
+                                                )
+                                                .Text(
+                                                    item.Dosage
+                                                    ?? "—"
+                                                );
+
+
+                                            table.Cell()
+                                                .Element(
+                                                    PrescriptionPdfBodyCell
+                                                )
+                                                .Text(
+                                                    item.Instruction
+                                                    ?? "—"
+                                                );
+
+
+                                            table.Cell()
+                                                .Element(
+                                                    PrescriptionPdfBodyCell
+                                                )
+                                                .AlignCenter()
+                                                .Text(
+                                                    item.DurationDays
+                                                        ?.ToString()
+                                                    ?? "—"
+                                                );
+
+
+                                            itemIndex++;
+                                        }
+                                    });
+
+
+                                // -----------------------------------------
+                                // FOOTER INFORMATION
+                                // -----------------------------------------
+
+                                column.Item()
+                                    .PaddingTop(20)
+                                    .Row(row =>
+                                    {
+                                        row.RelativeItem()
+                                            .AlignCenter()
+                                            .Text(
+                                                "Bác sĩ kê đơn"
+                                            )
+                                            .Bold();
+                                    });
+
+
+                                column.Item()
+                                    .PaddingTop(35)
+                                    .Row(row =>
+                                    {
+                                        row.RelativeItem()
+                                            .AlignCenter()
+                                            .Text(
+                                                doctor?.FullName
+                                                ?? "—"
+                                            );
+                                    });
+                            });
+
+
+                        // =============================================
+                        // FOOTER
+                        // =============================================
+
+                        page.Footer()
+                            .AlignCenter()
+                            .Text(
+                                text =>
+                                {
+                                    text.Span("Trang ");
+                                    text.CurrentPageNumber();
+                                    text.Span(" / ");
+                                    text.TotalPages();
+                                }
+                            );
+                    });
+                });
+
+
+            // =================================================
+            // RETURN PDF
+            // =================================================
+
+            return document.GeneratePdf();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to generate prescription PDF. " +
+                "PrescriptionId: {PrescriptionId}",
+                prescriptionId
+            );
+
+            return null;
+        }
+    }
+
+
+    // =====================================================
+    // PDF HEADER CELL
+    // =====================================================
+
+    private static IContainer PrescriptionPdfHeaderCell(
+        IContainer container)
+    {
+        return container
+            .Border(1)
+            .BorderColor(
+                Colors.Grey.Lighten2
+            )
+            .Background(
+                Colors.Grey.Lighten3
+            )
+            .Padding(6)
+            .AlignMiddle()
+            .DefaultTextStyle(
+                x => x.Bold()
+            );
+    }
+
+
+    // =====================================================
+    // PDF BODY CELL
+    // =====================================================
+
+    private static IContainer PrescriptionPdfBodyCell(
+        IContainer container)
+    {
+        return container
+            .Border(1)
+            .BorderColor(
+                Colors.Grey.Lighten2
+            )
+            .Padding(6)
+            .AlignMiddle();
     }
 
     // =====================================================
