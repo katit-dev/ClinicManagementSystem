@@ -1,0 +1,561 @@
+/* =====================================================
+   PRESCRIPTION PAGE
+   ===================================================== */
+
+.prescription-search-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+    gap: 16px;
+}
+
+
+/* =====================================================
+   SEARCH HINT
+   ===================================================== */
+
+.prescription-search-hint {
+    margin-top: 6px;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   STOCK
+   ===================================================== */
+
+.prescription-stock-box {
+    min-height: 46px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding: 0 14px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+
+    background: #f8fafc;
+
+    color: #334155;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   SEARCH RESULT
+   ===================================================== */
+
+.prescription-search-result {
+    margin-top: 14px;
+
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+
+.prescription-search-result-empty {
+    padding: 14px 16px;
+
+    color: #64748b;
+
+    font-size: 14px;
+
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   PRESCRIPTION ITEM
+   ===================================================== */
+
+.prescription-allergy-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    margin-left: 8px;
+
+    padding: 4px 9px;
+
+    border-radius: 999px;
+
+    background: #fee2e2;
+
+    color: #b91c1c;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   WARNING
+   ===================================================== */
+
+.prescription-warning {
+    margin-top: 16px;
+
+    padding: 14px 18px;
+
+    border: 1px solid #f4c542;
+    border-radius: 10px;
+
+    background: #fff7c2;
+
+    color: #8a5a00;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+.prescription-allergy-warning {
+    padding: 14px 16px;
+
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+
+    background: #fef2f2;
+
+    color: #991b1b;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+.prescription-allergy-confirm {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 12px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   MODAL PLACEHOLDER
+   ===================================================== */
+
+.prescription-modal-placeholder {
+    padding: 12px 14px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+
+    background: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   DOCTOR EXAM ACTIONS
+   ===================================================== */
+
+.doctor-exam-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+
+    margin-top: 18px;
+}
+
+
+/* =====================================================
+   BUTTON
+   ===================================================== */
+
+.doctor-exam-primary-button,
+.doctor-exam-secondary-button,
+.doctor-exam-danger-button {
+    min-height: 42px;
+
+    padding: 0 18px;
+
+    border-radius: 9px;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+
+.doctor-exam-primary-button {
+    border: 1px solid #252a30;
+
+    background: #252a30;
+
+    color: #ffffff;
+}
+
+
+.doctor-exam-primary-button:hover:not(:disabled) {
+    background: #16324f;
+}
+
+
+.doctor-exam-secondary-button {
+    border: 1px solid #cbd5e1;
+
+    background: #ffffff;
+
+    color: #16324f;
+}
+
+
+.doctor-exam-secondary-button:hover:not(:disabled) {
+    background: #f8fafc;
+
+    border-color: #94a3b8;
+}
+
+
+.doctor-exam-danger-button {
+    border: 1px solid #fecaca;
+
+    background: #ffffff;
+
+    color: #b91c1c;
+}
+
+
+.doctor-exam-danger-button:hover:not(:disabled) {
+    background: #fef2f2;
+
+    border-color: #fca5a5;
+}
+
+
+.doctor-exam-primary-button:disabled,
+.doctor-exam-secondary-button:disabled,
+.doctor-exam-danger-button:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   TABLE
+   ===================================================== */
+
+.doctor-exam-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+.doctor-exam-table {
+    width: 100%;
+
+    min-width: 850px;
+
+    border-collapse: collapse;
+}
+
+
+.doctor-exam-table th {
+    padding: 14px 16px;
+
+    border: 1px solid #cbd5e1;
+
+    background: #eef2f6;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+
+.doctor-exam-table td {
+    padding: 14px 16px;
+
+    border: 1px solid #cbd5e1;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    vertical-align: middle;
+}
+
+
+/* =====================================================
+   MODAL
+   ===================================================== */
+
+.doctor-exam-modal-backdrop {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1000;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    box-sizing: border-box;
+
+    background: rgba(15, 23, 42, 0.55);
+}
+
+
+.doctor-exam-modal {
+    width: 100%;
+
+    max-width: 560px;
+
+    max-height: 90vh;
+
+    display: flex;
+
+    flex-direction: column;
+
+    overflow: hidden;
+
+    border-radius: 14px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 20px 50px rgba(15, 23, 42, 0.2);
+}
+
+
+.doctor-exam-modal-header {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    background: #252a30;
+
+    color: #ffffff;
+}
+
+
+.doctor-exam-modal-header span {
+    font-size: 12px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+
+    opacity: 0.75;
+}
+
+
+.doctor-exam-modal-header h3 {
+    margin: 5px 0 0;
+
+    font-size: 21px;
+
+    font-weight: 700;
+}
+
+
+.doctor-exam-modal-close {
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    font-size: 25px;
+
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+
+.doctor-exam-modal-body {
+    padding: 22px;
+
+    overflow-y: auto;
+}
+
+
+.doctor-exam-modal-footer {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 16px 22px;
+
+    border-top: 1px solid #e2e8f0;
+
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   FORM
+   ===================================================== */
+
+.doctor-exam-form-group {
+    margin-bottom: 16px;
+}
+
+
+.doctor-exam-form-group:last-child {
+    margin-bottom: 0;
+}
+
+
+.doctor-exam-form-group label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #475569;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+.doctor-exam-form-control,
+.doctor-exam-input {
+    width: 100%;
+
+    min-height: 44px;
+
+    padding: 10px 12px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #334155;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+
+.doctor-exam-form-control:focus,
+.doctor-exam-input:focus {
+    border-color: #16324f;
+
+    box-shadow:
+        0 0 0 3px rgba(22, 50, 79, 0.08);
+}
+
+
+.doctor-exam-textarea {
+    min-height: 90px;
+
+    resize: vertical;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .prescription-search-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .doctor-exam-actions {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .doctor-exam-actions button {
+        width: 100%;
+    }
+
+
+    .doctor-exam-modal-backdrop {
+        padding: 10px;
+    }
+
+
+    .doctor-exam-modal {
+        max-height: 95vh;
+    }
+
+
+    .doctor-exam-modal-header,
+    .doctor-exam-modal-body,
+    .doctor-exam-modal-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
