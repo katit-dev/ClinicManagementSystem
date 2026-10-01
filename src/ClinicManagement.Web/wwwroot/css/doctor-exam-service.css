@@ -789,3 +789,46 @@
 .doctor-exam-confirm-info strong {
     color: #334155;
 }
+
+/* =====================================================
+   SERVICE STATUS
+   ===================================================== */
+
+.doctor-exam-status {
+    display: inline-flex;
+
+    align-items: center;
+
+    min-width: 110px;
+
+    justify-content: center;
+
+    padding: 5px 10px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.doctor-exam-status-ordered {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.doctor-exam-status-completed {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.doctor-exam-status-cancelled {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.doctor-exam-status-in-progress {
+    background: #eff6ff;
+    color: #1d4ed8;
+}

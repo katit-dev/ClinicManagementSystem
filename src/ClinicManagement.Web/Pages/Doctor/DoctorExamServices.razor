@@ -252,7 +252,9 @@
                                                  ================================= -->
 
                                             <td>
-                                                @service.Status
+                                                <span class="@GetServiceStatusClass(service.Status)">
+                                                    @GetServiceStatusText(service.Status)
+                                                </span>
                                             </td>
 
 
@@ -775,6 +777,46 @@
 
         CancelServiceErrorMessage =
             string.Empty;
+    }
+
+    private static string GetServiceStatusText(byte status)
+    {
+        return status switch
+        {
+            (byte)MedicalRecordServiceStatus.Ordered
+                => "Đã chỉ định",
+
+            (byte)MedicalRecordServiceStatus.InProgress
+                => "Đang thực hiện",
+
+            (byte)MedicalRecordServiceStatus.Completed
+                => "Đã hoàn thành",
+
+            (byte)MedicalRecordServiceStatus.Cancelled
+                => "Đã hủy",
+
+            _ => "Không xác định"
+        };
+    }
+
+    private static string GetServiceStatusClass(byte status)
+    {
+        return status switch
+        {
+            (byte)MedicalRecordServiceStatus.Ordered
+                => "doctor-exam-status doctor-exam-status-ordered",
+
+            (byte)MedicalRecordServiceStatus.InProgress
+                => "doctor-exam-status doctor-exam-status-in-progress",
+
+            (byte)MedicalRecordServiceStatus.Completed
+                => "doctor-exam-status doctor-exam-status-completed",
+
+            (byte)MedicalRecordServiceStatus.Cancelled
+                => "doctor-exam-status doctor-exam-status-cancelled",
+
+            _ => "doctor-exam-status"
+        };
     }
 
 
