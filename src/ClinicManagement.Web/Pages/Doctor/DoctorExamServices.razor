@@ -6,6 +6,9 @@
 
 @using ClinicManagementSystem.Application.DTOs.MedicalRecord
 @using Microsoft.AspNetCore.Authorization
+@using ClinicManagementSystem.Application.Enums
+@using ClinicManagementSystem.Application.DTOs.MedicalRecord
+@using Microsoft.AspNetCore.Authorization
 
 @inject DoctorExamStateService DoctorExamStateService
 @inject NavigationManager NavigationManager
@@ -123,10 +126,7 @@
                             Dịch vụ cận lâm sàng
                         </div>
 
-                        <button
-                            type="button"
-                            class="doctor-exam-primary-button"
-                            @onclick="OpenAddServiceModal">
+                        <button type="button" class="doctor-exam-primary-button" @onclick="OpenAddServiceModal">
 
                             + Thêm chỉ định
 
@@ -188,6 +188,10 @@
 
                                         <th>
                                             Kết quả
+                                        </th>
+
+                                        <th>
+                                            Thao tác
                                         </th>
 
                                     </tr>
@@ -283,6 +287,25 @@
 
                                             </td>
 
+                                            <td>
+
+                                                @if (service.Status ==
+                                                    (byte)MedicalRecordServiceStatus.Ordered)
+                                                {
+                                                    <button type="button" class="doctor-exam-danger-button"
+                                                            @onclick="() => OpenCancelServiceModal(service)">
+
+                                                        Hủy
+
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <span>—</span>
+                                                }
+
+                                            </td>
+
                                         </tr>
                                     }
 
@@ -302,10 +325,7 @@
 
                 <div class="doctor-exam-actions">
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        @onclick="GoBack">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="GoBack">
 
                         Quay lại khám bệnh
 
@@ -348,10 +368,7 @@
                     </div>
 
 
-                    <button
-                        type="button"
-                        class="doctor-exam-modal-close"
-                        @onclick="CloseAddServiceModal">
+                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseAddServiceModal">
 
                         ×
 
@@ -391,10 +408,7 @@
                             Dịch vụ
                         </label>
 
-                        <select
-                            id="service"
-                            class="doctor-exam-form-control"
-                            @bind="SelectedServiceId">
+                        <select id="service" class="doctor-exam-form-control" @bind="SelectedServiceId">
 
                             <option value="0">
                                 Chọn dịch vụ
@@ -424,12 +438,8 @@
                             Số lượng
                         </label>
 
-                        <input
-                            id="quantity"
-                            type="number"
-                            min="1"
-                            class="doctor-exam-form-control"
-                            @bind="ServiceQuantity" />
+                        <input id="quantity" type="number" min="1" class="doctor-exam-form-control"
+                               @bind="ServiceQuantity" />
 
                     </div>
 
@@ -442,25 +452,131 @@
 
                 <div class="doctor-exam-modal-footer">
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        @onclick="CloseAddServiceModal">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseAddServiceModal">
 
                         Hủy
 
                     </button>
 
 
-                    <button
-                        type="button"
-                        class="doctor-exam-primary-button"
-                        @onclick="AddService"
-                        disabled="@DoctorExamStateService.IsSubmitting">
+                    <button type="button" class="doctor-exam-primary-button" @onclick="AddService"
+                            disabled="@DoctorExamStateService.IsSubmitting">
 
                         @(DoctorExamStateService.IsSubmitting
                             ? "Đang thêm..."
                             : "Thêm")
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    @if (IsCancelServiceModalOpen &&
+     SelectedServiceToCancel != null)
+    {
+        <div class="doctor-exam-modal-backdrop">
+
+            <div class="doctor-exam-modal">
+
+                <!-- =================================================
+                 MODAL HEADER
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-header">
+
+                    <div>
+
+                        <span>
+                            HỦY CHỈ ĐỊNH
+                        </span>
+
+                        <h3>
+                            Hủy chỉ định
+                        </h3>
+
+                    </div>
+
+
+                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseCancelServiceModal">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <!-- =================================================
+                 MODAL BODY
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-body">
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        CancelServiceErrorMessage))
+                    {
+                        <div class="doctor-exam-message doctor-exam-error">
+
+                            @CancelServiceErrorMessage
+
+                        </div>
+                    }
+
+
+                    <p class="doctor-exam-confirm-text">
+
+                        Bạn có chắc muốn hủy chỉ định
+
+                        <strong>
+                            @SelectedServiceToCancel.ServiceName
+                        </strong>
+
+                        không?
+
+                    </p>
+
+
+                    <div class="doctor-exam-confirm-info">
+
+                        <div>
+                            Mã chỉ định:
+                            <strong>
+                                #@SelectedServiceToCancel.Id
+                            </strong>
+                        </div>
+
+                        <div>
+                            Số lượng:
+                            <strong>
+                                @SelectedServiceToCancel.Quantity
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                 MODAL FOOTER
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-footer">
+
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseCancelServiceModal">
+
+                        Không
+
+                    </button>
+
+
+                    <button type="button" class="doctor-exam-danger-button">
+
+                        Hủy chỉ định
 
                     </button>
 
@@ -496,6 +612,16 @@
     private int ServiceQuantity = 1;
 
     private string AddServiceErrorMessage = string.Empty;
+
+    // =====================================================
+    // CANCEL SERVICE MODAL
+    // =====================================================
+
+    private bool IsCancelServiceModalOpen;
+
+    private MedicalRecordServiceDTO? SelectedServiceToCancel;
+
+    private string CancelServiceErrorMessage = string.Empty;
 
 
     // =====================================================
@@ -581,6 +707,40 @@
         ServiceQuantity = 1;
 
         AddServiceErrorMessage =
+            string.Empty;
+    }
+
+    // =====================================================
+    // OPEN CANCEL SERVICE MODAL
+    // =====================================================
+
+    private void OpenCancelServiceModal(
+        MedicalRecordServiceDTO service)
+    {
+        SelectedServiceToCancel =
+            service;
+
+        CancelServiceErrorMessage =
+            string.Empty;
+
+        IsCancelServiceModalOpen =
+            true;
+    }
+
+
+    // =====================================================
+    // CLOSE CANCEL SERVICE MODAL
+    // =====================================================
+
+    private void CloseCancelServiceModal()
+    {
+        IsCancelServiceModalOpen =
+            false;
+
+        SelectedServiceToCancel =
+            null;
+
+        CancelServiceErrorMessage =
             string.Empty;
     }
 
