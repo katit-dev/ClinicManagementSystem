@@ -452,13 +452,8 @@ public class MedicalRecordService
                 }
             }
 
-
             // =================================================
-            // GET VALID BATCHES
-            //
-            // Chỉ tính:
-            // - Quantity > 0
-            // - ExpiryDate >= hôm nay
+            // CURRENT DATE
             // =================================================
 
             var today =
@@ -467,59 +462,14 @@ public class MedicalRecordService
                 );
 
 
-            var validBatches =
-                await _unitOfWork
-                    .MedicineBatchRepository
-                    .WhereSql(
-                        b =>
-                            medicineIds.Contains(
-                                b.MedicineId
-                            ) &&
-                            b.Quantity > 0 &&
-                            b.ExpiryDate >= today
-                    )
-                    .ToListAsync();
-
-
             // =================================================
-            // CHECK STOCK
+            // CHECK STOCK + EXPIRY
             // =================================================
 
             foreach (var item in request.Items)
             {
-                var availableQuantity =
-                    validBatches
-                        .Where(
-                            b =>
-                                b.MedicineId ==
-                                item.MedicineId
-                        )
-                        .Sum(
-                            b => b.Quantity
-                        );
-
-
-                if (
-                    availableQuantity <
-                    item.Quantity
-                )
-                {
-                    return new HttpResponseData<PrescriptionResponseDTO>
-                    {
-                        StatusCode = 409,
-
-                        Message =
-                            PrescriptionResponseMessageDTO
-                                .MedicineOutOfStock
-                    };
-                }
-
-
                 // =============================================
-                // CHECK EXPIRED ONLY
-                //
-                // Nếu không có batch còn hạn nhưng có batch
-                // của thuốc này đã tồn tại → báo hết hạn.
+                // GET ALL BATCHES CÒN HÀNG
                 // =============================================
 
                 var allBatches =
@@ -527,31 +477,38 @@ public class MedicalRecordService
                         .MedicineBatchRepository
                         .WhereSql(
                             b =>
-                                b.MedicineId ==
-                                item.MedicineId
+                                b.MedicineId == item.MedicineId &&
+                                b.Quantity > 0
                         )
-                        .AnyAsync();
+                        .ToListAsync();
 
 
-                var hasExpiredOrInvalidBatch =
-                    await _unitOfWork
-                        .MedicineBatchRepository
-                        .WhereSql(
+                // =============================================
+                // GET BATCH CÒN HẠN
+                // =============================================
+
+                var validBatches =
+                    allBatches
+                        .Where(
                             b =>
-                                b.MedicineId ==
-                                item.MedicineId &&
-                                b.Quantity > 0 &&
-                                b.ExpiryDate < today
+                                b.ExpiryDate >= today
                         )
-                        .AnyAsync();
+                        .ToList();
 
+
+                // =============================================
+                // CHECK EXPIRED
+                //
+                // Có hàng nhưng tất cả batch đều hết hạn
+                // =============================================
 
                 if (
-                    availableQuantity == 0 &&
-                    hasExpiredOrInvalidBatch
+                    allBatches.Count > 0 &&
+                    validBatches.Count == 0
                 )
                 {
-                    return new HttpResponseData<PrescriptionResponseDTO>
+                    return new HttpResponseData<
+                        PrescriptionResponseDTO>
                     {
                         StatusCode = 409,
 
@@ -560,9 +517,38 @@ public class MedicalRecordService
                                 .MedicineExpired
                     };
                 }
+
+
+                // =============================================
+                // AVAILABLE QUANTITY
+                // =============================================
+
+                var availableQuantity =
+                    validBatches.Sum(
+                        b => b.Quantity
+                    );
+
+
+                // =============================================
+                // CHECK STOCK
+                // =============================================
+
+                if (
+                    availableQuantity <
+                    item.Quantity
+                )
+                {
+                    return new HttpResponseData<
+                        PrescriptionResponseDTO>
+                    {
+                        StatusCode = 409,
+
+                        Message =
+                            PrescriptionResponseMessageDTO
+                                .MedicineOutOfStock
+                    };
+                }
             }
-
-
             // =================================================
             // BEGIN TRANSACTION
             // =================================================
