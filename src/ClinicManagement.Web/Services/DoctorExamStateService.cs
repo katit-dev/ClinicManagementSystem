@@ -125,6 +125,215 @@ public class DoctorExamStateService
     }
 
     // =====================================================
+    // UPLOAD MEDICAL RECORD ATTACHMENT
+    //
+    // POST:
+    // /api/medical-records/{id}/attachments
+    //
+    // Request:
+    // multipart/form-data
+    //
+    // Field:
+    // file
+    //
+    // Allowed:
+    // jpg
+    // jpeg
+    // png
+    // pdf
+    // dcm
+    // dicom
+    //
+    // Max size:
+    // 10 MB
+    // =====================================================
+
+    public async Task<bool> UploadMedicalRecordAttachmentAsync(
+        int medicalRecordId,
+        Stream fileStream,
+        string fileName,
+        string contentType)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE MEDICAL RECORD
+        // =================================================
+
+        if (medicalRecordId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được bệnh án.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE FILE
+        // =================================================
+
+        if (fileStream == null ||
+            fileStream.Length <= 0 ||
+            string.IsNullOrWhiteSpace(fileName))
+        {
+            ActionErrorMessage =
+                "Vui lòng chọn file.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // CREATE MULTIPART FORM
+            // =================================================
+
+            using var form =
+                new MultipartFormDataContent();
+
+
+            // =================================================
+            // FILE CONTENT
+            // =================================================
+
+            var fileContent =
+                new StreamContent(fileStream);
+
+
+            if (!string.IsNullOrWhiteSpace(contentType))
+            {
+                fileContent.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue(
+                        contentType
+                    );
+            }
+
+
+            // =================================================
+            // IMPORTANT
+            //
+            // Backend parameter:
+            //
+            // IFormFile file
+            //
+            // Therefore multipart name MUST be:
+            //
+            // "file"
+            // =================================================
+
+            form.Add(
+                fileContent,
+                "file",
+                fileName
+            );
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        $"/api/medical-records/{medicalRecordId}/attachments",
+                        form
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<AttachmentDTO?>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải file lên.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // CHECK RESPONSE
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Tải file thành công nhưng không nhận được dữ liệu file.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
     // ADD MEDICAL RECORD SERVICE RESULT
     //
     // POST:

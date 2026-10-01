@@ -908,3 +908,10 @@
 
     font-family: inherit;
 }
+
+.doctor-exam-action-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}

@@ -278,7 +278,7 @@
                                                 @if (service.Result != null)
                                                 {
                                                     <span class="doctor-exam-result-exists">
-                                                        Đã có kết quả
+                                                        @service.Result.ResultValue
                                                     </span>
                                                 }
                                                 else if (
@@ -303,22 +303,30 @@
                                             </td>
 
                                             <td>
+                                                <div class="doctor-exam-action-group">
 
-                                                @if (service.Status ==
-                                                    (byte)MedicalRecordServiceStatus.Ordered)
-                                                {
-                                                    <button type="button" class="doctor-exam-danger-button"
-                                                            @onclick="() => OpenCancelServiceModal(service)">
+                                                    @if (service.Result != null)
+                                                    {
+                                                        <button type="button" class="doctor-exam-result-button"
+                                                                @onclick="() => OpenViewResultModal(service)">
 
-                                                        Hủy
+                                                            Xem
 
-                                                    </button>
-                                                }
-                                                else
-                                                {
-                                                    <span>—</span>
-                                                }
+                                                        </button>
+                                                    }
 
+                                                    @if (service.Status ==
+                                                        (byte)MedicalRecordServiceStatus.Ordered)
+                                                    {
+                                                        <button type="button" class="doctor-exam-danger-button"
+                                                                @onclick="() => OpenCancelServiceModal(service)">
+
+                                                            Hủy
+
+                                                        </button>
+                                                    }
+
+                                                </div>
                                             </td>
 
                                         </tr>
@@ -755,6 +763,169 @@
         </div>
     }
 
+    @if (IsViewResultModalOpen &&
+     SelectedServiceForView?.Result != null)
+    {
+        <div class="doctor-exam-modal-backdrop">
+
+            <div class="doctor-exam-modal">
+
+                <!-- =================================================
+                 MODAL HEADER
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-header">
+
+                    <div>
+
+                        <span>
+                            KẾT QUẢ CẬN LÂM SÀNG
+                        </span>
+
+                        <h3>
+                            Kết quả xét nghiệm
+                        </h3>
+
+                    </div>
+
+
+                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseViewResultModal">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <!-- =================================================
+                 MODAL BODY
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-body">
+
+                    <!-- =============================================
+                     SERVICE
+                     ============================================= -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label>
+                            Dịch vụ
+                        </label>
+
+                        <div class="doctor-exam-readonly-value">
+
+                            @SelectedServiceForView.ServiceName
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =============================================
+                     RESULT VALUE
+                     ============================================= -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label>
+                            Kết quả
+                        </label>
+
+                        <div class="doctor-exam-result-detail">
+
+                            @SelectedServiceForView.Result.ResultValue
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =============================================
+                     REFERENCE RANGE
+                     ============================================= -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label>
+                            Khoảng tham chiếu
+                        </label>
+
+                        <div class="doctor-exam-readonly-value">
+
+                            @(string.IsNullOrWhiteSpace(
+                                SelectedServiceForView.Result.ReferenceRange)
+                                ? "—"
+                                : SelectedServiceForView.Result.ReferenceRange)
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =============================================
+                     CONCLUSION
+                     ============================================= -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label>
+                            Kết luận
+                        </label>
+
+                        <div class="doctor-exam-result-detail">
+
+                            @(string.IsNullOrWhiteSpace(
+                                SelectedServiceForView.Result.Conclusion)
+                                ? "—"
+                                : SelectedServiceForView.Result.Conclusion)
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =============================================
+                     RESULTED AT
+                     ============================================= -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label>
+                            Thời gian kết quả
+                        </label>
+
+                        <div class="doctor-exam-readonly-value">
+
+                            @SelectedServiceForView.Result.ResultedAt.ToString("dd/MM/yyyy HH:mm")
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                 MODAL FOOTER
+                 ================================================= -->
+
+                <div class="doctor-exam-modal-footer">
+
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseViewResultModal">
+
+                        Đóng
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
 </div>
 
 
@@ -809,6 +980,14 @@
 
     private string ResultErrorMessage = string.Empty;
 
+    // =====================================================
+    // VIEW RESULT MODAL
+    // =====================================================
+
+    private bool IsViewResultModalOpen;
+
+    private MedicalRecordServiceDTO? SelectedServiceForView;
+
 
 
     // =====================================================
@@ -824,6 +1003,39 @@
 
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
+    }
+
+    // =====================================================
+    // OPEN VIEW RESULT MODAL
+    // =====================================================
+
+    private void OpenViewResultModal(
+        MedicalRecordServiceDTO service)
+    {
+        if (service.Result == null)
+        {
+            return;
+        }
+
+        SelectedServiceForView =
+            service;
+
+        IsViewResultModalOpen =
+            true;
+    }
+
+
+    // =====================================================
+    // CLOSE VIEW RESULT MODAL
+    // =====================================================
+
+    private void CloseViewResultModal()
+    {
+        IsViewResultModalOpen =
+            false;
+
+        SelectedServiceForView =
+            null;
     }
 
     // =====================================================
