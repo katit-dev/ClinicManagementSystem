@@ -16,6 +16,8 @@ public class MedicalRecordExamDTO
 
     public int AppointmentId { get; set; }
 
+    public int PatientId { get; set; }
+
     public string DoctorName { get; set; } = string.Empty;
 
     public string? Symptoms { get; set; }

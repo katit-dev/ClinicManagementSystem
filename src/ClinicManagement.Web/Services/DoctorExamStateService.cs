@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Invoice;
 using ClinicManagementSystem.Application.DTOs.MedicalRecord;
+using ClinicManagementSystem.Application.DTOs.Medicine;
 using ClinicManagementSystem.Application.DTOs.Service;
 using ClinicManagementSystem.Application.Enums;
 
@@ -122,6 +123,175 @@ public class DoctorExamStateService
     {
         _authorizedApiService =
             authorizedApiService;
+    }
+
+    // =====================================================
+    // SEARCH MEDICINES
+    //
+    // GET:
+    // /api/medicines/search?keyword={keyword}&patientId={patientId}
+    //
+    // Response:
+    // MedicineSearchDTO[]
+    //
+    // =====================================================
+
+    public async Task<bool> SearchMedicinesAsync(
+        string keyword)
+    {
+        // =================================================
+        // CLEAR OLD RESULT
+        // =================================================
+
+        MedicineSearchResults.Clear();
+
+        ActionErrorMessage =
+            string.Empty;
+
+
+        // =================================================
+        // VALIDATE MEDICAL RECORD
+        // =================================================
+
+        if (MedicalRecord == null)
+        {
+            ActionErrorMessage =
+                "Không xác định được bệnh án.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // GET PATIENT ID
+        // =================================================
+
+        if (MedicalRecord.PatientId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được bệnh nhân.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // EMPTY KEYWORD
+        // =================================================
+
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            StateHasChanged();
+
+            return true;
+        }
+
+
+        // =================================================
+        // START SEARCH
+        // =================================================
+
+        IsSearchingMedicines = true;
+
+        StateHasChanged();
+
+
+        try
+        {
+            var encodedKeyword =
+                Uri.EscapeDataString(
+                    keyword.Trim()
+                );
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(
+                        $"/api/medicines/search" +
+                        $"?keyword={encodedKeyword}" +
+                        $"&patientId={MedicalRecord.PatientId}"
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<MedicineSearchDTO>?
+                        >
+                    >();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tìm thuốc.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // UPDATE RESULT
+            // =================================================
+
+            MedicineSearchResults =
+                responseData.Content
+                ?? new List<MedicineSearchDTO>();
+
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSearchingMedicines = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
+    // MEDICINE SEARCH
+    // =====================================================
+
+    public List<MedicineSearchDTO> MedicineSearchResults
+    {
+        get;
+        private set;
+    } = new();
+
+
+    public bool IsSearchingMedicines
+    {
+        get;
+        private set;
     }
 
     // =====================================================
@@ -1443,6 +1613,9 @@ public class DoctorExamStateService
 
             AppointmentId =
                 draft.AppointmentId,
+
+            PatientId =
+    draft.PatientId,
 
             DoctorName =
                 draft.DoctorName,

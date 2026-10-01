@@ -559,3 +559,83 @@
         padding-right: 16px;
     }
 }
+
+/* =====================================================
+   MEDICINE SEARCH RESULT
+   ===================================================== */
+
+.prescription-medicine-result {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 14px 16px;
+
+    border: none;
+    border-bottom: 1px solid #e2e8f0;
+
+    background: #ffffff;
+
+    color: #334155;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+
+.prescription-medicine-result:last-child {
+    border-bottom: none;
+}
+
+
+.prescription-medicine-result:hover:not(:disabled) {
+    background: #f8fafc;
+}
+
+
+.prescription-medicine-result:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+.prescription-medicine-info {
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+.prescription-medicine-name {
+    color: #16324f;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+.prescription-medicine-detail {
+    margin-top: 4px;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+
+.prescription-medicine-stock {
+    flex-shrink: 0;
+
+    color: #334155;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}

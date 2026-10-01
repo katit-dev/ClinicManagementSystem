@@ -8,6 +8,7 @@
 @using ClinicManagementSystem.Application.Enums
 @using ClinicManagementSystem.Web.Services
 @using Microsoft.AspNetCore.Authorization
+@using ClinicManagementSystem.Application.DTOs.Medicine
 
 
 @inject DoctorExamStateService DoctorExamStateService
@@ -192,13 +193,9 @@
                                 Tìm thuốc
                             </label>
 
-                            <input
-                                id="medicine-search"
-                                type="text"
-                                class="doctor-exam-input"
-                                placeholder="Nhập tên thuốc..."
-                                @bind="MedicineKeyword"
-                                disabled="@IsFinalized" />
+                            <input id="medicine-search" type="text" class="doctor-exam-input"
+                                   placeholder="Nhập tên thuốc..." value="@MedicineKeyword" @oninput="HandleMedicineInput"
+                                   disabled="@IsFinalized" />
 
                             <div class="prescription-search-hint">
 
@@ -244,15 +241,92 @@
                          SEARCH RESULT
                          ===================================== -->
 
-                    @if (!string.IsNullOrWhiteSpace(
-                        MedicineKeyword))
+                    @if (DoctorExamStateService.IsSearchingMedicines)
                     {
                         <div class="prescription-search-result">
 
                             <div class="prescription-search-result-empty">
 
-                                Tìm kiếm thuốc sẽ được kết nối
-                                với API ở bước tiếp theo.
+                                Đang tìm thuốc...
+
+                            </div>
+
+                        </div>
+                    }
+                    else if (
+                        !string.IsNullOrWhiteSpace(MedicineKeyword) &&
+                        DoctorExamStateService.MedicineSearchResults.Count > 0)
+                    {
+                        <div class="prescription-search-result">
+
+                            @foreach (
+                                var medicine
+                                in DoctorExamStateService.MedicineSearchResults)
+                            {
+                                <button type="button" class="prescription-medicine-result" @onclick="() => SelectMedicine(medicine)"
+                                        disabled="@(medicine.AvailableQuantity <= 0)">
+
+                                    <div class="prescription-medicine-info">
+
+                                        <div class="prescription-medicine-name">
+
+                                            @medicine.Name
+
+                                        </div>
+
+                                        <div class="prescription-medicine-detail">
+
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                medicine.Concentration))
+                                            {
+                                                @medicine.Concentration
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                medicine.ActiveIngredient))
+                                            {
+                                                <span>
+                                                    · @medicine.ActiveIngredient
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="prescription-medicine-stock">
+
+                                        @medicine.AvailableQuantity
+                                        @(string.IsNullOrWhiteSpace(medicine.Unit)
+                                            ? ""
+                                            : $" {medicine.Unit}")
+
+                                    </div>
+
+
+                                    @if (medicine.HasAllergyWarning)
+                                    {
+                                        <span class="prescription-allergy-badge">
+
+                                            Cảnh báo dị ứng
+
+                                        </span>
+                                    }
+
+                                </button>
+                            }
+
+                        </div>
+                    }
+                    else if (
+                        !string.IsNullOrWhiteSpace(MedicineKeyword))
+                    {
+                        <div class="prescription-search-result">
+
+                            <div class="prescription-search-result-empty">
+
+                                Không tìm thấy thuốc phù hợp.
 
                             </div>
 
@@ -369,11 +443,8 @@
 
                                             <td>
 
-                                                <button
-                                                    type="button"
-                                                    class="doctor-exam-danger-button"
-                                                    @onclick="() => RemovePrescriptionItem(item)"
-                                                    disabled="@IsFinalized">
+                                                <button type="button" class="doctor-exam-danger-button"
+                                                        @onclick="() => RemovePrescriptionItem(item)" disabled="@IsFinalized">
 
                                                     Xóa
 
@@ -406,13 +477,8 @@
                             Ghi chú
                         </label>
 
-                        <textarea
-                            id="prescription-note"
-                            class="doctor-exam-input doctor-exam-textarea"
-                            rows="3"
-                            placeholder="Ghi chú cho đơn thuốc..."
-                            @bind="PrescriptionNote"
-                            disabled="@IsFinalized">
+                        <textarea id="prescription-note" class="doctor-exam-input doctor-exam-textarea" rows="3"
+                                  placeholder="Ghi chú cho đơn thuốc..." @bind="PrescriptionNote" disabled="@IsFinalized">
                         </textarea>
 
                     </div>
@@ -429,11 +495,8 @@
 
                     <!-- ADD MEDICINE -->
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        @onclick="OpenAddMedicineModal"
-                        disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="OpenAddMedicineModal"
+                            disabled="@IsFinalized">
 
                         + Thêm thuốc
 
@@ -442,11 +505,7 @@
 
                     <!-- SAVE -->
 
-                    <button
-                        type="button"
-                        class="doctor-exam-primary-button"
-                        @onclick="SavePrescription"
-                        disabled="@(
+                    <button type="button" class="doctor-exam-primary-button" @onclick="SavePrescription" disabled="@(
                             IsFinalized ||
                             PrescriptionItems.Count == 0 ||
                             IsSaving
@@ -461,11 +520,8 @@
 
                     <!-- PRINT -->
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        @onclick="PrintPrescription"
-                        disabled="@(PrescriptionId == null)">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="PrintPrescription"
+                            disabled="@(PrescriptionId == null)">
 
                         In đơn
 
@@ -474,10 +530,7 @@
 
                     <!-- BACK -->
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        @onclick="GoBack">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="GoBack">
 
                         Quay lại khám bệnh
 
@@ -538,10 +591,7 @@
                     </div>
 
 
-                    <button
-                        type="button"
-                        class="doctor-exam-modal-close"
-                        @onclick="CloseAddMedicineModal">
+                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseAddMedicineModal">
 
                         ×
 
@@ -582,13 +632,8 @@
                             Số lượng
                         </label>
 
-                        <input
-                            id="medicine-quantity"
-                            type="number"
-                            min="1"
-                            class="doctor-exam-form-control"
-                            @bind="NewMedicineQuantity"
-                            disabled="@IsFinalized" />
+                        <input id="medicine-quantity" type="number" min="1" class="doctor-exam-form-control"
+                               @bind="NewMedicineQuantity" disabled="@IsFinalized" />
 
                     </div>
 
@@ -601,13 +646,8 @@
                             Liều dùng
                         </label>
 
-                        <input
-                            id="medicine-dosage"
-                            type="text"
-                            class="doctor-exam-form-control"
-                            placeholder="Ví dụ: sáng 1 · chiều 1"
-                            @bind="NewMedicineDosage"
-                            disabled="@IsFinalized" />
+                        <input id="medicine-dosage" type="text" class="doctor-exam-form-control"
+                               placeholder="Ví dụ: sáng 1 · chiều 1" @bind="NewMedicineDosage" disabled="@IsFinalized" />
 
                     </div>
 
@@ -620,13 +660,8 @@
                             Hướng dẫn
                         </label>
 
-                        <input
-                            id="medicine-instruction"
-                            type="text"
-                            class="doctor-exam-form-control"
-                            placeholder="Ví dụ: uống sau ăn"
-                            @bind="NewMedicineInstruction"
-                            disabled="@IsFinalized" />
+                        <input id="medicine-instruction" type="text" class="doctor-exam-form-control"
+                               placeholder="Ví dụ: uống sau ăn" @bind="NewMedicineInstruction" disabled="@IsFinalized" />
 
                     </div>
 
@@ -639,13 +674,8 @@
                             Số ngày
                         </label>
 
-                        <input
-                            id="medicine-duration"
-                            type="number"
-                            min="1"
-                            class="doctor-exam-form-control"
-                            @bind="NewMedicineDurationDays"
-                            disabled="@IsFinalized" />
+                        <input id="medicine-duration" type="number" min="1" class="doctor-exam-form-control"
+                               @bind="NewMedicineDurationDays" disabled="@IsFinalized" />
 
                     </div>
 
@@ -667,9 +697,7 @@
 
                             <label class="prescription-allergy-confirm">
 
-                                <input
-                                    type="checkbox"
-                                    @bind="NewMedicineAllergyConfirmed" />
+                                <input type="checkbox" @bind="NewMedicineAllergyConfirmed" />
 
                                 Tôi xác nhận vẫn kê thuốc này.
 
@@ -687,21 +715,15 @@
 
                 <div class="doctor-exam-modal-footer">
 
-                    <button
-                        type="button"
-                        class="doctor-exam-secondary-button"
-                        @onclick="CloseAddMedicineModal">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseAddMedicineModal">
 
                         Hủy
 
                     </button>
 
 
-                    <button
-                        type="button"
-                        class="doctor-exam-primary-button"
-                        @onclick="AddMedicineToPrescription"
-                        disabled="@IsFinalized">
+                    <button type="button" class="doctor-exam-primary-button" @onclick="AddMedicineToPrescription"
+                            disabled="@IsFinalized">
 
                         Thêm
 
@@ -783,8 +805,7 @@
     // Sẽ thay bằng DTO thật khi nối API search.
     // =====================================================
 
-    private MedicineViewModel? SelectedMedicine;
-
+    private MedicineSearchDTO? SelectedMedicine;
 
     // =====================================================
     // INITIALIZE
@@ -795,6 +816,55 @@
         await DoctorExamStateService
             .LoadMedicalRecordAsync(
                 MedicalRecordId
+            );
+    }
+
+    // =====================================================
+    // SELECT MEDICINE
+    // =====================================================
+
+    private void SelectMedicine(
+        MedicineSearchDTO medicine)
+    {
+        if (medicine.AvailableQuantity <= 0)
+        {
+            return;
+        }
+
+
+        SelectedMedicine =
+            medicine;
+
+
+        MedicineKeyword =
+            medicine.Name;
+
+
+        NewMedicineIsAllergy =
+            medicine.HasAllergyWarning;
+
+
+        NewMedicineAllergyConfirmed =
+            false;
+    }
+
+    // =====================================================
+    // MEDICINE SEARCH INPUT
+    // =====================================================
+
+    private async Task HandleMedicineInput(
+        ChangeEventArgs e)
+    {
+        MedicineKeyword =
+            e.Value?.ToString()
+            ?? string.Empty;
+
+        SelectedMedicine =
+            null;
+
+        await DoctorExamStateService
+            .SearchMedicinesAsync(
+                MedicineKeyword
             );
     }
 
@@ -1025,21 +1095,5 @@
     }
 
 
-    // =====================================================
-    // MEDICINE UI MODEL
-    // =====================================================
-
-    private sealed class MedicineViewModel
-    {
-        public int Id { get; set; }
-
-        public string Name { get; set; } =
-            string.Empty;
-
-        public int AvailableQuantity { get; set; }
-
-        public string Unit { get; set; } =
-            string.Empty;
-    }
 
 }

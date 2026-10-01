@@ -3063,6 +3063,9 @@ public class MedicalRecordService
                     AppointmentId =
                         medicalRecord.AppointmentId,
 
+                    PatientId =
+            medicalRecord.PatientId,
+
                     DoctorName =
                         medicalRecord.Doctor?.FullName
                         ?? string.Empty,
@@ -4180,6 +4183,9 @@ public class MedicalRecordService
 
                     AppointmentId =
                         medicalRecord.AppointmentId,
+
+                    PatientId =
+            medicalRecord.PatientId,
 
                     DoctorName =
                         doctor.FullName,
