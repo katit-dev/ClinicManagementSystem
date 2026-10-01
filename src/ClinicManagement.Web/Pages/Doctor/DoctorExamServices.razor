@@ -1,4 +1,5 @@
 @page "/doctor/exam/{MedicalRecordId:int}/services"
+
 @layout HomePageMaster
 
 @attribute [Authorize(Roles = "Doctor")]
@@ -8,8 +9,6 @@
 
 @inject DoctorExamStateService DoctorExamStateService
 @inject NavigationManager NavigationManager
-
-@implements IDisposable
 
 
 <PageTitle>Chỉ định cận lâm sàng</PageTitle>
@@ -26,7 +25,7 @@
         <div>
 
             <div class="doctor-exam-label">
-                VC-14
+                CẬN LÂM SÀNG
             </div>
 
             <h1>
@@ -65,7 +64,7 @@
     {
         <div class="doctor-exam-state">
 
-            Đang tải thông tin bệnh án...
+            Đang tải dữ liệu cận lâm sàng...
 
         </div>
     }
@@ -73,7 +72,7 @@
     {
         <div class="doctor-exam-state">
 
-            Không tìm thấy thông tin bệnh án.
+            Không tìm thấy bệnh án.
 
         </div>
     }
@@ -84,14 +83,14 @@
 
 
         <!-- =================================================
-             MEDICAL RECORD
+             MEDICAL RECORD SERVICES
              ================================================= -->
 
         <section class="doctor-exam-card">
 
-            <!-- =================================================
+            <!-- =============================================
                  CARD HEADER
-                 ================================================= -->
+                 ============================================= -->
 
             <div class="doctor-exam-card-header">
 
@@ -112,85 +111,6 @@
 
             <div class="doctor-exam-content">
 
-                <!-- =================================================
-                     BASIC INFORMATION
-                     ================================================= -->
-
-                <div class="doctor-exam-section">
-
-                    <div class="doctor-exam-section-title">
-                        Thông tin bệnh án
-                    </div>
-
-
-                    <div class="doctor-exam-grid">
-
-                        <div class="doctor-exam-field">
-
-                            <label>
-                                Bác sĩ
-                            </label>
-
-                            <div>
-                                @record.DoctorName
-                            </div>
-
-                        </div>
-
-
-                        <div class="doctor-exam-field">
-
-                            <label>
-                                Mã lịch hẹn
-                            </label>
-
-                            <div>
-                                @record.AppointmentId
-                            </div>
-
-                        </div>
-
-
-                        <div class="doctor-exam-field">
-
-                            <label>
-                                Triệu chứng
-                            </label>
-
-                            <div>
-                                @(string.IsNullOrWhiteSpace(
-                                    record.Symptoms)
-                                    ? "—"
-                                    : record.Symptoms)
-                            </div>
-
-                        </div>
-
-
-                        <div class="doctor-exam-field">
-
-                            <label>
-                                Chẩn đoán
-                            </label>
-
-                            <div>
-                                @(string.IsNullOrWhiteSpace(
-                                    record.Diagnosis)
-                                    ? "—"
-                                    : record.Diagnosis)
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- =================================================
-                     SERVICES
-                     ================================================= -->
-
                 <div class="doctor-exam-section">
 
                     <div class="doctor-exam-section-title">
@@ -198,12 +118,162 @@
                     </div>
 
 
-                    <div class="doctor-exam-state">
+                    <!-- =====================================
+                         EMPTY
+                         ===================================== -->
 
-                        Bước tiếp theo sẽ hiển thị các chỉ định
-                        cận lâm sàng tại đây.
+                    @if (record.Services == null ||
+                         record.Services.Count == 0)
+                    {
+                        <div class="doctor-exam-state">
 
-                    </div>
+                            Chưa có chỉ định cận lâm sàng.
+
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- =================================
+                             SERVICES TABLE
+                             ================================= -->
+
+                        <div class="doctor-exam-table-wrapper">
+
+                            <table class="doctor-exam-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Mã chỉ định
+                                        </th>
+
+                                        <th>
+                                            Dịch vụ
+                                        </th>
+
+                                        <th>
+                                            Số lượng
+                                        </th>
+
+                                        <th>
+                                            Đơn giá
+                                        </th>
+
+                                        <th>
+                                            Trạng thái
+                                        </th>
+
+                                        <th>
+                                            Ngày chỉ định
+                                        </th>
+
+                                        <th>
+                                            Kết quả
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    @foreach (
+                                        var service
+                                        in record.Services)
+                                    {
+                                        <tr>
+
+                                            <!-- =====================
+                                                 ID
+                                                 ===================== -->
+
+                                            <td>
+                                                #@service.Id
+                                            </td>
+
+
+                                            <!-- =====================
+                                                 SERVICE NAME
+                                                 ===================== -->
+
+                                            <td>
+                                                <strong>
+                                                    @service.ServiceName
+                                                </strong>
+                                            </td>
+
+
+                                            <!-- =====================
+                                                 QUANTITY
+                                                 ===================== -->
+
+                                            <td>
+                                                @service.Quantity
+                                            </td>
+
+
+                                            <!-- =====================
+                                                 PRICE
+                                                 ===================== -->
+
+                                            <td>
+                                                @service.UnitPriceSnapshot.ToString("N0")
+                                                đ
+                                            </td>
+
+
+                                            <!-- =====================
+                                                 STATUS
+                                                 ===================== -->
+
+                                            <td>
+                                                @service.Status
+                                            </td>
+
+
+                                            <!-- =====================
+                                                 ORDERED AT
+                                                 ===================== -->
+
+                                            <td>
+                                                @service.OrderedAt
+                                                    .ToString("dd/MM/yyyy HH:mm")
+                                            </td>
+
+
+                                            <!-- =====================
+                                                 RESULT
+                                                 ===================== -->
+
+                                            <td>
+
+                                                @if (service.Result == null)
+                                                {
+                                                    <span>
+                                                        Chưa có kết quả
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>
+                                                        Đã có kết quả
+                                                    </span>
+                                                }
+
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
 
                 </div>
 
@@ -247,31 +317,12 @@
     // INITIALIZE
     // =====================================================
 
-    protected override void OnInitialized()
-    {
-        DoctorExamStateService.OnChange +=
-            HandleStateChanged;
-    }
-
-
     protected override async Task OnParametersSetAsync()
     {
         await DoctorExamStateService
             .LoadMedicalRecordAsync(
                 MedicalRecordId
             );
-    }
-
-
-    // =====================================================
-    // STATE CHANGE
-    // =====================================================
-
-    private void HandleStateChanged()
-    {
-        InvokeAsync(
-            StateHasChanged
-        );
     }
 
 
@@ -284,17 +335,6 @@
         NavigationManager.NavigateTo(
             $"/doctor/exam/{MedicalRecordId}"
         );
-    }
-
-
-    // =====================================================
-    // DISPOSE
-    // =====================================================
-
-    public void Dispose()
-    {
-        DoctorExamStateService.OnChange -=
-            HandleStateChanged;
     }
 
 }
