@@ -1,12 +1,16 @@
-@page "/doctor/exam/{MedicalRecordId:int}/services"
+@page "/doctor/exam/{MedicalRecordId:int}"
 
 @layout HomePageMaster
 
 @attribute [Authorize(Roles = "Doctor")]
 
+@using ClinicManagementSystem.Application.DTOs.MedicalRecord
 @using Microsoft.AspNetCore.Authorization
 
+@inject DoctorExamStateService DoctorExamStateService
 @inject NavigationManager NavigationManager
+
+@implements IDisposable
 
 
 <PageTitle>Chỉ định cận lâm sàng</PageTitle>
@@ -27,11 +31,11 @@
             </div>
 
             <h1>
-                Chỉ định cận lâm sàng & kết quả
+                Chỉ định cận lâm sàng
             </h1>
 
             <p>
-                Bác sĩ chỉ định dịch vụ và xem kết quả cận lâm sàng.
+                Quản lý các dịch vụ cận lâm sàng của bệnh án.
             </p>
 
         </div>
@@ -40,66 +44,192 @@
 
 
     <!-- =====================================================
-         MAIN CARD
+         ERROR
          ===================================================== -->
 
-    <section class="doctor-exam-card">
+    @if (!string.IsNullOrWhiteSpace(
+        DoctorExamStateService.ErrorMessage))
+    {
+        <div class="doctor-exam-message doctor-exam-error">
 
-        <div class="doctor-exam-card-header">
-
-            <div>
-
-                <div class="doctor-exam-card-label">
-                    CHỈ ĐỊNH CẬN LÂM SÀNG
-                </div>
-
-                <h2>
-                    Bệnh án #@MedicalRecordId
-                </h2>
-
-            </div>
+            @DoctorExamStateService.ErrorMessage
 
         </div>
+    }
 
 
-        <div class="doctor-exam-content">
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
 
-            <div class="doctor-exam-section">
+    @if (DoctorExamStateService.IsLoading)
+    {
+        <div class="doctor-exam-state">
 
-                <div class="doctor-exam-section-title">
-                    Medical Record Services
-                </div>
+            Đang tải thông tin bệnh án...
+
+        </div>
+    }
+    else if (DoctorExamStateService.MedicalRecord == null)
+    {
+        <div class="doctor-exam-state">
+
+            Không tìm thấy thông tin bệnh án.
+
+        </div>
+    }
+    else
+    {
+        var record =
+            DoctorExamStateService.MedicalRecord;
 
 
-                <div class="doctor-exam-state">
+        <!-- =================================================
+             MEDICAL RECORD
+             ================================================= -->
 
-                    Chưa có dữ liệu cận lâm sàng.
-
-                </div>
-
-            </div>
-
+        <section class="doctor-exam-card">
 
             <!-- =================================================
-                 ACTIONS
+                 CARD HEADER
                  ================================================= -->
 
-            <div class="doctor-exam-actions">
+            <div class="doctor-exam-card-header">
 
-                <button
-                    type="button"
-                    class="doctor-exam-secondary-button"
-                    @onclick="GoBack">
+                <div>
 
-                    Quay lại khám bệnh
+                    <div class="doctor-exam-card-label">
+                        BỆNH ÁN
+                    </div>
 
-                </button>
+                    <h2>
+                        #@record.Id
+                    </h2>
+
+                </div>
 
             </div>
 
-        </div>
 
-    </section>
+            <div class="doctor-exam-content">
+
+                <!-- =================================================
+                     BASIC INFORMATION
+                     ================================================= -->
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-section-title">
+                        Thông tin bệnh án
+                    </div>
+
+
+                    <div class="doctor-exam-grid">
+
+                        <div class="doctor-exam-field">
+
+                            <label>
+                                Bác sĩ
+                            </label>
+
+                            <div>
+                                @record.DoctorName
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field">
+
+                            <label>
+                                Mã lịch hẹn
+                            </label>
+
+                            <div>
+                                @record.AppointmentId
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field">
+
+                            <label>
+                                Triệu chứng
+                            </label>
+
+                            <div>
+                                @(string.IsNullOrWhiteSpace(
+                                    record.Symptoms)
+                                    ? "—"
+                                    : record.Symptoms)
+                            </div>
+
+                        </div>
+
+
+                        <div class="doctor-exam-field">
+
+                            <label>
+                                Chẩn đoán
+                            </label>
+
+                            <div>
+                                @(string.IsNullOrWhiteSpace(
+                                    record.Diagnosis)
+                                    ? "—"
+                                    : record.Diagnosis)
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SERVICES
+                     ================================================= -->
+
+                <div class="doctor-exam-section">
+
+                    <div class="doctor-exam-section-title">
+                        Dịch vụ cận lâm sàng
+                    </div>
+
+
+                    <div class="doctor-exam-state">
+
+                        Bước tiếp theo sẽ hiển thị các chỉ định
+                        cận lâm sàng tại đây.
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ACTIONS
+                     ================================================= -->
+
+                <div class="doctor-exam-actions">
+
+                    <button
+                        type="button"
+                        class="doctor-exam-secondary-button"
+                        @onclick="GoBack">
+
+                        Quay lại khám bệnh
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+    }
 
 </div>
 
@@ -115,6 +245,38 @@
 
 
     // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override void OnInitialized()
+    {
+        DoctorExamStateService.OnChange +=
+            HandleStateChanged;
+    }
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await DoctorExamStateService
+            .LoadMedicalRecordAsync(
+                MedicalRecordId
+            );
+    }
+
+
+    // =====================================================
+    // STATE CHANGE
+    // =====================================================
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(
+            StateHasChanged
+        );
+    }
+
+
+    // =====================================================
     // BACK
     // =====================================================
 
@@ -123,6 +285,17 @@
         NavigationManager.NavigateTo(
             $"/doctor/exam/{MedicalRecordId}"
         );
+    }
+
+
+    // =====================================================
+    // DISPOSE
+    // =====================================================
+
+    public void Dispose()
+    {
+        DoctorExamStateService.OnChange -=
+            HandleStateChanged;
     }
 
 }
