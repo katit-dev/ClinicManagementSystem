@@ -9,6 +9,7 @@
 @using ClinicManagementSystem.Web.Services
 @using Microsoft.AspNetCore.Authorization
 @using ClinicManagementSystem.Application.DTOs.Medicine
+@using ClinicManagementSystem.Application.DTOs.Prescription
 
 
 @inject DoctorExamStateService DoctorExamStateService
@@ -591,12 +592,15 @@
                     <button type="button" class="doctor-exam-primary-button" @onclick="SavePrescription" disabled="@(
                             IsFinalized ||
                             PrescriptionItems.Count == 0 ||
-                            IsSaving
+                            IsSaving ||
+                            PrescriptionId != null
                         )">
 
                         @(IsSaving
                             ? "Đang lưu..."
-                            : "Lưu đơn thuốc")
+                            : PrescriptionId != null
+                                ? "Đã lưu đơn thuốc"
+                                : "Lưu đơn thuốc")
 
                     </button>
 
@@ -1316,16 +1320,109 @@
     // PUT /api/medical-records/{id}/prescription
     // =====================================================
 
-    private void SavePrescription()
+    // =====================================================
+    // SAVE PRESCRIPTION
+    // =====================================================
+
+    private async Task SavePrescription()
     {
-        if (IsFinalized ||
-            PrescriptionItems.Count == 0)
+        // =================================================
+        // CHECK FINALIZED
+        // =================================================
+
+        if (IsFinalized)
         {
             return;
         }
 
 
-        // Chưa gọi API.
+        // =================================================
+        // CHECK EXISTING PRESCRIPTION
+        // =================================================
+
+        if (PrescriptionId != null)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // CHECK ITEMS
+        // =================================================
+
+        if (PrescriptionItems.Count == 0)
+        {
+            return;
+        }
+
+        // =================================================
+        // BUILD REQUEST
+        // =================================================
+
+        var request =
+            new PrescriptionRequestDTO
+            {
+                Note =
+                    string.IsNullOrWhiteSpace(
+                        PrescriptionNote)
+                        ? null
+                        : PrescriptionNote.Trim(),
+
+                Items =
+                    PrescriptionItems
+                        .Select(
+                            item =>
+                                new PrescriptionItemRequestDTO
+                                {
+                                    MedicineId =
+                                        item.MedicineId,
+
+                                    Quantity =
+                                        item.Quantity,
+
+                                    Dosage =
+                                        item.Dosage.Trim(),
+
+                                    Instruction =
+                                        string.IsNullOrWhiteSpace(
+                                            item.Instruction)
+                                            ? null
+                                            : item.Instruction.Trim(),
+
+                                    DurationDays =
+                                        item.DurationDays,
+
+                                    AllergyConfirmed =
+                                        item.AllergyConfirmed
+                                }
+                        )
+                        .ToList()
+            };
+
+
+        // =================================================
+        // CALL API
+        // =================================================
+
+        var success =
+            await DoctorExamStateService
+                .SavePrescriptionAsync(
+                    request
+                );
+
+
+        // =================================================
+        // SAVE SUCCESS
+        // =================================================
+
+        if (success &&
+            DoctorExamStateService.Prescription != null)
+        {
+            PrescriptionId =
+                DoctorExamStateService
+                    .Prescription
+                    .Id;
+        }
     }
 
 
