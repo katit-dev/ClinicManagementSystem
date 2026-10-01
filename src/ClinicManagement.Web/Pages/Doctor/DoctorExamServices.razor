@@ -118,9 +118,12 @@
                             Dịch vụ cận lâm sàng
                         </div>
 
-                        <button type="button" class="doctor-exam-primary-button" @onclick="OpenAddServiceModal">
+                        <button type="button" class="doctor-exam-primary-button" @onclick="AddService"
+                                disabled="@DoctorExamStateService.IsSubmitting">
 
-                            + Thêm chỉ định
+                            @(DoctorExamStateService.IsSubmitting
+                                ? "Đang thêm..."
+                                : "Thêm")
 
                         </button>
                     </div>
@@ -228,8 +231,7 @@
                                                  ===================== -->
 
                                             <td>
-                                                @service.UnitPriceSnapshot.ToString("N0")
-                                                đ
+                                                @service.UnitPriceSnapshot.ToString("N0")đ
                                             </td>
 
 
@@ -247,8 +249,7 @@
                                                  ===================== -->
 
                                             <td>
-                                                @service.OrderedAt
-                                                .ToString("dd/MM/yyyy HH:mm")
+                                                @service.OrderedAt.ToString("dd/MM/yyyy HH:mm")
                                             </td>
 
 
@@ -339,6 +340,12 @@
                  ===================================================== -->
 
                 <div class="doctor-exam-modal-body">
+                    @if (!string.IsNullOrWhiteSpace(AddServiceErrorMessage))
+                    {
+                        <div class="doctor-exam-message doctor-exam-error">
+                            @AddServiceErrorMessage
+                        </div>
+                    }
 
                     <!-- SERVICE -->
 
@@ -432,6 +439,8 @@
 
     private int ServiceQuantity = 1;
 
+    private string AddServiceErrorMessage = string.Empty;
+
 
     // =====================================================
     // INITIALIZE
@@ -446,6 +455,42 @@
 
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
+    }
+
+    // =====================================================
+    // ADD SERVICE
+    // =====================================================
+
+    private async Task AddService()
+    {
+        AddServiceErrorMessage =
+            string.Empty;
+
+
+        var success =
+            await DoctorExamStateService
+                .AddMedicalRecordServiceAsync(
+                    MedicalRecordId,
+                    SelectedServiceId,
+                    ServiceQuantity
+                );
+
+
+        if (!success)
+        {
+            AddServiceErrorMessage =
+                DoctorExamStateService
+                    .ActionErrorMessage;
+
+            return;
+        }
+
+
+        // =================================================
+        // CLOSE MODAL AFTER SUCCESS
+        // =================================================
+
+        CloseAddServiceModal();
     }
 
     // =====================================================

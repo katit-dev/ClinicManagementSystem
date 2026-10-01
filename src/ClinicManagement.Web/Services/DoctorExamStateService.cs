@@ -125,6 +125,223 @@ public class DoctorExamStateService
     }
 
     // =====================================================
+    // ADD MEDICAL RECORD SERVICE
+    //
+    // POST:
+    // /api/medical-records/{id}/services
+    //
+    // Request:
+    // - ServiceId
+    // - Quantity
+    //
+    // Response:
+    // MedicalRecordServiceDTO
+    // =====================================================
+
+    public async Task<bool> AddMedicalRecordServiceAsync(
+        int medicalRecordId,
+        int serviceId,
+        int quantity)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE MEDICAL RECORD ID
+        // =================================================
+
+        if (medicalRecordId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được bệnh án.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE SERVICE
+        // =================================================
+
+        if (serviceId <= 0)
+        {
+            ActionErrorMessage =
+                "Vui lòng chọn dịch vụ.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE QUANTITY
+        // =================================================
+
+        if (quantity <= 0)
+        {
+            ActionErrorMessage =
+                "Số lượng phải lớn hơn 0.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // REQUEST
+            // =================================================
+
+            var request =
+                new MedicalRecordServiceRequestDTO
+                {
+                    ServiceId =
+                        serviceId,
+
+                    Quantity =
+                        quantity
+                };
+
+
+            // =================================================
+            // CREATE JSON CONTENT
+            // =================================================
+
+            var content =
+                JsonContent.Create(request);
+
+
+            // =================================================
+            // CALL API
+            //
+            // POST:
+            // /api/medical-records/{id}/services
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        $"/api/medical-records/{medicalRecordId}/services",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            MedicalRecordServiceDTO?>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể thêm chỉ định.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // EMPTY CONTENT
+            // =================================================
+
+            if (responseData.Content == null)
+            {
+                ActionErrorMessage =
+                    "Không nhận được dữ liệu chỉ định sau khi thêm.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS MESSAGE
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+
+            // =================================================
+            // RELOAD MEDICAL RECORD
+            //
+            // GET lại để cập nhật:
+            // MedicalRecord.Services
+            // =================================================
+
+            var reloadSuccess =
+                await LoadMedicalRecordAsync(
+                    medicalRecordId
+                );
+
+            if (!reloadSuccess)
+            {
+                ActionErrorMessage =
+                    "Đã thêm chỉ định nhưng không thể tải lại dữ liệu.";
+
+                return false;
+            }
+
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+
+    // =====================================================
     // LOAD SERVICE CATALOG
     //
     // GET:
@@ -678,182 +895,6 @@ public class DoctorExamStateService
             StateHasChanged();
         }
     }
-
-    // =====================================================
-    // ADD MEDICAL RECORD SERVICE
-    //
-    // POST:
-    // /api/medical-records/{id}/services
-    //
-    // Request:
-    // {
-    //     serviceId,
-    //     quantity
-    // }
-    //
-    // Response:
-    // MedicalRecordServiceDTO
-    // =====================================================
-
-    public async Task<bool> AddMedicalRecordServiceAsync(
-        int medicalRecordId,
-        int serviceId,
-        int quantity)
-    {
-        // =================================================
-        // PREVENT DOUBLE SUBMIT
-        // =================================================
-
-        if (IsSubmitting)
-        {
-            return false;
-        }
-
-
-        // =================================================
-        // VALIDATE
-        // =================================================
-
-        if (medicalRecordId <= 0)
-        {
-            ActionErrorMessage =
-                "Không xác định được bệnh án.";
-
-            StateHasChanged();
-
-            return false;
-        }
-
-        if (serviceId <= 0)
-        {
-            ActionErrorMessage =
-                "Dịch vụ không hợp lệ.";
-
-            StateHasChanged();
-
-            return false;
-        }
-
-        if (quantity <= 0)
-        {
-            ActionErrorMessage =
-                "Số lượng phải lớn hơn 0.";
-
-            StateHasChanged();
-
-            return false;
-        }
-
-
-        // =================================================
-        // START SUBMIT
-        // =================================================
-
-        IsSubmitting = true;
-
-        ActionMessage = string.Empty;
-
-        ActionErrorMessage = string.Empty;
-
-        StateHasChanged();
-
-
-        try
-        {
-            // =================================================
-            // REQUEST
-            // =================================================
-
-            var request = new
-            {
-                serviceId,
-                quantity
-            };
-
-
-            var content =
-                JsonContent.Create(request);
-
-
-            // =================================================
-            // CALL API
-            //
-            // POST:
-            // /api/medical-records/{id}/services
-            // =================================================
-
-            var response =
-                await _authorizedApiService
-                    .PostAsync(
-                        $"/api/medical-records/{medicalRecordId}/services",
-                        content
-                    );
-
-
-            // =================================================
-            // READ RESPONSE
-            // =================================================
-
-            var responseData =
-                await response.Content
-                    .ReadFromJsonAsync<
-                        HttpResponseData<
-                            MedicalRecordServiceDTO?>>();
-
-
-            // =================================================
-            // API FAILED
-            // =================================================
-
-            if (!response.IsSuccessStatusCode ||
-                responseData == null ||
-                responseData.StatusCode < 200 ||
-                responseData.StatusCode >= 300)
-            {
-                ActionErrorMessage =
-                    responseData?.Message
-                    ?? "Không thể thêm chỉ định.";
-
-                return false;
-            }
-
-
-            // =================================================
-            // SUCCESS
-            // =================================================
-
-            ActionMessage =
-                responseData.Message;
-
-
-            // =================================================
-            // RELOAD MEDICAL RECORD
-            //
-            // Để table lấy service mới nhất từ backend.
-            // =================================================
-
-            await LoadMedicalRecordAsync(
-                medicalRecordId
-            );
-
-
-            return true;
-        }
-        catch
-        {
-            ActionErrorMessage =
-                "Không thể kết nối đến hệ thống.";
-
-            return false;
-        }
-        finally
-        {
-            IsSubmitting = false;
-
-            StateHasChanged();
-        }
-    }
-
 
     // =====================================================
     // CANCEL MEDICAL RECORD SERVICE
