@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ClinicManagementSystem.Application.DTOs.MedicalRecord;
+using ClinicManagementSystem.Application.DTOs.Prescription;
 using ClinicManagementSystem.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -500,6 +501,62 @@ public class MedicalRecordController : ControllerBase
                     fileStream,
                     file.FileName,
                     file.ContentType
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
+    // =====================================================
+    // CREATE PRESCRIPTION
+    //
+    // PUT:
+    // /api/medical-records/{id}/prescription
+    //
+    // Doctor lấy từ JWT.
+    // =====================================================
+
+    [HttpPut("{id:int}/prescription")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> CreatePrescription(
+        int id,
+        [FromBody] PrescriptionRequestDTO request)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // CALL SERVICE
+        // =================================================
+
+        var result =
+            await _medicalRecordService
+                .CreatePrescriptionAsync(
+                    id,
+                    currentUserId,
+                    request
                 );
 
 

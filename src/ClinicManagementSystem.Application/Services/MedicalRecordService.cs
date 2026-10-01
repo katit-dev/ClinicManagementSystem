@@ -7,6 +7,7 @@ using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Infrastructure.Models;
 using ClinicManagementSystem.Application.DTOs.Invoice;
 using MedicalRecordServiceEntity = ClinicManagementSystem.Infrastructure.Models.MedicalRecordService;
+using ClinicManagementSystem.Application.DTOs.Prescription;
 
 
 namespace ClinicManagementSystem.Application.Services;
@@ -39,6 +40,8 @@ public interface IMedicalRecordService
     Task<HttpResponseData<MedicalRecordServiceDTO>> AddMedicalRecordServiceResultAsync(int medicalRecordServiceId, int currentUserId, LabResultRequestDTO request);
 
     Task<HttpResponseData<AttachmentDTO>> UploadMedicalRecordAttachmentAsync(int medicalRecordId, int currentUserId, Stream fileStream, string fileName, string contentType);
+
+    Task<HttpResponseData<PrescriptionResponseDTO>> CreatePrescriptionAsync(int medicalRecordId, int currentUserId, PrescriptionRequestDTO request);
 
 }
 
@@ -82,347 +85,1082 @@ public class MedicalRecordService
     }
 
     // =====================================================
-// UPLOAD MEDICAL RECORD ATTACHMENT
-//
-// POST:
-// /api/medical-records/{id}/attachments
-//
-// Request:
-// multipart/form-data
-//
-// Allowed:
-// jpg
-// png
-// pdf
-// dicom
-// =====================================================
+    // CREATE PRESCRIPTION
+    //
+    // PUT:
+    // /api/medical-records/{id}/prescription
+    //
+    // Doctor lấy từ JWT.
+    // Mỗi MedicalRecord chỉ có 1 Prescription.
+    // =====================================================
 
-public async Task<
-    HttpResponseData<AttachmentDTO>>
-    UploadMedicalRecordAttachmentAsync(
-        int medicalRecordId,
-        int currentUserId,
-        Stream fileStream,
-        string fileName,
-        string contentType)
-{
-    try
+    public async Task<
+        HttpResponseData<PrescriptionResponseDTO>>
+        CreatePrescriptionAsync(
+            int medicalRecordId,
+            int currentUserId,
+            PrescriptionRequestDTO request)
     {
-        // =================================================
-        // VALIDATE MEDICAL RECORD ID
-        // =================================================
+        bool transactionStarted = false;
 
-        if (medicalRecordId <= 0)
+        try
         {
-            return new HttpResponseData<AttachmentDTO>
+            // =================================================
+            // VALIDATE MEDICAL RECORD ID
+            // =================================================
+
+            if (medicalRecordId <= 0)
             {
-                StatusCode = 400,
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE USER
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 401,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE REQUEST
+            // =================================================
+
+            if (request == null ||
+                request.Items == null ||
+                request.Items.Count == 0)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .InvalidRequest
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE ITEMS
+            // =================================================
+
+            foreach (var item in request.Items)
+            {
+                if (item.MedicineId <= 0 ||
+                    item.Quantity <= 0 ||
+                    string.IsNullOrWhiteSpace(item.Dosage) ||
+                    (item.DurationDays.HasValue &&
+                     item.DurationDays.Value <= 0))
+                {
+                    return new HttpResponseData<PrescriptionResponseDTO>
+                    {
+                        StatusCode = 400,
+
+                        Message =
+                            PrescriptionResponseMessageDTO
+                                .InvalidRequest
+                    };
+                }
+            }
+
+
+            // =================================================
+            // GET CURRENT DOCTOR
+            //
+            // JWT UserId
+            //      ↓
+            // Doctor.UserId
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // DOCTOR NOT FOUND
+            // =================================================
+
+            if (doctor == null)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 403,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id == medicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MEDICAL RECORD NOT FOUND
+            // =================================================
+
+            if (medicalRecord == null)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
+            }
+
+
+            // =================================================
+            // CHECK DOCTOR OWNERSHIP
+            // =================================================
+
+            if (medicalRecord.DoctorId != doctor.Id)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 403,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // CHECK MEDICAL RECORD STATUS
+            //
+            // Chỉ Draft mới được kê đơn.
+            // =================================================
+
+            if (
+                medicalRecord.Status !=
+                (byte)MedicalRecordStatus.Draft
+            )
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicalRecordNotDraft
+                };
+            }
+
+
+            // =================================================
+            // CHECK EXISTING PRESCRIPTION
+            //
+            // Mỗi MedicalRecord chỉ có 1 Prescription.
+            // =================================================
+
+            var existingPrescription =
+                await _unitOfWork
+                    .PrescriptionRepository
+                    .WhereSql(
+                        p =>
+                            p.MedicalRecordId ==
+                            medicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (existingPrescription != null)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .PrescriptionAlreadyExists
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICINES
+            // =================================================
+
+            var medicineIds =
+                request.Items
+                    .Select(i => i.MedicineId)
+                    .Distinct()
+                    .ToList();
+
+
+            var medicines =
+                await _unitOfWork
+                    .MedicineRepository
+                    .WhereSql(
+                        m =>
+                            medicineIds.Contains(m.Id)
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // CHECK ALL MEDICINES EXIST
+            // =================================================
+
+            if (medicines.Count != medicineIds.Count)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicineNotFound
+                };
+            }
+
+
+            // =================================================
+            // CHECK ACTIVE
+            // =================================================
+
+            var inactiveMedicine =
+                medicines.FirstOrDefault(
+                    m => !m.IsActive
+                );
+
+
+            if (inactiveMedicine != null)
+            {
+                return new HttpResponseData<PrescriptionResponseDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        PrescriptionResponseMessageDTO
+                            .MedicineInactive
+                };
+            }
+
+
+            // =================================================
+            // GET PATIENT ALLERGIES
+            // =================================================
+
+            var allergens =
+                await _unitOfWork
+                    .PatientAllergyRepository
+                    .WhereSql(
+                        a =>
+                            a.PatientId ==
+                            medicalRecord.PatientId
+                    )
+                    .Select(
+                        a => a.Allergen
+                    )
+                    .Where(
+                        a =>
+                            !string.IsNullOrWhiteSpace(a)
+                    )
+                    .ToListAsync();
+
+
+            var normalizedAllergens =
+                allergens
+                    .Select(
+                        a => a.Trim()
+                    )
+                    .Where(
+                        a => a.Length > 0
+                    )
+                    .ToList();
+
+
+            // =================================================
+            // CHECK ALLERGY
+            // =================================================
+
+            foreach (var item in request.Items)
+            {
+                var medicine =
+                    medicines.First(
+                        m =>
+                            m.Id ==
+                            item.MedicineId
+                    );
+
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        medicine.ActiveIngredient
+                    ) &&
+                    normalizedAllergens.Any(
+                        allergen =>
+                            string.Equals(
+                                allergen,
+                                medicine.ActiveIngredient.Trim(),
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                    ) &&
+                    !item.AllergyConfirmed
+                )
+                {
+                    return new HttpResponseData<PrescriptionResponseDTO>
+                    {
+                        StatusCode = 409,
+
+                        Message =
+                            PrescriptionResponseMessageDTO
+                                .AllergyConfirmationRequired
+                    };
+                }
+            }
+
+
+            // =================================================
+            // GET VALID BATCHES
+            //
+            // Chỉ tính:
+            // - Quantity > 0
+            // - ExpiryDate >= hôm nay
+            // =================================================
+
+            var today =
+                DateOnly.FromDateTime(
+                    DateTime.Now
+                );
+
+
+            var validBatches =
+                await _unitOfWork
+                    .MedicineBatchRepository
+                    .WhereSql(
+                        b =>
+                            medicineIds.Contains(
+                                b.MedicineId
+                            ) &&
+                            b.Quantity > 0 &&
+                            b.ExpiryDate >= today
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // CHECK STOCK
+            // =================================================
+
+            foreach (var item in request.Items)
+            {
+                var availableQuantity =
+                    validBatches
+                        .Where(
+                            b =>
+                                b.MedicineId ==
+                                item.MedicineId
+                        )
+                        .Sum(
+                            b => b.Quantity
+                        );
+
+
+                if (
+                    availableQuantity <
+                    item.Quantity
+                )
+                {
+                    return new HttpResponseData<PrescriptionResponseDTO>
+                    {
+                        StatusCode = 409,
+
+                        Message =
+                            PrescriptionResponseMessageDTO
+                                .MedicineOutOfStock
+                    };
+                }
+
+
+                // =============================================
+                // CHECK EXPIRED ONLY
+                //
+                // Nếu không có batch còn hạn nhưng có batch
+                // của thuốc này đã tồn tại → báo hết hạn.
+                // =============================================
+
+                var allBatches =
+                    await _unitOfWork
+                        .MedicineBatchRepository
+                        .WhereSql(
+                            b =>
+                                b.MedicineId ==
+                                item.MedicineId
+                        )
+                        .AnyAsync();
+
+
+                var hasExpiredOrInvalidBatch =
+                    await _unitOfWork
+                        .MedicineBatchRepository
+                        .WhereSql(
+                            b =>
+                                b.MedicineId ==
+                                item.MedicineId &&
+                                b.Quantity > 0 &&
+                                b.ExpiryDate < today
+                        )
+                        .AnyAsync();
+
+
+                if (
+                    availableQuantity == 0 &&
+                    hasExpiredOrInvalidBatch
+                )
+                {
+                    return new HttpResponseData<PrescriptionResponseDTO>
+                    {
+                        StatusCode = 409,
+
+                        Message =
+                            PrescriptionResponseMessageDTO
+                                .MedicineExpired
+                    };
+                }
+            }
+
+
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
+            // CREATE PRESCRIPTION
+            // =================================================
+
+            var prescription =
+                new Prescription
+                {
+                    MedicalRecordId =
+                        medicalRecord.Id,
+
+                    DoctorId =
+                        doctor.Id,
+
+                    Note =
+                        string.IsNullOrWhiteSpace(
+                            request.Note)
+                            ? null
+                            : request.Note.Trim(),
+
+                    CreatedAt =
+                        DateTime.Now
+
+                    // Status:
+                    // Không set ở đây vì source hiện tại
+                    // chưa có enum/definition xác nhận
+                    // giá trị status ban đầu.
+                    //
+                    // CLR default của byte = 0.
+                };
+
+
+            await _unitOfWork
+                .PrescriptionRepository
+                .AddAsync(
+                    prescription
+                );
+
+
+            // =================================================
+            // CREATE PRESCRIPTION ITEMS
+            // =================================================
+
+            var prescriptionItems =
+                new List<PrescriptionItem>();
+
+
+            foreach (var item in request.Items)
+            {
+                var medicine =
+                    medicines.First(
+                        m =>
+                            m.Id ==
+                            item.MedicineId
+                    );
+
+
+                var prescriptionItem =
+                    new PrescriptionItem
+                    {
+                        Prescription =
+                            prescription,
+
+                        MedicineId =
+                            medicine.Id,
+
+                        Quantity =
+                            item.Quantity,
+
+                        Dosage =
+                            item.Dosage.Trim(),
+
+                        Instruction =
+                            string.IsNullOrWhiteSpace(
+                                item.Instruction)
+                                ? null
+                                : item.Instruction.Trim(),
+
+                        MedicineNameSnapshot =
+                            medicine.Name,
+
+                        UnitPriceSnapshot =
+                            medicine.Price,
+
+                        DurationDays =
+                            item.DurationDays,
+
+                        Frequency =
+                            null
+                    };
+
+
+                prescriptionItems.Add(
+                    prescriptionItem
+                );
+            }
+
+
+            await _unitOfWork
+                .PrescriptionItemRepository
+                .AddListItemsAsync(
+                    prescriptionItems
+                );
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new PrescriptionResponseDTO
+                {
+                    Id =
+                        prescription.Id,
+
+                    MedicalRecordId =
+                        prescription.MedicalRecordId,
+
+                    Note =
+                        prescription.Note,
+
+                    Status =
+                        prescription.Status,
+
+                    CreatedAt =
+                        prescription.CreatedAt,
+
+                    DispensedAt =
+                        prescription.DispensedAt,
+
+                    Items =
+                        prescriptionItems
+                            .Select(
+                                item =>
+                                    new PrescriptionItemResponseDTO
+                                    {
+                                        Id =
+                                            item.Id,
+
+                                        MedicineName =
+                                            item.MedicineNameSnapshot,
+
+                                        Quantity =
+                                            item.Quantity,
+
+                                        Dosage =
+                                            item.Dosage
+                                            ?? string.Empty,
+
+                                        Instruction =
+                                            item.Instruction,
+
+                                        DurationDays =
+                                            item.DurationDays,
+
+                                        Frequency =
+                                            item.Frequency
+                                    }
+                            )
+                            .ToList()
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<PrescriptionResponseDTO>
+            {
+                StatusCode = 200,
 
                 Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordNotFound
+                    PrescriptionResponseMessageDTO
+                        .PrescriptionCreateSuccess,
+
+                Content =
+                    result
             };
         }
-
-
-        // =================================================
-        // VALIDATE USER
-        // =================================================
-
-        if (currentUserId <= 0)
+        catch (Exception ex)
         {
-            return new HttpResponseData<AttachmentDTO>
+            // =================================================
+            // ROLLBACK
+            // =================================================
+
+            if (transactionStarted)
             {
-                StatusCode = 401,
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+                        "Failed to rollback prescription creation. " +
+                        "MedicalRecordId: {MedicalRecordId}",
+                        medicalRecordId
+                    );
+                }
+            }
+
+
+            // =================================================
+            // LOG
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to create prescription. " +
+                "MedicalRecordId: {MedicalRecordId}, " +
+                "UserId: {UserId}",
+                medicalRecordId,
+                currentUserId
+            );
+
+
+            return new HttpResponseData<PrescriptionResponseDTO>
+            {
+                StatusCode = 500,
 
                 Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordAccessDenied
+                    PrescriptionResponseMessageDTO
+                        .PrescriptionCreateFailed
             };
         }
+    }
 
+    // =====================================================
+    // UPLOAD MEDICAL RECORD ATTACHMENT
+    //
+    // POST:
+    // /api/medical-records/{id}/attachments
+    //
+    // Request:
+    // multipart/form-data
+    //
+    // Allowed:
+    // jpg
+    // png
+    // pdf
+    // dicom
+    // =====================================================
 
-        // =================================================
-        // VALIDATE FILE
-        // =================================================
-
-        if (fileStream == null ||
-            fileStream.Length <= 0 ||
-            string.IsNullOrWhiteSpace(fileName))
+    public async Task<
+        HttpResponseData<AttachmentDTO>>
+        UploadMedicalRecordAttachmentAsync(
+            int medicalRecordId,
+            int currentUserId,
+            Stream fileStream,
+            string fileName,
+            string contentType)
+    {
+        try
         {
-            return new HttpResponseData<AttachmentDTO>
+            // =================================================
+            // VALIDATE MEDICAL RECORD ID
+            // =================================================
+
+            if (medicalRecordId <= 0)
             {
-                StatusCode = 400,
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 400,
 
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .AttachmentFileRequired
-            };
-        }
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
+            }
 
 
-        // =================================================
-        // VALIDATE FILE TYPE
-        // =================================================
+            // =================================================
+            // VALIDATE USER
+            // =================================================
 
-        var extension =
-            Path.GetExtension(fileName)
-                .ToLowerInvariant();
-
-        var allowedExtensions =
-            new HashSet<string>(
-                StringComparer.OrdinalIgnoreCase)
+            if (currentUserId <= 0)
             {
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 401,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE FILE
+            // =================================================
+
+            if (fileStream == null ||
+                fileStream.Length <= 0 ||
+                string.IsNullOrWhiteSpace(fileName))
+            {
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .AttachmentFileRequired
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE FILE TYPE
+            // =================================================
+
+            var extension =
+                Path.GetExtension(fileName)
+                    .ToLowerInvariant();
+
+            var allowedExtensions =
+                new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase)
+                {
                 ".jpg",
                 ".jpeg",
                 ".png",
                 ".pdf",
                 ".dcm",
                 ".dicom"
-            };
+                };
 
-        if (!allowedExtensions.Contains(
-            extension))
-        {
-            return new HttpResponseData<AttachmentDTO>
+            if (!allowedExtensions.Contains(
+                extension))
             {
-                StatusCode = 400,
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 400,
 
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .AttachmentFileTypeNotAllowed
-            };
-        }
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .AttachmentFileTypeNotAllowed
+                };
+            }
 
 
-        // =================================================
-        // GET CURRENT DOCTOR
-        //
-        // JWT UserId
-        //      ↓
-        // Doctor.UserId
-        // =================================================
+            // =================================================
+            // GET CURRENT DOCTOR
+            //
+            // JWT UserId
+            //      ↓
+            // Doctor.UserId
+            // =================================================
 
-        var doctor =
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.UserId == currentUserId &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // DOCTOR NOT FOUND
+            // =================================================
+
+            if (doctor == null)
+            {
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 403,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id == medicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            // =================================================
+            // MEDICAL RECORD NOT FOUND
+            // =================================================
+
+            if (medicalRecord == null)
+            {
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
+            }
+
+
+            // =================================================
+            // CHECK DOCTOR OWNERSHIP
+            // =================================================
+
+            if (
+                medicalRecord.DoctorId !=
+                doctor.Id
+            )
+            {
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 403,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordAccessDenied
+                };
+            }
+
+
+            // =================================================
+            // CHECK MEDICAL RECORD STATUS
+            //
+            // Chỉ Draft mới được thêm attachment.
+            // =================================================
+
+            if (
+                medicalRecord.Status !=
+                (byte)MedicalRecordStatus.Draft
+            )
+            {
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        MedicalRecordResponseMessageDTO
+                            .MedicalRecordNotDraft
+                };
+            }
+
+
+            // =================================================
+            // UPLOAD FILE
+            // =================================================
+
+            var fileUrl =
+                await _fileStorageService
+                    .UploadAsync(
+                        fileStream,
+                        fileName,
+                        contentType,
+                        medicalRecordId
+                    );
+
+
+            // =================================================
+            // CREATE ATTACHMENT
+            // =================================================
+
+            var attachment =
+                new Attachment
+                {
+                    MedicalRecordId =
+                        medicalRecord.Id,
+
+                    FileUrl =
+                        fileUrl,
+
+                    FileType =
+                        string.IsNullOrWhiteSpace(
+                            contentType)
+                            ? null
+                            : contentType,
+
+                    UploadedAt =
+                        DateTime.UtcNow,
+
+                    UploadedBy =
+                        currentUserId
+                };
+
+
+            // =================================================
+            // SAVE ATTACHMENT
+            // =================================================
+
             await _unitOfWork
-                .DoctorRepository
-                .WhereSql(
-                    d =>
-                        d.UserId == currentUserId &&
-                        d.IsActive
-                )
-                .FirstOrDefaultAsync();
-
-
-        // =================================================
-        // DOCTOR NOT FOUND
-        // =================================================
-
-        if (doctor == null)
-        {
-            return new HttpResponseData<AttachmentDTO>
-            {
-                StatusCode = 403,
-
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordAccessDenied
-            };
-        }
-
-
-        // =================================================
-        // GET MEDICAL RECORD
-        // =================================================
-
-        var medicalRecord =
-            await _unitOfWork
-                .MedicalRecordRepository
-                .WhereSql(
-                    m =>
-                        m.Id == medicalRecordId
-                )
-                .FirstOrDefaultAsync();
-
-
-        // =================================================
-        // MEDICAL RECORD NOT FOUND
-        // =================================================
-
-        if (medicalRecord == null)
-        {
-            return new HttpResponseData<AttachmentDTO>
-            {
-                StatusCode = 404,
-
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordNotFound
-            };
-        }
-
-
-        // =================================================
-        // CHECK DOCTOR OWNERSHIP
-        // =================================================
-
-        if (
-            medicalRecord.DoctorId !=
-            doctor.Id
-        )
-        {
-            return new HttpResponseData<AttachmentDTO>
-            {
-                StatusCode = 403,
-
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordAccessDenied
-            };
-        }
-
-
-        // =================================================
-        // CHECK MEDICAL RECORD STATUS
-        //
-        // Chỉ Draft mới được thêm attachment.
-        // =================================================
-
-        if (
-            medicalRecord.Status !=
-            (byte)MedicalRecordStatus.Draft
-        )
-        {
-            return new HttpResponseData<AttachmentDTO>
-            {
-                StatusCode = 409,
-
-                Message =
-                    MedicalRecordResponseMessageDTO
-                        .MedicalRecordNotDraft
-            };
-        }
-
-
-        // =================================================
-        // UPLOAD FILE
-        // =================================================
-
-        var fileUrl =
-            await _fileStorageService
-                .UploadAsync(
-                    fileStream,
-                    fileName,
-                    contentType,
-                    medicalRecordId
+                .AttachmentRepository
+                .AddAsync(
+                    attachment
                 );
 
+            await _unitOfWork
+                .SaveChangesAsync();
 
-        // =================================================
-        // CREATE ATTACHMENT
-        // =================================================
 
-        var attachment =
-            new Attachment
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new AttachmentDTO
+                {
+                    Id =
+                        attachment.Id,
+
+                    MedicalRecordId =
+                        attachment.MedicalRecordId,
+
+                    FileUrl =
+                        attachment.FileUrl,
+
+                    FileType =
+                        attachment.FileType,
+
+                    UploadedAt =
+                        attachment.UploadedAt,
+
+                    UploadedBy =
+                        attachment.UploadedBy
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<AttachmentDTO>
             {
-                MedicalRecordId =
-                    medicalRecord.Id,
+                StatusCode = 200,
 
-                FileUrl =
-                    fileUrl,
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .AttachmentUploadSuccess,
 
-                FileType =
-                    string.IsNullOrWhiteSpace(
-                        contentType)
-                        ? null
-                        : contentType,
-
-                UploadedAt =
-                    DateTime.UtcNow,
-
-                UploadedBy =
-                    currentUserId
+                Content =
+                    result
             };
-
-
-        // =================================================
-        // SAVE ATTACHMENT
-        // =================================================
-
-        await _unitOfWork
-            .AttachmentRepository
-            .AddAsync(
-                attachment
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to upload medical record attachment. " +
+                "MedicalRecordId: {MedicalRecordId}, " +
+                "UserId: {UserId}",
+                medicalRecordId,
+                currentUserId
             );
 
-        await _unitOfWork
-            .SaveChangesAsync();
-
-
-        // =================================================
-        // MAP RESPONSE
-        // =================================================
-
-        var result =
-            new AttachmentDTO
+            return new HttpResponseData<AttachmentDTO>
             {
-                Id =
-                    attachment.Id,
+                StatusCode = 500,
 
-                MedicalRecordId =
-                    attachment.MedicalRecordId,
-
-                FileUrl =
-                    attachment.FileUrl,
-
-                FileType =
-                    attachment.FileType,
-
-                UploadedAt =
-                    attachment.UploadedAt,
-
-                UploadedBy =
-                    attachment.UploadedBy
+                Message =
+                    MedicalRecordResponseMessageDTO
+                        .AttachmentUploadFailed
             };
-
-
-        // =================================================
-        // SUCCESS
-        // =================================================
-
-        return new HttpResponseData<AttachmentDTO>
-        {
-            StatusCode = 200,
-
-            Message =
-                MedicalRecordResponseMessageDTO
-                    .AttachmentUploadSuccess,
-
-            Content =
-                result
-        };
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(
-            ex,
-            "Failed to upload medical record attachment. " +
-            "MedicalRecordId: {MedicalRecordId}, " +
-            "UserId: {UserId}",
-            medicalRecordId,
-            currentUserId
-        );
-
-        return new HttpResponseData<AttachmentDTO>
-        {
-            StatusCode = 500,
-
-            Message =
-                MedicalRecordResponseMessageDTO
-                    .AttachmentUploadFailed
-        };
-    }
-}
 
     // =====================================================
     // ADD MEDICAL RECORD SERVICE RESULT
