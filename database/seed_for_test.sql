@@ -1801,3 +1801,24 @@ SELECT
 FROM clinical.medical_record_services
 WHERE medical_record_id = 4
 ORDER BY id DESC;
+
+
+---------------------------------- seed medicine batch
+USE ClinicManagementSystem
+
+INSERT INTO clinical.medicine_batches
+(
+    medicine_id,
+    batch_no,
+    expiry_date,
+    quantity,
+    import_price
+)
+VALUES
+(
+    1,
+    'TEST-PARA-001',
+    '2027-09-30',
+    100,
+    1000
+);
