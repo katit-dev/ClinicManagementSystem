@@ -1,21 +1,37 @@
+using System;
+
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.Medicine;
-using ClinicManagementSystem.Infrastructure.Models;
+
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+
 namespace ClinicManagementSystem.Application.Services;
+
+
+// =====================================================
+// MEDICINE SERVICE CONTRACT
+// =====================================================
 
 public interface IMedicineService
 {
-    Task<HttpResponseData<List<MedicineSearchDTO>>>
+    Task<
+        HttpResponseData<List<MedicineSearchDTO>>>
         SearchMedicinesAsync(
             string? keyword,
             int patientId);
 }
 
-public class MedicineService : IMedicineService
+
+// =====================================================
+// MEDICINE SERVICE
+// =====================================================
+
+public class MedicineService
+    : IMedicineService
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -57,13 +73,11 @@ public class MedicineService : IMedicineService
 
             if (patientId <= 0)
             {
-                return new HttpResponseData<
-                    List<MedicineSearchDTO>>
-                {
-                    StatusCode = 400,
-                    Message =
-                        "Mã bệnh nhân không hợp lệ."
-                };
+                return Response(
+                    400,
+                    MedicineResponseMessageDTO
+                        .InvalidPatientId
+                );
             }
 
 
@@ -82,15 +96,17 @@ public class MedicineService : IMedicineService
                     .FirstOrDefaultAsync();
 
 
+            // =================================================
+            // PATIENT NOT FOUND
+            // =================================================
+
             if (patient == null)
             {
-                return new HttpResponseData<
-                    List<MedicineSearchDTO>>
-                {
-                    StatusCode = 404,
-                    Message =
-                        "Không tìm thấy bệnh nhân."
-                };
+                return Response(
+                    404,
+                    MedicineResponseMessageDTO
+                        .PatientNotFound
+                );
             }
 
 
@@ -297,8 +313,11 @@ public class MedicineService : IMedicineService
                         hasAllergyWarning = true;
 
                         allergyWarning =
-                            $"Bệnh nhân có ghi nhận dị ứng với " +
-                            $"{matchedAllergen}.";
+                            string.Format(
+                                MedicineResponseMessageDTO
+                                    .AllergyWarning,
+                                matchedAllergen
+                            );
                     }
                 }
 
@@ -351,20 +370,19 @@ public class MedicineService : IMedicineService
             // SUCCESS
             // =================================================
 
-            return new HttpResponseData<
-                List<MedicineSearchDTO>>
-            {
-                StatusCode = 200,
-
-                Message =
-                    "Tìm thuốc thành công.",
-
-                Content =
-                    result
-            };
+            return Response(
+                200,
+                MedicineResponseMessageDTO
+                    .SearchSuccess,
+                result
+            );
         }
         catch (Exception ex)
         {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
             _logger.LogError(
                 ex,
                 "Failed to search medicines. " +
@@ -375,14 +393,41 @@ public class MedicineService : IMedicineService
             );
 
 
-            return new HttpResponseData<
-                List<MedicineSearchDTO>>
-            {
-                StatusCode = 500,
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
 
-                Message =
-                    "Không thể tìm kiếm thuốc."
-            };
+            return Response(
+                500,
+                MedicineResponseMessageDTO
+                    .SearchFailed
+            );
         }
+    }
+
+
+    // =====================================================
+    // RESPONSE
+    // =====================================================
+
+    private static
+        HttpResponseData<List<MedicineSearchDTO>>
+        Response(
+            int statusCode,
+            string message,
+            List<MedicineSearchDTO>? content = null)
+    {
+        return new HttpResponseData<
+            List<MedicineSearchDTO>>
+        {
+            StatusCode =
+                statusCode,
+
+            Message =
+                message,
+
+            Content =
+                content
+        };
     }
 }
