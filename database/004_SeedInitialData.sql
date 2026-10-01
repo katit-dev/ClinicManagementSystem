@@ -1469,3 +1469,216 @@ SELECT TOP 10 *
 FROM auth.notifications
 ORDER BY id DESC;
 
+------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------
+
+USE ClinicManagementSystem;
+GO
+
+-- ============================================================
+-- SEED BILLING SERVICES
+-- ============================================================
+
+-- 1. Xét nghiệm đường huyết
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.services
+    WHERE code = 'LAB-GLU'
+)
+BEGIN
+    INSERT INTO billing.services
+    (
+        name,
+        description,
+        price,
+        is_active,
+        created_at,
+        code,
+        duration_minutes
+    )
+    VALUES
+    (
+        N'Xét nghiệm đường huyết',
+        N'Xét nghiệm kiểm tra nồng độ glucose trong máu.',
+        100000,
+        1,
+        GETDATE(),
+        'LAB-GLU',
+        30
+    );
+END;
+
+
+-- 2. Xét nghiệm chức năng gan
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.services
+    WHERE code = 'LAB-LFT'
+)
+BEGIN
+    INSERT INTO billing.services
+    (
+        name,
+        description,
+        price,
+        is_active,
+        created_at,
+        code,
+        duration_minutes
+    )
+    VALUES
+    (
+        N'Xét nghiệm chức năng gan',
+        N'Xét nghiệm đánh giá chức năng gan.',
+        250000,
+        1,
+        GETDATE(),
+        'LAB-LFT',
+        45
+    );
+END;
+
+
+-- 3. X-quang ngực
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.services
+    WHERE code = 'IMG-CXR'
+)
+BEGIN
+    INSERT INTO billing.services
+    (
+        name,
+        description,
+        price,
+        is_active,
+        created_at,
+        code,
+        duration_minutes
+    )
+    VALUES
+    (
+        N'X-quang ngực thẳng',
+        N'Chụp X-quang ngực thẳng.',
+        180000,
+        1,
+        GETDATE(),
+        'IMG-CXR',
+        30
+    );
+END;
+
+
+-- 4. Siêu âm bụng
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.services
+    WHERE code = 'IMG-USAB'
+)
+BEGIN
+    INSERT INTO billing.services
+    (
+        name,
+        description,
+        price,
+        is_active,
+        created_at,
+        code,
+        duration_minutes
+    )
+    VALUES
+    (
+        N'Siêu âm bụng tổng quát',
+        N'Siêu âm kiểm tra các cơ quan trong ổ bụng.',
+        250000,
+        1,
+        GETDATE(),
+        'IMG-USAB',
+        30
+    );
+END;
+
+
+-- 5. Điện tim
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.services
+    WHERE code = 'CARD-ECG'
+)
+BEGIN
+    INSERT INTO billing.services
+    (
+        name,
+        description,
+        price,
+        is_active,
+        created_at,
+        code,
+        duration_minutes
+    )
+    VALUES
+    (
+        N'Điện tâm đồ',
+        N'Đo và ghi lại hoạt động điện của tim.',
+        120000,
+        1,
+        GETDATE(),
+        'CARD-ECG',
+        15
+    );
+END;
+
+
+-- 6. Service INACTIVE để test API filter
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM billing.services
+    WHERE code = 'LAB-INACTIVE'
+)
+BEGIN
+    INSERT INTO billing.services
+    (
+        name,
+        description,
+        price,
+        is_active,
+        created_at,
+        code,
+        duration_minutes
+    )
+    VALUES
+    (
+        N'Dịch vụ test inactive',
+        N'Dùng để kiểm tra API không trả về service đã ngừng hoạt động.',
+        50000,
+        0,
+        GETDATE(),
+        'LAB-INACTIVE',
+        15
+    );
+END;
+
+
+-- ============================================================
+-- VERIFY
+-- ============================================================
+
+SELECT
+    id,
+    code,
+    name,
+    description,
+    price,
+    is_active,
+    duration_minutes
+FROM billing.services
+ORDER BY id;
+
+GO
