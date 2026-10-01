@@ -1,0 +1,128 @@
+@page "/doctor/exam/{MedicalRecordId:int}/services"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Doctor")]
+
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager NavigationManager
+
+
+<PageTitle>Chỉ định cận lâm sàng</PageTitle>
+
+
+<div class="doctor-exam-page">
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <div class="doctor-exam-header">
+
+        <div>
+
+            <div class="doctor-exam-label">
+                VC-14
+            </div>
+
+            <h1>
+                Chỉ định cận lâm sàng & kết quả
+            </h1>
+
+            <p>
+                Bác sĩ chỉ định dịch vụ và xem kết quả cận lâm sàng.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAIN CARD
+         ===================================================== -->
+
+    <section class="doctor-exam-card">
+
+        <div class="doctor-exam-card-header">
+
+            <div>
+
+                <div class="doctor-exam-card-label">
+                    CHỈ ĐỊNH CẬN LÂM SÀNG
+                </div>
+
+                <h2>
+                    Bệnh án #@MedicalRecordId
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="doctor-exam-content">
+
+            <div class="doctor-exam-section">
+
+                <div class="doctor-exam-section-title">
+                    Medical Record Services
+                </div>
+
+
+                <div class="doctor-exam-state">
+
+                    Chưa có dữ liệu cận lâm sàng.
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ACTIONS
+                 ================================================= -->
+
+            <div class="doctor-exam-actions">
+
+                <button
+                    type="button"
+                    class="doctor-exam-secondary-button"
+                    @onclick="GoBack">
+
+                    Quay lại khám bệnh
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // ROUTE
+    // =====================================================
+
+    [Parameter]
+    public int MedicalRecordId { get; set; }
+
+
+    // =====================================================
+    // BACK
+    // =====================================================
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo(
+            $"/doctor/exam/{MedicalRecordId}"
+        );
+    }
+
+}
