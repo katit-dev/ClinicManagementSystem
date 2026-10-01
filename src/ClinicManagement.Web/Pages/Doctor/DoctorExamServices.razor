@@ -489,11 +489,6 @@
                 <div class="doctor-exam-modal-header">
 
                     <div>
-
-                        <span>
-                            HỦY CHỈ ĐỊNH
-                        </span>
-
                         <h3>
                             Hủy chỉ định
                         </h3>
@@ -574,9 +569,12 @@
                     </button>
 
 
-                    <button type="button" class="doctor-exam-danger-button">
+                    <button type="button" class="doctor-exam-danger-button" @onclick="CancelService"
+                            disabled="@DoctorExamStateService.IsSubmitting">
 
-                        Hủy chỉ định
+                        @(DoctorExamStateService.IsSubmitting
+                            ? "Đang hủy..."
+                            : "Hủy chỉ định")
 
                     </button>
 
@@ -637,6 +635,41 @@
 
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
+    }
+
+    // =====================================================
+    // CANCEL SERVICE
+    // =====================================================
+
+    private async Task CancelService()
+    {
+        CancelServiceErrorMessage =
+            string.Empty;
+
+        if (SelectedServiceToCancel == null)
+        {
+            CancelServiceErrorMessage =
+                "Không xác định được chỉ định.";
+
+            return;
+        }
+
+        var success =
+            await DoctorExamStateService
+                .CancelMedicalRecordServiceAsync(
+                    SelectedServiceToCancel.Id
+                );
+
+        if (!success)
+        {
+            CancelServiceErrorMessage =
+                DoctorExamStateService
+                    .ActionErrorMessage;
+
+            return;
+        }
+
+        CloseCancelServiceModal();
     }
 
 

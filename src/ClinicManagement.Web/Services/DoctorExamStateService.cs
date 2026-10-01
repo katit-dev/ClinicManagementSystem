@@ -125,6 +125,105 @@ public class DoctorExamStateService
     }
 
     // =====================================================
+    // CANCEL MEDICAL RECORD SERVICE
+    //
+    // PATCH:
+    // /api/medical-record-services/{id}/cancel
+    // =====================================================
+
+    public async Task<bool> CancelMedicalRecordServiceAsync(
+        int medicalRecordServiceId)
+    {
+        if (IsSubmitting)
+        {
+            return false;
+        }
+
+        if (medicalRecordServiceId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được chỉ định.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+        IsSubmitting = true;
+
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+
+        try
+        {
+            var response =
+                await _authorizedApiService
+                    .PatchAsync(
+                        $"/api/medical-record-services/{medicalRecordServiceId}/cancel",
+                        null
+                    );
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            MedicalRecordServiceDTO?>>();
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể hủy chỉ định.";
+
+                return false;
+            }
+
+            ActionMessage =
+                responseData.Message;
+
+            if (MedicalRecordId.HasValue)
+            {
+                var reloadSuccess =
+                    await LoadMedicalRecordAsync(
+                        MedicalRecordId.Value
+                    );
+
+                if (!reloadSuccess)
+                {
+                    ActionErrorMessage =
+                        "Đã hủy chỉ định nhưng không thể tải lại dữ liệu.";
+
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+
+    // =====================================================
     // ADD MEDICAL RECORD SERVICE
     //
     // POST:
@@ -880,140 +979,6 @@ public class DoctorExamStateService
 
             return true;
 
-        }
-        catch
-        {
-            ActionErrorMessage =
-                "Không thể kết nối đến hệ thống.";
-
-            return false;
-        }
-        finally
-        {
-            IsSubmitting = false;
-
-            StateHasChanged();
-        }
-    }
-
-    // =====================================================
-    // CANCEL MEDICAL RECORD SERVICE
-    //
-    // PATCH:
-    // /api/medical-record-services/{id}/cancel
-    //
-    // Không có request body.
-    // =====================================================
-
-    public async Task<bool> CancelMedicalRecordServiceAsync(
-        int medicalRecordServiceId)
-    {
-        // =================================================
-        // PREVENT DOUBLE SUBMIT
-        // =================================================
-
-        if (IsSubmitting)
-        {
-            return false;
-        }
-
-
-        // =================================================
-        // VALIDATE
-        // =================================================
-
-        if (medicalRecordServiceId <= 0)
-        {
-            ActionErrorMessage =
-                "Mã chỉ định không hợp lệ.";
-
-            StateHasChanged();
-
-            return false;
-        }
-
-
-        // =================================================
-        // START SUBMIT
-        // =================================================
-
-        IsSubmitting = true;
-
-        ActionMessage = string.Empty;
-
-        ActionErrorMessage = string.Empty;
-
-        StateHasChanged();
-
-
-        try
-        {
-            // =================================================
-            // CALL API
-            //
-            // PATCH:
-            // /api/medical-record-services/{id}/cancel
-            //
-            // Không gửi request body.
-            // =================================================
-
-            var response =
-                await _authorizedApiService
-                    .PatchAsync(
-                        $"/api/medical-record-services/{medicalRecordServiceId}/cancel",
-                        null
-                    );
-
-
-            // =================================================
-            // READ RESPONSE
-            // =================================================
-
-            var responseData =
-                await response.Content
-                    .ReadFromJsonAsync<
-                        HttpResponseData<
-                            MedicalRecordServiceDTO?>>();
-
-
-            // =================================================
-            // API FAILED
-            // =================================================
-
-            if (!response.IsSuccessStatusCode ||
-                responseData == null ||
-                responseData.StatusCode < 200 ||
-                responseData.StatusCode >= 300)
-            {
-                ActionErrorMessage =
-                    responseData?.Message
-                    ?? "Không thể hủy chỉ định.";
-
-                return false;
-            }
-
-
-            // =================================================
-            // SUCCESS
-            // =================================================
-
-            ActionMessage =
-                responseData.Message;
-
-
-            // =================================================
-            // RELOAD MEDICAL RECORD
-            // =================================================
-
-            if (MedicalRecordId != null)
-            {
-                await LoadMedicalRecordAsync(
-                    MedicalRecordId.Value
-                );
-            }
-
-
-            return true;
         }
         catch
         {
