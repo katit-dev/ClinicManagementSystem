@@ -275,9 +275,18 @@
 
                                             <td>
 
-                                                @if (service.Result == null &&
-                                                     service.Status !=
-                                                         (byte)MedicalRecordServiceStatus.Cancelled)
+                                                @if (service.Result != null)
+                                                {
+                                                    <span class="doctor-exam-result-exists">
+                                                        Đã có kết quả
+                                                    </span>
+                                                }
+                                                else if (
+                                                    service.Status ==
+                                                        (byte)MedicalRecordServiceStatus.Ordered
+                                                    ||
+                                                    service.Status ==
+                                                        (byte)MedicalRecordServiceStatus.InProgress)
                                                 {
                                                     <button type="button" class="doctor-exam-result-button"
                                                             @onclick="() => OpenResultModal(service)">
@@ -286,17 +295,9 @@
 
                                                     </button>
                                                 }
-                                                else if (service.Result != null)
-                                                {
-                                                    <span class="doctor-exam-result-exists">
-                                                        Đã có kết quả
-                                                    </span>
-                                                }
                                                 else
                                                 {
-                                                    <span>
-                                                        —
-                                                    </span>
+                                                    <span>—</span>
                                                 }
 
                                             </td>
@@ -738,9 +739,12 @@
 
                     </button>
 
-                    <button type="button" class="doctor-exam-primary-button">
+                    <button type="button" class="doctor-exam-primary-button" @onclick="SaveResult"
+                            disabled="@DoctorExamStateService.IsSubmitting">
 
-                        Lưu kết quả
+                        @(DoctorExamStateService.IsSubmitting
+                            ? "Đang lưu..."
+                            : "Lưu kết quả")
 
                     </button>
 
@@ -820,6 +824,53 @@
 
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
+    }
+
+    // =====================================================
+    // SAVE RESULT
+    // =====================================================
+
+    private async Task SaveResult()
+    {
+        ResultErrorMessage =
+            string.Empty;
+
+
+        if (SelectedServiceForResult == null)
+        {
+            ResultErrorMessage =
+                "Không xác định được chỉ định.";
+
+            return;
+        }
+
+
+        var success =
+            await DoctorExamStateService
+                .AddMedicalRecordServiceResultAsync(
+                    SelectedServiceForResult.Id,
+                    ResultValue,
+                    ReferenceRange,
+                    Conclusion,
+                    ResultedAt
+                );
+
+
+        if (!success)
+        {
+            ResultErrorMessage =
+                DoctorExamStateService
+                    .ActionErrorMessage;
+
+            return;
+        }
+
+
+        // =================================================
+        // CLOSE MODAL AFTER SUCCESS
+        // =================================================
+
+        CloseResultModal();
     }
 
     // =====================================================

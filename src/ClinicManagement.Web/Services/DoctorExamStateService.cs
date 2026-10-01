@@ -125,6 +125,203 @@ public class DoctorExamStateService
     }
 
     // =====================================================
+    // ADD MEDICAL RECORD SERVICE RESULT
+    //
+    // POST:
+    // /api/medical-record-services/{id}/result
+    //
+    // Request:
+    // - ResultValue
+    // - ReferenceRange
+    // - Conclusion
+    // - ResultedAt
+    // =====================================================
+
+    public async Task<bool> AddMedicalRecordServiceResultAsync(
+        int medicalRecordServiceId,
+        string resultValue,
+        string? referenceRange,
+        string? conclusion,
+        DateTime resultedAt)
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE SERVICE ID
+        // =================================================
+
+        if (medicalRecordServiceId <= 0)
+        {
+            ActionErrorMessage =
+                "Không xác định được chỉ định.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // VALIDATE RESULT
+        // =================================================
+
+        if (string.IsNullOrWhiteSpace(resultValue))
+        {
+            ActionErrorMessage =
+                "Vui lòng nhập kết quả.";
+
+            StateHasChanged();
+
+            return false;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+
+        ActionMessage =
+            string.Empty;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        StateHasChanged();
+
+
+        try
+        {
+            // =================================================
+            // REQUEST
+            // =================================================
+
+            var request =
+                new LabResultRequestDTO
+                {
+                    ResultValue =
+                        resultValue,
+
+                    ReferenceRange =
+                        referenceRange,
+
+                    Conclusion =
+                        conclusion,
+
+                    ResultedAt =
+                        resultedAt
+                };
+
+
+            // =================================================
+            // CREATE JSON CONTENT
+            // =================================================
+
+            var content =
+                JsonContent.Create(request);
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .PostAsync(
+                        $"/api/medical-record-services/{medicalRecordServiceId}/result",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            MedicalRecordServiceDTO?>>();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể lưu kết quả.";
+
+                return false;
+            }
+
+
+            // =================================================
+            // SUCCESS MESSAGE
+            // =================================================
+
+            ActionMessage =
+                responseData.Message;
+
+
+            // =================================================
+            // RELOAD MEDICAL RECORD
+            //
+            // Để cập nhật:
+            // - Status = Completed
+            // - Result != null
+            // - CompletedAt
+            // =================================================
+
+            if (MedicalRecordId.HasValue)
+            {
+                var reloadSuccess =
+                    await LoadMedicalRecordAsync(
+                        MedicalRecordId.Value
+                    );
+
+                if (!reloadSuccess)
+                {
+                    ActionErrorMessage =
+                        "Đã lưu kết quả nhưng không thể tải lại dữ liệu.";
+
+                    return false;
+                }
+            }
+
+
+            return true;
+        }
+        catch
+        {
+            ActionErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            return false;
+        }
+        finally
+        {
+            IsSubmitting = false;
+
+            StateHasChanged();
+        }
+    }
+
+    // =====================================================
     // CANCEL MEDICAL RECORD SERVICE
     //
     // PATCH:
