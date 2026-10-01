@@ -559,23 +559,30 @@ public class DoctorExamStateService
                 return false;
             }
 
-
             // =================================================
-            // UPDATE STATE
+            // RELOAD MEDICAL RECORD
             //
-            // Backend trả:
-            // MedicalRecordDraftResponseDTO
+            // MedicalRecordDraftResponseDTO không có Services.
+            // Vì vậy sau khi Save Draft thành công,
+            // gọi lại GET để lấy MedicalRecordExamDTO đầy đủ:
             //
-            // State đang dùng:
-            // MedicalRecordExamDTO
-            //
-            // → map response sang Exam DTO
+            // - Medical Record
+            // - Vital
+            // - Services
             // =================================================
 
-            MedicalRecord =
-                MapDraftResponseToExam(
-                    responseData.Content
+            var reloadSuccess =
+                await LoadMedicalRecordAsync(
+                    MedicalRecordId.Value
                 );
+
+            if (!reloadSuccess)
+            {
+                ActionErrorMessage =
+                    "Đã lưu bệnh án nhưng không thể tải lại dữ liệu.";
+
+                return false;
+            }
 
 
             // =================================================
@@ -586,6 +593,7 @@ public class DoctorExamStateService
                 responseData.Message;
 
             return true;
+
         }
         catch
         {
