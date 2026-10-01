@@ -570,4 +570,34 @@ public class MedicalRecordController : ControllerBase
         );
     }
 
+    // =====================================================
+    // GET PRESCRIPTION PDF
+    //
+    // GET:
+    // /api/prescriptions/{id}/pdf
+    // =====================================================
+
+    [HttpGet("/api/prescriptions/{id:int}/pdf")]
+    [Authorize(Roles = "Doctor")]
+    public async Task<IActionResult> GetPrescriptionPdf(
+        int id)
+    {
+        var pdf =
+            await _medicalRecordService
+                .GetPrescriptionPdfAsync(id);
+
+
+        if (pdf == null)
+        {
+            return NotFound();
+        }
+
+
+        return File(
+            pdf,
+            "application/pdf",
+            $"prescription-{id}.pdf"
+        );
+    }
+
 }
