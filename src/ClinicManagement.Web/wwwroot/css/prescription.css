@@ -639,3 +639,88 @@
 
     font-weight: 700;
 }
+
+/* =====================================================
+   SELECTED MEDICINE
+   ===================================================== */
+
+.prescription-selected-medicine {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 14px 16px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+
+    background: #f8fafc;
+}
+
+
+.prescription-selected-medicine-main {
+    min-width: 0;
+}
+
+
+.prescription-selected-medicine-name {
+    color: #16324f;
+
+    font-size: 15px;
+
+    font-weight: 700;
+}
+
+
+.prescription-selected-medicine-detail {
+    display: flex;
+
+    gap: 6px;
+
+    margin-top: 5px;
+
+    color: #64748b;
+
+    font-size: 12px;
+
+    flex-wrap: wrap;
+}
+
+
+.prescription-selected-medicine-stock {
+    flex-shrink: 0;
+
+    color: #334155;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   MEDICINE META
+   ===================================================== */
+
+.prescription-medicine-meta {
+    display: flex;
+
+    gap: 24px;
+
+    margin-top: -6px;
+    margin-bottom: 16px;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+
+.prescription-meta-label {
+    color: #475569;
+
+    font-weight: 700;
+}

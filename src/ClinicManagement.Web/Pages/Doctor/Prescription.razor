@@ -583,7 +583,7 @@
                     <!-- ADD MEDICINE -->
 
                     <button type="button" class="doctor-exam-secondary-button" @onclick="OpenAddMedicineModal"
-                            disabled="@IsFinalized">
+                            disabled="@(IsFinalized || SelectedMedicine == null)">
 
                         + Thêm thuốc
 
@@ -693,6 +693,16 @@
 
                 <div class="doctor-exam-modal-body">
 
+                    @if (!string.IsNullOrWhiteSpace(
+    PrescriptionModalErrorMessage))
+                    {
+                        <div class="doctor-exam-message doctor-exam-error">
+
+                            @PrescriptionModalErrorMessage
+
+                        </div>
+                    }
+
 
                     <!-- MEDICINE -->
 
@@ -702,14 +712,112 @@
                             Thuốc
                         </label>
 
-                        <div class="prescription-modal-placeholder">
+                        @if (SelectedMedicine != null)
+                        {
+                            <div class="prescription-selected-medicine">
 
-                            Chọn thuốc từ kết quả tìm kiếm.
+                                <div class="prescription-selected-medicine-main">
 
-                        </div>
+                                    <div class="prescription-selected-medicine-name">
+                                        @SelectedMedicine.Name
+                                    </div>
+
+                                    <div class="prescription-selected-medicine-detail">
+
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            SelectedMedicine.ActiveIngredient))
+                                        {
+                                            <span>
+                                                Hoạt chất:
+                                                @SelectedMedicine.ActiveIngredient
+                                            </span>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            SelectedMedicine.Concentration))
+                                        {
+                                            <span>
+                                                · @SelectedMedicine.Concentration
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="prescription-selected-medicine-stock">
+
+                                    Tồn:
+                                    @SelectedMedicine.AvailableQuantity
+                                    @(string.IsNullOrWhiteSpace(
+                                        SelectedMedicine.Unit)
+                                        ? ""
+                                        : $" {SelectedMedicine.Unit}")
+
+                                </div>
+
+                            </div>
+                        }
 
                     </div>
 
+                    @if (SelectedMedicine != null)
+                    {
+                        <div class="prescription-medicine-meta">
+
+                            <div>
+
+                                <span class="prescription-meta-label">
+                                    Lô:
+                                </span>
+
+                                @(SelectedMedicine.BatchNo ?? "—")
+
+                            </div>
+
+
+                            <div>
+
+                                <span class="prescription-meta-label">
+                                    Hạn dùng:
+                                </span>
+
+                                @(SelectedMedicine.ExpiryDate?.ToString(
+                                    "dd/MM/yyyy")
+                                    ?? "—")
+
+                            </div>
+
+                        </div>
+                    }
+
+                    @if (SelectedMedicine?.HasAllergyWarning == true)
+                    {
+                        <div class="prescription-allergy-warning">
+
+                            <strong>
+                                Cảnh báo dị ứng
+                            </strong>
+
+                            <div>
+
+                                @(SelectedMedicine.AllergyWarning
+                                    ?? "Thuốc này có thể liên quan đến dị ứng của bệnh nhân.")
+
+                            </div>
+
+
+                            <label class="prescription-allergy-confirm">
+
+                                <input type="checkbox" @bind="NewMedicineAllergyConfirmed" />
+
+                                Tôi xác nhận vẫn kê thuốc này.
+
+                            </label>
+
+                        </div>
+                    }
 
                     <!-- QUANTITY -->
 
@@ -852,6 +960,9 @@
 
     private bool IsAddMedicineModalOpen;
 
+    private string PrescriptionModalErrorMessage =
+    string.Empty;
+
 
     // =====================================================
     // NEW MEDICINE
@@ -904,6 +1015,39 @@
             .LoadMedicalRecordAsync(
                 MedicalRecordId
             );
+    }
+
+    private void OpenAddMedicineModal()
+    {
+        if (IsFinalized ||
+            SelectedMedicine == null)
+        {
+            return;
+        }
+
+
+        PrescriptionModalErrorMessage =
+            string.Empty;
+
+
+        NewMedicineQuantity =
+            1;
+
+        NewMedicineDosage =
+            string.Empty;
+
+        NewMedicineInstruction =
+            string.Empty;
+
+        NewMedicineDurationDays =
+            null;
+
+        NewMedicineAllergyConfirmed =
+            false;
+
+
+        IsAddMedicineModalOpen =
+            true;
     }
 
     // =====================================================
@@ -976,75 +1120,103 @@
     // OPEN ADD MEDICINE MODAL
     // =====================================================
 
-    private void OpenAddMedicineModal()
-    {
-        NewMedicineQuantity = 1;
-
-        NewMedicineDosage =
-            string.Empty;
-
-        NewMedicineInstruction =
-            string.Empty;
-
-        NewMedicineDurationDays =
-            null;
-
-        NewMedicineIsAllergy =
-            false;
-
-        NewMedicineAllergyConfirmed =
-            false;
-
-        IsAddMedicineModalOpen =
-            true;
-    }
-
-
-    // =====================================================
-    // CLOSE ADD MEDICINE MODAL
-    // =====================================================
-
-    private void CloseAddMedicineModal()
-    {
-        IsAddMedicineModalOpen =
-            false;
-    }
-
-
-    // =====================================================
-    // ADD MEDICINE
-    //
-    // UI ONLY
-    //
-    // Chưa gọi API.
-    // =====================================================
-
     private void AddMedicineToPrescription()
     {
+        PrescriptionModalErrorMessage =
+            string.Empty;
+
+
+        // =================================================
+        // CHECK FINALIZED
+        // =================================================
+
         if (IsFinalized)
         {
             return;
         }
 
 
+        // =================================================
+        // CHECK MEDICINE
+        // =================================================
+
         if (SelectedMedicine == null)
         {
+            PrescriptionModalErrorMessage =
+                "Vui lòng chọn thuốc.";
+
             return;
         }
 
+
+        // =================================================
+        // CHECK QUANTITY
+        // =================================================
 
         if (NewMedicineQuantity <= 0)
         {
+            PrescriptionModalErrorMessage =
+                "Số lượng phải lớn hơn 0.";
+
             return;
         }
 
+
+        if (NewMedicineQuantity >
+            SelectedMedicine.AvailableQuantity)
+        {
+            PrescriptionModalErrorMessage =
+                "Số lượng kê vượt quá tồn kho khả dụng.";
+
+            return;
+        }
+
+
+        // =================================================
+        // CHECK DOSAGE
+        // =================================================
 
         if (string.IsNullOrWhiteSpace(
             NewMedicineDosage))
         {
+            PrescriptionModalErrorMessage =
+                "Vui lòng nhập liều dùng.";
+
             return;
         }
 
+
+        // =================================================
+        // CHECK DURATION
+        // =================================================
+
+        if (NewMedicineDurationDays.HasValue &&
+            NewMedicineDurationDays.Value <= 0)
+        {
+            PrescriptionModalErrorMessage =
+                "Số ngày phải lớn hơn 0.";
+
+            return;
+        }
+
+
+        // =================================================
+        // CHECK ALLERGY
+        // =================================================
+
+        if (SelectedMedicine.HasAllergyWarning &&
+            !NewMedicineAllergyConfirmed)
+        {
+            PrescriptionModalErrorMessage =
+                "Vui lòng xác nhận cảnh báo dị ứng trước khi thêm thuốc.";
+
+            return;
+        }
+
+
+        // =================================================
+        // ADD ITEM
+        // =================================================
 
         PrescriptionItems.Add(
             new PrescriptionItemViewModel
@@ -1071,7 +1243,7 @@
                     NewMedicineDurationDays,
 
                 IsAllergy =
-                    NewMedicineIsAllergy,
+                    SelectedMedicine.HasAllergyWarning,
 
                 AllergyConfirmed =
                     NewMedicineAllergyConfirmed
@@ -1079,9 +1251,50 @@
         );
 
 
-        CloseAddMedicineModal();
+        // =================================================
+        // CLOSE MODAL
+        // =================================================
+
+        IsAddMedicineModalOpen =
+            false;
+
+
+        // =================================================
+        // CLEAR CURRENT SELECTION
+        // =================================================
+
+        SelectedMedicine =
+            null;
+
+        MedicineKeyword =
+            string.Empty;
+
+        DoctorExamStateService
+            .MedicineSearchResults
+            .Clear();
+
+        PrescriptionModalErrorMessage =
+            string.Empty;
     }
 
+    // =====================================================
+    // CLOSE ADD MEDICINE MODAL
+    // =====================================================
+
+    private void CloseAddMedicineModal()
+    {
+        IsAddMedicineModalOpen =
+            false;
+    }
+
+
+    // =====================================================
+    // ADD MEDICINE
+    //
+    // UI ONLY
+    //
+    // Chưa gọi API.
+    // =====================================================
 
     // =====================================================
     // REMOVE MEDICINE
