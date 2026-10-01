@@ -113,8 +113,16 @@
 
                 <div class="doctor-exam-section">
 
-                    <div class="doctor-exam-section-title">
-                        Dịch vụ cận lâm sàng
+                    <div class="doctor-exam-section-header">
+                        <div class="doctor-exam-section-title">
+                            Dịch vụ cận lâm sàng
+                        </div>
+
+                        <button type="button" class="doctor-exam-primary-button" @onclick="OpenAddServiceModal">
+
+                            + Thêm chỉ định
+
+                        </button>
                     </div>
 
 
@@ -297,10 +305,115 @@
         </section>
     }
 
+    @if (IsAddServiceModalOpen)
+    {
+        <div class="doctor-exam-modal-backdrop">
+
+            <div class="doctor-exam-modal">
+
+                <!-- =====================================================
+                 MODAL HEADER
+                 ===================================================== -->
+
+                <div class="doctor-exam-modal-header">
+
+                    <div>
+                        <span>CHỈ ĐỊNH CẬN LÂM SÀNG</span>
+
+                        <h3>
+                            Thêm chỉ định
+                        </h3>
+                    </div>
+
+                    <button type="button" class="doctor-exam-modal-close" @onclick="CloseAddServiceModal">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+
+                <!-- =====================================================
+                 MODAL BODY
+                 ===================================================== -->
+
+                <div class="doctor-exam-modal-body">
+
+                    <!-- SERVICE -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="service">
+                            Dịch vụ
+                        </label>
+
+                        <select id="service" class="doctor-exam-form-control" @bind="SelectedServiceId">
+
+                            <option value="0">
+                                Chọn dịch vụ
+                            </option>
+
+                            @foreach (
+                                var service
+                                in DoctorExamStateService.AvailableServices)
+                            {
+                                <option value="@service.Id">
+                                    @service.Name
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- QUANTITY -->
+
+                    <div class="doctor-exam-form-group">
+
+                        <label for="quantity">
+                            Số lượng
+                        </label>
+
+                        <input id="quantity" type="number" min="1" class="doctor-exam-form-control"
+                               @bind="ServiceQuantity" />
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                 MODAL FOOTER
+                 ===================================================== -->
+
+                <div class="doctor-exam-modal-footer">
+
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="CloseAddServiceModal">
+
+                        Hủy
+
+                    </button>
+
+                    <button type="button" class="doctor-exam-primary-button">
+
+                        Thêm
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
 </div>
 
 
 @code {
+    
 
     // =====================================================
     // ROUTE
@@ -308,6 +421,16 @@
 
     [Parameter]
     public int MedicalRecordId { get; set; }
+
+    // =====================================================
+    // ADD SERVICE MODAL
+    // =====================================================
+
+    private bool IsAddServiceModalOpen;
+
+    private int SelectedServiceId;
+
+    private int ServiceQuantity = 1;
 
 
     // =====================================================
@@ -323,6 +446,33 @@
 
         await DoctorExamStateService
             .LoadAvailableServicesAsync();
+    }
+
+    // =====================================================
+    // OPEN ADD SERVICE MODAL
+    // =====================================================
+
+    private void OpenAddServiceModal()
+    {
+        SelectedServiceId = 0;
+
+        ServiceQuantity = 1;
+
+        IsAddServiceModalOpen = true;
+    }
+
+
+    // =====================================================
+    // CLOSE ADD SERVICE MODAL
+    // =====================================================
+
+    private void CloseAddServiceModal()
+    {
+        IsAddServiceModalOpen = false;
+
+        SelectedServiceId = 0;
+
+        ServiceQuantity = 1;
     }
 
 
