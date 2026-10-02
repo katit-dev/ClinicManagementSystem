@@ -1,0 +1,539 @@
+@page "/pharmacy/inventory/{MedicineId:int}"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Pharmacist")]
+
+@using System.Net.Http.Json
+@using ClinicManagementSystem.Application.DTOs
+@using ClinicManagementSystem.Application.DTOs.Pharmacy
+@using Microsoft.AspNetCore.Authorization
+
+@inject AuthorizedApiService AuthorizedApiService
+@inject NavigationManager NavigationManager
+
+
+<PageTitle>Thẻ kho</PageTitle>
+
+
+<div class="stock-card-page">
+
+    <div class="stock-card-container">
+
+        @* =====================================================
+           BACK
+           ===================================================== *@
+
+        <button
+            type="button"
+            class="stock-card-back-button"
+            @onclick="GoBack">
+
+            <i class="fas fa-arrow-left"></i>
+
+            Quay lại kho thuốc
+
+        </button>
+
+
+        @* =====================================================
+           HEADER
+           ===================================================== *@
+
+        <div class="stock-card-header">
+
+            <div class="stock-card-label">
+                MEDICINE STOCK CARD
+            </div>
+
+            <h1>
+                Thẻ kho
+            </h1>
+
+            <p>
+                Lịch sử nhập, xuất và điều chỉnh tồn kho.
+            </p>
+
+        </div>
+
+
+        @* =====================================================
+           ERROR
+           ===================================================== *@
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="stock-card-error">
+                @ErrorMessage
+            </div>
+        }
+
+
+        @* =====================================================
+           LOADING
+           ===================================================== *@
+
+        @if (IsLoading)
+        {
+            <div class="stock-card-state">
+
+                <div class="stock-card-spinner"></div>
+
+                <span>
+                    Đang tải thẻ kho...
+                </span>
+
+            </div>
+        }
+        else
+        {
+            @* =================================================
+               MEDICINE INFO
+               ================================================= *@
+
+            <section class="stock-card-info">
+
+                <div>
+
+                    <div class="stock-card-info-label">
+                        THUỐC
+                    </div>
+
+                    <h2>
+                        @MedicineName
+                    </h2>
+
+                </div>
+
+                <div class="stock-card-info-id">
+                    Medicine ID: @MedicineId
+                </div>
+
+            </section>
+
+
+            @* =================================================
+               TRANSACTION CARD
+               ================================================= *@
+
+            <section class="stock-card-content">
+
+                <div class="stock-card-content-header">
+
+                    <div>
+
+                        <h2>
+                            Lịch sử tồn kho
+                        </h2>
+
+                        <span>
+                            @Transactions.Count giao dịch
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="stock-card-refresh-button"
+                        @onclick="LoadTransactionsAsync">
+
+                        <i class="fas fa-sync-alt"></i>
+
+                        Làm mới
+
+                    </button>
+
+                </div>
+
+
+                @if (Transactions.Count == 0)
+                {
+                    <div class="stock-card-empty">
+
+                        <i class="fas fa-history"></i>
+
+                        <h3>
+                            Chưa có giao dịch
+                        </h3>
+
+                        <p>
+                            Thuốc này chưa có lịch sử nhập,
+                            xuất hoặc điều chỉnh.
+                        </p>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="stock-card-table-wrapper">
+
+                        <table class="stock-card-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Thời gian
+                                    </th>
+
+                                    <th>
+                                        Lô
+                                    </th>
+
+                                    <th>
+                                        Loại
+                                    </th>
+
+                                    <th class="text-right">
+                                        SL
+                                    </th>
+
+                                    <th class="text-right">
+                                        Trước
+                                    </th>
+
+                                    <th class="text-right">
+                                        Sau
+                                    </th>
+
+                                    <th>
+                                        Đơn thuốc
+                                    </th>
+
+                                    <th>
+                                        Ghi chú
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                @foreach (var transaction in Transactions)
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <span class="transaction-time">
+                                                @transaction.CreatedAt
+                                                    .ToString("dd/MM/yyyy HH:mm")
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <strong class="transaction-batch">
+                                                @transaction.BatchNo
+                                            </strong>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            @if (transaction.Type == 0)
+                                            {
+                                                <span class="transaction-type in">
+                                                    Nhập
+                                                </span>
+                                            }
+                                            else if (transaction.Type == 1)
+                                            {
+                                                <span class="transaction-type out">
+                                                    Xuất
+                                                </span>
+                                            }
+                                            else if (transaction.Type == 2)
+                                            {
+                                                <span class="transaction-type adjust">
+                                                    Điều chỉnh
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="transaction-type">
+                                                    Không xác định
+                                                </span>
+                                            }
+
+                                        </td>
+
+
+                                        <td class="text-right">
+
+                                            @transaction.Quantity
+
+                                        </td>
+
+
+                                        <td class="text-right">
+
+                                            @transaction.QuantityBefore
+
+                                        </td>
+
+
+                                        <td class="text-right">
+
+                                            <strong>
+                                                @transaction.QuantityAfter
+                                            </strong>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            @if (transaction.PrescriptionId.HasValue)
+                                            {
+                                                <span class="prescription-reference">
+                                                    #@transaction.PrescriptionId
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="muted">
+                                                    —
+                                                </span>
+                                            }
+
+                                        </td>
+
+
+                                        <td>
+
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                transaction.Note))
+                                            {
+                                                <span class="transaction-note">
+                                                    @transaction.Note
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="muted">
+                                                    —
+                                                </span>
+                                            }
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+            </section>
+
+        }
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // PARAMETER
+    // =====================================================
+
+    [Parameter]
+    public int MedicineId { get; set; }
+
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    private List<StockTransactionDTO> Transactions =
+        new();
+
+    private bool IsLoading;
+
+    private string ErrorMessage =
+        string.Empty;
+
+    private string MedicineName =
+        "Thuốc";
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTransactionsAsync();
+    }
+
+
+    // =====================================================
+    // LOAD TRANSACTIONS
+    //
+    // GET:
+    // /api/medicines/{id}/transactions
+    // =====================================================
+
+    private async Task LoadTransactionsAsync()
+    {
+        if (MedicineId <= 0)
+        {
+            ErrorMessage =
+                "Mã thuốc không hợp lệ.";
+
+            return;
+        }
+
+
+        IsLoading = true;
+
+        ErrorMessage =
+            string.Empty;
+
+
+        try
+        {
+            var response =
+                await AuthorizedApiService.GetAsync(
+                    $"/api/medicines/{MedicineId}/transactions"
+                );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<StockTransactionDTO>
+                        >
+                    >();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải thẻ kho.";
+
+                Transactions =
+                    new List<StockTransactionDTO>();
+
+                return;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            Transactions =
+                responseData.Content
+                ?? new List<StockTransactionDTO>();
+
+
+            // =================================================
+            // GET MEDICINE NAME
+            //
+            // Hiện tại transactions API chỉ trả transaction,
+            // nên lấy tên thuốc từ inventory API.
+            // =================================================
+
+            await LoadMedicineNameAsync();
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            Transactions =
+                new List<StockTransactionDTO>();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+
+    // =====================================================
+    // LOAD MEDICINE NAME
+    // =====================================================
+
+    private async Task LoadMedicineNameAsync()
+    {
+        try
+        {
+            var response =
+                await AuthorizedApiService.GetAsync(
+                    "/api/medicines/inventory" +
+                    "?lowStock=false" +
+                    "&nearExpiry=30"
+                );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<MedicineInventoryDTO>
+                        >
+                    >();
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData?.Content == null)
+            {
+                return;
+            }
+
+
+            var medicine =
+                responseData.Content
+                    .FirstOrDefault(
+                        x => x.Id == MedicineId
+                    );
+
+
+            if (medicine != null)
+            {
+                MedicineName =
+                    medicine.Name;
+            }
+        }
+        catch
+        {
+            // Không làm hỏng trang thẻ kho
+            // nếu chỉ không lấy được tên thuốc.
+        }
+    }
+
+
+    // =====================================================
+    // BACK
+    // =====================================================
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo(
+            "/pharmacy/inventory"
+        );
+    }
+}

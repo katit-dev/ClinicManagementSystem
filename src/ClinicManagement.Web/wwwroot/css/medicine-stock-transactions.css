@@ -1,0 +1,472 @@
+.stock-card-page {
+    min-height: 100vh;
+
+    background: #f4f7fa;
+
+    padding: 30px 24px;
+}
+
+.stock-card-container {
+    max-width: 1250px;
+
+    margin: 0 auto;
+}
+
+
+/* =====================================================
+   BACK
+   ===================================================== */
+
+.stock-card-back-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-bottom: 24px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #58738d;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.stock-card-back-button:hover {
+    color: #294c68;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.stock-card-header {
+    margin-bottom: 25px;
+}
+
+.stock-card-label {
+    margin-bottom: 6px;
+
+    color: #7188a0;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.1px;
+}
+
+.stock-card-header h1 {
+    margin: 0 0 7px;
+
+    color: #193953;
+
+    font-size: 29px;
+    font-weight: 750;
+}
+
+.stock-card-header p {
+    margin: 0;
+
+    color: #718296;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   MEDICINE INFO
+   ===================================================== */
+
+.stock-card-info {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    margin-bottom: 16px;
+
+    padding: 18px 21px;
+
+    background: #ffffff;
+
+    border: 1px solid #dce5ed;
+
+    border-radius: 11px;
+}
+
+.stock-card-info-label {
+    margin-bottom: 5px;
+
+    color: #8494a3;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.stock-card-info h2 {
+    margin: 0;
+
+    color: #274862;
+
+    font-size: 20px;
+}
+
+.stock-card-info-id {
+    color: #71869a;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   CONTENT
+   ===================================================== */
+
+.stock-card-content {
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #dce5ed;
+
+    border-radius: 12px;
+}
+
+.stock-card-content-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 19px 21px;
+
+    border-bottom: 1px solid #e3eaf0;
+}
+
+.stock-card-content-header h2 {
+    margin: 0 0 4px;
+
+    color: #294861;
+
+    font-size: 18px;
+}
+
+.stock-card-content-header span {
+    color: #8998a7;
+
+    font-size: 11px;
+}
+
+
+/* =====================================================
+   REFRESH
+   ===================================================== */
+
+.stock-card-refresh-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #cbd8e3;
+
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #506c84;
+
+    font-size: 12px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.stock-card-refresh-button:hover {
+    background: #f3f6f8;
+}
+
+
+/* =====================================================
+   TABLE
+   ===================================================== */
+
+.stock-card-table-wrapper {
+    overflow-x: auto;
+}
+
+.stock-card-table {
+    width: 100%;
+
+    min-width: 1050px;
+
+    border-collapse: collapse;
+}
+
+.stock-card-table th {
+    padding: 12px 15px;
+
+    background: #f2f6f9;
+
+    border-bottom: 1px solid #dce5ed;
+
+    color: #60758a;
+
+    font-size: 11px;
+    font-weight: 750;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+.stock-card-table td {
+    padding: 14px 15px;
+
+    border-bottom: 1px solid #edf1f4;
+
+    color: #405970;
+
+    font-size: 12px;
+
+    vertical-align: middle;
+}
+
+.stock-card-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.stock-card-table tbody tr:hover {
+    background: #fafcfd;
+}
+
+.text-right {
+    text-align: right !important;
+}
+
+
+/* =====================================================
+   TRANSACTION CONTENT
+   ===================================================== */
+
+.transaction-time {
+    color: #71869a;
+
+    white-space: nowrap;
+}
+
+.transaction-batch {
+    color: #365671;
+
+    font-size: 12px;
+}
+
+.prescription-reference {
+    display: inline-flex;
+
+    padding: 4px 8px;
+
+    border-radius: 6px;
+
+    background: #eef4f8;
+
+    color: #476983;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.transaction-note {
+    display: block;
+
+    max-width: 230px;
+
+    color: #708296;
+
+    line-height: 1.4;
+}
+
+.muted {
+    color: #a1adb8;
+}
+
+
+/* =====================================================
+   TYPE
+   ===================================================== */
+
+.transaction-type {
+    display: inline-flex;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+    font-weight: 750;
+
+    white-space: nowrap;
+}
+
+.transaction-type.in {
+    background: #eaf7ef;
+
+    color: #27794a;
+}
+
+.transaction-type.out {
+    background: #edf3fb;
+
+    color: #37679b;
+}
+
+.transaction-type.adjust {
+    background: #fff4dc;
+
+    color: #9b6805;
+}
+
+
+/* =====================================================
+   EMPTY
+   ===================================================== */
+
+.stock-card-empty {
+    padding: 60px 20px;
+
+    text-align: center;
+}
+
+.stock-card-empty > i {
+    margin-bottom: 14px;
+
+    color: #8ea0b1;
+
+    font-size: 27px;
+}
+
+.stock-card-empty h3 {
+    margin: 0 0 6px;
+
+    color: #3d5870;
+
+    font-size: 17px;
+}
+
+.stock-card-empty p {
+    margin: 0;
+
+    color: #8998a7;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+.stock-card-state {
+    min-height: 300px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 10px;
+
+    color: #728498;
+
+    font-size: 13px;
+}
+
+.stock-card-spinner {
+    width: 18px;
+    height: 18px;
+
+    border: 3px solid #dce5ed;
+
+    border-top-color: #5d7d9c;
+
+    border-radius: 50%;
+
+    animation:
+        stock-card-spin
+        0.8s linear infinite;
+}
+
+@keyframes stock-card-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =====================================================
+   ERROR
+   ===================================================== */
+
+.stock-card-error {
+    margin-bottom: 16px;
+
+    padding: 12px 14px;
+
+    border: 1px solid #fecdd3;
+
+    border-radius: 8px;
+
+    background: #fff1f2;
+
+    color: #9f1239;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 700px) {
+
+    .stock-card-page {
+        padding: 22px 12px;
+    }
+
+    .stock-card-info {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    .stock-card-content-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 12px;
+    }
+
+    .stock-card-refresh-button {
+        width: 100%;
+
+        justify-content: center;
+    }
+}
