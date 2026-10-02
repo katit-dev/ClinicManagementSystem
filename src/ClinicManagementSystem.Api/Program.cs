@@ -101,6 +101,7 @@ builder.Services.AddScoped< IMedicineService, MedicineService>();
 builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
 builder.Services.AddScoped<IPharmacyService, PharmacyService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IMedicineInventoryService, MedicineInventoryService>();
 
 
 // file storage
