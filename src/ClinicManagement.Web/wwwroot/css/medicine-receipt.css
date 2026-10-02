@@ -494,3 +494,243 @@
 
     font-size: 12px;
 }
+
+.medicine-search-row {
+    display: flex;
+    gap: 8px;
+}
+
+.medicine-search-row .medicine-receipt-input {
+    flex: 1;
+}
+
+.medicine-search-button {
+    min-width: 82px;
+    height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    border: 1px solid #385a76;
+    border-radius: 8px;
+
+    background: #385a76;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    pointer-events: auto;
+}
+
+.medicine-search-button:hover {
+    background: #294965;
+}
+
+.medicine-search-button:active {
+    transform: translateY(1px);
+}
+
+.medicine-search-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   SEARCH RESULTS
+   ===================================================== */
+
+.medicine-search-results {
+    display: flex;
+    flex-direction: column;
+
+    margin-top: 7px;
+
+    overflow: hidden;
+
+    border: 1px solid #d7e1e9;
+    border-radius: 8px;
+
+    background: #ffffff;
+}
+
+.medicine-search-result {
+    width: 100%;
+
+    padding: 11px 13px;
+
+    border: none;
+    border-bottom: 1px solid #edf1f4;
+
+    background: #ffffff;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.medicine-search-result:last-child {
+    border-bottom: none;
+}
+
+.medicine-search-result:hover {
+    background: #f3f7fa;
+}
+
+.medicine-search-result-name {
+    color: #294965;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.medicine-search-result-meta {
+    display: flex;
+
+    gap: 4px;
+
+    margin-top: 4px;
+
+    color: #8291a0;
+
+    font-size: 11px;
+}
+
+
+/* =====================================================
+   SELECTED MEDICINE
+   ===================================================== */
+
+.medicine-selected {
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    margin-bottom: 18px;
+
+    padding: 12px 13px;
+
+    border: 1px solid #c9dfd1;
+    border-radius: 8px;
+
+    background: #f2faf5;
+}
+
+.medicine-selected-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    border-radius: 7px;
+
+    background: #dcefe2;
+
+    color: #34744e;
+
+    flex-shrink: 0;
+}
+
+.medicine-selected-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+
+    flex: 1;
+}
+
+.medicine-selected-info span {
+    color: #759080;
+
+    font-size: 10px;
+}
+
+.medicine-selected-info strong {
+    color: #315c44;
+
+    font-size: 13px;
+}
+
+.medicine-selected-status {
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    color: #34744e;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   EMPTY SEARCH
+   ===================================================== */
+
+.medicine-search-empty {
+    margin-top: 7px;
+
+    padding: 10px 12px;
+
+    border-radius: 7px;
+
+    background: #f7f9fb;
+
+    color: #8291a0;
+
+    font-size: 11px;
+}
+
+/* =====================================================
+   VIEW INVENTORY BUTTON
+   ===================================================== */
+
+.medicine-receipt-view-inventory-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 42px;
+    padding: 0 18px;
+
+    border: 1px solid #385a76;
+    border-radius: 8px;
+
+    background: #385a76;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.1s ease;
+}
+
+.medicine-receipt-view-inventory-button:hover {
+    background: #294965;
+    border-color: #294965;
+}
+
+.medicine-receipt-view-inventory-button:active {
+    transform: translateY(1px);
+}

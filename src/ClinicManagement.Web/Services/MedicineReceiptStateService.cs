@@ -27,6 +27,30 @@ public class MedicineReceiptStateService
         private set;
     } = [];
 
+    // =====================================================
+    // MEDICINE SEARCH
+    // =====================================================
+
+    public string SearchKeyword
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public List<MedicineDTO> SearchResults
+    {
+        get;
+        private set;
+    } = [];
+
+
+    public bool IsSearching
+    {
+        get;
+        private set;
+    }
+
 
     // =====================================================
     // LOAD STATE
@@ -154,6 +178,147 @@ public class MedicineReceiptStateService
             authorizedApiService;
     }
 
+    // =====================================================
+    // SEARCH MEDICINES
+    //
+    // GET:
+    // /api/medicines?keyword=
+    //
+    // Search theo:
+    // - Code
+    // - Name
+    // - ActiveIngredient
+    // =====================================================
+
+    public async Task SearchMedicinesAsync()
+    {
+        var keyword =
+            SearchKeyword.Trim();
+
+
+        // =================================================
+        // EMPTY KEYWORD
+        // =================================================
+
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            SearchResults = [];
+
+            SelectedMedicineId = 0;
+
+            NotifyStateChanged();
+
+            return;
+        }
+
+
+        // =================================================
+        // START SEARCH
+        // =================================================
+
+        IsSearching = true;
+
+        ActionErrorMessage =
+            string.Empty;
+
+        NotifyStateChanged();
+
+
+        try
+        {
+            var url =
+                "/api/medicines?keyword=" +
+                Uri.EscapeDataString(keyword);
+
+
+            // =================================================
+            // CALL API
+            // =================================================
+
+            var response =
+                await _authorizedApiService
+                    .GetAsync(url);
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<MedicineDTO>
+                        >
+                    >();
+
+
+            // =================================================
+            // API ERROR
+            // =================================================
+
+            if (
+                !response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300
+            )
+            {
+                SearchResults = [];
+
+                ActionErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tìm thuốc.";
+
+                return;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            SearchResults =
+                responseData.Content
+                ?? [];
+        }
+        catch (Exception ex)
+        {
+            SearchResults = [];
+
+            ActionErrorMessage =
+                $"Lỗi tìm thuốc: {ex.Message}";
+        }
+        finally
+        {
+            IsSearching = false;
+
+            NotifyStateChanged();
+        }
+    }
+
+    // =====================================================
+    // SELECT MEDICINE
+    // =====================================================
+
+    public void SelectMedicine(
+        MedicineDTO medicine)
+    {
+        SelectedMedicineId =
+            medicine.Id;
+
+        SearchKeyword =
+            medicine.Name;
+
+        SearchResults =
+            [];
+
+        ActionErrorMessage =
+            string.Empty;
+
+        NotifyStateChanged();
+    }
+
 
     // =====================================================
     // RESET
@@ -201,6 +366,15 @@ public class MedicineReceiptStateService
 
         ImportPrice =
             0;
+
+        SearchKeyword =
+    string.Empty;
+
+        SearchResults =
+            [];
+
+        IsSearching =
+            false;
     }
 
 

@@ -4,8 +4,10 @@
 
 @attribute [Authorize(Roles = "Pharmacist")]
 
+@using ClinicManagementSystem.Application.DTOs
 @using ClinicManagementSystem.Application.DTOs.Pharmacy
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Web
 
 
 @inject MedicineReceiptStateService MedicineReceiptStateService
@@ -30,7 +32,10 @@
            BACK
            ===================================================== *@
 
-        <button type="button" class="medicine-receipt-back-button" @onclick="GoBack">
+        <button
+            type="button"
+            class="medicine-receipt-back-button"
+            @onclick="GoBack">
 
             <i class="fas fa-arrow-left"></i>
 
@@ -45,6 +50,10 @@
 
         <div class="medicine-receipt-header">
 
+            <div class="medicine-receipt-label">
+                PHARMACY · MEDICINE RECEIPT
+            </div>
+
             <h1>
                 Nhập thuốc
             </h1>
@@ -57,7 +66,7 @@
 
 
         @* =====================================================
-           LOAD ERROR
+           ERROR
            ===================================================== *@
 
         @if (!string.IsNullOrWhiteSpace(
@@ -101,314 +110,465 @@
 
                 <i class="fas fa-check-circle"></i>
 
-                @MedicineReceiptStateService.ActionMessage
-
-            </div>
-        }
-
-
-        @* =====================================================
-           LOADING
-           ===================================================== *@
-
-        @if (MedicineReceiptStateService.IsLoading)
-        {
-            <div class="medicine-receipt-state">
-
-                <div class="medicine-receipt-spinner"></div>
-
-                <span>
-                    Đang tải danh sách thuốc...
-                </span>
-
-            </div>
-        }
-        else
-        {
-            <div class="medicine-receipt-layout">
-
-
-                @* =================================================
-                   RECEIPT INFORMATION
-                   ================================================= *@
-
-                <section class="medicine-receipt-card">
-
-                    <div class="medicine-receipt-card-header">
-
-                        <div>
-
-                            <div class="medicine-receipt-card-label">
-                                RECEIPT INFORMATION
-                            </div>
-
-                            <h2>
-                                Thông tin nhập thuốc
-                            </h2>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="medicine-receipt-card-body">
-
-
-                        <div class="medicine-receipt-field">
-
-                            <label>
-                                Nhà cung cấp
-                            </label>
-
-                            <input type="text" class="medicine-receipt-input" @bind="
-                                   MedicineReceiptStateService.SupplierName" maxlength="255"
-       placeholder="Nhập tên nhà cung cấp..." />
-
-</div>
-
-
-                        <div class="medicine-receipt-field">
-
-                            <label>
-                                Số hóa đơn / mã tham chiếu
-                            </label>
-
-                            <input type="text" class="medicine-receipt-input" @bind="
-                                   MedicineReceiptStateService.ReferenceCode" maxlength="100"
-       placeholder="Ví dụ: HD-DHG-8891" />
-
-</div>
-
-
-                    </div>
-
-                </section>
-
-
-                @* =================================================
-                   MEDICINE BATCH
-                   ================================================= *@
-
-                <section class="medicine-receipt-card">
-
-                    <div class="medicine-receipt-card-header">
-
-                        <div>
-
-                            <div class="medicine-receipt-card-label">
-                                MEDICINE BATCH
-                            </div>
-
-                            <h2>
-                                Thông tin thuốc nhập
-                            </h2>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="medicine-receipt-card-body">
-
-
-                        @if (
-                            MedicineReceiptStateService
-                                .Medicines
-                                .Count == 0
-                        )
-                        {
-                            <div class="medicine-receipt-empty">
-
-                                <i class="fas fa-pills"></i>
-
-                                <h3>
-                                    Không có thuốc
-                                </h3>
-
-                                <p>
-                                    Không tìm thấy thuốc đang hoạt động.
-                                </p>
-
-                            </div>
-                        }
-                        else
-                        {
-                            @* =========================================
-                               MEDICINE
-                               ========================================= *@
-
-                            <div class="medicine-receipt-field">
-
-                                <label>
-                                    Thuốc
-                                </label>
-
-                                <select class="medicine-receipt-input" @bind="
-                                        MedicineReceiptStateService
-                                            .SelectedMedicineId">
-
-<option value="0">
-                                        -- Chọn thuốc --
-                                    </option>
-
-
-                                    @foreach (
-                                        var medicine
-                                        in MedicineReceiptStateService
-                                            .Medicines)
-                                    {
-                                        <option value="@medicine.Id">
-
-                                            @(medicine.Code
-                                                ?? $"TH{medicine.Id:000}")
-
-                                            -
-
-                                            @medicine.Name
-
-                                        </option>
-                                    }
-
-                                </select>
-
-                            </div>
-
-
-                            @* =========================================
-                               BATCH + EXPIRY
-                               ========================================= *@
-
-                            <div class="medicine-receipt-grid">
-
-
-                                <div class="medicine-receipt-field">
-
-                                    <label>
-                                        Số lô
-                                    </label>
-
-                                    <input type="text" class="medicine-receipt-input" @bind="
-                                           MedicineReceiptStateService
-                                               .BatchNo" maxlength="50" placeholder="Ví dụ: L2409" />
-
-</div>
-
-
-                                <div class="medicine-receipt-field">
-
-                                    <label>
-                                        Hạn sử dụng
-                                    </label>
-
-                                    <input type="date" class="medicine-receipt-input" @bind="
-                                           MedicineReceiptStateService
-                                               .ExpiryDate" />
-
-</div>
-
-
-                            </div>
-
-
-                            @* =========================================
-                               QUANTITY + PRICE
-                               ========================================= *@
-
-                            <div class="medicine-receipt-grid">
-
-
-                                <div class="medicine-receipt-field">
-
-                                    <label>
-                                        Số lượng
-                                    </label>
-
-                                    <input type="number" min="1" class="medicine-receipt-input" @bind="
-                                           MedicineReceiptStateService
-                                               .Quantity" placeholder="Nhập số lượng..." />
-
-</div>
-
-
-                                <div class="medicine-receipt-field">
-
-                                    <label>
-                                        Giá nhập / đơn vị
-                                    </label>
-
-                                    <input type="number" min="0" step="0.01" class="medicine-receipt-input" @bind="
-                                           MedicineReceiptStateService
-                                               .ImportPrice" placeholder="0" />
-
-</div>
-
-
-                            </div>
-                        }
-
-
-                    </div>
-
-                </section>
-
-
-                @* =================================================
-                   NOTE
-                   ================================================= *@
-
-                <section class="medicine-receipt-note">
-
-                    <i class="fas fa-info-circle"></i>
+                <div>
+
+                    <strong>
+                        @MedicineReceiptStateService.ActionMessage
+                    </strong>
 
                     <div>
-
-                        <strong>
-                            Lưu ý
-                        </strong>
-
-                        <p>
-                            Mỗi lô thuốc được xác định bởi thuốc và
-                            số lô. Hạn sử dụng và giá nhập sẽ được
-                            kiểm tra khi lưu phiếu nhập.
-                        </p>
-
+                        Thuốc đã được cập nhật vào kho.
                     </div>
-
-                </section>
-
-
-                @* =================================================
-                   ACTIONS
-                   ================================================= *@
-
-                <div class="medicine-receipt-actions">
-
-
-                    <button type="button" class="medicine-receipt-cancel-button" @onclick="GoBack">
-
-                        Hủy
-
-                    </button>
-
-
-                    <button type="button" class="medicine-receipt-submit-button"
-                            disabled="@(!MedicineReceiptStateService.CanSubmit)" @onclick="SubmitReceiptAsync">
-
-                        <i class="fas fa-check"></i>
-
-                        @(MedicineReceiptStateService.IsSubmitting
-                            ? "Đang nhập..."
-                            : "Nhập thuốc")
-
-                    </button>
-
 
                 </div>
 
 
+                <button
+                    type="button"
+                    class="medicine-receipt-view-inventory-button"
+                    @onclick="GoToInventory">
+
+                    Xem kho thuốc
+
+                </button>
+
             </div>
         }
 
+
+        <div class="medicine-receipt-layout">
+
+
+            @* =================================================
+               RECEIPT INFORMATION
+               ================================================= *@
+
+            <section class="medicine-receipt-card">
+
+                <div class="medicine-receipt-card-header">
+
+                    <div>
+
+                        <div class="medicine-receipt-card-label">
+                            RECEIPT INFORMATION
+                        </div>
+
+                        <h2>
+                            Thông tin nhập thuốc
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="medicine-receipt-card-body">
+
+
+                    @* =============================================
+                       SUPPLIER
+                       ============================================= *@
+
+                    <div class="medicine-receipt-field">
+
+                        <label>
+                            Nhà cung cấp
+                        </label>
+
+                        <input
+                            type="text"
+                            class="medicine-receipt-input"
+                            @bind="
+                                MedicineReceiptStateService.SupplierName"
+                            @bind:event="oninput"
+                            maxlength="255"
+                            placeholder="Nhập tên nhà cung cấp..." />
+
+                    </div>
+
+
+                    @* =============================================
+                       REFERENCE CODE
+                       ============================================= *@
+
+                    <div class="medicine-receipt-field">
+
+                        <label>
+                            Số hóa đơn / mã tham chiếu
+                        </label>
+
+                        <input
+                            type="text"
+                            class="medicine-receipt-input"
+                            @bind="
+                                MedicineReceiptStateService.ReferenceCode"
+                            @bind:event="oninput"
+                            maxlength="100"
+                            placeholder="Ví dụ: HD-DHG-8891" />
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+            @* =================================================
+               MEDICINE BATCH
+               ================================================= *@
+
+            <section class="medicine-receipt-card">
+
+                <div class="medicine-receipt-card-header">
+
+                    <div>
+
+                        <div class="medicine-receipt-card-label">
+                            MEDICINE BATCH
+                        </div>
+
+                        <h2>
+                            Thông tin thuốc nhập
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="medicine-receipt-card-body">
+
+
+                    @* =============================================
+                       SEARCH MEDICINE
+                       ============================================= *@
+
+                    <div class="medicine-receipt-field">
+
+                        <label>
+                            Tìm thuốc
+                        </label>
+
+
+                        <div class="medicine-search-row">
+
+                            <input
+                                type="text"
+                                class="medicine-receipt-input"
+                                @bind="
+                                    MedicineReceiptStateService.SearchKeyword"
+                                @bind:event="oninput"
+                                @onkeydown="HandleSearchKeyDown"
+                                placeholder="Nhập tên, mã hoặc hoạt chất..." />
+
+
+                            <button
+                                type="button"
+                                class="medicine-search-button"
+                                @onclick="SearchMedicinesAsync">
+
+                                <i class="fas fa-search"></i>
+
+                                @(MedicineReceiptStateService.IsSearching
+                                    ? "Đang tìm..."
+                                    : "Tìm")
+
+                            </button>
+
+                        </div>
+
+
+                        @* =============================================
+                           SEARCH RESULTS
+                           ============================================= *@
+
+                        @if (
+                            MedicineReceiptStateService
+                                .SearchResults
+                                .Count > 0
+                        )
+                        {
+                            <div class="medicine-search-results">
+
+                                @foreach (
+                                    var medicine
+                                    in MedicineReceiptStateService
+                                        .SearchResults)
+                                {
+                                    <button
+                                        type="button"
+                                        class="medicine-search-result"
+                                        @onclick="
+                                            () => SelectMedicine(medicine)">
+
+                                        <div class="medicine-search-result-name">
+
+                                            @medicine.Name
+
+                                        </div>
+
+
+                                        <div class="medicine-search-result-meta">
+
+                                            @if (
+                                                !string.IsNullOrWhiteSpace(
+                                                    medicine.Code))
+                                            {
+                                                <span>
+                                                    @medicine.Code
+                                                </span>
+                                            }
+
+
+                                            @if (
+                                                !string.IsNullOrWhiteSpace(
+                                                    medicine.ActiveIngredient))
+                                            {
+                                                <span>
+                                                    · @medicine.ActiveIngredient
+                                                </span>
+                                            }
+
+
+                                            @if (
+                                                !string.IsNullOrWhiteSpace(
+                                                    medicine.Concentration))
+                                            {
+                                                <span>
+                                                    · @medicine.Concentration
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </button>
+                                }
+
+                            </div>
+                        }
+
+
+                        @* =============================================
+                           NO RESULT
+                           ============================================= *@
+
+                        @if (
+                            !MedicineReceiptStateService.IsSearching &&
+                            !string.IsNullOrWhiteSpace(
+                                MedicineReceiptStateService.SearchKeyword) &&
+                            MedicineReceiptStateService.SearchResults.Count == 0 &&
+                            MedicineReceiptStateService.SelectedMedicineId == 0
+                        )
+                        {
+                            <div class="medicine-search-empty">
+
+                                Không tìm thấy thuốc phù hợp.
+
+                            </div>
+                        }
+
+                    </div>
+
+
+                    @* =============================================
+                       SELECTED MEDICINE
+                       ============================================= *@
+
+                    @if (
+                        MedicineReceiptStateService.SelectedMedicineId > 0
+                    )
+                    {
+                        <div class="medicine-selected">
+
+                            <div class="medicine-selected-icon">
+
+                                <i class="fas fa-pills"></i>
+
+                            </div>
+
+
+                            <div class="medicine-selected-info">
+
+                                <span>
+                                    Thuốc đã chọn
+                                </span>
+
+                                <strong>
+                                    @MedicineReceiptStateService.SearchKeyword
+                                </strong>
+
+                            </div>
+
+
+                            <div class="medicine-selected-status">
+
+                                <i class="fas fa-check"></i>
+
+                                Đã chọn
+
+                            </div>
+
+                        </div>
+                    }
+
+
+                    @* =============================================
+                       BATCH + EXPIRY
+                       ============================================= *@
+
+                    <div class="medicine-receipt-grid">
+
+
+                        <div class="medicine-receipt-field">
+
+                            <label>
+                                Số lô
+                            </label>
+
+                            <input
+                                type="text"
+                                class="medicine-receipt-input"
+                                @bind="
+                                    MedicineReceiptStateService.BatchNo"
+                                @bind:event="oninput"
+                                maxlength="50"
+                                placeholder="Ví dụ: L2409" />
+
+                        </div>
+
+
+                        <div class="medicine-receipt-field">
+
+                            <label>
+                                Hạn sử dụng
+                            </label>
+
+                            <input
+                                type="date"
+                                class="medicine-receipt-input"
+                                @bind="
+                                    MedicineReceiptStateService.ExpiryDate" />
+
+                        </div>
+
+
+                    </div>
+
+
+                    @* =============================================
+                       QUANTITY + PRICE
+                       ============================================= *@
+
+                    <div class="medicine-receipt-grid">
+
+
+                        <div class="medicine-receipt-field">
+
+                            <label>
+                                Số lượng
+                            </label>
+
+                            <input
+                                type="number"
+                                min="1"
+                                class="medicine-receipt-input"
+                                @bind="
+                                    MedicineReceiptStateService.Quantity"
+                                @bind:event="oninput"
+                                placeholder="Nhập số lượng..." />
+
+                        </div>
+
+
+                        <div class="medicine-receipt-field">
+
+                            <label>
+                                Giá nhập / đơn vị
+                            </label>
+
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                class="medicine-receipt-input"
+                                @bind="
+                                    MedicineReceiptStateService.ImportPrice"
+                                @bind:event="oninput"
+                                placeholder="0" />
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+            @* =================================================
+               NOTE
+               ================================================= *@
+
+            <section class="medicine-receipt-note">
+
+                <i class="fas fa-info-circle"></i>
+
+                <div>
+
+                    <strong>
+                        Lưu ý
+                    </strong>
+
+                    <p>
+                        Mỗi lô thuốc được xác định bởi thuốc và
+                        số lô. Hạn sử dụng và giá nhập sẽ được
+                        kiểm tra khi lưu phiếu nhập.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            @* =================================================
+               ACTIONS
+               ================================================= *@
+
+            <div class="medicine-receipt-actions">
+
+
+                <button
+                    type="button"
+                    class="medicine-receipt-cancel-button"
+                    @onclick="GoBack">
+
+                    Hủy
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="medicine-receipt-submit-button"
+                    disabled="@(!MedicineReceiptStateService.CanSubmit)"
+                    @onclick="SubmitReceiptAsync">
+
+                    <i class="fas fa-check"></i>
+
+                    @(MedicineReceiptStateService.IsSubmitting
+                        ? "Đang nhập..."
+                        : "Nhập thuốc")
+
+                </button>
+
+
+            </div>
+
+
+        </div>
 
     </div>
 
@@ -431,13 +591,6 @@
     }
 
 
-    protected override async Task OnInitializedAsync()
-    {
-        await MedicineReceiptStateService
-            .LoadMedicinesAsync();
-    }
-
-
     // =====================================================
     // STATE CHANGE
     // =====================================================
@@ -447,6 +600,43 @@
         InvokeAsync(
             StateHasChanged
         );
+    }
+
+
+    // =====================================================
+    // SEARCH MEDICINES
+    // =====================================================
+
+    private async Task SearchMedicinesAsync()
+    {
+        await MedicineReceiptStateService
+            .SearchMedicinesAsync();
+    }
+
+
+    // =====================================================
+    // SEARCH BY ENTER
+    // =====================================================
+
+    private async Task HandleSearchKeyDown(
+        KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchMedicinesAsync();
+        }
+    }
+
+
+    // =====================================================
+    // SELECT MEDICINE
+    // =====================================================
+
+    private void SelectMedicine(
+        MedicineDTO medicine)
+    {
+        MedicineReceiptStateService
+            .SelectMedicine(medicine);
     }
 
 
@@ -462,20 +652,24 @@
         }
 
 
-        var success =
-            await MedicineReceiptStateService
-                .SubmitReceiptAsync();
-
-
-        if (!success)
-        {
-            return;
-        }
-
-
-        // Không chuyển trang ngay.
-        // Cho user thấy message thành công.
+        await MedicineReceiptStateService
+            .SubmitReceiptAsync();
     }
+
+
+    // =====================================================
+    // GO TO INVENTORY
+    // =====================================================
+
+    private void GoToInventory()
+    {
+        NavigationManager.NavigateTo(
+            "/pharmacy/inventory",
+            forceLoad: true
+        );
+    }
+
+
     // =====================================================
     // BACK
     // =====================================================
