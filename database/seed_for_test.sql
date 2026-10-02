@@ -1839,3 +1839,31 @@ SELECT
     dispensed_by
 FROM clinical.prescriptions
 WHERE id = 7
+
+-------------------------------------------------------------test dispense medicince
+SELECT
+    id,
+    medical_record_id,
+    status
+FROM clinical.prescriptions
+WHERE status = 1;
+
+SELECT
+    id,
+    prescription_id,
+    medicine_id,
+    medicine_name_snapshot,
+    quantity
+FROM clinical.prescription_items
+WHERE prescription_id = 7
+
+SELECT
+    id,
+    medicine_id,
+    batch_no,
+    quantity,
+    expiry_date
+FROM clinical.medicine_batches
+WHERE medicine_id = 1
+  AND quantity > 0
+ORDER BY expiry_date, id;

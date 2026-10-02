@@ -1682,3 +1682,171 @@ FROM billing.services
 ORDER BY id;
 
 GO
+
+INSERT INTO auth.roles
+(
+    name,
+    description,
+    is_system
+)
+VALUES
+(
+    'Pharmacist',
+    N'Dược sĩ',
+    1
+);
+
+
+
+
+--------------------------------------------------
+-- ============================================================
+-- SEED PHARMACIST ACCOUNT
+-- ============================================================
+
+-- ============================================================
+-- GET PHARMACIST ROLE
+-- ============================================================
+
+DECLARE @PharmacistRoleId INT;
+
+SELECT @PharmacistRoleId = id
+FROM auth.roles
+WHERE name = 'Pharmacist';
+
+
+IF @PharmacistRoleId IS NULL
+BEGIN
+    THROW 50010,
+        'Pharmacist role does not exist.',
+        1;
+END;
+
+
+-- ============================================================
+-- GET EXISTING PASSWORD HASH
+-- ============================================================
+-- Dùng password_hash của Doctor đã tồn tại
+-- để tài khoản test Pharmacist có cùng password.
+
+DECLARE @PharmacistPasswordHash NVARCHAR(255);
+
+SELECT TOP 1
+    @PharmacistPasswordHash = u.password_hash
+FROM auth.users u
+INNER JOIN scheduling.doctors d
+    ON d.user_id = u.id
+WHERE
+    u.is_active = 1
+    AND u.is_deleted = 0;
+
+
+IF @PharmacistPasswordHash IS NULL
+BEGIN
+    THROW 50011,
+        'No existing Doctor account found to copy password hash.',
+        1;
+END;
+
+
+-- ============================================================
+-- CREATE PHARMACIST USER
+-- ============================================================
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM auth.users
+    WHERE username = 'pharmacist01'
+)
+BEGIN
+
+    INSERT INTO auth.users
+    (
+        username,
+        password_hash,
+        email,
+        full_name,
+        phone,
+        is_active,
+        created_at,
+        failed_login_count,
+        email_confirmed,
+        is_deleted
+    )
+    VALUES
+    (
+        'pharmacist01',
+        @PharmacistPasswordHash,
+        'pharmacist01@clinic.local',
+        N'Dược sĩ Test',
+        '0910000010',
+        1,
+        GETDATE(),
+        0,
+        1,
+        0
+    );
+
+END;
+
+
+-- ============================================================
+-- GET USER ID
+-- ============================================================
+
+DECLARE @PharmacistUserId INT;
+
+SELECT @PharmacistUserId = id
+FROM auth.users
+WHERE username = 'pharmacist01';
+
+
+-- ============================================================
+-- ASSIGN PHARMACIST ROLE
+-- ============================================================
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM auth.user_roles
+    WHERE
+        user_id = @PharmacistUserId
+        AND role_id = @PharmacistRoleId
+)
+BEGIN
+
+    INSERT INTO auth.user_roles
+    (
+        user_id,
+        role_id,
+        assigned_at,
+        assigned_by
+    )
+    VALUES
+    (
+        @PharmacistUserId,
+        @PharmacistRoleId,
+        GETDATE(),
+        NULL
+    );
+
+END;
+
+
+-- ============================================================
+-- VERIFY PHARMACIST
+-- ============================================================
+
+SELECT
+    u.id AS user_id,
+    u.username,
+    u.full_name,
+    u.email,
+    r.name AS role_name
+FROM auth.users u
+INNER JOIN auth.user_roles ur
+    ON ur.user_id = u.id
+INNER JOIN auth.roles r
+    ON r.id = ur.role_id
+WHERE u.username = 'pharmacist01';

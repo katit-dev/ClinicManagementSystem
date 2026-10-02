@@ -28,6 +28,8 @@ public class PharmacyController : ControllerBase
     // =====================================================
 
     [HttpPost("{id}/dispense")]
+    [Authorize(Roles = "Pharmacist")]
+
     public async Task<IActionResult> Dispense(
         int id,
         [FromBody] DispenseRequestDTO request)
