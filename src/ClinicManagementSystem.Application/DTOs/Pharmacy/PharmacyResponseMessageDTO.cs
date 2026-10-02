@@ -107,4 +107,19 @@ public static class PharmacyResponseMessageDTO
 
     public const string GetPendingPrescriptionsFailed =
         "Không thể tải danh sách đơn thuốc.";
+
+    // =====================================================
+    // PRESCRIPTION DETAIL
+    // =====================================================
+
+    public const string GetPrescriptionDetailSuccess =
+        "Lấy thông tin đơn thuốc thành công.";
+
+    public const string GetPrescriptionDetailFailed =
+        "Không thể tải thông tin đơn thuốc.";
+
+    public const string PrescriptionNotAvailableForPharmacy =
+        "Đơn thuốc không ở trạng thái chờ phát.";
+
+
 }

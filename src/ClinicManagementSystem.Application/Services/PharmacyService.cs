@@ -33,6 +33,10 @@ public interface IPharmacyService
         string? keyword,
         int pageNumber,
         int pageSize);
+
+    Task<HttpResponseData<PharmacyPrescriptionDetailResponseDTO>>
+    GetPrescriptionDetailAsync(
+        int prescriptionId);
 }
 
 
@@ -59,6 +63,448 @@ public class PharmacyService
         _unitOfWork = unitOfWork;
 
         _logger = logger;
+    }
+
+    // =====================================================
+    // GET PRESCRIPTION DETAIL
+    //
+    // GET:
+    // /api/pharmacy/prescriptions/{id}
+    //
+    // Trả về:
+    // - Prescription
+    // - Patient
+    // - Doctor
+    // - Prescription Items
+    // - Available Stock
+    // - FEFO Batches
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<PharmacyPrescriptionDetailResponseDTO>>
+        GetPrescriptionDetailAsync(
+            int prescriptionId)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE ID
+            // =================================================
+
+            if (prescriptionId <= 0)
+            {
+                return new HttpResponseData<
+                    PharmacyPrescriptionDetailResponseDTO>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        PharmacyResponseMessageDTO
+                            .PrescriptionIdInvalid
+                };
+            }
+
+
+            // =================================================
+            // GET PRESCRIPTION
+            // =================================================
+
+            var prescription =
+                await _unitOfWork
+                    .PrescriptionRepository
+                    .WhereSql(
+                        p =>
+                            p.Id == prescriptionId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (prescription == null)
+            {
+                return new HttpResponseData<
+                    PharmacyPrescriptionDetailResponseDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        PharmacyResponseMessageDTO
+                            .PrescriptionNotFound
+                };
+            }
+
+
+            // =================================================
+            // CHECK STATUS
+            //
+            // Pharmacy chỉ xử lý đơn đã Finalized.
+            // =================================================
+
+            if (
+                prescription.Status !=
+                (byte)PrescriptionStatus.Finalized
+            )
+            {
+                return new HttpResponseData<
+                    PharmacyPrescriptionDetailResponseDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        PharmacyResponseMessageDTO
+                            .PrescriptionNotAvailableForPharmacy
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id ==
+                            prescription.MedicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (medicalRecord == null)
+            {
+                return new HttpResponseData<
+                    PharmacyPrescriptionDetailResponseDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        PharmacyResponseMessageDTO
+                            .MedicalRecordNotFound
+                };
+            }
+
+
+            // =================================================
+            // GET PATIENT
+            // =================================================
+
+            var patient =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            p.Id ==
+                            medicalRecord.PatientId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (patient == null)
+            {
+                return new HttpResponseData<
+                    PharmacyPrescriptionDetailResponseDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        "Không tìm thấy bệnh nhân."
+                };
+            }
+
+
+            // =================================================
+            // GET DOCTOR
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.Id ==
+                            prescription.DoctorId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (doctor == null)
+            {
+                return new HttpResponseData<
+                    PharmacyPrescriptionDetailResponseDTO>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        "Không tìm thấy bác sĩ."
+                };
+            }
+
+
+            // =================================================
+            // GET PRESCRIPTION ITEMS
+            // =================================================
+
+            var prescriptionItems =
+                await _unitOfWork
+                    .PrescriptionItemRepository
+                    .WhereSql(
+                        i =>
+                            i.PrescriptionId ==
+                            prescription.Id
+                    )
+                    .OrderBy(
+                        i => i.Id
+                    )
+                    .ToListAsync();
+
+
+            if (prescriptionItems.Count == 0)
+            {
+                return new HttpResponseData<
+                    PharmacyPrescriptionDetailResponseDTO>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        PharmacyResponseMessageDTO
+                            .PrescriptionHasNoItems
+                };
+            }
+
+
+            // =================================================
+            // CURRENT DATE
+            // =================================================
+
+            var today =
+                DateOnly.FromDateTime(
+                    DateTime.Now
+                );
+
+
+            // =================================================
+            // GET MEDICINE BATCHES
+            //
+            // Chỉ lấy:
+            // - còn hàng
+            // - chưa hết hạn
+            //
+            // FEFO:
+            // expiry_date ASC
+            // id ASC
+            // =================================================
+
+            var medicineIds =
+                prescriptionItems
+                    .Select(
+                        i => i.MedicineId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var batches =
+                await _unitOfWork
+                    .MedicineBatchRepository
+                    .WhereSql(
+                        b =>
+                            medicineIds.Contains(
+                                b.MedicineId
+                            )
+                            &&
+                            b.Quantity > 0
+                            &&
+                            b.ExpiryDate >= today
+                    )
+                    .OrderBy(
+                        b => b.ExpiryDate
+                    )
+                    .ThenBy(
+                        b => b.Id
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // GROUP BATCHES BY MEDICINE
+            // =================================================
+
+            var batchesByMedicine =
+                batches
+                    .GroupBy(
+                        b => b.MedicineId
+                    )
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.ToList()
+                    );
+
+
+            // =================================================
+            // MAP ITEMS
+            // =================================================
+
+            var itemDtos =
+                prescriptionItems
+                    .Select(
+                        item =>
+                        {
+                            batchesByMedicine.TryGetValue(
+                                item.MedicineId,
+                                out var medicineBatches
+                            );
+
+
+                            medicineBatches ??=
+                                new List<MedicineBatch>();
+
+
+                            return new PharmacyPrescriptionDetailItemDTO
+                            {
+                                PrescriptionItemId =
+                                    item.Id,
+
+                                MedicineId =
+                                    item.MedicineId,
+
+                                MedicineName =
+                                    item.MedicineNameSnapshot,
+
+                                Quantity =
+                                    item.Quantity,
+
+                                Dosage =
+                                    item.Dosage
+                                    ?? string.Empty,
+
+                                Instruction =
+                                    item.Instruction,
+
+                                DurationDays =
+                                    item.DurationDays,
+
+                                Frequency =
+                                    item.Frequency,
+
+                                AvailableQuantity =
+                                    medicineBatches.Sum(
+                                        b => b.Quantity
+                                    ),
+
+                                Batches =
+                                    medicineBatches
+                                        .Select(
+                                            batch =>
+                                                new PharmacyPrescriptionBatchDTO
+                                                {
+                                                    BatchId =
+                                                        batch.Id,
+
+                                                    BatchNo =
+                                                        batch.BatchNo,
+
+                                                    ExpiryDate =
+                                                        batch.ExpiryDate,
+
+                                                    Quantity =
+                                                        batch.Quantity
+                                                }
+                                        )
+                                        .ToList()
+                            };
+                        }
+                    )
+                    .ToList();
+
+
+            // =================================================
+            // MAP RESPONSE
+            // =================================================
+
+            var result =
+                new PharmacyPrescriptionDetailResponseDTO
+                {
+                    PrescriptionId =
+                        prescription.Id,
+
+                    MedicalRecordId =
+                        prescription.MedicalRecordId,
+
+                    Status =
+                        prescription.Status,
+
+                    Note =
+                        prescription.Note,
+
+                    CreatedAt =
+                        prescription.CreatedAt,
+
+                    DispensedAt =
+                        prescription.DispensedAt,
+
+                    PatientId =
+                        patient.Id,
+
+                    PatientCode =
+                        patient.PatientCode,
+
+                    PatientName =
+                        patient.FullName,
+
+                    DoctorName =
+                        doctor.FullName,
+
+                    Items =
+                        itemDtos
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<
+                PharmacyPrescriptionDetailResponseDTO>
+            {
+                StatusCode = 200,
+
+                Message =
+                    PharmacyResponseMessageDTO
+                        .GetPrescriptionDetailSuccess,
+
+                Content =
+                    result
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to get pharmacy prescription detail. " +
+                "PrescriptionId: {PrescriptionId}",
+                prescriptionId
+            );
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            return new HttpResponseData<
+                PharmacyPrescriptionDetailResponseDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    PharmacyResponseMessageDTO
+                        .GetPrescriptionDetailFailed
+            };
+        }
     }
 
     // =====================================================
