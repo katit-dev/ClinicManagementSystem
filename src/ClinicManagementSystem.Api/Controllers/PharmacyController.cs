@@ -168,6 +168,27 @@ public class PharmacyController : ControllerBase
         );
     }
 
+    // =====================================================
+    // GET PRESCRIPTION DETAIL
+    //
+    // GET:
+    // /api/pharmacy/prescriptions/{id}
+    // =====================================================
+
+    [HttpGet("/api/pharmacy/prescriptions/{id:int}")]
+    public async Task<IActionResult> GetPrescriptionDetail(
+        int id)
+    {
+        var result =
+            await _pharmacyService
+                .GetPrescriptionDetailAsync(id);
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 
 
 }
