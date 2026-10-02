@@ -139,5 +139,32 @@ public static class PharmacyResponseMessageDTO
     public const string StockTransactionGetFailed =
         "Không thể lấy thẻ kho.";
 
+        public const string InvalidUser =
+            "Không xác định được người thực hiện.";
 
-}
+        public const string ReceiptInvalidRequest =
+            "Thông tin phiếu nhập không hợp lệ.";
+
+        public const string ReceiptDuplicateBatch =
+            "Không được nhập trùng thuốc và số lô trong cùng phiếu.";
+
+        public const string MedicineInactive =
+            "Thuốc đã ngừng hoạt động.";
+
+        public const string ReceiptBatchExpiryMismatch =
+            "Hạn sử dụng của lô thuốc không khớp với dữ liệu hiện tại.";
+
+        public const string ReceiptBatchPriceMismatch =
+            "Giá nhập của lô thuốc không khớp với dữ liệu hiện tại.";
+
+        public const string ReceiptBatchNotFound =
+            "Không tìm thấy lô thuốc.";
+
+        public const string ReceiptCreateSuccess =
+            "Nhập thuốc thành công.";
+
+        public const string ReceiptCreateFailed =
+            "Không thể nhập thuốc.";
+    }
+
+

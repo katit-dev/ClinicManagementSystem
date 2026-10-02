@@ -37,6 +37,11 @@ public interface IPharmacyService
     Task<HttpResponseData<PharmacyPrescriptionDetailResponseDTO>>
     GetPrescriptionDetailAsync(
         int prescriptionId);
+
+    Task<HttpResponseData<bool>>
+    CreateMedicineReceiptAsync(
+        int currentUserId,
+        MedicineReceiptRequestDTO request);
 }
 
 
@@ -64,6 +69,547 @@ public class PharmacyService
 
         _logger = logger;
     }
+
+    // =====================================================
+    // CREATE MEDICINE RECEIPT
+    //
+    // POST:
+    // /api/medicines/receipts
+    //
+    // - Tạo mới hoặc cộng vào medicine_batches
+    // - Cập nhật medicines.stock_quantity
+    // - Tạo medicine_stock_transactions với Type = IN
+    // - Tất cả nằm trong cùng transaction
+    // =====================================================
+    // =====================================================
+    // CREATE MEDICINE RECEIPT
+    //
+    // POST:
+    // /api/medicines/receipts
+    //
+    // - Tạo mới hoặc cộng vào medicine_batches
+    // - Cập nhật medicines.stock_quantity
+    // - Tạo medicine_stock_transactions
+    // - Type = 0 = IN
+    // - Tất cả xử lý trong cùng transaction
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<bool>>
+        CreateMedicineReceiptAsync(
+            int currentUserId,
+            MedicineReceiptRequestDTO request)
+    {
+        bool transactionStarted = false;
+
+        try
+        {
+            // =================================================
+            // VALIDATE USER
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return new HttpResponseData<bool>
+                {
+                    StatusCode = 401,
+
+                    Message =
+                        "Không xác định được người nhập thuốc."
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE REQUEST
+            // =================================================
+
+            if (
+                request == null ||
+                request.Items == null ||
+                request.Items.Count == 0
+            )
+            {
+                return new HttpResponseData<bool>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        "Danh sách thuốc nhập không được rỗng."
+                };
+            }
+
+
+            // =================================================
+            // VALIDATE ITEMS
+            // =================================================
+
+            foreach (var item in request.Items)
+            {
+                if (
+                    item.MedicineId <= 0 ||
+                    string.IsNullOrWhiteSpace(
+                        item.BatchNo) ||
+                    item.Quantity <= 0 ||
+                    item.ImportPrice < 0
+                )
+                {
+                    return new HttpResponseData<bool>
+                    {
+                        StatusCode = 400,
+
+                        Message =
+                            "Thông tin thuốc nhập không hợp lệ."
+                    };
+                }
+            }
+
+
+            // =================================================
+            // GET MEDICINE IDS
+            // =================================================
+
+            var medicineIds =
+                request.Items
+                    .Select(
+                        x => x.MedicineId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            // =================================================
+            // GET MEDICINES
+            // =================================================
+
+            var medicines =
+                await _unitOfWork
+                    .MedicineRepository
+                    .WhereSql(
+                        m =>
+                            medicineIds.Contains(
+                                m.Id
+                            )
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // CHECK MEDICINES EXIST
+            // =================================================
+
+            if (
+                medicines.Count !=
+                medicineIds.Count
+            )
+            {
+                return new HttpResponseData<bool>
+                {
+                    StatusCode = 404,
+
+                    Message =
+                        "Không tìm thấy thuốc."
+                };
+            }
+
+
+            // =================================================
+            // CHECK MEDICINES ACTIVE
+            // =================================================
+
+            var inactiveMedicine =
+                medicines.FirstOrDefault(
+                    m => !m.IsActive
+                );
+
+
+            if (inactiveMedicine != null)
+            {
+                return new HttpResponseData<bool>
+                {
+                    StatusCode = 409,
+
+                    Message =
+                        $"Thuốc {inactiveMedicine.Name} " +
+                        "đã ngừng hoạt động."
+                };
+            }
+
+
+            // =================================================
+            // BEGIN TRANSACTION
+            // =================================================
+
+            await _unitOfWork
+                .BeginTransactionAsync();
+
+            transactionStarted = true;
+
+
+            // =================================================
+            // PREPARE STOCK TRANSACTIONS
+            //
+            // Lưu tạm batch + quantity before.
+            //
+            // Batch mới chưa có Id cho tới khi SaveChanges.
+            // =================================================
+
+            var pendingTransactions =
+                new List<
+                    (
+                        MedicineBatch Batch,
+                        MedicineStockTransaction Transaction
+                    )
+                >();
+
+
+            // =================================================
+            // PROCESS EACH ITEM
+            // =================================================
+
+            foreach (var item in request.Items)
+            {
+                // =============================================
+                // GET MEDICINE
+                // =============================================
+
+                var medicine =
+                    medicines.First(
+                        m =>
+                            m.Id ==
+                            item.MedicineId
+                    );
+
+
+                // =============================================
+                // NORMALIZE BATCH NO
+                // =============================================
+
+                var batchNo =
+                    item.BatchNo.Trim();
+
+
+                // =============================================
+                // EXPIRY DATE
+                // =============================================
+
+                var expiryDate =
+                    DateOnly.FromDateTime(
+                        item.ExpiryDate
+                    );
+
+
+                // =============================================
+                // FIND EXISTING BATCH
+                //
+                // Unique:
+                // (medicine_id, batch_no)
+                // =============================================
+
+                var batch =
+                    await _unitOfWork
+                        .MedicineBatchRepository
+                        .WhereSql(
+                            b =>
+                                b.MedicineId ==
+                                    medicine.Id
+                                &&
+                                b.BatchNo ==
+                                    batchNo
+                        )
+                        .FirstOrDefaultAsync();
+
+
+                // =============================================
+                // BATCH QUANTITY BEFORE
+                // =============================================
+
+                var batchQuantityBefore =
+                    batch?.Quantity ?? 0;
+
+
+                // =============================================
+                // CREATE NEW BATCH
+                // =============================================
+
+                if (batch == null)
+                {
+                    batch =
+                        new MedicineBatch
+                        {
+                            MedicineId =
+                                medicine.Id,
+
+                            BatchNo =
+                                batchNo,
+
+                            ExpiryDate =
+                                expiryDate,
+
+                            Quantity =
+                                item.Quantity,
+
+                            ImportPrice =
+                                item.ImportPrice
+                        };
+
+
+                    await _unitOfWork
+                        .MedicineBatchRepository
+                        .AddAsync(
+                            batch
+                        );
+                }
+                else
+                {
+                    // =========================================
+                    // EXISTING BATCH
+                    //
+                    // Cộng thêm số lượng vào lô.
+                    // =========================================
+
+                    batch.Quantity =
+                        batchQuantityBefore +
+                        item.Quantity;
+                }
+
+
+                // =============================================
+                // MEDICINE TOTAL STOCK BEFORE
+                // =============================================
+
+                var medicineStockBefore =
+                    medicine.StockQuantity;
+
+
+                // =============================================
+                // UPDATE TOTAL STOCK
+                // =============================================
+
+                medicine.StockQuantity =
+                    medicineStockBefore +
+                    item.Quantity;
+
+
+                medicine.UpdatedAt =
+                    DateTime.Now;
+
+
+                // =============================================
+                // BUILD NOTE
+                // =============================================
+
+                var noteParts =
+                    new List<string>
+                    {
+                    "Nhập thuốc"
+                    };
+
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        request.SupplierName)
+                )
+                {
+                    noteParts.Add(
+                        $"NCC: {request.SupplierName.Trim()}"
+                    );
+                }
+
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        request.ReferenceCode)
+                )
+                {
+                    noteParts.Add(
+                        $"Số HĐ: {request.ReferenceCode.Trim()}"
+                    );
+                }
+
+
+                noteParts.Add(
+                    $"Lô: {batchNo}"
+                );
+
+
+                // =============================================
+                // CREATE PENDING TRANSACTION
+                //
+                // Chưa gán BatchId ở đây vì batch mới có thể
+                // chưa được DB cấp Id.
+                // =============================================
+
+                var stockTransaction =
+                    new MedicineStockTransaction
+                    {
+                        MedicineId =
+                            medicine.Id,
+
+                        Type = 0,
+
+                        Quantity =
+                            item.Quantity,
+
+                        QuantityBefore =
+                            batchQuantityBefore,
+
+                        QuantityAfter =
+                            batchQuantityBefore +
+                            item.Quantity,
+
+                        PrescriptionId =
+                            null,
+
+                        ReversalOfTransactionId =
+                            null,
+
+                        CreatedBy =
+                            currentUserId,
+
+                        CreatedAt =
+                            DateTime.Now,
+
+                        Note =
+                            string.Join(
+                                " | ",
+                                noteParts
+                            )
+                    };
+
+
+                pendingTransactions.Add(
+                    (
+                        batch,
+                        stockTransaction
+                    )
+                );
+            }
+
+
+            // =================================================
+            // SAVE BATCHES + MEDICINES
+            //
+            // Sau SaveChanges:
+            // batch mới sẽ có Id.
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // CREATE STOCK TRANSACTIONS
+            // =================================================
+
+            foreach (
+                var pending
+                in pendingTransactions
+            )
+            {
+                pending.Transaction.BatchId =
+                    pending.Batch.Id;
+
+
+                await _unitOfWork
+                    .MedicineStockTransactionRepository
+                    .AddAsync(
+                        pending.Transaction
+                    );
+            }
+
+
+            // =================================================
+            // SAVE STOCK TRANSACTIONS
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // COMMIT
+            // =================================================
+
+            await _unitOfWork
+                .CommitTransactionAsync();
+
+            transactionStarted = false;
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<bool>
+            {
+                StatusCode = 200,
+
+                Message =
+                    "Nhập thuốc thành công.",
+
+                Content =
+                    true
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // ROLLBACK
+            // =================================================
+
+            if (transactionStarted)
+            {
+                try
+                {
+                    await _unitOfWork
+                        .RollbackTransactionAsync();
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(
+                        rollbackEx,
+
+                        "Rollback medicine receipt failed. " +
+                        "UserId: {UserId}",
+
+                        currentUserId
+                    );
+                }
+            }
+
+
+            // =================================================
+            // LOG
+            // =================================================
+
+            _logger.LogError(
+                ex,
+
+                "Failed to create medicine receipt. " +
+                "UserId: {UserId}",
+
+                currentUserId
+            );
+
+
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
+
+            return new HttpResponseData<bool>
+            {
+                StatusCode = 500,
+
+                Message =
+                    "Không thể nhập thuốc.",
+
+                Content =
+                    false
+            };
+        }
+    }
+
 
     // =====================================================
     // GET PRESCRIPTION DETAIL
