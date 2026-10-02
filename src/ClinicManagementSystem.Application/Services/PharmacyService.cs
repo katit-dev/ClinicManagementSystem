@@ -21,6 +21,12 @@ public interface IPharmacyService
             int prescriptionId,
             int currentUserId,
             DispenseRequestDTO request);
+
+    Task<HttpResponseData<bool>>
+        ReportShortageAsync(
+            int prescriptionId,
+            int currentUserId,
+            ReportShortageRequestDTO request);
 }
 
 
@@ -82,7 +88,8 @@ public class PharmacyService
             {
                 return Response(
                     400,
-                    "Không xác định được đơn thuốc."
+                    PharmacyResponseMessageDTO
+                        .PrescriptionIdInvalid
                 );
             }
 
@@ -95,7 +102,8 @@ public class PharmacyService
             {
                 return Response(
                     401,
-                    "Không xác định được người phát thuốc."
+                    PharmacyResponseMessageDTO
+                        .DispenseUserInvalid
                 );
             }
 
@@ -110,7 +118,8 @@ public class PharmacyService
             {
                 return Response(
                     400,
-                    "Danh sách thuốc phát không được rỗng."
+                    PharmacyResponseMessageDTO
+                        .DispenseRequestEmpty
                 );
             }
 
@@ -123,7 +132,8 @@ public class PharmacyService
                 {
                     return Response(
                         400,
-                        "Thông tin phát thuốc không hợp lệ."
+                        PharmacyResponseMessageDTO
+                            .DispenseRequestInvalid
                     );
                 }
             }
@@ -147,7 +157,8 @@ public class PharmacyService
             {
                 return Response(
                     404,
-                    "Không tìm thấy đơn thuốc."
+                    PharmacyResponseMessageDTO
+                        .PrescriptionNotFound
                 );
             }
 
@@ -170,7 +181,8 @@ public class PharmacyService
             {
                 return Response(
                     409,
-                    "Đơn thuốc đã được phát."
+                    PharmacyResponseMessageDTO
+                        .PrescriptionAlreadyDispensed
                 );
             }
 
@@ -182,7 +194,8 @@ public class PharmacyService
             {
                 return Response(
                     409,
-                    "Đơn thuốc chưa được chốt."
+                    PharmacyResponseMessageDTO
+                        .PrescriptionNotFinalized
                 );
             }
 
@@ -209,7 +222,8 @@ public class PharmacyService
             {
                 return Response(
                     409,
-                    "Đơn thuốc không có thuốc để phát."
+                    PharmacyResponseMessageDTO
+                        .PrescriptionHasNoItems
                 );
             }
 
@@ -243,8 +257,8 @@ public class PharmacyService
                 {
                     return Response(
                         400,
-                        $"Thiếu thông tin phát thuốc cho " +
-                        $"thuốc #{prescriptionItem.Id}."
+                        $"{PharmacyResponseMessageDTO.DispenseItemMissing} " +
+                        $"#{prescriptionItem.Id}."
                     );
                 }
 
@@ -262,9 +276,8 @@ public class PharmacyService
                 {
                     return Response(
                         400,
-                        $"Số lượng phát của " +
-                        $"{prescriptionItem.MedicineNameSnapshot} " +
-                        $"không đúng số lượng kê."
+                        $"{PharmacyResponseMessageDTO.DispenseQuantityInvalid} " +
+                        $"{prescriptionItem.MedicineNameSnapshot}."
                     );
                 }
             }
@@ -291,7 +304,8 @@ public class PharmacyService
             {
                 return Response(
                     400,
-                    "Có thuốc không thuộc đơn thuốc."
+                    PharmacyResponseMessageDTO
+                        .PrescriptionItemInvalid
                 );
             }
 
@@ -379,9 +393,8 @@ public class PharmacyService
 
                     return Response(
                         409,
-                        $"Thuốc " +
-                        $"{prescriptionItem.MedicineNameSnapshot} " +
-                        "không đủ tồn kho."
+                        $"{PharmacyResponseMessageDTO.InsufficientStock} " +
+                        $"{prescriptionItem.MedicineNameSnapshot}."
                     );
                 }
 
@@ -411,9 +424,8 @@ public class PharmacyService
 
                     return Response(
                         409,
-                        $"Lô thuốc của " +
-                        $"{prescriptionItem.MedicineNameSnapshot} " +
-                        "không đúng thứ tự FEFO."
+                        $"{PharmacyResponseMessageDTO.InvalidFefoBatch} " +
+                        $"{prescriptionItem.MedicineNameSnapshot}."
                     );
                 }
 
@@ -491,7 +503,8 @@ public class PharmacyService
 
                         return Response(
                             404,
-                            "Không tìm thấy thuốc."
+                            PharmacyResponseMessageDTO
+                                .MedicineNotFound
                         );
                     }
 
@@ -512,8 +525,8 @@ public class PharmacyService
 
                         return Response(
                             409,
-                            $"Tồn tổng của thuốc " +
-                            $"{medicine.Name} không hợp lệ."
+                            $"{PharmacyResponseMessageDTO.InvalidMedicineStock} " +
+                            $"{medicine.Name}."
                         );
                     }
 
@@ -587,7 +600,7 @@ public class PharmacyService
 
                     return Response(
                         409,
-                        $"Không đủ thuốc " +
+                        $"{PharmacyResponseMessageDTO.DispenseQuantityInsufficient} " +
                         $"{prescriptionItem.MedicineNameSnapshot}."
                     );
                 }
@@ -694,7 +707,8 @@ public class PharmacyService
                 StatusCode = 200,
 
                 Message =
-                    "Phát thuốc thành công.",
+                    PharmacyResponseMessageDTO
+                        .DispenseSuccess,
 
                 Content =
                     result
@@ -733,21 +747,347 @@ public class PharmacyService
 
             return Response(
                 500,
-                "Không thể phát thuốc."
+                PharmacyResponseMessageDTO
+                    .DispenseFailed
             );
         }
     }
 
 
     // =====================================================
-    // RESPONSE HELPER
+    // REPORT SHORTAGE
+    //
+    // POST:
+    // /api/prescriptions/{id}/report-shortage
+    //
+    // Dược sĩ báo thiếu thuốc
+    // → tạo notification cho bác sĩ.
+    //
+    // Không:
+    // - đổi Prescription.Status
+    // - trừ kho
+    // - tạo StockTransaction
     // =====================================================
 
-    private static HttpResponseData<
-        PrescriptionResponseDTO>
+    public async Task<HttpResponseData<bool>>
+        ReportShortageAsync(
+            int prescriptionId,
+            int currentUserId,
+            ReportShortageRequestDTO request)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE PRESCRIPTION ID
+            // =================================================
+
+            if (prescriptionId <= 0)
+            {
+                return ShortageResponse(
+                    400,
+                    PharmacyResponseMessageDTO
+                        .PrescriptionIdInvalid
+                );
+            }
+
+
+            // =================================================
+            // VALIDATE USER
+            // =================================================
+
+            if (currentUserId <= 0)
+            {
+                return ShortageResponse(
+                    401,
+                    PharmacyResponseMessageDTO
+                        .UserNotFound
+                );
+            }
+
+
+            // =================================================
+            // VALIDATE REQUEST
+            // =================================================
+
+            if (
+                request == null ||
+                request.MedicineId <= 0
+            )
+            {
+                return ShortageResponse(
+                    400,
+                    PharmacyResponseMessageDTO
+                        .ShortageRequestInvalid
+                );
+            }
+
+
+            // =================================================
+            // GET PRESCRIPTION
+            // =================================================
+
+            var prescription =
+                await _unitOfWork
+                    .PrescriptionRepository
+                    .WhereSql(
+                        p =>
+                            p.Id ==
+                            prescriptionId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (prescription == null)
+            {
+                return ShortageResponse(
+                    404,
+                    PharmacyResponseMessageDTO
+                        .PrescriptionNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK PRESCRIPTION STATUS
+            //
+            // Chỉ đơn đã Finalized mới được báo thiếu.
+            // =================================================
+
+            if (
+                prescription.Status !=
+                (byte)PrescriptionStatus.Finalized
+            )
+            {
+                return ShortageResponse(
+                    409,
+                    PharmacyResponseMessageDTO
+                        .ShortagePrescriptionNotFinalized
+                );
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORD
+            // =================================================
+
+            var medicalRecord =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            m.Id ==
+                            prescription.MedicalRecordId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (medicalRecord == null)
+            {
+                return ShortageResponse(
+                    404,
+                    PharmacyResponseMessageDTO
+                        .MedicalRecordNotFound
+                );
+            }
+
+
+            // =================================================
+            // GET DOCTOR
+            //
+            // MedicalRecord
+            //      ↓
+            // Doctor
+            //      ↓
+            // UserId
+            // =================================================
+
+            var doctor =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            d.Id ==
+                            medicalRecord.DoctorId
+                            &&
+                            d.IsActive
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (doctor == null)
+            {
+                return ShortageResponse(
+                    404,
+                    PharmacyResponseMessageDTO
+                        .ShortageDoctorNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK MEDICINE
+            // =================================================
+
+            var medicine =
+                await _unitOfWork
+                    .MedicineRepository
+                    .WhereSql(
+                        m =>
+                            m.Id ==
+                            request.MedicineId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (medicine == null)
+            {
+                return ShortageResponse(
+                    404,
+                    PharmacyResponseMessageDTO
+                        .MedicineNotFound
+                );
+            }
+
+
+            // =================================================
+            // CHECK MEDICINE BELONGS TO PRESCRIPTION
+            //
+            // Không cho phép báo thiếu một thuốc
+            // không nằm trong đơn.
+            // =================================================
+
+            var prescriptionItem =
+                await _unitOfWork
+                    .PrescriptionItemRepository
+                    .WhereSql(
+                        i =>
+                            i.PrescriptionId ==
+                                prescription.Id
+                            &&
+                            i.MedicineId ==
+                                request.MedicineId
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (prescriptionItem == null)
+            {
+                return ShortageResponse(
+                    400,
+                    PharmacyResponseMessageDTO
+                        .MedicineNotInPrescription
+                );
+            }
+
+
+            // =================================================
+            // CREATE NOTIFICATION
+            //
+            // Gửi InApp notification cho Doctor.
+            //
+            // appointment_id bắt buộc theo schema.
+            // =================================================
+
+            var notification =
+                new Notification
+                {
+                    AppointmentId =
+                        medicalRecord.AppointmentId,
+
+                    UserId =
+                        doctor.UserId,
+
+                    Channel =
+                        "InApp",
+
+                    Recipient =
+                        doctor.Email,
+
+                    Title =
+                        "Báo thiếu thuốc",
+
+                    Content =
+                        $"Thuốc \"{medicine.Name}\" " +
+                        $"trong đơn thuốc #{prescription.Id} " +
+                        $"đang thiếu. " +
+                        (
+                            string.IsNullOrWhiteSpace(
+                                request.Note
+                            )
+                                ? "Vui lòng kiểm tra và đổi thuốc thay thế."
+                                : request.Note
+                        ),
+
+                    Status = 0,
+
+                    CreatedAt =
+                        DateTime.Now
+                };
+
+
+            await _unitOfWork
+                .NotificationRepository
+                .AddAsync(
+                    notification
+                );
+
+
+            // =================================================
+            // SAVE
+            // =================================================
+
+            await _unitOfWork
+                .SaveChangesAsync();
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<bool>
+            {
+                StatusCode = 200,
+
+                Message =
+                    PharmacyResponseMessageDTO
+                        .ShortageSuccess,
+
+                Content = true
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to report medicine shortage. " +
+                "PrescriptionId: {PrescriptionId}, " +
+                "MedicineId: {MedicineId}, " +
+                "UserId: {UserId}",
+                prescriptionId,
+                request?.MedicineId,
+                currentUserId
+            );
+
+
+            return ShortageResponse(
+                500,
+                PharmacyResponseMessageDTO
+                    .ShortageFailed
+            );
+        }
+    }
+
+
+    // =====================================================
+    // DISPENSE RESPONSE HELPER
+    // =====================================================
+
+    private static
+        HttpResponseData<PrescriptionResponseDTO>
         Response(
             int statusCode,
-            string message)
+            string message,
+            PrescriptionResponseDTO? content = null)
     {
         return new HttpResponseData<
             PrescriptionResponseDTO>
@@ -756,7 +1096,35 @@ public class PharmacyService
                 statusCode,
 
             Message =
-                message
+                message,
+
+            Content =
+                content
+        };
+    }
+
+
+    // =====================================================
+    // SHORTAGE RESPONSE HELPER
+    // =====================================================
+
+    private static
+        HttpResponseData<bool>
+        ShortageResponse(
+            int statusCode,
+            string message,
+            bool content = false)
+    {
+        return new HttpResponseData<bool>
+        {
+            StatusCode =
+                statusCode,
+
+            Message =
+                message,
+
+            Content =
+                content
         };
     }
 }
