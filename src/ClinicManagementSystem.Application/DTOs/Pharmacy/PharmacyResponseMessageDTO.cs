@@ -121,5 +121,23 @@ public static class PharmacyResponseMessageDTO
     public const string PrescriptionNotAvailableForPharmacy =
         "Đơn thuốc không ở trạng thái chờ phát.";
 
+    public const string InventoryGetSuccess =
+    "Lấy tồn kho thành công.";
+
+    public const string InventoryGetFailed =
+        "Không thể lấy tồn kho.";
+
+    public const string StockAdjustSuccess =
+        "Điều chỉnh tồn kho thành công.";
+
+    public const string StockAdjustFailed =
+        "Không thể điều chỉnh tồn kho.";
+
+    public const string StockTransactionGetSuccess =
+        "Lấy thẻ kho thành công.";
+
+    public const string StockTransactionGetFailed =
+        "Không thể lấy thẻ kho.";
+
 
 }
