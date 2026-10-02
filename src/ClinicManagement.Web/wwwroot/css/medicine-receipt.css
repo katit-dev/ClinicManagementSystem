@@ -1,0 +1,462 @@
+.medicine-receipt-page {
+    min-height: 100vh;
+
+    background: #f4f7fa;
+
+    padding: 30px 24px;
+}
+
+.medicine-receipt-container {
+    max-width: 900px;
+
+    margin: 0 auto;
+}
+
+
+/* =====================================================
+   BACK
+   ===================================================== */
+
+.medicine-receipt-back-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-bottom: 24px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #58738d;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.medicine-receipt-back-button:hover {
+    color: #294c68;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.medicine-receipt-header {
+    margin-bottom: 24px;
+}
+
+.medicine-receipt-label {
+    margin-bottom: 6px;
+
+    color: #7188a0;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.1px;
+}
+
+.medicine-receipt-header h1 {
+    margin: 0 0 7px;
+
+    color: #193953;
+
+    font-size: 29px;
+    font-weight: 750;
+}
+
+.medicine-receipt-header p {
+    margin: 0;
+
+    color: #718296;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   LAYOUT
+   ===================================================== */
+
+.medicine-receipt-layout {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+}
+
+
+/* =====================================================
+   CARD
+   ===================================================== */
+
+.medicine-receipt-card {
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #dce5ed;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 3px 12px
+        rgba(32, 55, 80, 0.04);
+}
+
+.medicine-receipt-card-header {
+    padding: 19px 21px;
+
+    border-bottom: 1px solid #e4ebf1;
+}
+
+.medicine-receipt-card-label {
+    margin-bottom: 5px;
+
+    color: #8392a3;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.medicine-receipt-card-header h2 {
+    margin: 0;
+
+    color: #294965;
+
+    font-size: 18px;
+}
+
+.medicine-receipt-card-body {
+    padding: 21px;
+}
+
+
+/* =====================================================
+   FORM
+   ===================================================== */
+
+.medicine-receipt-field {
+    margin-bottom: 17px;
+}
+
+.medicine-receipt-field:last-child {
+    margin-bottom: 0;
+}
+
+.medicine-receipt-field label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #405870;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.medicine-receipt-input {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    min-height: 40px;
+
+    padding: 9px 12px;
+
+    border: 1px solid #cdd9e3;
+
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #304b64;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    outline: none;
+}
+
+.medicine-receipt-input:focus {
+    border-color: #7191ad;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(93, 125, 156, 0.1);
+}
+
+.medicine-receipt-input::placeholder {
+    color: #a0acb7;
+}
+
+
+/* =====================================================
+   GRID
+   ===================================================== */
+
+.medicine-receipt-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 16px;
+}
+
+
+/* =====================================================
+   NOTE
+   ===================================================== */
+
+.medicine-receipt-note {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 12px;
+
+    padding: 15px 17px;
+
+    border: 1px solid #dce5ed;
+
+    border-radius: 9px;
+
+    background: #f8fafc;
+
+    color: #718398;
+}
+
+.medicine-receipt-note > i {
+    margin-top: 2px;
+
+    color: #68839c;
+
+    font-size: 14px;
+}
+
+.medicine-receipt-note strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #405b73;
+
+    font-size: 12px;
+}
+
+.medicine-receipt-note p {
+    margin: 0;
+
+    color: #78899a;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   ACTIONS
+   ===================================================== */
+
+.medicine-receipt-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 9px;
+
+    padding-top: 3px;
+}
+
+.medicine-receipt-cancel-button,
+.medicine-receipt-submit-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-width: 100px;
+
+    padding: 9px 15px;
+
+    border-radius: 7px;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.medicine-receipt-cancel-button {
+    border: 1px solid #cbd7e1;
+
+    background: #ffffff;
+
+    color: #5b7186;
+
+    cursor: pointer;
+}
+
+.medicine-receipt-cancel-button:hover {
+    background: #f1f5f8;
+}
+
+.medicine-receipt-submit-button {
+    border: 1px solid #385a76;
+
+    background: #385a76;
+
+    color: #ffffff;
+
+    cursor: not-allowed;
+
+    opacity: 0.55;
+}
+
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+.medicine-receipt-state {
+    min-height: 300px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 10px;
+
+    color: #728498;
+
+    font-size: 13px;
+}
+
+.medicine-receipt-spinner {
+    width: 18px;
+    height: 18px;
+
+    border: 3px solid #dce5ed;
+
+    border-top-color: #5d7d9c;
+
+    border-radius: 50%;
+
+    animation:
+        medicine-receipt-spin
+        0.8s linear infinite;
+}
+
+@keyframes medicine-receipt-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =====================================================
+   ERROR
+   ===================================================== */
+
+.medicine-receipt-error {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 16px;
+
+    padding: 12px 14px;
+
+    border: 1px solid #fecdd3;
+
+    border-radius: 8px;
+
+    background: #fff1f2;
+
+    color: #9f1239;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   EMPTY
+   ===================================================== */
+
+.medicine-receipt-empty {
+    padding: 35px 15px;
+
+    text-align: center;
+}
+
+.medicine-receipt-empty > i {
+    margin-bottom: 12px;
+
+    color: #8ea0b1;
+
+    font-size: 26px;
+}
+
+.medicine-receipt-empty h3 {
+    margin: 0 0 5px;
+
+    color: #405a71;
+
+    font-size: 16px;
+}
+
+.medicine-receipt-empty p {
+    margin: 0;
+
+    color: #8998a7;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 650px) {
+
+    .medicine-receipt-page {
+        padding: 22px 12px;
+    }
+
+    .medicine-receipt-grid {
+        grid-template-columns: 1fr;
+
+        gap: 0;
+    }
+
+    .medicine-receipt-actions {
+        flex-direction: column-reverse;
+    }
+
+    .medicine-receipt-cancel-button,
+    .medicine-receipt-submit-button {
+        width: 100%;
+    }
+}
