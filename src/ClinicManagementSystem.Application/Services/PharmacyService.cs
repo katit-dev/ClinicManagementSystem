@@ -42,6 +42,11 @@ public interface IPharmacyService
     CreateMedicineReceiptAsync(
         int currentUserId,
         MedicineReceiptRequestDTO request);
+
+    Task<HttpResponseData<List<MedicineDTO>>>
+        SearchMedicinesAsync(
+            string keyword);
+
 }
 
 
@@ -68,6 +73,223 @@ public class PharmacyService
         _unitOfWork = unitOfWork;
 
         _logger = logger;
+    }
+
+    // =====================================================
+    // SEARCH MEDICINES
+    //
+    // GET:
+    // /api/medicines?keyword=
+    //
+    // Tìm theo:
+    // - Mã thuốc
+    // - Tên thuốc
+    // - Hoạt chất
+    //
+    // Chỉ lấy thuốc đang active.
+    // Tối đa 20 kết quả.
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<List<MedicineDTO>>>
+        SearchMedicinesAsync(
+            string keyword)
+    {
+        try
+        {
+            // =================================================
+            // VALIDATE KEYWORD
+            // =================================================
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return new HttpResponseData<
+                    List<MedicineDTO>>
+                {
+                    StatusCode = 400,
+
+                    Message =
+                        "Từ khóa tìm thuốc không được để trống.",
+
+                    Content =
+                        []
+                };
+            }
+
+
+            // =================================================
+            // NORMALIZE KEYWORD
+            // =================================================
+
+            keyword =
+                keyword.Trim();
+
+
+            // =================================================
+            // SEARCH PATTERN
+            // =================================================
+
+            var pattern =
+                $"%{keyword}%";
+
+
+            // =================================================
+            // GET MEDICINES
+            //
+            // Chỉ lấy thuốc active.
+            //
+            // Search:
+            // - code
+            // - name
+            // - active_ingredient
+            // =================================================
+
+            var medicines =
+                await _unitOfWork
+                    .MedicineRepository
+                    .WhereSql(
+                        m =>
+                            m.IsActive &&
+                            (
+                                EF.Functions.Like(
+                                    m.Name,
+                                    pattern
+                                )
+                                ||
+                                (
+                                    m.Code != null &&
+                                    EF.Functions.Like(
+                                        m.Code,
+                                        pattern
+                                    )
+                                )
+                                ||
+                                (
+                                    m.ActiveIngredient != null &&
+                                    EF.Functions.Like(
+                                        m.ActiveIngredient,
+                                        pattern
+                                    )
+                                )
+                            )
+                    )
+                    .OrderBy(
+                        m => m.Name
+                    )
+                    .ThenBy(
+                        m => m.Id
+                    )
+                    .Take(20)
+                    .ToListAsync();
+
+
+            // =================================================
+            // MAP DTO
+            // =================================================
+
+            var result =
+                medicines
+                    .Select(
+                        m =>
+                            new MedicineDTO
+                            {
+                                Id =
+                                    m.Id,
+
+                                Code =
+                                    m.Code,
+
+                                Name =
+                                    m.Name,
+
+                                ActiveIngredient =
+                                    m.ActiveIngredient,
+
+                                Concentration =
+                                    m.Concentration,
+
+                                Unit =
+                                    m.Unit,
+
+                                Price =
+                                    m.Price,
+
+                                StockQuantity =
+                                    m.StockQuantity,
+
+                                IsActive =
+                                    m.IsActive
+                            }
+                    )
+                    .ToList();
+
+
+            // =================================================
+            // NO RESULT
+            // =================================================
+
+            if (result.Count == 0)
+            {
+                return new HttpResponseData<
+                    List<MedicineDTO>>
+                {
+                    StatusCode = 200,
+
+                    Message =
+                        "Không tìm thấy thuốc phù hợp.",
+
+                    Content =
+                        []
+                };
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<
+                List<MedicineDTO>>
+            {
+                StatusCode = 200,
+
+                Message =
+                    "Tìm thuốc thành công.",
+
+                Content =
+                    result
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to search medicines. " +
+                "Keyword: {Keyword}",
+                keyword
+            );
+
+
+            // =================================================
+            // ERROR RESPONSE
+            // =================================================
+
+            return new HttpResponseData<
+                List<MedicineDTO>>
+            {
+                StatusCode = 500,
+
+                Message =
+                    "Không thể tìm thuốc.",
+
+                Content =
+                    []
+            };
+        }
     }
 
     // =====================================================
