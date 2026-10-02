@@ -1,4 +1,4 @@
-namespace ClinicManagementSystem.Application.DTOs.Pharmacy;
+using ClinicManagementSystem.Application.DTOs.Pharmacy;
 
 public class MedicineInventoryDTO
 {
@@ -25,4 +25,7 @@ public class MedicineInventoryDTO
     public bool IsNearExpiry { get; set; }
 
     public int NearExpiryBatchCount { get; set; }
+
+    // Tất cả các lô còn tồn của thuốc
+    public List<MedicineInventoryBatchDTO> Batches { get; set; } = [];
 }

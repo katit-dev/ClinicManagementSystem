@@ -229,47 +229,59 @@ public class MedicineInventoryService
                     continue;
                 }
 
-
                 result.Add(
-                    new MedicineInventoryDTO
-                    {
-                        Id =
-                            medicine.Id,
+        new MedicineInventoryDTO
+        {
+            Id = medicine.Id,
 
-                        Code =
-                            medicine.Code,
+            Code = medicine.Code,
 
-                        Name =
-                            medicine.Name,
+            Name = medicine.Name,
 
-                        ActiveIngredient =
-                            medicine.ActiveIngredient,
+            ActiveIngredient =
+                medicine.ActiveIngredient,
 
-                        StockQuantity =
-                            totalStock,
+            StockQuantity =
+                totalStock,
 
-                        MinStock =
-                            medicine.MinStock,
+            MinStock =
+                medicine.MinStock,
 
-                        IsLowStock =
-                            isLowStock,
+            IsLowStock =
+                isLowStock,
 
-                        NearExpiryBatchNo =
-                            nearestBatch?.BatchNo,
+            NearExpiryBatchNo =
+                nearestBatch?.BatchNo,
 
-                        NearExpiryDate =
-                            nearestBatch?.ExpiryDate,
+            NearExpiryDate =
+                nearestBatch?.ExpiryDate,
 
-                        NearExpiryBatchQuantity =
-                            nearestBatch?.Quantity,
+            NearExpiryBatchQuantity =
+                nearestBatch?.Quantity,
 
-                        IsNearExpiry =
-                            nearExpiryBatches.Count > 0,
+            IsNearExpiry =
+                nearExpiryBatches.Count > 0,
 
-                        NearExpiryBatchCount =
-                            nearExpiryBatches.Count
-                    }
-                );
+            NearExpiryBatchCount =
+                nearExpiryBatches.Count,
+
+            Batches =
+                validBatches
+                    .OrderBy(b => b.ExpiryDate)
+                    .ThenBy(b => b.Id)
+                    .Select(
+                        b => new MedicineInventoryBatchDTO
+                        {
+                            BatchId = b.Id,
+                            BatchNo = b.BatchNo,
+                            ExpiryDate = b.ExpiryDate,
+                            Quantity = b.Quantity
+                        }
+                    )
+                    .ToList()
+        }
+    );
+
             }
 
 

@@ -26,10 +26,6 @@
 
             <div>
 
-                <div class="pharmacy-inventory-label">
-                    KHO THUỐC
-                </div>
-
                 <h1>
                     Kho thuốc & lô hạn dùng
                 </h1>
@@ -150,11 +146,8 @@
 
                     </div>
 
-                    <button
-                        type="button"
-                        class="pharmacy-inventory-refresh-button"
-                        @onclick="LoadInventoryAsync"
-                        disabled="@IsLoading">
+                    <button type="button" class="pharmacy-inventory-refresh-button" @onclick="LoadInventoryAsync"
+                            disabled="@IsLoading">
 
                         <i class="fas fa-sync-alt"></i>
 
@@ -217,6 +210,10 @@
 
                                     <th>
                                         Trạng thái
+                                    </th>
+
+                                    <th>
+                                        Thao tác
                                     </th>
 
                                 </tr>
@@ -288,7 +285,7 @@
                                                     {
                                                         <span>
                                                             @medicine.NearExpiryDate.Value
-                                                                .ToString("dd/MM/yyyy")
+                                                            .ToString("dd/MM/yyyy")
                                                         </span>
                                                     }
 
@@ -327,6 +324,17 @@
 
                                         </td>
 
+                                        <td>
+                                            <button type="button" class="inventory-adjust-button"
+                                                    @onclick="() => OpenAdjustModal(medicine)">
+
+                                                <i class="fas fa-sliders-h"></i>
+
+                                                Điều chỉnh
+
+                                            </button>
+                                        </td>
+
                                     </tr>
                                 }
 
@@ -338,6 +346,140 @@
                 }
 
             </section>
+
+            @if (ShowAdjustModal && SelectedMedicine != null)
+            {
+                <div class="inventory-modal-backdrop" @onclick="CloseAdjustModal">
+
+                    <div class="inventory-modal" @onclick:stopPropagation="true">
+
+                        <div class="inventory-modal-header">
+
+                            <div>
+                                <div class="inventory-modal-label">
+                                    ĐIỀU CHỈNH TỒN
+                                </div>
+
+                                <h3>
+                                    @SelectedMedicine.Name
+                                </h3>
+
+                                <span>
+                                    @(SelectedMedicine.Code
+                                        ?? $"TH{SelectedMedicine.Id:000}")
+                                </span>
+                            </div>
+
+                            <button type="button" class="inventory-modal-close" @onclick="CloseAdjustModal">
+
+                                <i class="fas fa-times"></i>
+
+                            </button>
+
+                        </div>
+
+
+                        <div class="inventory-modal-body">
+
+                            @if (!string.IsNullOrWhiteSpace(AdjustError))
+                            {
+                                <div class="inventory-adjust-error">
+                                    @AdjustError
+                                </div>
+                            }
+
+
+                            <div class="inventory-adjust-field">
+
+                                <label>
+                                    Lô thuốc
+                                </label>
+
+                                <select class="inventory-adjust-input" @bind="SelectedBatchId">
+
+                                    <option value="0">
+                                        -- Chọn lô thuốc --
+                                    </option>
+
+                                    @foreach (var batch in SelectedMedicine.Batches)
+                                    {
+                                        <option value="@batch.BatchId">
+                                            @batch.BatchNo
+                                            — tồn @batch.Quantity
+                                            — HSD @batch.ExpiryDate.ToString("dd/MM/yyyy")
+                                        </option>
+                                    }
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="inventory-adjust-field">
+
+                                <label>
+                                    Số lượng điều chỉnh
+                                </label>
+
+                                <input type="number" class="inventory-adjust-input" @bind="AdjustQuantity"
+                                       placeholder="Ví dụ: 5 hoặc -5" />
+
+                                <small>
+                                    Số dương để cộng tồn, số âm để trừ tồn.
+                                </small>
+
+                            </div>
+
+
+                            <div class="inventory-adjust-field">
+
+                                <label>
+                                    Lý do
+                                </label>
+
+                                <textarea class="inventory-adjust-input inventory-adjust-textarea" @bind="AdjustReason"
+                                          maxlength="500" placeholder="Nhập lý do điều chỉnh...">
+                    </textarea>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="inventory-modal-footer">
+
+                            <button type="button" class="inventory-cancel-button" @onclick="CloseAdjustModal"
+                                    disabled="@IsAdjusting">
+
+                                Hủy
+
+                            </button>
+
+                            <button type="button" class="inventory-confirm-button" @onclick="AdjustStockAsync"
+                                    disabled="@IsAdjusting">
+
+                                @if (IsAdjusting)
+                                {
+                                    <span>
+                                        Đang lưu...
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        <i class="fas fa-check"></i>
+                                        Xác nhận điều chỉnh
+                                    </span>
+                                }
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
 
         }
 
@@ -375,6 +517,26 @@
             x => x.NearExpiryBatchCount
         );
 
+    // =====================================================
+    // ADJUST STOCK MODAL
+    // =====================================================
+
+    private bool ShowAdjustModal;
+
+    private MedicineInventoryDTO? SelectedMedicine;
+
+    private int SelectedBatchId;
+
+    private int AdjustQuantity;
+
+    private string AdjustReason =
+        string.Empty;
+
+    private string AdjustError =
+        string.Empty;
+
+    private bool IsAdjusting;
+
 
     // =====================================================
     // INITIALIZE
@@ -383,6 +545,162 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadInventoryAsync();
+    }
+
+    // Goi api adjust
+    private async Task AdjustStockAsync()
+    {
+        if (SelectedMedicine == null)
+        {
+            return;
+        }
+
+
+        AdjustError =
+            string.Empty;
+
+
+        if (SelectedBatchId <= 0)
+        {
+            AdjustError =
+                "Vui lòng chọn lô thuốc.";
+
+            return;
+        }
+
+
+        if (AdjustQuantity == 0)
+        {
+            AdjustError =
+                "Số lượng điều chỉnh phải khác 0.";
+
+            return;
+        }
+
+
+        if (string.IsNullOrWhiteSpace(
+            AdjustReason))
+        {
+            AdjustError =
+                "Vui lòng nhập lý do điều chỉnh.";
+
+            return;
+        }
+
+
+        IsAdjusting =
+            true;
+
+
+        try
+        {
+            var request =
+                new AdjustMedicineStockRequestDTO
+                {
+                    BatchId =
+                        SelectedBatchId,
+
+                    Quantity =
+                        AdjustQuantity,
+
+                    Reason =
+                        AdjustReason.Trim()
+                };
+
+
+            var content = JsonContent.Create(request);
+
+            var response =
+                await AuthorizedApiService.PostAsync(
+                    $"/api/medicines/{SelectedMedicine.Id}/adjust",
+                    content
+                );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            StockTransactionDTO
+                        >
+                    >();
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                AdjustError =
+                    responseData?.Message
+                    ?? "Không thể điều chỉnh tồn kho.";
+
+                return;
+            }
+
+
+            // =============================================
+            // SUCCESS
+            // =============================================
+
+            ShowAdjustModal =
+                false;
+
+            SelectedMedicine =
+                null;
+
+            await LoadInventoryAsync();
+        }
+        catch
+        {
+            AdjustError =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsAdjusting =
+                false;
+        }
+    }
+    // Mo modal
+    private void OpenAdjustModal(
+    MedicineInventoryDTO medicine)
+    {
+        SelectedMedicine =
+            medicine;
+
+        SelectedBatchId =
+            0;
+
+        AdjustQuantity =
+            0;
+
+        AdjustReason =
+            string.Empty;
+
+        AdjustError =
+            string.Empty;
+
+        ShowAdjustModal =
+            true;
+    }
+
+    // dong modal
+    private void CloseAdjustModal()
+    {
+        if (IsAdjusting)
+        {
+            return;
+        }
+
+        ShowAdjustModal =
+            false;
+
+        SelectedMedicine =
+            null;
+
+        AdjustError =
+            string.Empty;
     }
 
 
