@@ -1,0 +1,606 @@
+@page "/pharmacy/prescriptions/{PrescriptionId:int}"
+
+@using System.Net.Http.Json
+@using ClinicManagementSystem.Application.DTOs
+@using ClinicManagementSystem.Application.DTOs.Pharmacy
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Pharmacist")]
+
+@inject AuthorizedApiService AuthorizedApiService
+@inject NavigationManager NavigationManager
+
+
+<div class="pharmacy-prescription-detail-page">
+
+    <div class="pharmacy-prescription-detail-container">
+
+        @* =====================================================
+           HEADER
+           ===================================================== *@
+
+        <div class="pharmacy-prescription-detail-header">
+
+            <div>
+
+                <button
+                    type="button"
+                    class="pharmacy-prescription-back-button"
+                    @onclick="GoBack">
+
+                    ← Quay lại danh sách
+
+                </button>
+
+                <h1>
+                    Chi tiết đơn thuốc
+                </h1>
+
+                @if (Prescription != null)
+                {
+                    <p>
+                        Đơn thuốc #@Prescription.PrescriptionId
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+
+        @* =====================================================
+           ERROR
+           ===================================================== *@
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="pharmacy-prescription-message pharmacy-prescription-error">
+                @ErrorMessage
+            </div>
+        }
+
+
+        @* =====================================================
+           LOADING
+           ===================================================== *@
+
+        @if (IsLoading)
+        {
+            <div class="pharmacy-prescription-loading">
+
+                <div class="pharmacy-prescription-spinner"></div>
+
+                <span>
+                    Đang tải thông tin đơn thuốc...
+                </span>
+
+            </div>
+        }
+        else if (Prescription != null)
+        {
+            @* =================================================
+               PATIENT + PRESCRIPTION INFO
+               ================================================= *@
+
+            <div class="pharmacy-prescription-info-grid">
+
+                @* =============================================
+                   PATIENT
+                   ============================================= *@
+
+                <section class="pharmacy-prescription-card">
+
+                    <div class="pharmacy-prescription-card-title">
+                        Thông tin bệnh nhân
+                    </div>
+
+                    <div class="pharmacy-prescription-info-row">
+
+                        <span>
+                            Mã bệnh nhân
+                        </span>
+
+                        <strong>
+                            @Prescription.PatientCode
+                        </strong>
+
+                    </div>
+
+                    <div class="pharmacy-prescription-info-row">
+
+                        <span>
+                            Họ tên
+                        </span>
+
+                        <strong>
+                            @Prescription.PatientName
+                        </strong>
+
+                    </div>
+
+                    <div class="pharmacy-prescription-info-row">
+
+                        <span>
+                            Bác sĩ kê đơn
+                        </span>
+
+                        <strong>
+                            @Prescription.DoctorName
+                        </strong>
+
+                    </div>
+
+                </section>
+
+
+                @* =============================================
+                   PRESCRIPTION
+                   ============================================= *@
+
+                <section class="pharmacy-prescription-card">
+
+                    <div class="pharmacy-prescription-card-title">
+                        Thông tin đơn
+                    </div>
+
+                    <div class="pharmacy-prescription-info-row">
+
+                        <span>
+                            Mã đơn
+                        </span>
+
+                        <strong>
+                            #@Prescription.PrescriptionId
+                        </strong>
+
+                    </div>
+
+                    <div class="pharmacy-prescription-info-row">
+
+                        <span>
+                            Ngày kê
+                        </span>
+
+                        <strong>
+                            @Prescription.CreatedAt
+                                .ToString("dd/MM/yyyy HH:mm")
+                        </strong>
+
+                    </div>
+
+                    <div class="pharmacy-prescription-info-row">
+
+                        <span>
+                            Trạng thái
+                        </span>
+
+                        <span class="pharmacy-prescription-status">
+                            Đã chốt
+                        </span>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            @* =================================================
+               NOTE
+               ================================================= *@
+
+            @if (!string.IsNullOrWhiteSpace(
+                Prescription.Note))
+            {
+                <section class="pharmacy-prescription-card pharmacy-prescription-note-card">
+
+                    <div class="pharmacy-prescription-card-title">
+                        Ghi chú
+                    </div>
+
+                    <div class="pharmacy-prescription-note">
+                        @Prescription.Note
+                    </div>
+
+                </section>
+            }
+
+
+            @* =================================================
+               MEDICINES
+               ================================================= *@
+
+            <section class="pharmacy-prescription-card">
+
+                <div class="pharmacy-prescription-card-title">
+                    Danh sách thuốc
+                </div>
+
+
+                @if (Prescription.Items.Count == 0)
+                {
+                    <div class="pharmacy-prescription-empty">
+
+                        Đơn thuốc không có thuốc.
+
+                    </div>
+                }
+                else
+                {
+                    <div class="pharmacy-prescription-items">
+
+                        @foreach (
+                            var item in Prescription.Items)
+                        {
+                            <article class="pharmacy-prescription-item">
+
+                                @* =================================
+                                   MEDICINE HEADER
+                                   ================================= *@
+
+                                <div class="pharmacy-prescription-item-header">
+
+                                    <div>
+
+                                        <h2>
+                                            @item.MedicineName
+                                        </h2>
+
+                                        <span>
+                                            Medicine ID:
+                                            @item.MedicineId
+                                        </span>
+
+                                    </div>
+
+                                    <div class="pharmacy-prescription-quantity">
+
+                                        <span>
+                                            SL kê
+                                        </span>
+
+                                        <strong>
+                                            @item.Quantity
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+
+                                @* =================================
+                                   DOSAGE
+                                   ================================= *@
+
+                                <div class="pharmacy-prescription-item-info">
+
+                                    <div>
+
+                                        <span>
+                                            Liều dùng
+                                        </span>
+
+                                        <strong>
+                                            @item.Dosage
+                                        </strong>
+
+                                    </div>
+
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        item.Frequency))
+                                    {
+                                        <div>
+
+                                            <span>
+                                                Tần suất
+                                            </span>
+
+                                            <strong>
+                                                @item.Frequency
+                                            </strong>
+
+                                        </div>
+                                    }
+
+
+                                    @if (item.DurationDays.HasValue)
+                                    {
+                                        <div>
+
+                                            <span>
+                                                Số ngày
+                                            </span>
+
+                                            <strong>
+                                                @item.DurationDays ngày
+                                            </strong>
+
+                                        </div>
+                                    }
+
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        item.Instruction))
+                                    {
+                                        <div>
+
+                                            <span>
+                                                Hướng dẫn
+                                            </span>
+
+                                            <strong>
+                                                @item.Instruction
+                                            </strong>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+
+                                @* =================================
+                                   STOCK
+                                   ================================= *@
+
+                                <div class="pharmacy-prescription-stock">
+
+                                    <div>
+
+                                        <span>
+                                            Tồn khả dụng
+                                        </span>
+
+                                        <strong>
+                                            @item.AvailableQuantity
+                                        </strong>
+
+                                    </div>
+
+
+                                    @if (item.AvailableQuantity >=
+                                        item.Quantity)
+                                    {
+                                        <span class="pharmacy-prescription-stock-ok">
+                                            Đủ thuốc
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="pharmacy-prescription-stock-shortage">
+                                            Không đủ thuốc
+                                        </span>
+                                    }
+
+                                </div>
+
+
+                                @* =================================
+                                   FEFO BATCHES
+                                   ================================= *@
+
+                                <div class="pharmacy-prescription-batches">
+
+                                    <h3>
+                                        Lô thuốc theo FEFO
+                                    </h3>
+
+
+                                    @if (item.Batches.Count == 0)
+                                    {
+                                        <div class="pharmacy-prescription-no-batch">
+
+                                            Không có lô thuốc còn hàng
+                                            và còn hạn.
+
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="pharmacy-prescription-batch-table-wrapper">
+
+                                            <table class="pharmacy-prescription-batch-table">
+
+                                                <thead>
+
+                                                    <tr>
+
+                                                        <th>
+                                                            Lô
+                                                        </th>
+
+                                                        <th>
+                                                            Hạn sử dụng
+                                                        </th>
+
+                                                        <th>
+                                                            Tồn lô
+                                                        </th>
+
+                                                    </tr>
+
+                                                </thead>
+
+                                                <tbody>
+
+                                                    @foreach (
+                                                        var batch in item.Batches)
+                                                    {
+                                                        <tr>
+
+                                                            <td>
+                                                                <strong>
+                                                                    @batch.BatchNo
+                                                                </strong>
+                                                            </td>
+
+                                                            <td>
+                                                                @batch.ExpiryDate
+                                                                    .ToString(
+                                                                        "dd/MM/yyyy"
+                                                                    )
+                                                            </td>
+
+                                                            <td>
+                                                                @batch.Quantity
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+
+                                                </tbody>
+
+                                            </table>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+
+            </section>
+
+
+            @* =================================================
+               ACTION
+               ================================================= *@
+
+            <div class="pharmacy-prescription-actions">
+
+                <button
+                    type="button"
+                    class="pharmacy-prescription-back-action"
+                    @onclick="GoBack">
+
+                    ← Quay lại danh sách
+
+                </button>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // PARAMETER
+    // =====================================================
+
+    [Parameter]
+    public int PrescriptionId { get; set; }
+
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    private PharmacyPrescriptionDetailResponseDTO?
+        Prescription;
+
+    private bool IsLoading;
+
+    private string ErrorMessage = string.Empty;
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPrescriptionAsync();
+    }
+
+
+    // =====================================================
+    // LOAD PRESCRIPTION DETAIL
+    // =====================================================
+
+    private async Task LoadPrescriptionAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+
+        ErrorMessage = string.Empty;
+
+        Prescription = null;
+
+        try
+        {
+            var response =
+                await AuthorizedApiService
+                    .GetAsync(
+                        $"/api/pharmacy/prescriptions/{PrescriptionId}"
+                    );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            PharmacyPrescriptionDetailResponseDTO
+                        >
+                    >();
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải thông tin đơn thuốc.";
+
+                return;
+            }
+
+
+            if (responseData.Content == null)
+            {
+                ErrorMessage =
+                    "Không nhận được dữ liệu đơn thuốc.";
+
+                return;
+            }
+
+
+            Prescription =
+                responseData.Content;
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+
+    // =====================================================
+    // BACK
+    // =====================================================
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo(
+            "/pharmacy"
+        );
+    }
+}

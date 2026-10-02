@@ -1,0 +1,500 @@
+.pharmacy-prescription-detail-page {
+    min-height: 100vh;
+    background: #f6f8fb;
+    padding: 32px 24px;
+    box-sizing: border-box;
+}
+
+.pharmacy-prescription-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.pharmacy-prescription-detail-header {
+    margin-bottom: 24px;
+}
+
+.pharmacy-prescription-detail-header h1 {
+    margin: 14px 0 6px;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.pharmacy-prescription-detail-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   BACK BUTTON
+   ===================================================== */
+
+.pharmacy-prescription-back-button {
+    padding: 8px 0;
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pharmacy-prescription-back-button:hover {
+    color: #1f2937;
+}
+
+
+/* =====================================================
+   CARD
+   ===================================================== */
+
+.pharmacy-prescription-card {
+    margin-bottom: 20px;
+    padding: 22px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+.pharmacy-prescription-card-title {
+    margin-bottom: 18px;
+    color: #334155;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   INFO GRID
+   ===================================================== */
+
+.pharmacy-prescription-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.pharmacy-prescription-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.pharmacy-prescription-info-row:last-child {
+    border-bottom: none;
+}
+
+.pharmacy-prescription-info-row span:first-child {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.pharmacy-prescription-info-row strong {
+    color: #1f2937;
+    font-size: 14px;
+    text-align: right;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.pharmacy-prescription-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 12px;
+
+    border: 1px solid #c9dcf8;
+    border-radius: 8px;
+
+    background: #e8f1ff;
+    color: #315b9d;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   NOTE
+   ===================================================== */
+
+.pharmacy-prescription-note-card {
+    padding-bottom: 20px;
+}
+
+.pharmacy-prescription-note {
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   MEDICINE ITEM
+   ===================================================== */
+
+.pharmacy-prescription-items {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pharmacy-prescription-item {
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fbfcfe;
+}
+
+
+/* =====================================================
+   MEDICINE HEADER
+   ===================================================== */
+
+.pharmacy-prescription-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5eaf0;
+}
+
+.pharmacy-prescription-item-header h2 {
+    margin: 0 0 6px;
+    color: #1f2937;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.pharmacy-prescription-item-header span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.pharmacy-prescription-quantity {
+    min-width: 80px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    text-align: center;
+}
+
+.pharmacy-prescription-quantity span {
+    display: block;
+    margin-bottom: 3px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.pharmacy-prescription-quantity strong {
+    color: #334155;
+    font-size: 18px;
+}
+
+
+/* =====================================================
+   DOSAGE / INSTRUCTION
+   ===================================================== */
+
+.pharmacy-prescription-item-info {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 18px 0;
+}
+
+.pharmacy-prescription-item-info > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.pharmacy-prescription-item-info span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.pharmacy-prescription-item-info strong {
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   STOCK
+   ===================================================== */
+
+.pharmacy-prescription-stock {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.pharmacy-prescription-stock > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pharmacy-prescription-stock > div span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.pharmacy-prescription-stock > div strong {
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.pharmacy-prescription-stock-ok,
+.pharmacy-prescription-stock-shortage {
+    padding: 6px 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pharmacy-prescription-stock-ok {
+    background: #edf7f0;
+    color: #3f7d53;
+    border: 1px solid #cfe8d5;
+}
+
+.pharmacy-prescription-stock-shortage {
+    background: #fff4e5;
+    color: #a15c00;
+    border: 1px solid #f3d39b;
+}
+
+
+/* =====================================================
+   BATCHES
+   ===================================================== */
+
+.pharmacy-prescription-batches {
+    margin-top: 4px;
+}
+
+.pharmacy-prescription-batches h3 {
+    margin: 0 0 10px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.pharmacy-prescription-batch-table-wrapper {
+    overflow-x: auto;
+}
+
+.pharmacy-prescription-batch-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pharmacy-prescription-batch-table th {
+    padding: 11px 13px;
+    background: #f1f5f9;
+    color: #475569;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    border-bottom: 1px solid #dfe5ec;
+}
+
+.pharmacy-prescription-batch-table td {
+    padding: 12px 13px;
+    color: #374151;
+    font-size: 13px;
+    border-bottom: 1px solid #edf0f3;
+}
+
+.pharmacy-prescription-batch-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =====================================================
+   NO BATCH
+   ===================================================== */
+
+.pharmacy-prescription-no-batch {
+    padding: 14px;
+    border-radius: 8px;
+    background: #fff8e6;
+    border: 1px solid #f3d68a;
+    color: #8a6500;
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   EMPTY
+   ===================================================== */
+
+.pharmacy-prescription-empty {
+    padding: 35px;
+    text-align: center;
+    color: #64748b;
+}
+
+
+/* =====================================================
+   ACTIONS
+   ===================================================== */
+
+.pharmacy-prescription-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 4px;
+}
+
+.pharmacy-prescription-back-action {
+    padding: 11px 18px;
+    border: 1px solid #d5dde7;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pharmacy-prescription-back-action:hover {
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+.pharmacy-prescription-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    min-height: 280px;
+    color: #64748b;
+}
+
+.pharmacy-prescription-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #dbe2ea;
+    border-top-color: #475569;
+    border-radius: 50%;
+    animation: pharmacy-prescription-spin 0.8s linear infinite;
+}
+
+@keyframes pharmacy-prescription-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =====================================================
+   ERROR
+   ===================================================== */
+
+.pharmacy-prescription-message {
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.pharmacy-prescription-error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #9f1239;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+    .pharmacy-prescription-info-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .pharmacy-prescription-item-info {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .pharmacy-prescription-detail-page {
+        padding: 20px 12px;
+    }
+
+    .pharmacy-prescription-detail-header h1 {
+        font-size: 24px;
+    }
+
+    .pharmacy-prescription-card {
+        padding: 16px;
+    }
+
+    .pharmacy-prescription-item {
+        padding: 16px;
+    }
+
+    .pharmacy-prescription-item-header {
+        flex-direction: column;
+    }
+
+    .pharmacy-prescription-quantity {
+        align-self: flex-start;
+    }
+
+    .pharmacy-prescription-item-info {
+        grid-template-columns: 1fr;
+    }
+
+    .pharmacy-prescription-stock {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pharmacy-prescription-info-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .pharmacy-prescription-info-row strong {
+        text-align: left;
+    }
+}
