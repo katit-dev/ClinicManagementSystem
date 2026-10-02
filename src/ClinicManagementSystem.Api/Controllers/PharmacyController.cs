@@ -189,6 +189,60 @@ public class PharmacyController : ControllerBase
         );
     }
 
+    // =====================================================
+    // CREATE MEDICINE RECEIPT
+    //
+    // POST:
+    // /api/medicines/receipts
+    //
+    // Pharmacist hiện tại lấy từ JWT.
+    // =====================================================
+
+    [HttpPost("medicines/receipts")]
+    [Authorize(Roles = "Pharmacist")]
+    public async Task<IActionResult> CreateMedicineReceipt(
+        [FromBody] MedicineReceiptRequestDTO request)
+    {
+        // =================================================
+        // GET CURRENT USER ID
+        // =================================================
+
+        var userIdValue =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+            userIdValue,
+            out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+
+        // =================================================
+        // CALL SERVICE
+        // =================================================
+
+        var result =
+            await _pharmacyService
+                .CreateMedicineReceiptAsync(
+                    currentUserId,
+                    request
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 
 
 }
