@@ -774,3 +774,233 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* =====================================================
+   SHORTAGE ACTION
+   ===================================================== */
+
+.pharmacy-prescription-shortage-action {
+    margin-top: 12px;
+}
+
+.pharmacy-prescription-shortage-button {
+    padding: 9px 15px;
+
+    border: 1px solid #e3bd79;
+    border-radius: 8px;
+
+    background: #fff8ea;
+    color: #95600f;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.pharmacy-prescription-shortage-button:hover:not(:disabled) {
+    background: #fff1d5;
+}
+
+.pharmacy-prescription-shortage-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   SUCCESS
+   ===================================================== */
+
+.pharmacy-prescription-shortage-success {
+    background: #edf8f1;
+    border: 1px solid #c9e6d1;
+    color: #34734b;
+}
+
+
+/* =====================================================
+   OVERLAY
+   ===================================================== */
+
+.pharmacy-prescription-shortage-overlay {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+
+    background: rgba(24, 39, 55, 0.38);
+
+    z-index: 1000;
+}
+
+
+/* =====================================================
+   MODAL
+   ===================================================== */
+
+.pharmacy-prescription-shortage-modal {
+    width: 100%;
+    max-width: 500px;
+
+    background: #ffffff;
+
+    border: 1px solid #dce4ed;
+    border-radius: 12px;
+
+    box-shadow: 0 12px 35px rgba(20, 40, 60, 0.18);
+
+    overflow: hidden;
+}
+
+
+/* =====================================================
+   MODAL HEADER
+   ===================================================== */
+
+.pharmacy-prescription-shortage-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    padding: 20px;
+
+    border-bottom: 1px solid #e5eaf0;
+}
+
+.pharmacy-prescription-shortage-modal-header h3 {
+    margin: 0 0 5px;
+
+    color: #244c72;
+
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.pharmacy-prescription-shortage-modal-header p {
+    margin: 0;
+
+    color: #718096;
+
+    font-size: 13px;
+}
+
+.pharmacy-prescription-shortage-close {
+    width: 32px;
+    height: 32px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: #f1f5f9;
+    color: #64748b;
+
+    font-size: 20px;
+
+    cursor: pointer;
+}
+
+.pharmacy-prescription-shortage-close:hover:not(:disabled) {
+    background: #e5ebf2;
+}
+
+
+/* =====================================================
+   MODAL BODY
+   ===================================================== */
+
+.pharmacy-prescription-shortage-modal-body {
+    padding: 20px;
+}
+
+.pharmacy-prescription-shortage-modal-body label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #425a72;
+
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.pharmacy-prescription-shortage-textarea {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 11px 12px;
+
+    border: 1px solid #cfd9e4;
+    border-radius: 8px;
+
+    background: #fbfcfe;
+
+    color: #263f5a;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    resize: vertical;
+    outline: none;
+}
+
+.pharmacy-prescription-shortage-textarea:focus {
+    border-color: #7192b3;
+    background: #ffffff;
+}
+
+
+/* =====================================================
+   MODAL ACTIONS
+   ===================================================== */
+
+.pharmacy-prescription-shortage-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 16px 20px;
+
+    border-top: 1px solid #e5eaf0;
+
+    background: #f8fafc;
+}
+
+.pharmacy-prescription-shortage-cancel,
+.pharmacy-prescription-shortage-submit {
+    padding: 10px 16px;
+
+    border-radius: 8px;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.pharmacy-prescription-shortage-cancel {
+    border: 1px solid #cfd9e4;
+    background: #ffffff;
+    color: #52677d;
+}
+
+.pharmacy-prescription-shortage-submit {
+    border: none;
+    background: #95600f;
+    color: #ffffff;
+}
+
+.pharmacy-prescription-shortage-submit:hover:not(:disabled) {
+    background: #7f4f09;
+}
+
+.pharmacy-prescription-shortage-cancel:disabled,
+.pharmacy-prescription-shortage-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

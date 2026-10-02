@@ -57,6 +57,13 @@
             </div>
         }
 
+        @if (!string.IsNullOrWhiteSpace(ShortageSuccessMessage))
+        {
+            <div class="pharmacy-prescription-message pharmacy-prescription-shortage-success">
+                @ShortageSuccessMessage
+            </div>
+        }
+
 
         @* =====================================================
            LOADING
@@ -371,6 +378,23 @@
 
                                 </div>
 
+                                @if (Prescription.Status == 1 && item.AvailableQuantity < item.Quantity)
+                                {
+                                    <div class="pharmacy-prescription-shortage-action">
+
+                                        <button type="button" class="pharmacy-prescription-shortage-button"
+                                                disabled="@IsReportingShortage" @onclick="
+                                                () => OpenShortageForm(
+                                                    item.MedicineId,
+                                                    item.MedicineName
+                                                )">
+
+Báo thiếu thuốc
+</button>
+
+                                    </div>
+                                }
+
 
                                 @* =================================
                                    FEFO BATCHES
@@ -453,6 +477,76 @@
 
                             </article>
                         }
+
+                    </div>
+                }
+
+                @if (ShowShortageForm)
+                {
+                    <div class="pharmacy-prescription-shortage-overlay">
+
+                        <div class="pharmacy-prescription-shortage-modal">
+
+                            <div class="pharmacy-prescription-shortage-modal-header">
+
+                                <div>
+
+                                    <h3>
+                                        Báo thiếu thuốc
+                                    </h3>
+
+                                    <p>
+                                        @ShortageMedicineName
+                                    </p>
+
+                                </div>
+
+                                <button type="button" class="pharmacy-prescription-shortage-close"
+                                        disabled="@IsReportingShortage" @onclick="CloseShortageForm">
+
+                                    ×
+
+                                </button>
+
+                            </div>
+
+
+                            <div class="pharmacy-prescription-shortage-modal-body">
+
+                                <label>
+                                    Ghi chú
+                                </label>
+
+                                <textarea class="pharmacy-prescription-shortage-textarea" rows="4"
+                                          placeholder="Nhập thông tin về tình trạng thiếu thuốc..." @bind="ShortageNote">
+                </textarea>
+
+                            </div>
+
+
+                            <div class="pharmacy-prescription-shortage-modal-actions">
+
+                                <button type="button" class="pharmacy-prescription-shortage-cancel"
+                                        disabled="@IsReportingShortage" @onclick="CloseShortageForm">
+
+                                    Hủy
+
+                                </button>
+
+                                <button type="button" class="pharmacy-prescription-shortage-submit" disabled="@(
+                                        IsReportingShortage ||
+                                        ShortageMedicineId == null
+                                    )" @onclick="ReportShortageAsync">
+
+                                    @(IsReportingShortage
+                                        ? "Đang gửi..."
+                                        : "Gửi báo thiếu")
+
+                                </button>
+
+                            </div>
+
+                        </div>
 
                     </div>
                 }
@@ -602,6 +696,19 @@
 
     private bool ShowDispenseConfirmation;
 
+    // state for report shortage
+    private int? ShortageMedicineId;
+
+    private string ShortageMedicineName = string.Empty;
+
+    private string ShortageNote = string.Empty;
+
+    private bool ShowShortageForm;
+
+    private bool IsReportingShortage;
+
+    private string ShortageSuccessMessage = string.Empty;
+
 
     // =====================================================
     // INITIALIZE
@@ -610,6 +717,159 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadPrescriptionAsync();
+    }
+
+    // =====================================================
+    // REPORT SHORTAGE
+    // =====================================================
+
+    private async Task ReportShortageAsync()
+    {
+        if (IsReportingShortage ||
+            ShortageMedicineId == null)
+        {
+            return;
+        }
+
+        IsReportingShortage = true;
+
+        ErrorMessage = string.Empty;
+
+        ShortageSuccessMessage =
+            string.Empty;
+
+        try
+        {
+            var request =
+                new ReportShortageRequestDTO
+                {
+                    MedicineId =
+                        ShortageMedicineId.Value,
+
+                    Note =
+                        string.IsNullOrWhiteSpace(
+                            ShortageNote)
+                            ? null
+                            : ShortageNote.Trim()
+                };
+
+
+            var content =
+                JsonContent.Create(request);
+
+
+            var response =
+                await AuthorizedApiService
+                    .PostAsync(
+                        $"/api/prescriptions/{PrescriptionId}/report-shortage",
+                        content
+                    );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<bool>
+                    >();
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể gửi báo thiếu thuốc.";
+
+                return;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ShowShortageForm =
+                false;
+
+            ShortageMedicineId =
+                null;
+
+            ShortageMedicineName =
+                string.Empty;
+
+            ShortageNote =
+                string.Empty;
+
+            ShortageSuccessMessage =
+                responseData.Message
+                ?? "Đã gửi thông báo thiếu thuốc cho bác sĩ.";
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsReportingShortage = false;
+
+            await InvokeAsync(
+                StateHasChanged
+            );
+        }
+    }
+
+    // =====================================================
+    // CLOSE SHORTAGE FORM
+    // =====================================================
+
+    private void CloseShortageForm()
+    {
+        if (IsReportingShortage)
+        {
+            return;
+        }
+
+        ShowShortageForm = false;
+
+        ShortageMedicineId = null;
+
+        ShortageMedicineName =
+            string.Empty;
+
+        ShortageNote =
+            string.Empty;
+    }
+
+    // =====================================================
+    // OPEN SHORTAGE FORM
+    // =====================================================
+
+    private void OpenShortageForm(
+        int medicineId,
+        string medicineName)
+    {
+        if (IsReportingShortage)
+        {
+            return;
+        }
+
+        ShortageMedicineId =
+            medicineId;
+
+        ShortageMedicineName =
+            medicineName;
+
+        ShortageNote =
+            string.Empty;
+
+        ShortageSuccessMessage =
+            string.Empty;
+
+        ShowShortageForm =
+            true;
     }
 
 

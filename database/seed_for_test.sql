@@ -1867,3 +1867,44 @@ FROM clinical.medicine_batches
 WHERE medicine_id = 1
   AND quantity > 0
 ORDER BY expiry_date, id;
+
+SELECT
+    id,
+    status,
+    dispensed_at,
+    dispensed_by
+FROM clinical.prescriptions
+WHERE id = 6;
+
+SELECT
+    id,
+    medicine_id,
+    batch_no,
+    quantity,
+    expiry_date
+FROM clinical.medicine_batches
+WHERE id = 2;
+
+SELECT
+    id,
+    medicine_id,
+    batch_id,
+    type,
+    quantity,
+    prescription_id
+FROM clinical.medicine_stock_transactions
+WHERE prescription_id = 6
+ORDER BY id DESC;
+
+-----------------------------notification
+SELECT TOP 10
+    id,
+    user_id,
+    appointment_id,
+    channel,
+    title,
+    content,
+    status,
+    created_at
+FROM auth.notifications
+ORDER BY id DESC;
