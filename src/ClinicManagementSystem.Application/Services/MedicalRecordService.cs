@@ -3671,6 +3671,18 @@ public class MedicalRecordService
                     );
             }
 
+            // =================================================
+            // FINALIZE PRESCRIPTION
+            //
+            // Nếu bệnh án có đơn thuốc:
+            // Draft → Finalized
+            // =================================================
+
+            if (prescription != null)
+            {
+                prescription.Status =
+                    (byte)PrescriptionStatus.Finalized;
+            }
 
             // =================================================
             // FINALIZE MEDICAL RECORD

@@ -1829,3 +1829,13 @@ USE ClinicManagementSystem
 SELECT *
 FROM billing.invoices
 WHERE medical_record_id = 8
+
+--------------------------------
+SELECT
+    id,
+    medical_record_id,
+    status,
+    dispensed_at,
+    dispensed_by
+FROM clinical.prescriptions
+WHERE id = 7
