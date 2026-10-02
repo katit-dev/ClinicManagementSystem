@@ -97,4 +97,14 @@ public static class PharmacyResponseMessageDTO
 
     public const string ShortageFailed =
         "Không thể báo thiếu thuốc.";
+
+    // =====================================================
+    // PRESCRIPTION LIST
+    // =====================================================
+
+    public const string GetPendingPrescriptionsSuccess =
+        "Lấy danh sách đơn thuốc thành công.";
+
+    public const string GetPendingPrescriptionsFailed =
+        "Không thể tải danh sách đơn thuốc.";
 }

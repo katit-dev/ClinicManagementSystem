@@ -27,6 +27,12 @@ public interface IPharmacyService
             int prescriptionId,
             int currentUserId,
             ReportShortageRequestDTO request);
+
+    Task<HttpResponseData<PharmacyPrescriptionListResponseDTO>>
+    GetPendingPrescriptionsAsync(
+        string? keyword,
+        int pageNumber,
+        int pageSize);
 }
 
 
@@ -53,6 +59,542 @@ public class PharmacyService
         _unitOfWork = unitOfWork;
 
         _logger = logger;
+    }
+
+    // =====================================================
+    // GET PENDING PRESCRIPTIONS
+    //
+    // GET:
+    // /api/pharmacy/prescriptions
+    //
+    // Chỉ lấy Prescription:
+    // Status = Finalized
+    //
+    // Search:
+    // - PrescriptionId
+    // - PatientCode
+    // - PatientName
+    //
+    // Pagination:
+    // - pageNumber
+    // - pageSize
+    // =====================================================
+
+    public async Task<
+        HttpResponseData<PharmacyPrescriptionListResponseDTO>>
+        GetPendingPrescriptionsAsync(
+            string? keyword,
+            int pageNumber,
+            int pageSize)
+    {
+        try
+        {
+            // =================================================
+            // NORMALIZE PAGINATION
+            // =================================================
+
+            if (pageNumber <= 0)
+            {
+                pageNumber = 1;
+            }
+
+            if (pageSize <= 0)
+            {
+                pageSize = 20;
+            }
+
+            // Không cho client request quá nhiều record.
+            if (pageSize > 100)
+            {
+                pageSize = 100;
+            }
+
+
+            // =================================================
+            // NORMALIZE KEYWORD
+            // =================================================
+
+            keyword =
+                string.IsNullOrWhiteSpace(keyword)
+                    ? null
+                    : keyword.Trim();
+
+
+            // =================================================
+            // BASE QUERY
+            //
+            // Chỉ đơn đã Finalized mới nằm trong hàng chờ.
+            // =================================================
+
+            var prescriptionQuery =
+                _unitOfWork
+                    .PrescriptionRepository
+                    .WhereSql(
+                        p =>
+                            p.Status ==
+                            (byte)PrescriptionStatus.Finalized
+                    );
+
+
+            // =================================================
+            // SEARCH
+            //
+            // Nếu keyword là số:
+            // → tìm theo PrescriptionId
+            //
+            // Đồng thời tìm:
+            // → PatientCode
+            // → PatientName
+            // =================================================
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var patientIds =
+                    await _unitOfWork
+                        .PatientRepository
+                        .WhereSql(
+                            p =>
+                                p.PatientCode.Contains(
+                                    keyword
+                                )
+                                ||
+                                p.FullName.Contains(
+                                    keyword
+                                )
+                        )
+                        .Select(
+                            p => p.Id
+                        )
+                        .ToListAsync();
+
+
+                var medicalRecordIds =
+                    new List<int>();
+
+
+                if (patientIds.Count > 0)
+                {
+                    medicalRecordIds =
+                        await _unitOfWork
+                            .MedicalRecordRepository
+                            .WhereSql(
+                                m =>
+                                    patientIds.Contains(
+                                        m.PatientId
+                                    )
+                            )
+                            .Select(
+                                m => m.Id
+                            )
+                            .ToListAsync();
+                }
+
+
+                if (
+                    int.TryParse(
+                        keyword,
+                        out var prescriptionId
+                    )
+                )
+                {
+                    prescriptionQuery =
+                        prescriptionQuery.Where(
+                            p =>
+                                p.Id ==
+                                    prescriptionId
+                                ||
+                                medicalRecordIds.Contains(
+                                    p.MedicalRecordId
+                                )
+                        );
+                }
+                else
+                {
+                    prescriptionQuery =
+                        prescriptionQuery.Where(
+                            p =>
+                                medicalRecordIds.Contains(
+                                    p.MedicalRecordId
+                                )
+                        );
+                }
+            }
+
+
+            // =================================================
+            // TOTAL COUNT
+            // =================================================
+
+            var totalCount =
+                await prescriptionQuery
+                    .CountAsync();
+
+
+            // =================================================
+            // GET CURRENT PAGE
+            //
+            // Mới nhất trước.
+            // =================================================
+
+            var prescriptions =
+                await prescriptionQuery
+                    .OrderByDescending(
+                        p => p.CreatedAt
+                    )
+                    .ThenByDescending(
+                        p => p.Id
+                    )
+                    .Skip(
+                        (pageNumber - 1) *
+                        pageSize
+                    )
+                    .Take(
+                        pageSize
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // EMPTY PAGE
+            // =================================================
+
+            if (prescriptions.Count == 0)
+            {
+                var emptyResult =
+                    new PharmacyPrescriptionListResponseDTO
+                    {
+                        Items = new(),
+
+                        PageNumber =
+                            pageNumber,
+
+                        PageSize =
+                            pageSize,
+
+                        TotalCount =
+                            totalCount,
+
+                        TotalPages =
+                            totalCount == 0
+                                ? 0
+                                : (int)Math.Ceiling(
+                                    totalCount /
+                                    (double)pageSize
+                                )
+                    };
+
+
+                return new HttpResponseData<
+                    PharmacyPrescriptionListResponseDTO>
+                {
+                    StatusCode = 200,
+
+                    Message =
+                        PharmacyResponseMessageDTO
+                            .GetPendingPrescriptionsSuccess,
+
+                    Content =
+                        emptyResult
+                };
+            }
+
+
+            // =================================================
+            // GET MEDICAL RECORDS
+            // =================================================
+
+            var medicalRecordIdsForPage =
+                prescriptions
+                    .Select(
+                        p => p.MedicalRecordId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var medicalRecords =
+                await _unitOfWork
+                    .MedicalRecordRepository
+                    .WhereSql(
+                        m =>
+                            medicalRecordIdsForPage.Contains(
+                                m.Id
+                            )
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // GET PATIENTS
+            // =================================================
+
+            var patientIdsForPage =
+                medicalRecords
+                    .Select(
+                        m => m.PatientId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var patients =
+                await _unitOfWork
+                    .PatientRepository
+                    .WhereSql(
+                        p =>
+                            patientIdsForPage.Contains(
+                                p.Id
+                            )
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // GET DOCTORS
+            // =================================================
+
+            var doctorIdsForPage =
+                prescriptions
+                    .Select(
+                        p => p.DoctorId
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var doctors =
+                await _unitOfWork
+                    .DoctorRepository
+                    .WhereSql(
+                        d =>
+                            doctorIdsForPage.Contains(
+                                d.Id
+                            )
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // GET PRESCRIPTION ITEMS
+            //
+            // Chỉ cần đếm số thuốc trong mỗi đơn.
+            // =================================================
+
+            var prescriptionIdsForPage =
+                prescriptions
+                    .Select(
+                        p => p.Id
+                    )
+                    .ToList();
+
+
+            var prescriptionItems =
+                await _unitOfWork
+                    .PrescriptionItemRepository
+                    .WhereSql(
+                        i =>
+                            prescriptionIdsForPage.Contains(
+                                i.PrescriptionId
+                            )
+                    )
+                    .ToListAsync();
+
+
+            // =================================================
+            // MAP LOOKUP
+            // =================================================
+
+            var medicalRecordMap =
+                medicalRecords
+                    .ToDictionary(
+                        m => m.Id
+                    );
+
+
+            var patientMap =
+                patients
+                    .ToDictionary(
+                        p => p.Id
+                    );
+
+
+            var doctorMap =
+                doctors
+                    .ToDictionary(
+                        d => d.Id
+                    );
+
+
+            var itemCountMap =
+                prescriptionItems
+                    .GroupBy(
+                        i => i.PrescriptionId
+                    )
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Count()
+                    );
+
+
+            // =================================================
+            // MAP DTO
+            // =================================================
+
+            var items =
+                prescriptions
+                    .Select(
+                        prescription =>
+                        {
+                            medicalRecordMap.TryGetValue(
+                                prescription.MedicalRecordId,
+                                out var medicalRecord
+                            );
+
+
+                            Patient? patient = null;
+
+
+                            if (medicalRecord != null)
+                            {
+                                patientMap.TryGetValue(
+                                    medicalRecord.PatientId,
+                                    out patient
+                                );
+                            }
+
+
+                            doctorMap.TryGetValue(
+                                prescription.DoctorId,
+                                out var doctor
+                            );
+
+
+                            itemCountMap.TryGetValue(
+                                prescription.Id,
+                                out var itemCount
+                            );
+
+
+                            return new PharmacyPrescriptionListItemDTO
+                            {
+                                PrescriptionId =
+                                    prescription.Id,
+
+                                MedicalRecordId =
+                                    prescription.MedicalRecordId,
+
+                                Status =
+                                    prescription.Status,
+
+                                CreatedAt =
+                                    prescription.CreatedAt,
+
+                                PatientId =
+                                    medicalRecord?.PatientId
+                                    ?? 0,
+
+                                PatientCode =
+                                    patient?.PatientCode
+                                    ?? string.Empty,
+
+                                PatientName =
+                                    patient?.FullName
+                                    ?? string.Empty,
+
+                                DoctorName =
+                                    doctor?.FullName
+                                    ?? string.Empty,
+
+                                ItemCount =
+                                    itemCount
+                            };
+                        }
+                    )
+                    .ToList();
+
+
+            // =================================================
+            // PAGINATION
+            // =================================================
+
+            var totalPages =
+                totalCount == 0
+                    ? 0
+                    : (int)Math.Ceiling(
+                        totalCount /
+                        (double)pageSize
+                    );
+
+
+            var result =
+                new PharmacyPrescriptionListResponseDTO
+                {
+                    Items =
+                        items,
+
+                    PageNumber =
+                        pageNumber,
+
+                    PageSize =
+                        pageSize,
+
+                    TotalCount =
+                        totalCount,
+
+                    TotalPages =
+                        totalPages
+                };
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            return new HttpResponseData<
+                PharmacyPrescriptionListResponseDTO>
+            {
+                StatusCode = 200,
+
+                Message =
+                    PharmacyResponseMessageDTO
+                        .GetPendingPrescriptionsSuccess,
+
+                Content =
+                    result
+            };
+        }
+        catch (Exception ex)
+        {
+            // =================================================
+            // LOG ERROR
+            // =================================================
+
+            _logger.LogError(
+                ex,
+                "Failed to get pending pharmacy prescriptions. " +
+                "Keyword: {Keyword}, " +
+                "PageNumber: {PageNumber}, " +
+                "PageSize: {PageSize}",
+                keyword,
+                pageNumber,
+                pageSize
+            );
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            return new HttpResponseData<
+                PharmacyPrescriptionListResponseDTO>
+            {
+                StatusCode = 500,
+
+                Message =
+                    PharmacyResponseMessageDTO
+                        .GetPendingPrescriptionsFailed
+            };
+        }
     }
 
 
