@@ -55,7 +55,7 @@
                DASHBOARD
                ========================================= *@
 
-            @if (!HasRole("Doctor"))
+            @if (!HasRole("Doctor") && !HasRole("Pharmacist"))
             {
                 <NavLink href="@GetDashboardUrl()" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
                          @onclick="CloseSidebar">
@@ -68,7 +68,6 @@
 
                 </NavLink>
             }
-
 
             @* =========================================
                RECEPTION MENU
@@ -207,6 +206,24 @@
 
                     <span>
                         Hàng chờ bệnh nhân
+                    </span>
+
+                </NavLink>
+            }
+
+            @* =====================================================
+   PHARMACIST MENU
+   ===================================================== *@
+
+            @if (HasRole("Pharmacist"))
+            {
+                <NavLink href="/pharmacy" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
+
+                    <i class="fas fa-pills"></i>
+
+                    <span>
+                        Phát thuốc
                     </span>
 
                 </NavLink>
@@ -411,6 +428,11 @@
             return "/reception";
         }
 
+        if (HasRole("Pharmacist"))
+        {
+            return "/pharmacy";
+        }
+
         if (HasRole("Patient"))
         {
             return "/patient";
@@ -418,8 +440,6 @@
 
         return "/";
     }
-
-
     // =====================================================
     // LOGOUT
     // =====================================================

@@ -892,6 +892,24 @@ public class UserStateService
             return;
         }
 
+        // =================================================
+        // PHARMACIST
+        // =================================================
+
+        if (CurrentUser.Roles.Any(
+            role =>
+                role.Equals(
+                    "Pharmacist",
+                    StringComparison.OrdinalIgnoreCase
+                )))
+        {
+            _navigationManager.NavigateTo(
+                "/pharmacy"
+            );
+
+            return;
+        }
+
 
         // =================================================
         // RECEPTIONIST
