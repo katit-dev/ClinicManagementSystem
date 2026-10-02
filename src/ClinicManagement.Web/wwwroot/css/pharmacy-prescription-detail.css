@@ -600,3 +600,177 @@
         text-align: left;
     }
 }
+
+/* =====================================================
+   DISPENSE CARD
+   ===================================================== */
+
+.pharmacy-prescription-dispense-card {
+    margin-bottom: 20px;
+    padding: 20px 22px;
+
+    background: #ffffff;
+
+    border: 1px solid #cfdceb;
+    border-left: 4px solid #4f79a5;
+
+    border-radius: 12px;
+
+    box-shadow: 0 3px 12px rgba(32, 55, 80, 0.05);
+}
+
+.pharmacy-prescription-dispense-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pharmacy-prescription-dispense-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 50%;
+
+    background: #e8f5ed;
+    color: #34734b;
+
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.pharmacy-prescription-dispense-info h3 {
+    margin: 0 0 4px;
+
+    color: #244c72;
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.pharmacy-prescription-dispense-info p {
+    margin: 0;
+
+    color: #718096;
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   DISPENSE BUTTON
+   ===================================================== */
+
+.pharmacy-prescription-dispense-button {
+    margin-top: 18px;
+
+    padding: 11px 22px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #315b86;
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.pharmacy-prescription-dispense-button:hover:not(:disabled) {
+    background: #264b71;
+}
+
+.pharmacy-prescription-dispense-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   WARNING
+   ===================================================== */
+
+.pharmacy-prescription-dispense-warning {
+    margin-top: 16px;
+    padding: 12px 14px;
+
+    border: 1px solid #f0d19a;
+    border-radius: 8px;
+
+    background: #fff5e3;
+    color: #9a5b0a;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   CONFIRM
+   ===================================================== */
+
+.pharmacy-prescription-confirm {
+    margin-top: 18px;
+    padding: 16px;
+
+    border: 1px solid #d8e2ec;
+    border-radius: 9px;
+
+    background: #f7fafd;
+}
+
+.pharmacy-prescription-confirm-text {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.pharmacy-prescription-confirm-text strong {
+    color: #243f5c;
+    font-size: 14px;
+}
+
+.pharmacy-prescription-confirm-text span {
+    color: #687b90;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.pharmacy-prescription-confirm-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.pharmacy-prescription-cancel-button,
+.pharmacy-prescription-confirm-button {
+    padding: 9px 16px;
+
+    border-radius: 7px;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.pharmacy-prescription-cancel-button {
+    border: 1px solid #ccd7e2;
+    background: #ffffff;
+    color: #52677d;
+}
+
+.pharmacy-prescription-confirm-button {
+    border: none;
+    background: #315b86;
+    color: #ffffff;
+}
+
+.pharmacy-prescription-cancel-button:disabled,
+.pharmacy-prescription-confirm-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

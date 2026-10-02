@@ -3,6 +3,7 @@
 @using System.Net.Http.Json
 @using ClinicManagementSystem.Application.DTOs
 @using ClinicManagementSystem.Application.DTOs.Pharmacy
+@using ClinicManagementSystem.Application.DTOs.Prescription
 @using Microsoft.AspNetCore.Authorization
 
 @attribute [Authorize(Roles = "Pharmacist")]
@@ -23,10 +24,7 @@
 
             <div>
 
-                <button
-                    type="button"
-                    class="pharmacy-prescription-back-button"
-                    @onclick="GoBack">
+                <button type="button" class="pharmacy-prescription-back-button" @onclick="GoBack">
 
                     ← Quay lại danh sách
 
@@ -461,6 +459,103 @@
 
             </section>
 
+            @* =================================================
+   DISPENSE
+   ================================================= *@
+
+            @if (Prescription.Status == 1)
+            {
+                <section class="pharmacy-prescription-dispense-card">
+
+                    <div class="pharmacy-prescription-dispense-info">
+
+                        <div class="pharmacy-prescription-dispense-icon">
+                            ✓
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Phát thuốc
+                            </h3>
+
+                            <p>
+                                Hệ thống sẽ tự động chọn lô theo FEFO
+                                (hạn dùng gần nhất).
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    @if (HasInsufficientStock)
+                    {
+                        <div class="pharmacy-prescription-dispense-warning">
+
+                            Không thể phát thuốc vì có thuốc
+                            không đủ tồn kho hợp lệ.
+
+                        </div>
+                    }
+
+
+                    @if (!ShowDispenseConfirmation)
+                    {
+                        <button type="button" class="pharmacy-prescription-dispense-button" disabled="@(
+                                IsDispensing ||
+                                HasInsufficientStock
+                            )" @onclick="ShowDispenseConfirmationAsync">
+
+                            Phát thuốc
+
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="pharmacy-prescription-confirm">
+
+                            <div class="pharmacy-prescription-confirm-text">
+
+                                <strong>
+                                    Xác nhận phát thuốc?
+                                </strong>
+
+                                <span>
+                                    Sau khi xác nhận, đơn thuốc sẽ chuyển
+                                    sang trạng thái Đã phát và tồn kho sẽ
+                                    được cập nhật.
+                                </span>
+
+                            </div>
+
+
+                            <div class="pharmacy-prescription-confirm-actions">
+
+                                <button type="button" class="pharmacy-prescription-cancel-button" disabled="@IsDispensing"
+                                        @onclick="CancelDispenseConfirmation">
+
+                                    Hủy
+
+                                </button>
+
+
+                                <button type="button" class="pharmacy-prescription-confirm-button" disabled="@IsDispensing"
+                                        @onclick="DispenseAsync">
+
+                                    @(IsDispensing
+                                        ? "Đang phát..."
+                                        : "Xác nhận phát thuốc")
+
+                                </button>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </section>
+            }
 
             @* =================================================
                ACTION
@@ -468,10 +563,7 @@
 
             <div class="pharmacy-prescription-actions">
 
-                <button
-                    type="button"
-                    class="pharmacy-prescription-back-action"
-                    @onclick="GoBack">
+                <button type="button" class="pharmacy-prescription-back-action" @onclick="GoBack">
 
                     ← Quay lại danh sách
 
@@ -506,6 +598,10 @@
 
     private string ErrorMessage = string.Empty;
 
+    private bool IsDispensing;
+
+    private bool ShowDispenseConfirmation;
+
 
     // =====================================================
     // INITIALIZE
@@ -514,6 +610,208 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadPrescriptionAsync();
+    }
+
+
+    // ------------------------------------------------
+    //------------------Dispense-----------------------
+    // ------------------------------------------------
+    private async Task DispenseAsync()
+    {
+        if (IsDispensing ||
+            Prescription == null)
+        {
+            return;
+        }
+
+        if (HasInsufficientStock)
+        {
+            ErrorMessage =
+                "Không đủ thuốc để phát.";
+
+            ShowDispenseConfirmation = false;
+
+            return;
+        }
+
+
+        IsDispensing = true;
+
+        ErrorMessage = string.Empty;
+
+        ShowDispenseConfirmation = false;
+
+
+        try
+        {
+            // =================================================
+            // BUILD REQUEST
+            //
+            // Mỗi prescription item:
+            // - Lấy batch FEFO đầu tiên
+            // - Gửi toàn bộ quantity cần phát
+            //
+            // Backend sẽ tự chia sang batch tiếp theo
+            // nếu batch đầu không đủ.
+            // =================================================
+
+            var request = new
+            {
+                items =
+                    Prescription.Items
+                        .Select(
+                            item =>
+                            {
+                                var firstBatch =
+                                    item.Batches
+                                        .OrderBy(
+                                            batch =>
+                                                batch.ExpiryDate
+                                        )
+                                        .ThenBy(
+                                            batch =>
+                                                batch.BatchId
+                                        )
+                                        .First();
+
+                                return new
+                                {
+                                    prescriptionItemId =
+                                        item.PrescriptionItemId,
+
+                                    batchId =
+                                        firstBatch.BatchId,
+
+                                    quantity =
+                                        item.Quantity
+                                };
+                            }
+                        )
+                        .ToList()
+            };
+
+
+            var content =
+                JsonContent.Create(request);
+
+
+            // =================================================
+            // CALL API
+            //
+            // POST:
+            // /api/prescriptions/{id}/dispense
+            // =================================================
+
+            var response =
+                await AuthorizedApiService
+                    .PostAsync(
+                        $"/api/prescriptions/{PrescriptionId}/dispense",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            PrescriptionResponseDTO
+                        >
+                    >();
+
+
+            // =================================================
+            // FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể phát thuốc.";
+
+                return;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            NavigationManager.NavigateTo(
+                "/pharmacy"
+            );
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsDispensing = false;
+
+            await InvokeAsync(
+                StateHasChanged
+            );
+        }
+    }
+
+    // huy xac nhan
+    private void CancelDispenseConfirmation()
+    {
+        if (IsDispensing)
+        {
+            return;
+        }
+
+        ShowDispenseConfirmation = false;
+    }
+
+    // them mo xac nhan
+    private Task ShowDispenseConfirmationAsync()
+    {
+        if (IsDispensing ||
+            HasInsufficientStock)
+        {
+            return Task.CompletedTask;
+        }
+
+        ShowDispenseConfirmation = true;
+
+        return InvokeAsync(
+            StateHasChanged
+        );
+    }
+
+    // kiem tra ton kho
+    private bool HasInsufficientStock
+    {
+        get
+        {
+            if (Prescription == null ||
+                Prescription.Items == null ||
+                Prescription.Items.Count == 0)
+            {
+                return true;
+            }
+
+            return Prescription.Items.Any(
+                item =>
+                    item.AvailableQuantity <
+                    item.Quantity
+                    ||
+                    item.Batches == null
+                    ||
+                    item.Batches.Count == 0
+            );
+        }
     }
 
 
