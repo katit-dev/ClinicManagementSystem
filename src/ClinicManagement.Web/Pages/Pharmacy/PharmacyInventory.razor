@@ -355,6 +355,18 @@
                     </div>
                 }
 
+                <div class="pharmacy-inventory-actions">
+
+                    <button type="button" class="inventory-receipt-button" @onclick="OpenReceipt">
+
+                        <i class="fas fa-plus"></i>
+
+                        Nhập thuốc
+
+                    </button>
+
+                </div>
+
             </section>
 
             @if (ShowAdjustModal && SelectedMedicine != null)
@@ -798,6 +810,13 @@
     {
         NavigationManager.NavigateTo(
             $"/pharmacy/inventory/{medicineId}/transactions"
+        );
+    }
+
+    private void OpenReceipt()
+    {
+        NavigationManager.NavigateTo(
+            "/pharmacy/receipt"
         );
     }
 

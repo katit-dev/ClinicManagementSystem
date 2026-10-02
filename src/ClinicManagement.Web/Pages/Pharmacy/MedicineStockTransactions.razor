@@ -1,5 +1,4 @@
-@page "/pharmacy/inventory/{MedicineId:int}"
-
+@page "/pharmacy/inventory/{MedicineId:int}/transactions"
 @layout HomePageMaster
 
 @attribute [Authorize(Roles = "Pharmacist")]
@@ -41,10 +40,6 @@
            ===================================================== *@
 
         <div class="stock-card-header">
-
-            <div class="stock-card-label">
-                MEDICINE STOCK CARD
-            </div>
 
             <h1>
                 Thẻ kho

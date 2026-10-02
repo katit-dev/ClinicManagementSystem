@@ -470,3 +470,124 @@
         justify-content: center;
     }
 }
+/* =====================================================
+   INVENTORY ACTIONS
+   ===================================================== */
+
+.inventory-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+/* =====================================================
+   STOCK CARD BUTTON
+   ===================================================== */
+
+.inventory-history-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-width: 100px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #cbd8e4;
+
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #456681;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.inventory-history-button i {
+    font-size: 13px;
+}
+
+.inventory-history-button:hover {
+    background: #f1f5f8;
+
+    border-color: #aebfce;
+
+    color: #294f6d;
+}
+
+.inventory-history-button:active {
+    background: #e8eef3;
+}
+
+/* =====================================================
+   INVENTORY ACTIONS
+   ===================================================== */
+
+.pharmacy-inventory-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 16px 21px;
+
+    border-top: 1px solid #e4ebf1;
+}
+
+.inventory-receipt-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 9px 15px;
+
+    border: 1px solid #385a76;
+
+    border-radius: 7px;
+
+    background: #385a76;
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.inventory-receipt-button:hover {
+    background: #2e4d66;
+
+    border-color: #2e4d66;
+}
+
+.inventory-receipt-button i {
+    font-size: 11px;
+}
