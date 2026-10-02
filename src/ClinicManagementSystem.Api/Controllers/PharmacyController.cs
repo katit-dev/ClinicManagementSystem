@@ -81,4 +81,65 @@ public class PharmacyController : ControllerBase
             result
         );
     }
+
+    // =====================================================
+    // REPORT SHORTAGE
+    //
+    // POST:
+    // /api/prescriptions/{id}/report-shortage
+    // =====================================================
+
+    [HttpPost("{id}/report-shortage")]
+    public async Task<IActionResult> ReportShortage(
+        int id,
+        [FromBody] ReportShortageRequestDTO request)
+    {
+        // =================================================
+        // GET CURRENT USER
+        // =================================================
+
+        var userIdClaim =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
+
+
+        if (!int.TryParse(
+                userIdClaim,
+                out var currentUserId))
+        {
+            return Unauthorized(
+                new
+                {
+                    statusCode = 401,
+                    message =
+                        PharmacyResponseMessageDTO
+                            .UserNotFound
+                }
+            );
+        }
+
+
+        // =================================================
+        // CALL SERVICE
+        // =================================================
+
+        var result =
+            await _pharmacyService
+                .ReportShortageAsync(
+                    id,
+                    currentUserId,
+                    request
+                );
+
+
+        // =================================================
+        // RETURN RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
 }
