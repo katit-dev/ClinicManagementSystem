@@ -9,6 +9,7 @@
 @using Microsoft.AspNetCore.Authorization
 
 @inject AuthorizedApiService AuthorizedApiService
+@inject NavigationManager NavigationManager
 
 
 <PageTitle>Kho thuốc</PageTitle>
@@ -324,15 +325,24 @@
 
                                         </td>
 
-                                        <td>
+                                        <td class="inventory-actions">
+
                                             <button type="button" class="inventory-adjust-button"
                                                     @onclick="() => OpenAdjustModal(medicine)">
 
                                                 <i class="fas fa-sliders-h"></i>
-
                                                 Điều chỉnh
 
                                             </button>
+
+                                            <button type="button" class="inventory-history-button"
+                                                    @onclick="() => ViewStockCard(medicine.Id)">
+
+                                                <i class="fas fa-history"></i>
+                                                Thẻ kho
+
+                                            </button>
+
                                         </td>
 
                                     </tr>
@@ -783,4 +793,12 @@
             IsLoading = false;
         }
     }
+
+    private void ViewStockCard(int medicineId)
+    {
+        NavigationManager.NavigateTo(
+            $"/pharmacy/inventory/{medicineId}/transactions"
+        );
+    }
+
 }
