@@ -228,7 +228,7 @@
 
             @if (HasRole("Pharmacist"))
             {
-                <NavLink href="/pharmacy" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                <NavLink href="/pharmacy" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.Prefix"
                          @onclick="CloseSidebar">
 
                     <i class="fas fa-pills"></i>
@@ -238,6 +238,19 @@
                     </span>
 
                 </NavLink>
+
+                <NavLink href="/pharmacy/inventory" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.All"
+                         @onclick="CloseSidebar">
+
+                    <i class="fas fa-pills"></i>
+
+                    <span>
+                        Kho thuốc
+                    </span>
+
+                </NavLink>
+
+
             }
 
         </nav>
