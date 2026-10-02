@@ -1,0 +1,468 @@
+@page "/pharmacy/inventory"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Pharmacist")]
+
+@using ClinicManagementSystem.Application.DTOs
+@using ClinicManagementSystem.Application.DTOs.Pharmacy
+@using Microsoft.AspNetCore.Authorization
+
+@inject AuthorizedApiService AuthorizedApiService
+
+
+<PageTitle>Kho thuốc</PageTitle>
+
+
+<div class="pharmacy-inventory-page">
+
+    <div class="pharmacy-inventory-container">
+
+        @* =====================================================
+           HEADER
+           ===================================================== *@
+
+        <div class="pharmacy-inventory-header">
+
+            <div>
+
+                <div class="pharmacy-inventory-label">
+                    KHO THUỐC
+                </div>
+
+                <h1>
+                    Kho thuốc & lô hạn dùng
+                </h1>
+
+                <p>
+                    Theo dõi tồn kho, lô thuốc và cảnh báo sắp hết,
+                    gần hết hạn.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        @* =====================================================
+           ERROR
+           ===================================================== *@
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="pharmacy-inventory-message pharmacy-inventory-error">
+
+                @ErrorMessage
+
+            </div>
+        }
+
+
+        @* =====================================================
+           LOADING
+           ===================================================== *@
+
+        @if (IsLoading)
+        {
+            <div class="pharmacy-inventory-state">
+
+                <div class="pharmacy-inventory-spinner"></div>
+
+                <span>
+                    Đang tải tồn kho...
+                </span>
+
+            </div>
+        }
+        else
+        {
+            @* =================================================
+               SUMMARY
+               ================================================= *@
+
+            <div class="pharmacy-inventory-summary">
+
+                <div class="pharmacy-inventory-summary-card low-stock">
+
+                    <div class="pharmacy-inventory-summary-icon">
+
+                        <i class="fas fa-exclamation-triangle"></i>
+
+                    </div>
+
+                    <div>
+
+                        <div class="pharmacy-inventory-summary-label">
+                            Thuốc dưới min_stock
+                        </div>
+
+                        <div class="pharmacy-inventory-summary-value">
+                            @LowStockCount
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="pharmacy-inventory-summary-card near-expiry">
+
+                    <div class="pharmacy-inventory-summary-icon">
+
+                        <i class="fas fa-calendar-times"></i>
+
+                    </div>
+
+                    <div>
+
+                        <div class="pharmacy-inventory-summary-label">
+                            Lô hết hạn trong 30 ngày
+                        </div>
+
+                        <div class="pharmacy-inventory-summary-value">
+                            @NearExpiryBatchCount
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            @* =================================================
+               INVENTORY CARD
+               ================================================= *@
+
+            <section class="pharmacy-inventory-card">
+
+                <div class="pharmacy-inventory-card-header">
+
+                    <div>
+
+                        <div class="pharmacy-inventory-card-label">
+                            MEDICINES + MEDICINE_BATCHES
+                        </div>
+
+                        <h2>
+                            Danh sách kho thuốc
+                        </h2>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pharmacy-inventory-refresh-button"
+                        @onclick="LoadInventoryAsync"
+                        disabled="@IsLoading">
+
+                        <i class="fas fa-sync-alt"></i>
+
+                        Làm mới
+
+                    </button>
+
+                </div>
+
+
+                @if (Inventory.Count == 0)
+                {
+                    <div class="pharmacy-inventory-empty">
+
+                        <i class="fas fa-pills"></i>
+
+                        <h3>
+                            Chưa có thuốc trong kho
+                        </h3>
+
+                        <p>
+                            Không tìm thấy dữ liệu tồn kho.
+                        </p>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="pharmacy-inventory-table-wrapper">
+
+                        <table class="pharmacy-inventory-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Mã
+                                    </th>
+
+                                    <th>
+                                        Tên thuốc
+                                    </th>
+
+                                    <th>
+                                        Hoạt chất
+                                    </th>
+
+                                    <th class="text-right">
+                                        Tồn tổng
+                                    </th>
+
+                                    <th class="text-right">
+                                        Min
+                                    </th>
+
+                                    <th>
+                                        Lô gần hết hạn
+                                    </th>
+
+                                    <th>
+                                        Trạng thái
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                @foreach (var medicine in Inventory)
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <span class="medicine-code">
+                                                @(medicine.Code ?? $"TH{medicine.Id:000}")
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <strong>
+                                                @medicine.Name
+                                            </strong>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="active-ingredient">
+                                                @(medicine.ActiveIngredient ?? "—")
+                                            </span>
+
+                                        </td>
+
+
+                                        <td class="text-right">
+
+                                            <span class="stock-value">
+                                                @medicine.StockQuantity
+                                            </span>
+
+                                        </td>
+
+
+                                        <td class="text-right">
+
+                                            @medicine.MinStock
+
+                                        </td>
+
+
+                                        <td>
+
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                medicine.NearExpiryBatchNo))
+                                            {
+                                                <div class="batch-info">
+
+                                                    <strong>
+                                                        @medicine.NearExpiryBatchNo
+                                                    </strong>
+
+                                                    @if (medicine.NearExpiryDate.HasValue)
+                                                    {
+                                                        <span>
+                                                            @medicine.NearExpiryDate.Value
+                                                                .ToString("dd/MM/yyyy")
+                                                        </span>
+                                                    }
+
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="muted">
+                                                    —
+                                                </span>
+                                            }
+
+                                        </td>
+
+
+                                        <td>
+
+                                            @if (medicine.IsLowStock)
+                                            {
+                                                <span class="inventory-status danger">
+                                                    Sắp hết
+                                                </span>
+                                            }
+                                            else if (medicine.IsNearExpiry)
+                                            {
+                                                <span class="inventory-status warning">
+                                                    Gần hết hạn
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inventory-status success">
+                                                    Đủ
+                                                </span>
+                                            }
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+            </section>
+
+        }
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    private List<MedicineInventoryDTO> Inventory =
+        new();
+
+    private bool IsLoading;
+
+    private string ErrorMessage =
+        string.Empty;
+
+
+    // =====================================================
+    // SUMMARY
+    // =====================================================
+
+    private int LowStockCount =>
+        Inventory.Count(
+            x => x.IsLowStock
+        );
+
+    private int NearExpiryBatchCount =>
+        Inventory.Sum(
+            x => x.NearExpiryBatchCount
+        );
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInventoryAsync();
+    }
+
+
+    // =====================================================
+    // LOAD INVENTORY
+    //
+    // GET:
+    // /api/medicines/inventory
+    // =====================================================
+
+    private async Task LoadInventoryAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+
+        ErrorMessage =
+            string.Empty;
+
+        try
+        {
+            var response =
+                await AuthorizedApiService.GetAsync(
+                    "/api/medicines/inventory" +
+                    "?lowStock=false" +
+                    "&nearExpiry=30"
+                );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<MedicineInventoryDTO>
+                        >
+                    >();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải tồn kho.";
+
+                Inventory =
+                    new List<MedicineInventoryDTO>();
+
+                return;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            Inventory =
+                responseData.Content
+                ?? new List<MedicineInventoryDTO>();
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            Inventory =
+                new List<MedicineInventoryDTO>();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

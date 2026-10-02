@@ -1,0 +1,483 @@
+.pharmacy-inventory-page {
+    min-height: 100vh;
+    background: #f4f7fa;
+    padding: 32px 24px;
+}
+
+.pharmacy-inventory-container {
+    max-width: 1250px;
+    margin: 0 auto;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.pharmacy-inventory-header {
+    margin-bottom: 28px;
+}
+
+.pharmacy-inventory-label {
+    margin-bottom: 7px;
+
+    color: #6684a3;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+}
+
+.pharmacy-inventory-header h1 {
+    margin: 0 0 8px;
+
+    color: #183654;
+
+    font-size: 30px;
+    font-weight: 750;
+}
+
+.pharmacy-inventory-header p {
+    margin: 0;
+
+    color: #718196;
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   SUMMARY
+   ===================================================== */
+
+.pharmacy-inventory-summary {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 16px;
+
+    margin-bottom: 18px;
+}
+
+.pharmacy-inventory-summary-card {
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 17px 19px;
+
+    border-radius: 11px;
+
+    background: #ffffff;
+
+    border: 1px solid #dce5ed;
+}
+
+.pharmacy-inventory-summary-card.low-stock {
+    border-left: 4px solid #e3a626;
+}
+
+.pharmacy-inventory-summary-card.near-expiry {
+    border-left: 4px solid #d86b72;
+}
+
+.pharmacy-inventory-summary-icon {
+    width: 42px;
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 9px;
+
+    background: #f1f5f8;
+
+    color: #5f7890;
+
+    font-size: 16px;
+}
+
+.pharmacy-inventory-summary-label {
+    color: #708197;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pharmacy-inventory-summary-value {
+    margin-top: 2px;
+
+    color: #233f5d;
+
+    font-size: 24px;
+    font-weight: 750;
+}
+
+
+/* =====================================================
+   MAIN CARD
+   ===================================================== */
+
+.pharmacy-inventory-card {
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #dce5ed;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 3px 12px
+        rgba(32, 55, 80, 0.04);
+}
+
+.pharmacy-inventory-card-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid #e4ebf1;
+}
+
+.pharmacy-inventory-card-label {
+    margin-bottom: 5px;
+
+    color: #8392a3;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.pharmacy-inventory-card-header h2 {
+    margin: 0;
+
+    color: #284965;
+
+    font-size: 19px;
+}
+
+
+/* =====================================================
+   REFRESH
+   ===================================================== */
+
+.pharmacy-inventory-refresh-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 9px 14px;
+
+    border: 1px solid #cbd8e4;
+
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #4f6c86;
+
+    font-size: 12px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.pharmacy-inventory-refresh-button:hover:not(:disabled) {
+    background: #f4f7fa;
+}
+
+.pharmacy-inventory-refresh-button:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   TABLE
+   ===================================================== */
+
+.pharmacy-inventory-table-wrapper {
+    overflow-x: auto;
+}
+
+.pharmacy-inventory-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 850px;
+}
+
+.pharmacy-inventory-table th {
+    padding: 13px 16px;
+
+    background: #f3f6f9;
+
+    color: #5d7186;
+
+    border-bottom: 1px solid #dce5ed;
+
+    font-size: 12px;
+    font-weight: 750;
+
+    text-align: left;
+}
+
+.pharmacy-inventory-table td {
+    padding: 15px 16px;
+
+    border-bottom: 1px solid #edf1f5;
+
+    color: #344f69;
+
+    font-size: 13px;
+
+    vertical-align: middle;
+}
+
+.pharmacy-inventory-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.pharmacy-inventory-table tbody tr:hover {
+    background: #fafcfd;
+}
+
+.text-right {
+    text-align: right !important;
+}
+
+
+/* =====================================================
+   TABLE CONTENT
+   ===================================================== */
+
+.medicine-code {
+    color: #58718a;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.pharmacy-inventory-table strong {
+    color: #254560;
+
+    font-weight: 700;
+}
+
+.active-ingredient {
+    color: #6f8295;
+}
+
+.stock-value {
+    color: #294f70;
+
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.batch-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.batch-info strong {
+    color: #355873;
+
+    font-size: 12px;
+}
+
+.batch-info span {
+    color: #8090a0;
+
+    font-size: 11px;
+}
+
+.muted {
+    color: #a1adb8;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.inventory-status {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 5px 10px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.inventory-status.success {
+    background: #e9f7ee;
+
+    color: #287a48;
+}
+
+.inventory-status.warning {
+    background: #fff5dc;
+
+    color: #a56b00;
+}
+
+.inventory-status.danger {
+    background: #fdebed;
+
+    color: #b83b47;
+}
+
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+.pharmacy-inventory-state {
+    min-height: 300px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 10px;
+
+    color: #718398;
+
+    font-size: 14px;
+}
+
+.pharmacy-inventory-spinner {
+    width: 19px;
+    height: 19px;
+
+    border: 3px solid #dce5ed;
+
+    border-top-color: #5d7d9c;
+
+    border-radius: 50%;
+
+    animation:
+        pharmacy-inventory-spin
+        0.8s linear infinite;
+}
+
+@keyframes pharmacy-inventory-spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =====================================================
+   EMPTY
+   ===================================================== */
+
+.pharmacy-inventory-empty {
+    padding: 60px 20px;
+
+    text-align: center;
+}
+
+.pharmacy-inventory-empty > i {
+    margin-bottom: 14px;
+
+    color: #8da0b2;
+
+    font-size: 28px;
+}
+
+.pharmacy-inventory-empty h3 {
+    margin: 0 0 6px;
+
+    color: #3c5870;
+
+    font-size: 17px;
+}
+
+.pharmacy-inventory-empty p {
+    margin: 0;
+
+    color: #8a99a8;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   ERROR
+   ===================================================== */
+
+.pharmacy-inventory-message {
+    padding: 13px 15px;
+
+    margin-bottom: 18px;
+
+    border-radius: 8px;
+
+    font-size: 13px;
+}
+
+.pharmacy-inventory-error {
+    background: #fff1f2;
+
+    border: 1px solid #fecdd3;
+
+    color: #9f1239;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 700px) {
+
+    .pharmacy-inventory-page {
+        padding: 22px 12px;
+    }
+
+    .pharmacy-inventory-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .pharmacy-inventory-card-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    .pharmacy-inventory-refresh-button {
+        width: 100%;
+
+        justify-content: center;
+    }
+}
