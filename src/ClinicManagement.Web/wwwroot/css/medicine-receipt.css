@@ -326,9 +326,21 @@
 
     color: #ffffff;
 
+    cursor: pointer;
+
+    opacity: 1;
+}
+
+.medicine-receipt-submit-button:disabled {
     cursor: not-allowed;
 
-    opacity: 0.55;
+    opacity: 0.75;
+}
+
+.medicine-receipt-submit-button:not(:disabled):hover {
+    background: #294c68;
+
+    border-color: #294c68;
 }
 
 
