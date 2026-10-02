@@ -196,14 +196,24 @@
 .pharmacy-queue-status {
     display: inline-flex;
     align-items: center;
-    padding: 5px 10px;
-    border-radius: 999px;
-    background: #eef4ff;
-    color: #315b9d;
-    font-size: 12px;
-    font-weight: 700;
-}
+    justify-content: center;
 
+    min-width: 76px;
+    padding: 7px 14px;
+
+    border-radius: 8px;
+
+    background: #e8f1ff;
+    border: 1px solid #c9dcf8;
+
+    color: #315b9d;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1.2;
+    white-space: nowrap;
+}
 
 /* =====================================================
    VIEW BUTTON
