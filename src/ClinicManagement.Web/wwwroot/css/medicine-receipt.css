@@ -460,3 +460,25 @@
         width: 100%;
     }
 }
+
+.medicine-receipt-success {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 16px;
+
+    padding: 12px 14px;
+
+    border: 1px solid #b9e2c8;
+
+    border-radius: 8px;
+
+    background: #effaf3;
+
+    color: #27794a;
+
+    font-size: 12px;
+}

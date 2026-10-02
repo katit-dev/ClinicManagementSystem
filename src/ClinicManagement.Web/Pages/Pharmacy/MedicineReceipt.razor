@@ -24,10 +24,7 @@
            BACK
            ===================================================== *@
 
-        <button
-            type="button"
-            class="medicine-receipt-back-button"
-            @onclick="GoBack">
+        <button type="button" class="medicine-receipt-back-button" @onclick="GoBack">
 
             <i class="fas fa-arrow-left"></i>
 
@@ -68,6 +65,17 @@
                 <i class="fas fa-exclamation-circle"></i>
 
                 @ErrorMessage
+
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(ActionMessage))
+        {
+            <div class="medicine-receipt-success">
+
+                <i class="fas fa-check-circle"></i>
+
+                @ActionMessage
 
             </div>
         }
@@ -124,12 +132,8 @@
                                 Nhà cung cấp
                             </label>
 
-                            <input
-                                type="text"
-                                class="medicine-receipt-input"
-                                @bind="SupplierName"
-                                maxlength="255"
-                                placeholder="Nhập tên nhà cung cấp..." />
+                            <input type="text" class="medicine-receipt-input" @bind="SupplierName" maxlength="255"
+                                   placeholder="Nhập tên nhà cung cấp..." />
 
                         </div>
 
@@ -140,12 +144,8 @@
                                 Số hóa đơn / mã tham chiếu
                             </label>
 
-                            <input
-                                type="text"
-                                class="medicine-receipt-input"
-                                @bind="ReferenceCode"
-                                maxlength="100"
-                                placeholder="Ví dụ: HD-DHG-8891" />
+                            <input type="text" class="medicine-receipt-input" @bind="ReferenceCode" maxlength="100"
+                                   placeholder="Ví dụ: HD-DHG-8891" />
 
                         </div>
 
@@ -203,9 +203,7 @@
                                     Thuốc
                                 </label>
 
-                                <select
-                                    class="medicine-receipt-input"
-                                    @bind="SelectedMedicineId">
+                                <select class="medicine-receipt-input" @bind="SelectedMedicineId">
 
                                     <option value="0">
                                         -- Chọn thuốc --
@@ -235,12 +233,8 @@
                                         Số lô
                                     </label>
 
-                                    <input
-                                        type="text"
-                                        class="medicine-receipt-input"
-                                        @bind="BatchNo"
-                                        maxlength="50"
-                                        placeholder="Ví dụ: L2409" />
+                                    <input type="text" class="medicine-receipt-input" @bind="BatchNo" maxlength="50"
+                                           placeholder="Ví dụ: L2409" />
 
                                 </div>
 
@@ -251,10 +245,7 @@
                                         Hạn sử dụng
                                     </label>
 
-                                    <input
-                                        type="date"
-                                        class="medicine-receipt-input"
-                                        @bind="ExpiryDate" />
+                                    <input type="date" class="medicine-receipt-input" @bind="ExpiryDate" />
 
                                 </div>
 
@@ -269,12 +260,8 @@
                                         Số lượng
                                     </label>
 
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        class="medicine-receipt-input"
-                                        @bind="Quantity"
-                                        placeholder="Nhập số lượng..." />
+                                    <input type="number" min="1" class="medicine-receipt-input" @bind="Quantity"
+                                           placeholder="Nhập số lượng..." />
 
                                 </div>
 
@@ -285,13 +272,8 @@
                                         Giá nhập / đơn vị
                                     </label>
 
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        class="medicine-receipt-input"
-                                        @bind="ImportPrice"
-                                        placeholder="0" />
+                                    <input type="number" min="0" step="0.01" class="medicine-receipt-input" @bind="ImportPrice"
+                                           placeholder="0" />
 
                                 </div>
 
@@ -334,24 +316,21 @@
 
                 <div class="medicine-receipt-actions">
 
-                    <button
-                        type="button"
-                        class="medicine-receipt-cancel-button"
-                        @onclick="GoBack">
+                    <button type="button" class="medicine-receipt-cancel-button" @onclick="GoBack">
 
                         Hủy
 
                     </button>
 
 
-                    <button
-                        type="button"
-                        class="medicine-receipt-submit-button"
-                        disabled>
+                    <button type="button" class="medicine-receipt-submit-button" disabled="@(!CanSubmit || IsSubmitting)"
+                            @onclick="SubmitReceiptAsync">
 
                         <i class="fas fa-check"></i>
 
-                        Nhập thuốc
+                        @(IsSubmitting
+                            ? "Đang nhập..."
+                            : "Nhập thuốc")
 
                     </button>
 
@@ -377,6 +356,11 @@
     private bool IsLoading;
 
     private string ErrorMessage =
+        string.Empty;
+
+    private bool IsSubmitting;
+
+    private string ActionMessage =
         string.Empty;
 
 
@@ -411,6 +395,225 @@
     {
         await LoadMedicinesAsync();
     }
+
+    // =====================================================
+    // SUBMIT MEDICINE RECEIPT
+    //
+    // POST:
+    // /api/medicines/receipts
+    //
+    // Current UI đang nhập 1 dòng thuốc,
+    // nên request.Items chỉ có 1 item.
+    // =====================================================
+
+    private async Task SubmitReceiptAsync()
+    {
+        // =================================================
+        // PREVENT DOUBLE SUBMIT
+        // =================================================
+
+        if (IsSubmitting)
+        {
+            return;
+        }
+
+
+        // =================================================
+        // CLIENT VALIDATION
+        // =================================================
+
+        if (SelectedMedicineId <= 0)
+        {
+            ErrorMessage =
+                "Vui lòng chọn thuốc.";
+
+            return;
+        }
+
+
+        if (string.IsNullOrWhiteSpace(BatchNo))
+        {
+            ErrorMessage =
+                "Vui lòng nhập số lô.";
+
+            return;
+        }
+
+
+        if (ExpiryDate.Date <= DateTime.Today)
+        {
+            ErrorMessage =
+                "Hạn sử dụng phải lớn hơn ngày hiện tại.";
+
+            return;
+        }
+
+
+        if (Quantity <= 0)
+        {
+            ErrorMessage =
+                "Số lượng phải lớn hơn 0.";
+
+            return;
+        }
+
+
+        if (ImportPrice < 0)
+        {
+            ErrorMessage =
+                "Giá nhập không được nhỏ hơn 0.";
+
+            return;
+        }
+
+
+        // =================================================
+        // START SUBMIT
+        // =================================================
+
+        IsSubmitting = true;
+
+        ErrorMessage =
+            string.Empty;
+
+        ActionMessage =
+            string.Empty;
+
+
+        try
+        {
+            // =================================================
+            // CREATE REQUEST
+            // =================================================
+
+            var request =
+                new MedicineReceiptRequestDTO
+                {
+                    SupplierName =
+                        string.IsNullOrWhiteSpace(
+                            SupplierName)
+                            ? null
+                            : SupplierName.Trim(),
+
+                    ReferenceCode =
+                        string.IsNullOrWhiteSpace(
+                            ReferenceCode)
+                            ? null
+                            : ReferenceCode.Trim(),
+
+                    Items =
+                        new List<
+                            MedicineReceiptItemRequestDTO
+                        >
+                        {
+                        new MedicineReceiptItemRequestDTO
+                        {
+                            MedicineId =
+                                SelectedMedicineId,
+
+                            BatchNo =
+                                BatchNo.Trim(),
+
+                            ExpiryDate =
+                                ExpiryDate,
+
+                            Quantity =
+                                Quantity,
+
+                            ImportPrice =
+                                ImportPrice
+                        }
+                        }
+                };
+
+
+            // =================================================
+            // CREATE JSON CONTENT
+            // =================================================
+
+            var content =
+                JsonContent.Create(request);
+
+
+            // =================================================
+            // CALL API
+            //
+            // POST:
+            // /api/medicines/receipts
+            // =================================================
+
+            var response =
+                await AuthorizedApiService
+                    .PostAsync(
+                        "/api/medicines/receipts",
+                        content
+                    );
+
+
+            // =================================================
+            // READ RESPONSE
+            // =================================================
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<bool>
+                    >();
+
+
+            // =================================================
+            // API FAILED
+            // =================================================
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể nhập thuốc.";
+
+                return;
+            }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            ActionMessage =
+                responseData.Message
+                ?? "Nhập thuốc thành công.";
+
+
+            // =================================================
+            // RETURN TO INVENTORY
+            // =================================================
+
+            await Task.Delay(500);
+
+            NavigationManager.NavigateTo(
+                "/pharmacy/inventory"
+            );
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private bool CanSubmit =>
+    SelectedMedicineId > 0 &&
+    !string.IsNullOrWhiteSpace(BatchNo) &&
+    ExpiryDate.Date > DateTime.Today &&
+    Quantity > 0 &&
+    ImportPrice >= 0;
 
 
     // =====================================================
