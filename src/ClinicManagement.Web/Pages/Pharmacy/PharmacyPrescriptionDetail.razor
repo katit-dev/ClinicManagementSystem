@@ -162,8 +162,7 @@
                         </span>
 
                         <strong>
-                            @Prescription.CreatedAt
-                                .ToString("dd/MM/yyyy HH:mm")
+                            @Prescription.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                         </strong>
 
                     </div>
@@ -435,10 +434,7 @@
                                                             </td>
 
                                                             <td>
-                                                                @batch.ExpiryDate
-                                                                    .ToString(
-                                                                        "dd/MM/yyyy"
-                                                                    )
+                                                                @batch.ExpiryDate.ToString("dd/MM/yyyy")
                                                             </td>
 
                                                             <td>
