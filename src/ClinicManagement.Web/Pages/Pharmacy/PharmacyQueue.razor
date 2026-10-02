@@ -1,0 +1,654 @@
+@page "/pharmacy"
+
+@using System.Net.Http.Json
+@using ClinicManagementSystem.Application.DTOs
+@using ClinicManagementSystem.Application.DTOs.Pharmacy
+
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Pharmacist")]
+
+@inject AuthorizedApiService AuthorizedApiService
+@inject NavigationManager NavigationManager
+
+
+<div class="pharmacy-queue-page">
+
+    <div class="pharmacy-queue-container">
+
+        @* =====================================================
+           HEADER
+           ===================================================== *@
+
+        <div class="pharmacy-queue-header">
+
+            <div>
+                <h1>Đơn thuốc chờ phát</h1>
+
+                <p>
+                    Danh sách các đơn thuốc đã chốt
+                    và đang chờ Dược sĩ xử lý.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="pharmacy-queue-refresh-button"
+                disabled="@IsLoading"
+                @onclick="LoadPrescriptionsAsync">
+
+                @(IsLoading ? "Đang tải..." : "Làm mới")
+
+            </button>
+
+        </div>
+
+
+        @* =====================================================
+           SEARCH
+           ===================================================== *@
+
+        <section class="pharmacy-queue-search-card">
+
+            <div class="pharmacy-queue-search">
+
+                <input
+                    class="pharmacy-queue-search-input"
+                    type="text"
+                    placeholder="Tìm theo mã đơn, mã bệnh nhân hoặc tên bệnh nhân..."
+                    @bind="Keyword"
+                    @onkeydown="HandleSearchKeyDown" />
+
+                <button
+                    type="button"
+                    class="pharmacy-queue-search-button"
+                    disabled="@IsLoading"
+                    @onclick="SearchAsync">
+
+                    Tìm kiếm
+
+                </button>
+
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Keyword))
+            {
+                <button
+                    type="button"
+                    class="pharmacy-queue-clear-button"
+                    disabled="@IsLoading"
+                    @onclick="ClearSearchAsync">
+
+                    Xóa tìm kiếm
+
+                </button>
+            }
+
+        </section>
+
+
+        @* =====================================================
+           ERROR
+           ===================================================== *@
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="pharmacy-queue-message pharmacy-queue-error">
+                @ErrorMessage
+            </div>
+        }
+
+
+        @* =====================================================
+           LOADING
+           ===================================================== *@
+
+        @if (IsLoading)
+        {
+            <div class="pharmacy-queue-loading">
+
+                <div class="pharmacy-queue-spinner"></div>
+
+                <span>
+                    Đang tải danh sách đơn thuốc...
+                </span>
+
+            </div>
+        }
+        else
+        {
+            @* =================================================
+               SUMMARY
+               ================================================= *@
+
+            <div class="pharmacy-queue-summary">
+
+                <div>
+                    Có
+                    <strong>
+                        @(ResponseData?.TotalCount ?? 0)
+                    </strong>
+                    đơn thuốc đang chờ phát.
+                </div>
+
+                @if (ResponseData != null &&
+                     ResponseData.TotalPages > 0)
+                {
+                    <div>
+                        Trang
+                        <strong>
+                            @ResponseData.PageNumber
+                        </strong>
+                        /
+                        <strong>
+                            @ResponseData.TotalPages
+                        </strong>
+                    </div>
+                }
+
+            </div>
+
+
+            @* =================================================
+               EMPTY
+               ================================================= *@
+
+            @if (ResponseData == null ||
+                 ResponseData.Items.Count == 0)
+            {
+                <section class="pharmacy-queue-empty">
+
+                    <div class="pharmacy-queue-empty-icon">
+                        ✓
+                    </div>
+
+                    <h2>
+                        Không có đơn thuốc chờ phát
+                    </h2>
+
+                    <p>
+                        Hiện tại không có đơn thuốc nào
+                        đang ở trạng thái chờ phát.
+                    </p>
+
+                </section>
+            }
+            else
+            {
+                @* =============================================
+                   TABLE
+                   ============================================= *@
+
+                <section class="pharmacy-queue-card">
+
+                    <div class="pharmacy-queue-table-wrapper">
+
+                        <table class="pharmacy-queue-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Mã đơn
+                                    </th>
+
+                                    <th>
+                                        Bệnh nhân
+                                    </th>
+
+                                    <th>
+                                        Mã bệnh nhân
+                                    </th>
+
+                                    <th>
+                                        Bác sĩ
+                                    </th>
+
+                                    <th>
+                                        Số thuốc
+                                    </th>
+
+                                    <th>
+                                        Ngày kê
+                                    </th>
+
+                                    <th>
+                                        Trạng thái
+                                    </th>
+
+                                    <th>
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                @foreach (
+                                    var prescription
+                                    in ResponseData.Items)
+                                {
+                                    <tr>
+
+                                        <td>
+                                            <strong>
+                                                #@prescription.PrescriptionId
+                                            </strong>
+                                        </td>
+
+
+                                        <td>
+                                            <div class="pharmacy-queue-patient">
+
+                                                <strong>
+                                                    @prescription.PatientName
+                                                </strong>
+
+                                            </div>
+                                        </td>
+
+
+                                        <td>
+                                            @prescription.PatientCode
+                                        </td>
+
+
+                                        <td>
+                                            @prescription.DoctorName
+                                        </td>
+
+
+                                        <td>
+                                            @prescription.ItemCount
+                                        </td>
+
+
+                                        <td>
+                                            @prescription.CreatedAt
+                                                .ToString(
+                                                    "dd/MM/yyyy HH:mm"
+                                                )
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="pharmacy-queue-status">
+                                                Đã chốt
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <button
+                                                type="button"
+                                                class="pharmacy-queue-view-button"
+                                                @onclick="
+                                                    () => OpenPrescription(
+                                                        prescription.PrescriptionId
+                                                    )">
+
+                                                Xem đơn
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                @* =============================================
+                   PAGINATION
+                   ============================================= *@
+                   @if (ResponseData.TotalPages > 1)
+{
+    <div class="pharmacy-queue-pagination">
+
+        <button
+            type="button"
+            class="pharmacy-queue-page-button"
+            disabled="@(
+                IsLoading ||
+                ResponseData.PageNumber <= 1
+            )"
+            @onclick="
+                () => ChangePageAsync(
+                    ResponseData.PageNumber - 1
+                )">
+
+            ← Trước
+
+        </button>
+
+
+        @foreach (
+            var pageNumber
+            in GetPageNumbers())
+        {
+            <button
+                type="button"
+                class="@GetPageButtonClass(pageNumber)"
+                disabled="@IsLoading"
+                @onclick="
+                    () => ChangePageAsync(pageNumber)">
+
+                @pageNumber
+
+            </button>
+        }
+
+
+        <button
+            type="button"
+            class="pharmacy-queue-page-button"
+            disabled="@(
+                IsLoading ||
+                ResponseData.PageNumber >=
+                    ResponseData.TotalPages
+            )"
+            @onclick="
+                () => ChangePageAsync(
+                    ResponseData.PageNumber + 1
+                )">
+
+            Sau →
+
+        </button>
+
+    </div>
+}
+
+                
+            }
+
+        }
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    private PharmacyPrescriptionListResponseDTO? ResponseData;
+
+    private string Keyword = string.Empty;
+
+    private bool IsLoading;
+
+    private string ErrorMessage = string.Empty;
+
+
+    // =====================================================
+    // PAGINATION
+    // =====================================================
+
+    private const int PageSize = 20;
+
+    private int CurrentPage = 1;
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPrescriptionsAsync();
+    }
+
+
+    // =====================================================
+    // LOAD
+    // =====================================================
+
+    private async Task LoadPrescriptionsAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var url =
+                $"/api/pharmacy/prescriptions" +
+                $"?pageNumber={CurrentPage}" +
+                $"&pageSize={PageSize}";
+
+            if (!string.IsNullOrWhiteSpace(Keyword))
+            {
+                var encodedKeyword =
+                    Uri.EscapeDataString(
+                        Keyword.Trim()
+                    );
+
+                url +=
+                    $"&keyword={encodedKeyword}";
+            }
+
+
+            var response =
+                await AuthorizedApiService
+                    .GetAsync(url);
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            PharmacyPrescriptionListResponseDTO
+                        >
+                    >();
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải danh sách đơn thuốc.";
+
+                return;
+            }
+
+
+            ResponseData =
+                responseData.Content;
+
+
+            if (ResponseData == null)
+            {
+                ErrorMessage =
+                    "Không nhận được dữ liệu đơn thuốc.";
+
+                return;
+            }
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+
+    // =====================================================
+    // SEARCH
+    // =====================================================
+
+    private async Task SearchAsync()
+    {
+        CurrentPage = 1;
+
+        await LoadPrescriptionsAsync();
+    }
+
+
+    // =====================================================
+    // CLEAR SEARCH
+    // =====================================================
+
+    private async Task ClearSearchAsync()
+    {
+        Keyword = string.Empty;
+
+        CurrentPage = 1;
+
+        await LoadPrescriptionsAsync();
+    }
+
+
+    // =====================================================
+    // ENTER TO SEARCH
+    // =====================================================
+
+    private async Task HandleSearchKeyDown(
+        KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchAsync();
+        }
+    }
+
+
+    // =====================================================
+    // CHANGE PAGE
+    // =====================================================
+
+    private async Task ChangePageAsync(
+        int page)
+    {
+        if (ResponseData == null)
+        {
+            return;
+        }
+
+        if (page < 1 ||
+            page > ResponseData.TotalPages)
+        {
+            return;
+        }
+
+        if (page == CurrentPage)
+        {
+            return;
+        }
+
+        CurrentPage = page;
+
+        await LoadPrescriptionsAsync();
+    }
+
+
+    // =====================================================
+    // PAGE NUMBERS
+    // =====================================================
+
+    private IEnumerable<int> GetPageNumbers()
+    {
+        if (ResponseData == null ||
+            ResponseData.TotalPages <= 0)
+        {
+            return Enumerable.Empty<int>();
+        }
+
+
+        var totalPages =
+            ResponseData.TotalPages;
+
+
+        var currentPage =
+            ResponseData.PageNumber;
+
+
+        const int visiblePages = 5;
+
+
+        var startPage =
+            Math.Max(
+                1,
+                currentPage - 2
+            );
+
+
+        var endPage =
+            Math.Min(
+                totalPages,
+                startPage + visiblePages - 1
+            );
+
+
+        if (endPage - startPage + 1 <
+            visiblePages)
+        {
+            startPage =
+                Math.Max(
+                    1,
+                    endPage - visiblePages + 1
+                );
+        }
+
+
+        return Enumerable
+            .Range(
+                startPage,
+                endPage - startPage + 1
+            );
+    }
+
+
+    // =====================================================
+    // PAGE BUTTON CLASS
+    // =====================================================
+
+    private string GetPageButtonClass(
+        int page)
+    {
+        return page == CurrentPage
+            ? "pharmacy-queue-page-button pharmacy-queue-page-button-active"
+            : "pharmacy-queue-page-button";
+    }
+
+
+    // =====================================================
+    // OPEN PRESCRIPTION
+    // =====================================================
+
+    private void OpenPrescription(
+        int prescriptionId)
+    {
+        NavigationManager.NavigateTo(
+            $"/pharmacy/prescriptions/{prescriptionId}"
+        );
+    }
+}

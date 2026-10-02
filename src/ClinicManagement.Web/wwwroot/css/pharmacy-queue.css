@@ -1,0 +1,367 @@
+.pharmacy-queue-page {
+    min-height: 100vh;
+    background: #f6f8fb;
+    padding: 32px 24px;
+}
+
+.pharmacy-queue-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
+.pharmacy-queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.pharmacy-queue-header h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.pharmacy-queue-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+
+/* =====================================================
+   BUTTON
+   ===================================================== */
+
+.pharmacy-queue-refresh-button,
+.pharmacy-queue-search-button,
+.pharmacy-queue-view-button,
+.pharmacy-queue-page-button {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.15s ease;
+}
+
+.pharmacy-queue-refresh-button {
+    padding: 10px 18px;
+    background: #e8eef7;
+    color: #334155;
+}
+
+.pharmacy-queue-refresh-button:hover {
+    background: #dce5f1;
+}
+
+
+/* =====================================================
+   SEARCH
+   ===================================================== */
+
+.pharmacy-queue-search-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.pharmacy-queue-search {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+}
+
+.pharmacy-queue-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+.pharmacy-queue-search-input:focus {
+    border-color: #94a3b8;
+}
+
+.pharmacy-queue-search-button {
+    padding: 11px 20px;
+    background: #334155;
+    color: #ffffff;
+}
+
+.pharmacy-queue-search-button:hover {
+    background: #1f2937;
+}
+
+.pharmacy-queue-clear-button {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   SUMMARY
+   ===================================================== */
+
+.pharmacy-queue-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   CARD
+   ===================================================== */
+
+.pharmacy-queue-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+
+/* =====================================================
+   TABLE
+   ===================================================== */
+
+.pharmacy-queue-table-wrapper {
+    overflow-x: auto;
+}
+
+.pharmacy-queue-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pharmacy-queue-table th {
+    padding: 14px 16px;
+    text-align: left;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pharmacy-queue-table td {
+    padding: 15px 16px;
+    color: #374151;
+    font-size: 14px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.pharmacy-queue-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.pharmacy-queue-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =====================================================
+   PATIENT
+   ===================================================== */
+
+.pharmacy-queue-patient strong {
+    color: #1f2937;
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.pharmacy-queue-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: #315b9d;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   VIEW BUTTON
+   ===================================================== */
+
+.pharmacy-queue-view-button {
+    padding: 8px 14px;
+    background: #334155;
+    color: #ffffff;
+}
+
+.pharmacy-queue-view-button:hover {
+    background: #1f2937;
+}
+
+
+/* =====================================================
+   PAGINATION
+   ===================================================== */
+
+.pharmacy-queue-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+}
+
+.pharmacy-queue-page-button {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #dbe0e7;
+}
+
+.pharmacy-queue-page-button:hover:not(:disabled) {
+    background: #f1f5f9;
+}
+
+.pharmacy-queue-page-button-active {
+    background: #334155;
+    color: #ffffff;
+    border-color: #334155;
+}
+
+.pharmacy-queue-page-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+.pharmacy-queue-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    min-height: 240px;
+    color: #64748b;
+}
+
+.pharmacy-queue-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #dbe2ea;
+    border-top-color: #475569;
+    border-radius: 50%;
+    animation: pharmacy-queue-spin 0.8s linear infinite;
+}
+
+@keyframes pharmacy-queue-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =====================================================
+   EMPTY
+   ===================================================== */
+
+.pharmacy-queue-empty {
+    padding: 70px 20px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.pharmacy-queue-empty-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background: #edf7f0;
+    color: #3f7d53;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.pharmacy-queue-empty h2 {
+    margin: 0 0 8px;
+    color: #374151;
+    font-size: 20px;
+}
+
+.pharmacy-queue-empty p {
+    margin: 0;
+    color: #6b7280;
+}
+
+
+/* =====================================================
+   MESSAGE
+   ===================================================== */
+
+.pharmacy-queue-message {
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.pharmacy-queue-error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #9f1239;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+    .pharmacy-queue-header {
+        flex-direction: column;
+    }
+
+    .pharmacy-queue-search-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .pharmacy-queue-search {
+        width: 100%;
+    }
+
+    .pharmacy-queue-clear-button {
+        align-self: flex-start;
+    }
+}
