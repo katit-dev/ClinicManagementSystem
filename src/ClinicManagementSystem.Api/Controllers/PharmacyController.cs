@@ -142,4 +142,32 @@ public class PharmacyController : ControllerBase
             result
         );
     }
+
+    // =====================================================
+    // GET PENDING PRESCRIPTIONS
+    // GET /api/pharmacy/prescriptions
+    // =====================================================
+
+    [HttpGet("/api/pharmacy/prescriptions")]
+    public async Task<IActionResult> GetPendingPrescriptions(
+        [FromQuery] string? keyword = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var result =
+            await _pharmacyService
+                .GetPendingPrescriptionsAsync(
+                    keyword,
+                    pageNumber,
+                    pageSize
+                );
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
+
+
 }
