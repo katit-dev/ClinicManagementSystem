@@ -243,6 +243,42 @@ public class PharmacyController : ControllerBase
         );
     }
 
+    // =====================================================
+    // SEARCH MEDICINES
+    //
+    // GET:
+    // /api/medicines?keyword=
+    //
+    // Pharmacist dùng API này để tìm thuốc
+    // trước khi nhập thuốc vào kho.
+    // =====================================================
+
+    [HttpGet("~/api/medicines")]
+    [Authorize(Roles = "Pharmacist")]
+    public async Task<IActionResult> SearchMedicines(
+        [FromQuery] string keyword)
+    {
+        // =================================================
+        // CALL SERVICE
+        // =================================================
+
+        var result =
+            await _pharmacyService
+                .SearchMedicinesAsync(
+                    keyword
+                );
+
+
+        // =================================================
+        // RESPONSE
+        // =================================================
+
+        return StatusCode(
+            result.StatusCode,
+            result
+        );
+    }
+
 
 
 }
