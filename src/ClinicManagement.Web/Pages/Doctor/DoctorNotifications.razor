@@ -1,0 +1,281 @@
+@page "/doctor/notifications"
+
+@layout HomePageMaster
+
+@attribute [Authorize(Roles = "Doctor")]
+
+@using System.Net.Http.Json
+@using ClinicManagementSystem.Application.DTOs
+@using ClinicManagementSystem.Application.DTOs.Notification
+@using Microsoft.AspNetCore.Authorization
+
+@inject AuthorizedApiService AuthorizedApiService
+
+
+<PageTitle>Thông báo</PageTitle>
+
+
+<div class="doctor-notifications-page">
+
+    <div class="doctor-notifications-container">
+
+        @* =====================================================
+           HEADER
+           ===================================================== *@
+
+        <div class="doctor-notifications-header">
+
+            <div>
+
+                <div class="doctor-notifications-label">
+                    THÔNG BÁO
+                </div>
+
+                <h1>
+                    Thông báo
+                </h1>
+
+                <p>
+                    Xem các thông báo được gửi đến bạn.
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="doctor-notifications-refresh-button"
+                disabled="@IsLoading"
+                @onclick="LoadNotificationsAsync">
+
+                <i class="fas fa-sync-alt"></i>
+
+                Làm mới
+
+            </button>
+
+        </div>
+
+
+        @* =====================================================
+           ERROR
+           ===================================================== *@
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="doctor-notifications-message doctor-notifications-error">
+
+                @ErrorMessage
+
+            </div>
+        }
+
+
+        @* =====================================================
+           LOADING
+           ===================================================== *@
+
+        @if (IsLoading)
+        {
+            <div class="doctor-notifications-state">
+
+                <div class="doctor-notifications-spinner"></div>
+
+                <span>
+                    Đang tải thông báo...
+                </span>
+
+            </div>
+        }
+
+
+        @* =====================================================
+           EMPTY
+           ===================================================== *@
+
+        else if (Notifications.Count == 0)
+        {
+            <div class="doctor-notifications-empty">
+
+                <div class="doctor-notifications-empty-icon">
+
+                    <i class="far fa-bell"></i>
+
+                </div>
+
+                <h2>
+                    Chưa có thông báo
+                </h2>
+
+                <p>
+                    Hiện tại bạn chưa có thông báo nào.
+                </p>
+
+            </div>
+        }
+
+
+        @* =====================================================
+           LIST
+           ===================================================== *@
+
+        else
+        {
+            <div class="doctor-notifications-list">
+
+                @foreach (
+                    var notification in Notifications)
+                {
+                    <article
+                        class="doctor-notification-card">
+
+                        <div class="doctor-notification-icon">
+
+                            <i class="fas fa-bell"></i>
+
+                        </div>
+
+
+                        <div class="doctor-notification-content">
+
+                            <div class="doctor-notification-top">
+
+                                <h2>
+                                    @notification.Title
+                                </h2>
+
+                                <time>
+                                    @notification.CreatedAt
+                                        .ToString(
+                                            "dd/MM/yyyy HH:mm"
+                                        )
+                                </time>
+
+                            </div>
+
+
+                            <p>
+                                @notification.Content
+                            </p>
+
+
+                            <div class="doctor-notification-meta">
+
+                                <span>
+                                    <i class="fas fa-calendar-check"></i>
+
+                                    Lịch hẹn
+                                    #@notification.AppointmentId
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </article>
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+@code {
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    private List<NotificationDTO>
+        Notifications = new();
+
+    private bool IsLoading;
+
+    private string ErrorMessage =
+        string.Empty;
+
+
+    // =====================================================
+    // INITIALIZE
+    // =====================================================
+
+    protected override async Task
+        OnInitializedAsync()
+    {
+        await LoadNotificationsAsync();
+    }
+
+
+    // =====================================================
+    // LOAD NOTIFICATIONS
+    // =====================================================
+
+    private async Task
+        LoadNotificationsAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+
+        ErrorMessage =
+            string.Empty;
+
+
+        try
+        {
+            var response =
+                await AuthorizedApiService
+                    .GetAsync(
+                        "/api/notifications"
+                    );
+
+
+            var responseData =
+                await response.Content
+                    .ReadFromJsonAsync<
+                        HttpResponseData<
+                            List<NotificationDTO>
+                        >
+                    >();
+
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300)
+            {
+                ErrorMessage =
+                    responseData?.Message
+                    ?? "Không thể tải thông báo.";
+
+                Notifications =
+                    new List<NotificationDTO>();
+
+                return;
+            }
+
+
+            Notifications =
+                responseData.Content
+                ?? new List<NotificationDTO>();
+        }
+        catch
+        {
+            ErrorMessage =
+                "Không thể kết nối đến hệ thống.";
+
+            Notifications =
+                new List<NotificationDTO>();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}
