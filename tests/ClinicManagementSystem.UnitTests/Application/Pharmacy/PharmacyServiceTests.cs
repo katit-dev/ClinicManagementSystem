@@ -712,5 +712,163 @@ public class PharmacyServiceTests
         );
     }
 
+    // =====================================================
+    // TEST 11
+    //
+    // Prescription không có item
+    //
+    // Expected:
+    // 409
+    // PharmacyResponseMessageDTO.PrescriptionHasNoItems
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescriptionAsync_ShouldReturn409_WhenPrescriptionHasNoItems()
+    {
+        // Arrange
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new()
+                {
+                    PrescriptionItemId = 1,
+                    BatchId = 1,
+                    Quantity = 1
+                }
+                ]
+            };
+
+
+        var prescription =
+            new Prescription
+            {
+                Id = 1,
+
+                Status =
+                    (byte)PrescriptionStatus.Finalized
+            };
+
+
+        var prescriptions =
+            new List<Prescription>
+            {
+            prescription
+            };
+
+
+        var prescriptionQuery =
+            prescriptions
+                .BuildMock();
+
+
+        var prescriptionRepositoryMock =
+            new Mock<IPrescriptionRepository>();
+
+
+        prescriptionRepositoryMock
+            .Setup(
+                x =>
+                    x.WhereSql(
+                        It.IsAny<
+                            Expression<
+                                Func<
+                                    Prescription,
+                                    bool
+                                >
+                            >
+                        >()
+                    )
+            )
+            .Returns(
+                prescriptionQuery
+            );
+
+
+        _unitOfWorkMock
+            .Setup(
+                x =>
+                    x.PrescriptionRepository
+            )
+            .Returns(
+                prescriptionRepositoryMock.Object
+            );
+
+
+        // =====================================================
+        // PRESCRIPTION ITEM REPOSITORY
+        //
+        // Không có prescription item
+        // =====================================================
+
+        var prescriptionItems =
+            new List<PrescriptionItem>();
+
+
+        var prescriptionItemQuery =
+            prescriptionItems
+                .BuildMock();
+
+
+        var prescriptionItemRepositoryMock =
+            new Mock<IPrescriptionItemRepository>();
+
+
+        prescriptionItemRepositoryMock
+            .Setup(
+                x =>
+                    x.WhereSql(
+                        It.IsAny<
+                            Expression<
+                                Func<
+                                    PrescriptionItem,
+                                    bool
+                                >
+                            >
+                        >()
+                    )
+            )
+            .Returns(
+                prescriptionItemQuery
+            );
+
+
+        _unitOfWorkMock
+            .Setup(
+                x =>
+                    x.PrescriptionItemRepository
+            )
+            .Returns(
+                prescriptionItemRepositoryMock.Object
+            );
+
+
+        // Act
+
+        var result =
+            await _service
+                .DispensePrescriptionAsync(
+                    prescriptionId: 1,
+                    currentUserId: 1,
+                    request: request
+                );
+
+
+        // Assert
+
+        Assert.Equal(
+            409,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionHasNoItems,
+            result.Message
+        );
+    }
+
 
 }
