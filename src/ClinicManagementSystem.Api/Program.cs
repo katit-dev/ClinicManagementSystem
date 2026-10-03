@@ -261,3 +261,7 @@ app.MapControllers();
 app.Logger.LogInformation("Clinic API started.");
 
 app.Run();
+
+public partial class Program
+{
+}
