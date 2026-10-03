@@ -33,10 +33,10 @@ public class CustomWebApplicationFactory
     // =================================================
 
     private readonly MsSqlContainer _sqlServer =
-        new MsSqlBuilder(
-            "mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04"
-        )
-        .Build();
+    new MsSqlBuilder(
+        "mcr.microsoft.com/mssql/server:2022-latest"
+    )
+    .Build();
 
 
     // =================================================
