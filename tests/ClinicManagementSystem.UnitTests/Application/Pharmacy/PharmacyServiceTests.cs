@@ -214,4 +214,177 @@ public class PharmacyServiceTests
             result.Message
         );
     }
+
+    // =====================================================
+// TEST 5
+//
+// PrescriptionItemId <= 0
+//
+// Expected:
+// 400
+// "Thông tin phát thuốc không hợp lệ."
+// =====================================================
+
+[Fact]
+public async Task DispensePrescriptionAsync_ShouldReturn400_WhenPrescriptionItemIdIsInvalid()
+{
+    // Arrange
+
+    var request =
+        new DispenseRequestDTO
+        {
+            Items =
+            [
+                new()
+                {
+                    PrescriptionItemId = 0,
+
+                    BatchId = 1,
+
+                    Quantity = 1
+                }
+            ]
+        };
+
+
+    // Act
+
+    var result =
+        await _service
+            .DispensePrescriptionAsync(
+                prescriptionId: 1,
+                currentUserId: 1,
+                request: request
+            );
+
+
+    // Assert
+
+    Assert.Equal(
+        400,
+        result.StatusCode
+    );
+
+
+    Assert.Equal(
+        "Thông tin phát thuốc không hợp lệ.",
+        result.Message
+    );
+}
+
+// =====================================================
+// TEST 6
+//
+// BatchId <= 0
+//
+// Expected:
+// 400
+// "Thông tin phát thuốc không hợp lệ."
+// =====================================================
+
+[Fact]
+public async Task DispensePrescriptionAsync_ShouldReturn400_WhenBatchIdIsInvalid()
+{
+    // Arrange
+
+    var request =
+        new DispenseRequestDTO
+        {
+            Items =
+            [
+                new()
+                {
+                    PrescriptionItemId = 1,
+
+                    BatchId = 0,
+
+                    Quantity = 1
+                }
+            ]
+        };
+
+
+    // Act
+
+    var result =
+        await _service
+            .DispensePrescriptionAsync(
+                prescriptionId: 1,
+                currentUserId: 1,
+                request: request
+            );
+
+
+    // Assert
+
+    Assert.Equal(
+        400,
+        result.StatusCode
+    );
+
+
+    Assert.Equal(
+        "Thông tin phát thuốc không hợp lệ.",
+        result.Message
+    );
+}
+
+// =====================================================
+// TEST 7
+//
+// Quantity <= 0
+//
+// Expected:
+// 400
+// "Thông tin phát thuốc không hợp lệ."
+// =====================================================
+
+[Fact]
+public async Task DispensePrescriptionAsync_ShouldReturn400_WhenQuantityIsInvalid()
+{
+    // Arrange
+
+    var request =
+        new DispenseRequestDTO
+        {
+            Items =
+            [
+                new()
+                {
+                    PrescriptionItemId = 1,
+
+                    BatchId = 1,
+
+                    Quantity = 0
+                }
+            ]
+        };
+
+
+    // Act
+
+    var result =
+        await _service
+            .DispensePrescriptionAsync(
+                prescriptionId: 1,
+                currentUserId: 1,
+                request: request
+            );
+
+
+    // Assert
+
+    Assert.Equal(
+        400,
+        result.StatusCode
+    );
+
+
+    Assert.Equal(
+        "Thông tin phát thuốc không hợp lệ.",
+        result.Message
+    );
+}
+
+
 }
