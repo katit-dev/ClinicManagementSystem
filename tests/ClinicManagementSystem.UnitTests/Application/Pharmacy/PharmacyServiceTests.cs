@@ -12,6 +12,7 @@ using ClinicManagementSystem.Infrastructure.Repositories;
 
 using MockQueryable;
 using Moq;
+using ClinicManagementSystem.Application.Enums;
 
 
 namespace ClinicManagementSystem.UnitTests.Application.Pharmacy;
@@ -489,5 +490,117 @@ public class PharmacyServiceTests
             result.Message
         );
     }
+    // =====================================================
+    // TEST 9
+    //
+    // Prescription đã Dispensed
+    //
+    // Expected:
+    // 409
+    // PharmacyResponseMessageDTO.PrescriptionAlreadyDispensed
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescriptionAsync_ShouldReturn409_WhenPrescriptionIsAlreadyDispensed()
+    {
+        // Arrange
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new()
+                {
+                    PrescriptionItemId = 1,
+
+                    BatchId = 1,
+
+                    Quantity = 1
+                }
+                ]
+            };
+
+
+        var prescription =
+            new Prescription
+            {
+                Id = 1,
+
+                Status =
+                    (byte)PrescriptionStatus.Dispensed
+            };
+
+
+        var prescriptions =
+            new List<Prescription>
+            {
+            prescription
+            };
+
+
+        var prescriptionQuery =
+            prescriptions
+                .BuildMock();
+
+
+        var prescriptionRepositoryMock =
+            new Mock<IPrescriptionRepository>();
+
+
+        prescriptionRepositoryMock
+            .Setup(
+                x =>
+                    x.WhereSql(
+                        It.IsAny<
+                            Expression<
+                                Func<
+                                    Prescription,
+                                    bool
+                                >
+                            >
+                        >()
+                    )
+            )
+            .Returns(
+                prescriptionQuery
+            );
+
+
+        _unitOfWorkMock
+            .Setup(
+                x =>
+                    x.PrescriptionRepository
+            )
+            .Returns(
+                prescriptionRepositoryMock.Object
+            );
+
+
+        // Act
+
+        var result =
+            await _service
+                .DispensePrescriptionAsync(
+                    prescriptionId: 1,
+                    currentUserId: 1,
+                    request: request
+                );
+
+
+        // Assert
+
+        Assert.Equal(
+            409,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionAlreadyDispensed,
+            result.Message
+        );
+    }
+
 
 }
