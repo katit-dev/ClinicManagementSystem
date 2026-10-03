@@ -5,7 +5,12 @@ using ClinicManagementSystem.Application.Services;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Linq.Expressions;
 
+using ClinicManagementSystem.Infrastructure.Models;
+using ClinicManagementSystem.Infrastructure.Repositories;
+
+using MockQueryable;
 using Moq;
 
 
@@ -216,26 +221,26 @@ public class PharmacyServiceTests
     }
 
     // =====================================================
-// TEST 5
-//
-// PrescriptionItemId <= 0
-//
-// Expected:
-// 400
-// "Thông tin phát thuốc không hợp lệ."
-// =====================================================
+    // TEST 5
+    //
+    // PrescriptionItemId <= 0
+    //
+    // Expected:
+    // 400
+    // "Thông tin phát thuốc không hợp lệ."
+    // =====================================================
 
-[Fact]
-public async Task DispensePrescriptionAsync_ShouldReturn400_WhenPrescriptionItemIdIsInvalid()
-{
-    // Arrange
+    [Fact]
+    public async Task DispensePrescriptionAsync_ShouldReturn400_WhenPrescriptionItemIdIsInvalid()
+    {
+        // Arrange
 
-    var request =
-        new DispenseRequestDTO
-        {
-            Items =
-            [
-                new()
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new()
                 {
                     PrescriptionItemId = 0,
 
@@ -243,56 +248,56 @@ public async Task DispensePrescriptionAsync_ShouldReturn400_WhenPrescriptionItem
 
                     Quantity = 1
                 }
-            ]
-        };
+                ]
+            };
 
 
-    // Act
+        // Act
 
-    var result =
-        await _service
-            .DispensePrescriptionAsync(
-                prescriptionId: 1,
-                currentUserId: 1,
-                request: request
-            );
-
-
-    // Assert
-
-    Assert.Equal(
-        400,
-        result.StatusCode
-    );
+        var result =
+            await _service
+                .DispensePrescriptionAsync(
+                    prescriptionId: 1,
+                    currentUserId: 1,
+                    request: request
+                );
 
 
-    Assert.Equal(
-        "Thông tin phát thuốc không hợp lệ.",
-        result.Message
-    );
-}
+        // Assert
 
-// =====================================================
-// TEST 6
-//
-// BatchId <= 0
-//
-// Expected:
-// 400
-// "Thông tin phát thuốc không hợp lệ."
-// =====================================================
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
 
-[Fact]
-public async Task DispensePrescriptionAsync_ShouldReturn400_WhenBatchIdIsInvalid()
-{
-    // Arrange
 
-    var request =
-        new DispenseRequestDTO
-        {
-            Items =
-            [
-                new()
+        Assert.Equal(
+            "Thông tin phát thuốc không hợp lệ.",
+            result.Message
+        );
+    }
+
+    // =====================================================
+    // TEST 6
+    //
+    // BatchId <= 0
+    //
+    // Expected:
+    // 400
+    // "Thông tin phát thuốc không hợp lệ."
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescriptionAsync_ShouldReturn400_WhenBatchIdIsInvalid()
+    {
+        // Arrange
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new()
                 {
                     PrescriptionItemId = 1,
 
@@ -300,56 +305,56 @@ public async Task DispensePrescriptionAsync_ShouldReturn400_WhenBatchIdIsInvalid
 
                     Quantity = 1
                 }
-            ]
-        };
+                ]
+            };
 
 
-    // Act
+        // Act
 
-    var result =
-        await _service
-            .DispensePrescriptionAsync(
-                prescriptionId: 1,
-                currentUserId: 1,
-                request: request
-            );
-
-
-    // Assert
-
-    Assert.Equal(
-        400,
-        result.StatusCode
-    );
+        var result =
+            await _service
+                .DispensePrescriptionAsync(
+                    prescriptionId: 1,
+                    currentUserId: 1,
+                    request: request
+                );
 
 
-    Assert.Equal(
-        "Thông tin phát thuốc không hợp lệ.",
-        result.Message
-    );
-}
+        // Assert
 
-// =====================================================
-// TEST 7
-//
-// Quantity <= 0
-//
-// Expected:
-// 400
-// "Thông tin phát thuốc không hợp lệ."
-// =====================================================
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
 
-[Fact]
-public async Task DispensePrescriptionAsync_ShouldReturn400_WhenQuantityIsInvalid()
-{
-    // Arrange
 
-    var request =
-        new DispenseRequestDTO
-        {
-            Items =
-            [
-                new()
+        Assert.Equal(
+            "Thông tin phát thuốc không hợp lệ.",
+            result.Message
+        );
+    }
+
+    // =====================================================
+    // TEST 7
+    //
+    // Quantity <= 0
+    //
+    // Expected:
+    // 400
+    // "Thông tin phát thuốc không hợp lệ."
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescriptionAsync_ShouldReturn400_WhenQuantityIsInvalid()
+    {
+        // Arrange
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new()
                 {
                     PrescriptionItemId = 1,
 
@@ -357,34 +362,132 @@ public async Task DispensePrescriptionAsync_ShouldReturn400_WhenQuantityIsInvali
 
                     Quantity = 0
                 }
-            ]
-        };
+                ]
+            };
 
 
-    // Act
+        // Act
 
-    var result =
-        await _service
-            .DispensePrescriptionAsync(
-                prescriptionId: 1,
-                currentUserId: 1,
-                request: request
+        var result =
+            await _service
+                .DispensePrescriptionAsync(
+                    prescriptionId: 1,
+                    currentUserId: 1,
+                    request: request
+                );
+
+
+        // Assert
+
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
+
+
+        Assert.Equal(
+            "Thông tin phát thuốc không hợp lệ.",
+            result.Message
+        );
+    }
+
+    // =====================================================
+    // TEST 8
+    //
+    // Prescription không tồn tại
+    //
+    // Expected:
+    // 404
+    // PharmacyResponseMessageDTO.PrescriptionNotFound
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescriptionAsync_ShouldReturn404_WhenPrescriptionDoesNotExist()
+    {
+        // Arrange
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new()
+                {
+                    PrescriptionItemId = 1,
+
+                    BatchId = 1,
+
+                    Quantity = 1
+                }
+                ]
+            };
+
+
+        var prescriptionRepositoryMock =
+            new Mock<IPrescriptionRepository>();
+
+
+        var prescriptions =
+            new List<Prescription>();
+
+
+        var prescriptionQuery =
+            prescriptions
+                .BuildMock();
+
+
+        prescriptionRepositoryMock
+            .Setup(
+                x =>
+                    x.WhereSql(
+                        It.IsAny<
+                            Expression<
+                                Func<
+                                    Prescription,
+                                    bool
+                                >
+                            >
+                        >()
+                    )
+            )
+            .Returns(
+                prescriptionQuery
             );
 
 
-    // Assert
+        _unitOfWorkMock
+            .Setup(
+                x =>
+                    x.PrescriptionRepository
+            )
+            .Returns(
+                prescriptionRepositoryMock.Object
+            );
 
-    Assert.Equal(
-        400,
-        result.StatusCode
-    );
+
+        // Act
+
+        var result =
+            await _service
+                .DispensePrescriptionAsync(
+                    prescriptionId: 1,
+                    currentUserId: 1,
+                    request: request
+                );
 
 
-    Assert.Equal(
-        "Thông tin phát thuốc không hợp lệ.",
-        result.Message
-    );
-}
+        // Assert
 
+        Assert.Equal(
+            404,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionNotFound,
+            result.Message
+        );
+    }
 
 }
