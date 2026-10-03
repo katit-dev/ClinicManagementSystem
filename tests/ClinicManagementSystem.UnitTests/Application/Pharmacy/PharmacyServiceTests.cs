@@ -602,5 +602,115 @@ public class PharmacyServiceTests
         );
     }
 
+    // =====================================================
+    // TEST 10
+    //
+    // Prescription chưa Finalized
+    //
+    // Expected:
+    // 409
+    // PharmacyResponseMessageDTO.PrescriptionNotFinalized
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescriptionAsync_ShouldReturn409_WhenPrescriptionIsNotFinalized()
+    {
+        // Arrange
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new()
+                {
+                    PrescriptionItemId = 1,
+                    BatchId = 1,
+                    Quantity = 1
+                }
+                ]
+            };
+
+
+        var prescription =
+            new Prescription
+            {
+                Id = 1,
+
+                Status =
+                    (byte)PrescriptionStatus.Draft
+            };
+
+
+        var prescriptions =
+            new List<Prescription>
+            {
+            prescription
+            };
+
+
+        var prescriptionQuery =
+            prescriptions
+                .BuildMock();
+
+
+        var prescriptionRepositoryMock =
+            new Mock<IPrescriptionRepository>();
+
+
+        prescriptionRepositoryMock
+            .Setup(
+                x =>
+                    x.WhereSql(
+                        It.IsAny<
+                            Expression<
+                                Func<
+                                    Prescription,
+                                    bool
+                                >
+                            >
+                        >()
+                    )
+            )
+            .Returns(
+                prescriptionQuery
+            );
+
+
+        _unitOfWorkMock
+            .Setup(
+                x =>
+                    x.PrescriptionRepository
+            )
+            .Returns(
+                prescriptionRepositoryMock.Object
+            );
+
+
+        // Act
+
+        var result =
+            await _service
+                .DispensePrescriptionAsync(
+                    prescriptionId: 1,
+                    currentUserId: 1,
+                    request: request
+                );
+
+
+        // Assert
+
+        Assert.Equal(
+            409,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionNotFinalized,
+            result.Message
+        );
+    }
+
 
 }
