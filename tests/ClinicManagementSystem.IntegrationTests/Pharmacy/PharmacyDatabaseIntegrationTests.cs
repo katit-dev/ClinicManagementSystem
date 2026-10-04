@@ -3,6 +3,8 @@ using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Application.Services;
 using ClinicManagementSystem.Infrastructure.Data;
 using ClinicManagementSystem.Infrastructure.Models;
+using MedicalRecordEntity =
+    ClinicManagementSystem.Infrastructure.Models.MedicalRecord;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -2492,7 +2494,7 @@ public class PharmacyDatabaseIntegrationTests
         // =====================================================
 
         var medicalRecord =
-            new MedicalRecord
+            new MedicalRecordEntity
             {
                 Appointment =
                     appointment,
