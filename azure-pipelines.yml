@@ -1,0 +1,127 @@
+# ============================================================
+# CLINIC MANAGEMENT SYSTEM
+# CI PIPELINE
+# ============================================================
+
+trigger:
+  branches:
+    include:
+      - develop
+
+# CI cũng chạy khi tạo/update Pull Request
+# từ develop -> main
+pr:
+  branches:
+    include:
+      - main
+
+
+# ============================================================
+# AGENT
+# ============================================================
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+
+# ============================================================
+# VARIABLES
+# ============================================================
+
+variables:
+  buildConfiguration: 'Release'
+
+
+# ============================================================
+# STEPS
+# ============================================================
+
+steps:
+
+# ------------------------------------------------------------
+# 1. CHECKOUT
+# ------------------------------------------------------------
+
+- checkout: self
+
+
+# ------------------------------------------------------------
+# 2. INSTALL .NET 10 SDK
+# ------------------------------------------------------------
+
+- task: UseDotNet@2
+  displayName: 'Install .NET 10 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '10.x'
+
+
+# ------------------------------------------------------------
+# 3. SHOW ENVIRONMENT
+# ------------------------------------------------------------
+
+- script: |
+    dotnet --info
+    docker --version
+  displayName: 'Check .NET and Docker'
+
+
+# ------------------------------------------------------------
+# 4. RESTORE
+# ------------------------------------------------------------
+
+- script: |
+    dotnet restore ClinicManagementSystem.slnx
+  displayName: 'Restore'
+
+
+# ------------------------------------------------------------
+# 5. BUILD
+# ------------------------------------------------------------
+
+- script: |
+    dotnet build ClinicManagementSystem.slnx \
+      --configuration $(buildConfiguration) \
+      --no-restore
+  displayName: 'Build'
+
+
+# ------------------------------------------------------------
+# 6. TEST
+# ------------------------------------------------------------
+# Chạy cả:
+#
+# - Unit Tests
+# - Integration Tests
+#
+# Integration Tests sẽ sử dụng:
+#
+# Testcontainers
+#      ↓
+# Docker
+#      ↓
+# SQL Server
+#
+# ------------------------------------------------------------
+
+- script: |
+    dotnet test ClinicManagementSystem.slnx \
+      --configuration $(buildConfiguration) \
+      --no-build \
+      --no-restore \
+      --logger "trx" \
+      --results-directory "$(Agent.TempDirectory)/TestResults"
+  displayName: 'Run Unit Tests and Integration Tests'
+
+
+# ------------------------------------------------------------
+# 7. PUBLISH TEST RESULTS
+# ------------------------------------------------------------
+
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results'
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
+    failTaskOnFailedTests: true
