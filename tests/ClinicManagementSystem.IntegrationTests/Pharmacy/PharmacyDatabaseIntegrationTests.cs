@@ -1,4 +1,5 @@
 using ClinicManagementSystem.Application.DTOs.Pharmacy;
+using ClinicManagementSystem.Application.Enums;
 using ClinicManagementSystem.Application.Services;
 using ClinicManagementSystem.Infrastructure.Data;
 using ClinicManagementSystem.Infrastructure.Models;
@@ -1152,11 +1153,810 @@ public class PharmacyDatabaseIntegrationTests
         );
     }
 
+    // =====================================================
+    // TEST 14
+    //
+    // Prescription đã Dispensed
+    //
+    // Expected:
+    // 409
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn409_WhenPrescriptionAlreadyDispensed()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Dispensed,
+                itemCount: 1
+            );
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            scenario.Items[0].Id,
+
+                        BatchId = 1,
+
+                        Quantity =
+                            scenario.Items[0].Quantity
+                    }
+                    ]
+                }
+            );
+
+        Assert.Equal(
+            409,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionAlreadyDispensed,
+            result.Message
+        );
+    }
+
+
+    // =====================================================
+    // TEST 15
+    //
+    // Prescription chưa Finalized
+    // Draft = 0
+    //
+    // Expected:
+    // 409
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn409_WhenPrescriptionIsNotFinalized()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Draft,
+                itemCount: 1
+            );
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            scenario.Items[0].Id,
+
+                        BatchId = 1,
+
+                        Quantity =
+                            scenario.Items[0].Quantity
+                    }
+                    ]
+                }
+            );
+
+        Assert.Equal(
+            409,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionNotFinalized,
+            result.Message
+        );
+    }
+
+
+    // =====================================================
+    // TEST 16
+    //
+    // Prescription Finalized nhưng không có item
+    //
+    // Expected:
+    // 409
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn409_WhenPrescriptionHasNoItems()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Finalized,
+                itemCount: 0
+            );
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId = 1,
+                        BatchId = 1,
+                        Quantity = 1
+                    }
+                    ]
+                }
+            );
+
+        Assert.Equal(
+            409,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionHasNoItems,
+            result.Message
+        );
+    }
+
+
+    // =====================================================
+    // TEST 17
+    //
+    // Prescription có 2 items
+    // Request chỉ có 1 item
+    //
+    // Expected:
+    // 400
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn400_WhenPrescriptionItemIsMissing()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Finalized,
+                itemCount: 2
+            );
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var prescriptionItems =
+    await db.PrescriptionItems
+        .Where(
+            x =>
+                x.PrescriptionId ==
+                scenario.Prescription.Id
+        )
+        .OrderBy(
+            x => x.Id
+        )
+        .ToListAsync();
+
+        Assert.Equal(
+            2,
+            prescriptionItems.Count
+        );
+
+        var firstItem =
+            prescriptionItems[0];
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            firstItem.Id,
+
+                        BatchId = 1,
+
+                        Quantity =
+                            firstItem.Quantity
+                    }
+                    ]
+                }
+            );
+
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
+
+        Assert.StartsWith(
+            PharmacyResponseMessageDTO
+                .DispenseItemMissing,
+            result.Message
+        );
+    }
+
+
+    // =====================================================
+    // TEST 18
+    //
+    // Quantity request != quantity prescription
+    //
+    // Expected:
+    // 400
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn400_WhenQuantityIsInvalid()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Finalized,
+                itemCount: 1
+            );
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var prescriptionItem =
+            scenario.Items[0];
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            prescriptionItem.Id,
+
+                        BatchId = 1,
+
+                        Quantity =
+    prescriptionItem.Quantity + 1
+                    }
+                    ]
+                }
+            );
+
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
+
+        Assert.StartsWith(
+            PharmacyResponseMessageDTO
+                .DispenseQuantityInvalid,
+            result.Message
+        );
+    }
+
+
+    // =====================================================
+    // TEST 19
+    //
+    // Request chứa PrescriptionItem không thuộc prescription
+    //
+    // Expected:
+    // 400
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn400_WhenRequestContainsExtraPrescriptionItem()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Finalized,
+                itemCount: 1
+            );
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var prescriptionItem =
+            scenario.Items[0];
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        // Item thật
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            prescriptionItem.Id,
+
+                        BatchId = 1,
+
+                        Quantity =
+                            prescriptionItem.Quantity
+                    },
+
+                    // Item không thuộc prescription
+                    new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            999999999,
+
+                        BatchId = 1,
+
+                        Quantity = 1
+                    }
+                    ]
+                }
+            );
+
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionItemInvalid,
+            result.Message
+        );
+    }
+
+
 
     // =====================================================
     // HELPER
     // SEED USER
     // =====================================================
+
+    // =====================================================
+    // HELPER
+    // SEED PRESCRIPTION SCENARIO
+    // =====================================================
+    //
+    // Tạo:
+    //
+    // User
+    //   ↓
+    // Doctor ← Specialty
+    //
+    // Patient
+    //   ↓
+    // Appointment
+    //   ↓
+    // MedicalRecord
+    //   ↓
+    // Prescription
+    //   ↓
+    // PrescriptionItem(s)
+    //
+    // =====================================================
+
+    private static async Task<PrescriptionScenario>
+        SeedPrescriptionScenarioAsync(
+            ClinicManagementDbContext db,
+            byte status,
+            int itemCount)
+    {
+        var token =
+            Guid.NewGuid()
+                .ToString("N");
+
+
+        // =====================================================
+        // USER
+        // =====================================================
+
+        var user =
+            new User
+            {
+                Username =
+                    $"it_pharmacy_doctor_{token}",
+
+                PasswordHash =
+                    "integration-test-password-hash",
+
+                Email =
+                    $"it_pharmacy_doctor_{token}@example.com",
+
+                FullName =
+                    "Integration Pharmacy Doctor",
+
+                IsActive = true,
+
+                EmailConfirmed = true,
+
+                IsDeleted = false,
+
+                CreatedAt =
+                    DateTime.UtcNow,
+
+                FailedLoginCount = 0
+            };
+
+
+        // =====================================================
+        // SPECIALTY
+        // =====================================================
+
+        var specialty =
+            new Specialty
+            {
+                Code =
+                    $"SP{token[..17]}",
+
+                Name =
+                    $"Integration Specialty {token[..8]}",
+
+                Description =
+                    "Integration test specialty",
+
+                IsActive = true,
+
+                CreatedAt =
+                    DateTime.UtcNow
+            };
+
+
+        // =====================================================
+        // DOCTOR
+        // =====================================================
+
+        var doctor =
+            new Doctor
+            {
+                User = user,
+
+                Specialty = specialty,
+
+                FullName =
+                    "Integration Pharmacy Doctor",
+
+                Title =
+                    "Doctor",
+
+                Phone =
+                    "0900000001",
+
+                Email =
+                    $"doctor_{token}@example.com",
+
+                IsActive = true,
+
+                CreatedAt =
+                    DateTime.UtcNow,
+
+                ConsultationFee = 100
+            };
+
+
+        // =====================================================
+        // PATIENT
+        // =====================================================
+
+        var patient =
+            new Patient
+            {
+                FullName =
+                    "Integration Pharmacy Patient",
+
+                Phone =
+                    "0900000002",
+
+                Email =
+                    $"patient_{token}@example.com",
+
+                PatientCode =
+                    $"PT{token[..18]}",
+
+                IsActive = true,
+
+                CreatedAt =
+                    DateTime.UtcNow
+            };
+
+
+        // =====================================================
+        // APPOINTMENT
+        // =====================================================
+
+        var startTime =
+            DateTime.UtcNow.AddDays(1);
+
+
+        var appointment =
+            new Appointment
+            {
+                Patient = patient,
+
+                Doctor = doctor,
+
+                StartTime =
+                    startTime,
+
+                EndTime =
+                    startTime.AddMinutes(30),
+
+                Status = 0,
+
+                Reason =
+                    "Integration test",
+
+                AppointmentCode =
+                    $"APT{token[..17]}",
+
+                CreatedAt =
+                    DateTime.UtcNow,
+
+                Source = 0,
+
+                FeeSnapshot = 100
+            };
+
+
+        // =====================================================
+        // MEDICAL RECORD
+        // =====================================================
+
+        var medicalRecord =
+            new MedicalRecord
+            {
+                Appointment =
+                    appointment,
+
+                Patient =
+                    patient,
+
+                Doctor =
+                    doctor,
+
+                Symptoms =
+                    "Integration test",
+
+                Diagnosis =
+                    "Integration test diagnosis",
+
+                CreatedAt =
+                    DateTime.UtcNow,
+
+                Status = 0
+            };
+
+
+        // =====================================================
+        // PRESCRIPTION
+        // =====================================================
+
+        var prescription =
+            new Prescription
+            {
+                MedicalRecord =
+                    medicalRecord,
+
+                Doctor =
+                    doctor,
+
+                Status =
+                    status,
+
+                Note =
+                    "Integration test prescription",
+
+                CreatedAt =
+                    DateTime.UtcNow
+            };
+
+
+        // =====================================================
+        // PRESCRIPTION ITEMS
+        // =====================================================
+
+        var items =
+            new List<PrescriptionItem>();
+
+
+        for (var i = 1; i <= itemCount; i++)
+        {
+            var medicine =
+                new Medicine
+                {
+                    Name =
+                        $"IT-Prescription-Medicine-{token[..8]}-{i}",
+
+                    Code =
+                        $"IT-PM-{token[..8]}-{i}",
+
+                    ActiveIngredient =
+                        $"Ingredient-{i}",
+
+                    Concentration =
+                        "500mg",
+
+                    Unit =
+                        "tablet",
+
+                    Price = 100,
+
+                    CostPrice = 50,
+
+                    StockQuantity = 10,
+
+                    MinStock = 5,
+
+                    IsActive = true,
+
+                    CreatedAt =
+                        DateTime.UtcNow
+                };
+
+
+            var prescriptionItem =
+    new PrescriptionItem
+    {
+        Prescription =
+            prescription,
+
+        Medicine =
+            medicine,
+
+        Quantity = 2,
+
+        Dosage =
+            "1 lần/ngày",
+
+        Instruction =
+            "Sau ăn",
+
+        MedicineNameSnapshot =
+            medicine.Name,
+
+        UnitPriceSnapshot =
+            medicine.Price,
+
+        DurationDays = 5,
+
+        Frequency =
+            "1 lần/ngày"
+    };
+
+
+            // =====================================================
+            // ADD ITEM TO PRESCRIPTION GRAPH
+            // =====================================================
+
+            prescription.PrescriptionItems.Add(
+                prescriptionItem
+            );
+
+
+            items.Add(
+                prescriptionItem
+            );
+        }
+
+
+        // =====================================================
+        // SAVE GRAPH
+        // =====================================================
+
+        db.Prescriptions.Add(
+            prescription
+        );
+
+        await db.SaveChangesAsync();
+
+
+        return new PrescriptionScenario(
+            user,
+            prescription,
+            items
+        );
+    }
+
+
+    // =====================================================
+    // TEST SCENARIO
+    // =====================================================
+
+    private sealed record PrescriptionScenario(
+        User User,
+        Prescription Prescription,
+        List<PrescriptionItem> Items
+    );
 
     private static async Task<User> SeedUserAsync(
         ClinicManagementDbContext db)
