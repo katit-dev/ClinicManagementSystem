@@ -927,6 +927,231 @@ public class PharmacyDatabaseIntegrationTests
         );
     }
 
+    // =====================================================
+    // TEST 10
+    //
+    // Dispense prescription
+    // invalid prescription ID
+    //
+    // Expected:
+    // 400
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn400_WhenPrescriptionIdIsInvalid()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new DispenseItemRequestDTO
+                {
+                    PrescriptionItemId = 1,
+                    BatchId = 1,
+                    Quantity = 1
+                }
+                ]
+            };
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                0,
+                1,
+                request
+            );
+
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionIdInvalid,
+            result.Message
+        );
+    }
+
+    // =====================================================
+    // TEST 11
+    //
+    // Dispense prescription
+    // invalid current user
+    //
+    // Expected:
+    // 401
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn401_WhenUserIsInvalid()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new DispenseItemRequestDTO
+                {
+                    PrescriptionItemId = 1,
+                    BatchId = 1,
+                    Quantity = 1
+                }
+                ]
+            };
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                1,
+                0,
+                request
+            );
+
+        Assert.Equal(
+            401,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .DispenseUserInvalid,
+            result.Message
+        );
+    }
+
+    // =====================================================
+    // TEST 12
+    //
+    // Dispense prescription
+    // empty request
+    //
+    // Expected:
+    // 400
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn400_WhenRequestIsEmpty()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                1,
+                1,
+                new DispenseRequestDTO
+                {
+                    Items = []
+                }
+            );
+
+        Assert.Equal(
+            400,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .DispenseRequestEmpty,
+            result.Message
+        );
+    }
+
+    // =====================================================
+    // TEST 13
+    //
+    // Dispense prescription
+    // prescription does not exist
+    //
+    // Expected:
+    // 404
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn404_WhenPrescriptionDoesNotExist()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+        var request =
+            new DispenseRequestDTO
+            {
+                Items =
+                [
+                    new DispenseItemRequestDTO
+                {
+                    PrescriptionItemId = 1,
+                    BatchId = 1,
+                    Quantity = 1
+                }
+                ]
+            };
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                999999999,
+                1,
+                request
+            );
+
+        Assert.Equal(
+            404,
+            result.StatusCode
+        );
+
+        Assert.Equal(
+            PharmacyResponseMessageDTO
+                .PrescriptionNotFound,
+            result.Message
+        );
+    }
+
 
     // =====================================================
     // HELPER
