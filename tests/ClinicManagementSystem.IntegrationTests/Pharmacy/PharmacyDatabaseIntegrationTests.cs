@@ -1596,11 +1596,710 @@ public class PharmacyDatabaseIntegrationTests
         );
     }
 
+    // =====================================================
+    // TEST 20
+    //
+    // Dispense prescription
+    // FEFO chọn batch có expiry gần nhất.
+    //
+    // Có:
+    // - 1 batch đã hết hạn
+    // - 1 batch expiry gần nhất
+    // - 1 batch expiry xa hơn
+    //
+    // Expected:
+    // - bỏ batch expired
+    // - lấy thuốc từ batch expiry gần nhất
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldUseFefoBatch_WhenMultipleBatchesExist()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Finalized,
+                itemCount: 1
+            );
+
+
+        var prescriptionItem =
+            scenario.Items[0];
+
+
+        var medicine =
+            await db.Medicines
+                .SingleAsync(
+                    m =>
+                        m.Id ==
+                        prescriptionItem.MedicineId
+                );
+
+
+        var expiredBatch =
+            new MedicineBatch
+            {
+                MedicineId =
+                    medicine.Id,
+
+                BatchNo =
+                    $"IT-FEFO-EXPIRED-{Guid.NewGuid():N}"[..30],
+
+                ExpiryDate =
+                    DateOnly.FromDateTime(
+                        DateTime.Today.AddDays(-1)
+                    ),
+
+                Quantity = 10,
+
+                ImportPrice = 50
+            };
+
+
+        var nearestBatch =
+            new MedicineBatch
+            {
+                MedicineId =
+                    medicine.Id,
+
+                BatchNo =
+                    $"IT-FEFO-NEAREST-{Guid.NewGuid():N}"[..30],
+
+                ExpiryDate =
+                    DateOnly.FromDateTime(
+                        DateTime.Today.AddDays(30)
+                    ),
+
+                Quantity = 5,
+
+                ImportPrice = 50
+            };
+
+
+        var laterBatch =
+            new MedicineBatch
+            {
+                MedicineId =
+                    medicine.Id,
+
+                BatchNo =
+                    $"IT-FEFO-LATER-{Guid.NewGuid():N}"[..30],
+
+                ExpiryDate =
+                    DateOnly.FromDateTime(
+                        DateTime.Today.AddDays(180)
+                    ),
+
+                Quantity = 10,
+
+                ImportPrice = 50
+            };
+
+
+        db.MedicineBatches.AddRange(
+            expiredBatch,
+            nearestBatch,
+            laterBatch
+        );
+
+
+        medicine.StockQuantity = 25;
+
+
+        await db.SaveChangesAsync();
+
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            prescriptionItem.Id,
+
+                        // FEFO batch phải là batch
+                        // expiry gần nhất còn hạn.
+                        BatchId =
+                            nearestBatch.Id,
+
+                        Quantity =
+                            prescriptionItem.Quantity
+                    }
+                    ]
+                }
+            );
+
+
+        // =====================================================
+        // RESPONSE
+        // =====================================================
+
+        Assert.Equal(
+            200,
+            result.StatusCode
+        );
+
+
+        // =====================================================
+        // NEAREST BATCH
+        //
+        // 5 - 2 = 3
+        // =====================================================
+
+        var savedNearestBatch =
+            await db.MedicineBatches
+                .SingleAsync(
+                    b =>
+                        b.Id ==
+                        nearestBatch.Id
+                );
+
+
+        Assert.Equal(
+            3,
+            savedNearestBatch.Quantity
+        );
+
+
+        // =====================================================
+        // LATER BATCH
+        //
+        // Không bị dùng.
+        // =====================================================
+
+        var savedLaterBatch =
+            await db.MedicineBatches
+                .SingleAsync(
+                    b =>
+                        b.Id ==
+                        laterBatch.Id
+                );
+
+
+        Assert.Equal(
+            10,
+            savedLaterBatch.Quantity
+        );
+
+
+        // =====================================================
+        // EXPIRED BATCH
+        //
+        // Không được sử dụng.
+        // =====================================================
+
+        var savedExpiredBatch =
+            await db.MedicineBatches
+                .SingleAsync(
+                    b =>
+                        b.Id ==
+                        expiredBatch.Id
+                );
+
+
+        Assert.Equal(
+            10,
+            savedExpiredBatch.Quantity
+        );
+    }
+
+    // =====================================================
+    // TEST 21
+    //
+    // Dispense prescription
+    // batch FEFO đầu tiên không đủ.
+    //
+    // Batch 1 = 1
+    // Batch 2 = 5
+    // Prescription = 2
+    //
+    // Expected:
+    // - Batch 1 lấy 1
+    // - Batch 2 lấy 1
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldDispenseFromMultipleBatches_WhenFirstBatchIsNotEnough()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Finalized,
+                itemCount: 1
+            );
+
+
+        var prescriptionItem =
+            scenario.Items[0];
+
+
+        var medicine =
+            await db.Medicines
+                .SingleAsync(
+                    m =>
+                        m.Id ==
+                        prescriptionItem.MedicineId
+                );
+
+
+        var firstBatch =
+            new MedicineBatch
+            {
+                MedicineId =
+                    medicine.Id,
+
+                BatchNo =
+                    $"IT-MULTI-FIRST-{Guid.NewGuid():N}"[..30],
+
+                ExpiryDate =
+                    DateOnly.FromDateTime(
+                        DateTime.Today.AddDays(30)
+                    ),
+
+                Quantity = 1,
+
+                ImportPrice = 50
+            };
+
+
+        var secondBatch =
+            new MedicineBatch
+            {
+                MedicineId =
+                    medicine.Id,
+
+                BatchNo =
+                    $"IT-MULTI-SECOND-{Guid.NewGuid():N}"[..30],
+
+                ExpiryDate =
+                    DateOnly.FromDateTime(
+                        DateTime.Today.AddDays(90)
+                    ),
+
+                Quantity = 5,
+
+                ImportPrice = 50
+            };
+
+
+        db.MedicineBatches.AddRange(
+            firstBatch,
+            secondBatch
+        );
+
+
+        medicine.StockQuantity = 6;
+
+
+        await db.SaveChangesAsync();
+
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            prescriptionItem.Id,
+
+                        // Batch đầu tiên theo FEFO.
+                        BatchId =
+                            firstBatch.Id,
+
+                        // Tổng quantity phải bằng
+                        // quantity prescription.
+                        Quantity =
+                            prescriptionItem.Quantity
+                    }
+                    ]
+                }
+            );
+
+
+        // =====================================================
+        // RESPONSE
+        // =====================================================
+
+        Assert.Equal(
+            200,
+            result.StatusCode
+        );
+
+
+        // =====================================================
+        // FIRST BATCH
+        //
+        // 1 - 1 = 0
+        // =====================================================
+
+        var savedFirstBatch =
+            await db.MedicineBatches
+                .SingleAsync(
+                    b =>
+                        b.Id ==
+                        firstBatch.Id
+                );
+
+
+        Assert.Equal(
+            0,
+            savedFirstBatch.Quantity
+        );
+
+
+        // =====================================================
+        // SECOND BATCH
+        //
+        // 5 - 1 = 4
+        // =====================================================
+
+        var savedSecondBatch =
+            await db.MedicineBatches
+                .SingleAsync(
+                    b =>
+                        b.Id ==
+                        secondBatch.Id
+                );
+
+
+        Assert.Equal(
+            4,
+            savedSecondBatch.Quantity
+        );
+
+
+        // =====================================================
+        // MEDICINE TOTAL STOCK
+        //
+        // 6 - 2 = 4
+        // =====================================================
+
+        var savedMedicine =
+            await db.Medicines
+                .SingleAsync(
+                    m =>
+                        m.Id ==
+                        medicine.Id
+                );
+
+
+        Assert.Equal(
+            4,
+            savedMedicine.StockQuantity
+        );
+
+
+        // =====================================================
+        // STOCK TRANSACTIONS
+        //
+        // 2 batches → 2 OUT transactions.
+        // =====================================================
+
+        var transactions =
+            await db.MedicineStockTransactions
+                .Where(
+                    t =>
+                        t.PrescriptionId ==
+                        scenario.Prescription.Id
+                )
+                .OrderBy(
+                    t => t.Id
+                )
+                .ToListAsync();
+
+
+        Assert.Equal(
+            2,
+            transactions.Count
+        );
+
+
+        Assert.All(
+            transactions,
+            transaction =>
+            {
+                Assert.Equal(
+                    1,
+                    transaction.Type
+                );
+
+                Assert.Equal(
+                    1,
+                    transaction.Quantity
+                );
+            }
+        );
+    }
+
+    // =====================================================
+    // TEST 22
+    //
+    // Prescription cần 2
+    // Stock hợp lệ chỉ có 1
+    //
+    // Expected:
+    // 409
+    // InsufficientStock
+    //
+    // Đồng thời:
+    // - batch không bị trừ
+    // - medicine stock không bị trừ
+    // =====================================================
+
+    [Fact]
+    public async Task DispensePrescription_ShouldReturn409_WhenTotalStockIsInsufficient()
+    {
+        await using var scope =
+            _factory.Services.CreateAsyncScope();
+
+        var db =
+            scope.ServiceProvider
+                .GetRequiredService<ClinicManagementDbContext>();
+
+        await db.Database.EnsureCreatedAsync();
+
+
+        var scenario =
+            await SeedPrescriptionScenarioAsync(
+                db,
+                status:
+                    (byte)PrescriptionStatus.Finalized,
+                itemCount: 1
+            );
+
+
+        var prescriptionItem =
+            scenario.Items[0];
+
+
+        var medicine =
+            await db.Medicines
+                .SingleAsync(
+                    m =>
+                        m.Id ==
+                        prescriptionItem.MedicineId
+                );
+
+
+        var batch =
+            new MedicineBatch
+            {
+                MedicineId =
+                    medicine.Id,
+
+                BatchNo =
+                    $"IT-INSUFFICIENT-{Guid.NewGuid():N}"[..30],
+
+                ExpiryDate =
+                    DateOnly.FromDateTime(
+                        DateTime.Today.AddDays(30)
+                    ),
+
+                Quantity = 1,
+
+                ImportPrice = 50
+            };
+
+
+        db.MedicineBatches.Add(
+            batch
+        );
+
+
+        medicine.StockQuantity = 1;
+
+
+        await db.SaveChangesAsync();
+
+
+        var service =
+            scope.ServiceProvider
+                .GetRequiredService<IPharmacyService>();
+
+
+        var result =
+            await service.DispensePrescriptionAsync(
+                scenario.Prescription.Id,
+                scenario.User.Id,
+                new DispenseRequestDTO
+                {
+                    Items =
+                    [
+                        new DispenseItemRequestDTO
+                    {
+                        PrescriptionItemId =
+                            prescriptionItem.Id,
+
+                        BatchId =
+                            batch.Id,
+
+                        Quantity =
+                            prescriptionItem.Quantity
+                    }
+                    ]
+                }
+            );
+
+
+        // =====================================================
+        // RESPONSE
+        // =====================================================
+
+        Assert.Equal(
+            409,
+            result.StatusCode
+        );
+
+
+        Assert.Equal(
+            $"{PharmacyResponseMessageDTO.InsufficientStock} " +
+            $"{prescriptionItem.MedicineNameSnapshot}.",
+            result.Message
+        );
+
+
+        // =====================================================
+        // BATCH MUST NOT CHANGE
+        // =====================================================
+
+        var savedBatch =
+            await db.MedicineBatches
+                .SingleAsync(
+                    b =>
+                        b.Id ==
+                        batch.Id
+                );
+
+
+        Assert.Equal(
+            1,
+            savedBatch.Quantity
+        );
+
+
+        // =====================================================
+        // MEDICINE STOCK MUST NOT CHANGE
+        // =====================================================
+
+        var savedMedicine =
+            await db.Medicines
+                .SingleAsync(
+                    m =>
+                        m.Id ==
+                        medicine.Id
+                );
+
+
+        Assert.Equal(
+            1,
+            savedMedicine.StockQuantity
+        );
+
+
+        // =====================================================
+        // NO OUT TRANSACTION
+        // =====================================================
+
+        var transactionCount =
+            await db.MedicineStockTransactions
+                .CountAsync(
+                    t =>
+                        t.PrescriptionId ==
+                        scenario.Prescription.Id
+                );
+
+
+        Assert.Equal(
+            0,
+            transactionCount
+        );
+    }
 
 
     // =====================================================
     // HELPER
-    // SEED USER
+    // SEED MEDICINE BATCH
+    // =====================================================
+
+    private static async Task<MedicineBatch>
+        SeedMedicineBatchAsync(
+            ClinicManagementDbContext db,
+            int medicineId,
+            string batchNo,
+            DateOnly expiryDate,
+            int quantity,
+            decimal importPrice = 50)
+    {
+        var batch =
+            new MedicineBatch
+            {
+                MedicineId =
+                    medicineId,
+
+                BatchNo =
+                    batchNo,
+
+                ExpiryDate =
+                    expiryDate,
+
+                Quantity =
+                    quantity,
+
+                ImportPrice =
+                    importPrice
+            };
+
+        db.MedicineBatches.Add(
+            batch
+        );
+
+        await db.SaveChangesAsync();
+
+        return batch;
+    }
+
     // =====================================================
 
     // =====================================================
