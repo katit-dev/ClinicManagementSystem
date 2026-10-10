@@ -1,0 +1,45 @@
+name: CD - API
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "src/ClinicManagementSystem.Api/**"
+      - "src/ClinicManagementSystem.Application/**"
+      - "src/ClinicManagementSystem.Infrastructure/**"
+      - "*.slnx"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore src/ClinicManagementSystem.Api/ClinicManagementSystem.Api.csproj
+
+      - name: Publish API
+        run: dotnet publish src/ClinicManagementSystem.Api/ClinicManagementSystem.Api.csproj -c Release --no-restore -o ${{ runner.temp }}/api
+
+      - name: Remove development settings
+        run: rm -f "${{ runner.temp }}/api/appsettings.Development.json"
+
+      - name: Deploy API to Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: clinicmanagement-api-2026
+          publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
+          package: ${{ runner.temp }}/api
