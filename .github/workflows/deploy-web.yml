@@ -1,0 +1,45 @@
+name: CD - Web
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "src/ClinicManagement.Web/**"
+      - "src/ClinicManagementSystem.Application/**"
+      - "src/ClinicManagementSystem.Infrastructure/**"
+      - "*.slnx"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore src/ClinicManagement.Web/ClinicManagement.Web.csproj
+
+      - name: Publish Web
+        run: dotnet publish src/ClinicManagement.Web/ClinicManagement.Web.csproj -c Release --no-restore -o ${{ runner.temp }}/web
+
+      - name: Remove development settings
+        run: rm -f "${{ runner.temp }}/web/appsettings.Development.json"
+
+      - name: Deploy Web to Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: clinicmanagement-web-2026
+          publish-profile: ${{ secrets.AZURE_WEB_PUBLISH_PROFILE }}
+          package: ${{ runner.temp }}/web

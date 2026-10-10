@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # =====================================================
+      # CHECKOUT
+      # =====================================================
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+
+      # =====================================================
+      # SETUP .NET 10
+      # =====================================================
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+
+      # =====================================================
+      # DISPLAY .NET VERSION
+      # =====================================================
+
+      - name: Display .NET information
+        run: dotnet --info
+
+
+      # =====================================================
+      # RESTORE
+      # =====================================================
+
+      - name: Restore dependencies
+        run: dotnet restore ClinicManagementSystem.slnx
+
+
+      # =====================================================
+      # BUILD
+      # =====================================================
+
+      - name: Build solution
+        run: >
+          dotnet build ClinicManagementSystem.slnx
+          --configuration Release
+          --no-restore
+
+
+      # =====================================================
+      # UNIT TEST
+      # =====================================================
+
+      - name: Run Unit Tests
+        run: >
+          dotnet test
+          tests/ClinicManagementSystem.UnitTests/ClinicManagementSystem.UnitTests.csproj
+          --configuration Release
+          --no-build
+          --no-restore
+          --verbosity normal
+
+
+      # =====================================================
+      # INTEGRATION TEST
+      # =====================================================
+
+      - name: Run Integration Tests
+        run: >
+          dotnet test
+          tests/ClinicManagementSystem.IntegrationTests/ClinicManagementSystem.IntegrationTests.csproj
+          --configuration Release
+          --no-build
+          --no-restore
+          --verbosity normal
