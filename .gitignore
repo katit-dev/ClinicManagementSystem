@@ -43,3 +43,11 @@ logs/
 Logs/
 
 src/ClinicManagementSystem.Api/test-files/
+
+
+# Azure deployment credentials
+*.PublishSettings
+
+# Build and deployment artifacts
+publish/
+clinicmanagement-*.zip
