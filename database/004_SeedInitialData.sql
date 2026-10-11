@@ -1850,3 +1850,18 @@ INNER JOIN auth.user_roles ur
 INNER JOIN auth.roles r
     ON r.id = ur.role_id
 WHERE u.username = 'pharmacist01';
+
+
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+USE [ClinicManagementSystem];
+GO
+
+IF NOT EXISTS (SELECT 1 FROM auth.roles WHERE name = 'Patient')
+    INSERT INTO auth.roles (name, description, is_system)
+    VALUES ('Patient', N'Bệnh nhân', 1);
+
+IF NOT EXISTS (SELECT 1 FROM auth.roles WHERE name = 'Admin')
+    INSERT INTO auth.roles (name, description, is_system)
+    VALUES ('Admin', N'Quản trị viên', 1);
