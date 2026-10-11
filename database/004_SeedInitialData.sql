@@ -1850,3 +1850,69 @@ INNER JOIN auth.user_roles ur
 INNER JOIN auth.roles r
     ON r.id = ur.role_id
 WHERE u.username = 'pharmacist01';
+
+
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+USE [ClinicManagementSystem];
+GO
+
+SET XACT_ABORT ON;
+
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    DECLARE @UserId INT;
+    DECLARE @RoleId INT;
+
+    SELECT @RoleId = id
+    FROM auth.roles
+    WHERE name = 'Admin';
+
+    IF @RoleId IS NULL
+        THROW 50001, N'Chưa có role Admin.', 1;
+
+    SELECT @UserId = id
+    FROM auth.users
+    WHERE username = 'admin.local';
+
+    IF @UserId IS NULL
+    BEGIN
+        INSERT INTO auth.users (
+            username, password_hash, full_name,
+            is_active, is_deleted, email_confirmed,
+            failed_login_count, created_at
+        )
+        VALUES (
+            'admin.local',
+            '$2a$12$NvNo3E.FV0t8crxYfkE3V.HJoYjs4.LZHT929ig8mEs7hsDY.Dm2a',
+            N'Admin Local',
+            1, 0, 0, 0, SYSUTCDATETIME()
+        );
+
+        SET @UserId = CONVERT(INT, SCOPE_IDENTITY());
+    END;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM auth.user_roles
+        WHERE user_id = @UserId AND role_id = @RoleId
+    )
+        INSERT INTO auth.user_roles (user_id, role_id, assigned_at)
+        VALUES (@UserId, @RoleId, SYSUTCDATETIME());
+
+    COMMIT TRANSACTION;
+
+    SELECT u.id, u.username, r.name AS role_name
+    FROM auth.users u
+    JOIN auth.user_roles ur ON ur.user_id = u.id
+    JOIN auth.roles r ON r.id = ur.role_id
+    WHERE u.id = @UserId;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
+
+
+
