@@ -1908,3 +1908,20 @@ SELECT TOP 10
     created_at
 FROM auth.notifications
 ORDER BY id DESC;
+
+--------test add specialty
+USE ClinicManagementSystem
+
+SELECT
+    id, code, name, description,
+    is_active, created_at, updated_at
+FROM scheduling.specialties
+WHERE code = 'TEST_ADMIN_01';
+
+---- test audit add specialty admin
+SELECT TOP (20)
+    id, user_id, action, entity_id,
+    succeeded, occurred_at, details
+FROM auth.audit_logs
+WHERE entity_name = 'Specialty'
+ORDER BY id DESC;

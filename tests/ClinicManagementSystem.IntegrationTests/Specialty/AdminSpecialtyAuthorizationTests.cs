@@ -23,6 +23,45 @@ public class AdminSpecialtyAuthorizationTests : IClassFixture<AdminSpecialtyApiF
     public AdminSpecialtyAuthorizationTests(AdminSpecialtyApiFactory factory) => _factory = factory;
 
     [Theory]
+    [InlineData("/api/specialties")]
+    [InlineData("/api/specialties?active=true")]
+    [InlineData("/api/specialties?active=false")]
+    public async Task SpecialtyList_Anonymous_CanRead(string path)
+    {
+        using var client = Client(null);
+        using var response = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<HttpResponseData<List<SpecialtyDTO>>>();
+        Assert.NotNull(result);
+        Assert.Equal("Tai mũi họng", Assert.Single(result.Content!).Name);
+    }
+
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("Patient")]
+    [InlineData("Receptionist")]
+    [InlineData("Doctor")]
+    [InlineData("Pharmacist")]
+    public async Task SpecialtyList_AuthenticatedUser_CanRead(string role)
+    {
+        using var client = Client(role);
+        using var response = await client.GetAsync("/api/specialties?active=true");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<HttpResponseData<List<SpecialtyDTO>>>();
+        Assert.NotNull(result);
+        Assert.Equal("Tai mũi họng", Assert.Single(result.Content!).Name);
+    }
+
+    [Fact]
+    public async Task SpecialtyList_InvalidToken_CanReadPublicList()
+    {
+        using var client = Client(null);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "invalid-token");
+        using var response = await client.GetAsync("/api/specialties");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Theory]
     [InlineData("GET", "/api/admin/specialties")]
     [InlineData("POST", "/api/admin/specialties")]
     [InlineData("PUT", "/api/admin/specialties/1")]
@@ -115,7 +154,19 @@ public class AdminSpecialtyApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<IAdminSpecialtyService>();
             services.AddSingleton<IAdminSpecialtyService, StubSpecialtyService>();
+            services.RemoveAll<ISpecialtyService>();
+            services.AddSingleton<ISpecialtyService, StubSpecialtyListService>();
         });
+    }
+
+    private sealed class StubSpecialtyListService : ISpecialtyService
+    {
+        public Task<HttpResponseData<List<SpecialtyDTO>>> GetSpecialtiesAsync(bool? active)
+            => Task.FromResult(new HttpResponseData<List<SpecialtyDTO>>
+            {
+                StatusCode = 200,
+                Content = new List<SpecialtyDTO> { new() { Id = 1, Name = "Tai mũi họng" } }
+            });
     }
 
     private sealed class StubSpecialtyService : IAdminSpecialtyService
