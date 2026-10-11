@@ -1,0 +1,245 @@
+@page "/admin/specialties"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Admin")]
+@using ClinicManagementSystem.Application.DTOs.Specialty
+@inject AdminSpecialtyStateService SpecialtyState
+
+<PageTitle>Quản lý chuyên khoa</PageTitle>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Quản lý chuyên khoa</h1>
+        <p class="text-secondary mb-0">Danh mục chuyên khoa phục vụ đặt lịch và khám bệnh.</p>
+    </div>
+    <button class="btn btn-primary" disabled="@Busy" @onclick="OpenCreate">
+        <i class="fas fa-plus me-2" aria-hidden="true"></i>Thêm chuyên khoa
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(SpecialtyState.ActionMessage))
+{
+    <div class="alert alert-success" role="status">@SpecialtyState.ActionMessage</div>
+}
+@if (!string.IsNullOrEmpty(SpecialtyState.ActionError))
+{
+    <div class="alert alert-danger" role="alert">@SpecialtyState.ActionError</div>
+}
+
+@if (_editing)
+{
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">@(_editingId.HasValue ? "Cập nhật chuyên khoa" : "Thêm chuyên khoa")</h2>
+            <EditForm Model="_form" OnValidSubmit="Save">
+                <DataAnnotationsValidator />
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="specialty-code">Mã chuyên khoa <span class="text-danger">*</span></label>
+                        <InputText id="specialty-code" class="form-control" @bind-Value="_form.Code" maxlength="20" disabled="@Busy" />
+                        <ValidationMessage For="@(() => _form.Code)" />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label" for="specialty-name">Tên chuyên khoa <span class="text-danger">*</span></label>
+                        <InputText id="specialty-name" class="form-control" @bind-Value="_form.Name" maxlength="255" disabled="@Busy" />
+                        <ValidationMessage For="@(() => _form.Name)" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="specialty-description">Mô tả</label>
+                        <InputTextArea id="specialty-description" class="form-control" @bind-Value="_form.Description" maxlength="500" rows="3" disabled="@Busy" />
+                        <ValidationMessage For="@(() => _form.Description)" />
+                    </div>
+                </div>
+                <p class="small text-secondary mt-3">Mã được chuẩn hóa thành chữ hoa. Chuyên khoa mới được bật hoạt động.</p>
+                <button type="submit" class="btn btn-primary me-2" disabled="@Busy">
+                    @(SpecialtyState.IsSubmitting ? "Đang lưu..." : "Lưu chuyên khoa")
+                </button>
+                <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="CloseEditor">Hủy</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (_statusTarget != null)
+{
+    <div class="alert alert-warning" role="alert">
+        <p>Bạn muốn @(_statusTarget.IsActive ? "ngừng" : "bật") hoạt động chuyên khoa <strong>@_statusTarget.Name</strong>?</p>
+        @if (_statusTarget.IsActive)
+        {
+            <p class="small">Chỉ có thể ngừng khi không còn bác sĩ hoặc dịch vụ đang hoạt động liên quan. Dữ liệu lịch sử được giữ lại.</p>
+        }
+        <button class="btn btn-warning me-2" disabled="@Busy" @onclick="ConfirmStatus">Xác nhận</button>
+        <button class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelStatus">Hủy</button>
+    </div>
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <form class="row g-3 align-items-end mb-4" @onsubmit="Search" @onsubmit:preventDefault>
+            <div class="col-md-6">
+                <label class="form-label" for="specialty-search">Tìm theo mã hoặc tên</label>
+                <input id="specialty-search" class="form-control" @bind="_keyword" maxlength="255" disabled="@Busy" placeholder="Nhập mã hoặc tên chuyên khoa" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="specialty-status">Trạng thái</label>
+                <select id="specialty-status" class="form-select" @bind="_activeFilter" disabled="@Busy">
+                    <option value="">Tất cả</option>
+                    <option value="true">Đang hoạt động</option>
+                    <option value="false">Ngừng hoạt động</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@Busy">Tìm kiếm</button>
+                <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="ResetSearch">Đặt lại</button>
+            </div>
+        </form>
+
+        @if (SpecialtyState.IsLoading)
+        {
+            <div class="text-center py-4" role="status">
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải chuyên khoa...
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(SpecialtyState.ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @SpecialtyState.ErrorMessage
+                <button class="btn btn-sm btn-outline-danger ms-2" @onclick="Reload">Thử lại</button>
+            </div>
+        }
+        else if (SpecialtyState.Result.Items.Count == 0)
+        {
+            <p class="text-center text-secondary py-4 mb-0">Không tìm thấy chuyên khoa phù hợp.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr><th>Mã</th><th>Tên chuyên khoa</th><th>Mô tả</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in SpecialtyState.Result.Items)
+                        {
+                            <tr @key="item.Id">
+                                <td>@(item.Code ?? "—")</td>
+                                <td class="fw-semibold">@item.Name</td>
+                                <td style="max-width: 320px; overflow-wrap: anywhere;">@(item.Description ?? "—")</td>
+                                <td><span class="badge @(item.IsActive ? "bg-success" : "bg-secondary")">@(item.IsActive ? "Đang hoạt động" : "Ngừng hoạt động")</span></td>
+                                <td class="text-end text-nowrap">
+                                    <button class="btn btn-sm btn-outline-primary me-1" disabled="@Busy" @onclick="() => OpenEdit(item)">Sửa</button>
+                                    <button class="btn btn-sm @(item.IsActive ? "btn-outline-warning" : "btn-outline-success")" disabled="@Busy" @onclick="() => AskStatus(item)">
+                                        @(item.IsActive ? "Ngừng" : "Bật")
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (!SpecialtyState.IsLoading && SpecialtyState.Result.TotalItems > 0)
+        {
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                <span class="text-secondary">Tổng @SpecialtyState.Result.TotalItems chuyên khoa · Trang @SpecialtyState.Result.Page/@SpecialtyState.Result.TotalPages</span>
+                <div class="btn-group" aria-label="Phân trang chuyên khoa">
+                    <button class="btn btn-outline-primary" disabled="@(Busy || SpecialtyState.Result.Page <= 1)" @onclick="Previous">Trước</button>
+                    <button class="btn btn-outline-primary" disabled="@(Busy || SpecialtyState.Result.Page >= SpecialtyState.Result.TotalPages)" @onclick="Next">Sau</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string _keyword = string.Empty;
+    private string _activeFilter = string.Empty;
+    private string _appliedKeyword = string.Empty;
+    private bool? _appliedActive;
+    private int _page = 1;
+    private bool _editing;
+    private int? _editingId;
+    private SaveSpecialtyRequestDTO _form = new();
+    private AdminSpecialtyDTO? _statusTarget;
+    private bool Busy => SpecialtyState.IsLoading || SpecialtyState.IsSubmitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SpecialtyState.ClearActionMessages();
+        await Reload();
+    }
+
+    private Task Reload() => SpecialtyState.LoadAsync(_appliedKeyword, _appliedActive, _page);
+
+    private async Task Search()
+    {
+        _appliedKeyword = _keyword;
+        _appliedActive = bool.TryParse(_activeFilter, out var active) ? active : null;
+        _page = 1;
+        await Reload();
+    }
+
+    private async Task ResetSearch()
+    {
+        _keyword = string.Empty;
+        _activeFilter = string.Empty;
+        await Search();
+    }
+
+    private async Task Previous() { if (_page > 1) { _page--; await Reload(); } }
+    private async Task Next() { if (_page < SpecialtyState.Result.TotalPages) { _page++; await Reload(); } }
+
+    private void OpenCreate()
+    {
+        SpecialtyState.ClearActionMessages();
+        _statusTarget = null;
+        _editingId = null;
+        _form = new();
+        _editing = true;
+    }
+
+    private void OpenEdit(AdminSpecialtyDTO item)
+    {
+        SpecialtyState.ClearActionMessages();
+        _statusTarget = null;
+        _editingId = item.Id;
+        _form = new() { Code = item.Code ?? string.Empty, Name = item.Name, Description = item.Description };
+        _editing = true;
+    }
+
+    private void CloseEditor() => _editing = false;
+
+    private async Task Save()
+    {
+        if (await SpecialtyState.SaveAsync(_editingId, _form))
+        {
+            _editing = false;
+            _page = 1;
+            await Reload();
+        }
+    }
+
+    private void AskStatus(AdminSpecialtyDTO item)
+    {
+        SpecialtyState.ClearActionMessages();
+        _editing = false;
+        _statusTarget = item;
+    }
+
+    private void CancelStatus() => _statusTarget = null;
+
+    private async Task ConfirmStatus()
+    {
+        if (_statusTarget == null) return;
+        if (await SpecialtyState.SetStatusAsync(_statusTarget.Id, !_statusTarget.IsActive))
+        {
+            _statusTarget = null;
+            await Reload();
+            if (SpecialtyState.Result.Items.Count == 0 && _page > 1)
+            {
+                _page--;
+                await Reload();
+            }
+        }
+    }
+}

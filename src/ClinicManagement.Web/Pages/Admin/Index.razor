@@ -1,0 +1,24 @@
+@page "/admin"
+@page "/admin/dashboard"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Quản trị phòng khám</PageTitle>
+
+<div class="mb-4">
+    <h1 class="fw-bold">Quản trị phòng khám</h1>
+    <p class="text-secondary">Chuẩn bị và quản lý dữ liệu phục vụ hoạt động phòng khám.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body p-4">
+                <i class="fas fa-stethoscope fa-2x text-primary mb-3" aria-hidden="true"></i>
+                <h2 class="h4">Chuyên khoa</h2>
+                <p class="text-secondary">Tra cứu, thêm, cập nhật và quản lý trạng thái hoạt động của chuyên khoa.</p>
+                <a class="btn btn-primary" href="/admin/specialties">Quản lý chuyên khoa</a>
+            </div>
+        </div>
+    </div>
+</div>

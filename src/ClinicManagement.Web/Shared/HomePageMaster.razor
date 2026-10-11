@@ -73,6 +73,14 @@
                RECEPTION MENU
                ========================================= *@
 
+            @if (HasRole("Admin"))
+            {
+                <NavLink href="/admin/specialties" class="sidebar-link" ActiveClass="active" Match="NavLinkMatch.Prefix"
+                         @onclick="CloseSidebar">
+                    <i class="fas fa-stethoscope" aria-hidden="true"></i>
+                    <span>Chuyên khoa</span>
+                </NavLink>
+            }
             @if (HasRole("Receptionist"))
             {
                 @* =========================================
