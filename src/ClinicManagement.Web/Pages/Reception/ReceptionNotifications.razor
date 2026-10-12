@@ -1,0 +1,33 @@
+@page "/reception/notifications"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Receptionist")]
+@using System.Globalization
+@inject ReceptionAffectedAppointmentStateService State
+
+<PageTitle>Thông báo lễ tân</PageTitle>
+
+<div class="reception-notifications-page">
+    <header class="reception-notifications-header">
+        <div><span class="reception-notifications-eyebrow">BÀN TIẾP ĐÓN</span><h1>Thông báo</h1><p>Cập nhật lịch làm việc, nghỉ phép và các lịch hẹn cần liên hệ bệnh nhân.</p></div>
+        <button type="button" class="btn btn-outline-primary" disabled="@State.IsLoadingNotifications" @onclick="State.LoadNotificationsAsync">Làm mới</button>
+    </header>
+    <div class="reception-notifications-banner"><div><strong>Kiểm tra danh sách lịch hẹn đang bị ảnh hưởng</strong><p>Thông báo được giữ làm lịch sử. Một lịch đã đổi, hủy hoặc khôi phục ca làm có thể không còn cần xử lý.</p></div><a class="btn btn-primary" href="/reception/affected-appointments">Xem lịch cần xử lý</a></div>
+    @if (!string.IsNullOrEmpty(State.NotificationsError)) { <div class="alert alert-danger" role="alert">@State.NotificationsError</div> }
+    else if (State.IsLoadingNotifications) { <p class="reception-notifications-empty" role="status">Đang tải thông báo...</p> }
+    else if (State.Notifications.Count == 0) { <div class="reception-notifications-empty"><i class="far fa-bell" aria-hidden="true"></i><h2>Chưa có thông báo</h2><p>Thông báo mới sẽ hiển thị tại đây khi bạn tải lại.</p></div> }
+    else
+    {
+        <div class="reception-notifications-list">
+            @foreach (var item in State.Notifications)
+            {
+                <article class="reception-notification-card" @key="item.Id"><div class="reception-notification-icon"><i class="fas fa-bell" aria-hidden="true"></i></div><div class="reception-notification-body"><div class="reception-notification-top"><h2>@item.Title</h2><time>@ClinicTime(item.CreatedAt)</time></div><p>@item.Content</p><small>Lịch hẹn #@item.AppointmentId · Giờ phòng khám UTC+7</small></div></article>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    protected override Task OnInitializedAsync() => State.LoadNotificationsAsync();
+    // Notification timestamps are stored in UTC; appointment timestamps already use clinic wall time.
+    private static string ClinicTime(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).AddHours(7).ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+}

@@ -107,7 +107,7 @@ public partial class ClinicManagementDbContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
-            entity.Property(e => e.EndTime).HasColumnName("end_time");
+            entity.Property(e => e.EndTime).IsConcurrencyToken().HasColumnName("end_time");
             entity.Property(e => e.FeeSnapshot)
                 .HasColumnType("decimal(12, 2)")
                 .HasColumnName("fee_snapshot");
@@ -120,9 +120,10 @@ public partial class ClinicManagementDbContext : DbContext
                 .HasMaxLength(500)
                 .HasColumnName("reason");
             entity.Property(e => e.Source).HasColumnName("source");
-            entity.Property(e => e.StartTime).HasColumnName("start_time");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            // Use existing columns for optimistic concurrency; no database schema change.
+            entity.Property(e => e.StartTime).IsConcurrencyToken().HasColumnName("start_time");
+            entity.Property(e => e.Status).IsConcurrencyToken().HasColumnName("status");
+            entity.Property(e => e.UpdatedAt).IsConcurrencyToken().HasColumnName("updated_at");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.CreatedBy)

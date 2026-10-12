@@ -1,0 +1,182 @@
+@page "/reception/affected-appointments"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Receptionist")]
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using ClinicManagementSystem.Application.DTOs.Appointment
+@using ClinicManagementSystem.Application.Helpers
+@inject ReceptionAffectedAppointmentStateService State
+@inject IJSRuntime JS
+
+<PageTitle>Lịch hẹn bị ảnh hưởng</PageTitle>
+
+<div class="reception-affected-page">
+    <header class="affected-header">
+        <div><span class="affected-eyebrow">BÀN TIẾP ĐÓN</span><h1>Lịch hẹn bị ảnh hưởng</h1><p>Liên hệ bệnh nhân để thống nhất giờ khám mới hoặc hủy lịch sau khi bác sĩ thay đổi ca làm, đăng ký nghỉ.</p></div>
+        <a class="btn btn-outline-primary" href="/reception/notifications"><i class="far fa-bell" aria-hidden="true"></i> Thông báo</a>
+    </header>
+
+    @if (!string.IsNullOrEmpty(State.ActionMessage))
+    { <div id="affected-success" class="alert alert-success" tabindex="-1" role="status">@State.ActionMessage</div> }
+    @if (!string.IsNullOrEmpty(State.ActionError))
+    { <div id="affected-action-error" class="alert alert-danger" tabindex="-1" role="alert">@State.ActionError @if (State.NeedsReload) { <p class="mb-0 mt-2">Danh sách đã được tải lại. Kiểm tra thông tin mới và mở lại thao tác nếu cần.</p> }</div> }
+
+    @if (State.Target is { } target && _editor != null)
+    {
+        <section class="affected-panel affected-editor" aria-labelledby="affected-editor-heading">
+            <h2 id="affected-editor-heading" tabindex="-1">@(_editor == "cancel" ? "Xác nhận hủy lịch hẹn" : "Đổi lịch hẹn") · @target.AppointmentCode</h2>
+            <div class="affected-summary">
+                <div><span>Bệnh nhân</span><strong>@target.PatientName</strong><span>@(target.PatientPhone ?? "Chưa có số điện thoại")</span></div>
+                <div><span>Bác sĩ</span><strong>@target.DoctorName</strong><span>Giữ nguyên bác sĩ khi đổi lịch</span></div>
+                <div><span>Giờ khám hiện tại (UTC+7)</span><strong>@Moment(target.StartTime) – @Clock(target.EndTime)</strong><span>@StatusName(target.Status)</span></div>
+            </div>
+            @if (_editor == "cancel")
+            { <p class="alert alert-warning">Hủy lịch sẽ thông báo cho bệnh nhân và bác sĩ. Lịch đã có thanh toán cần xử lý thanh toán trước khi hủy.</p> }
+            <EditForm EditContext="_editContext" OnValidSubmit="Submit" OnInvalidSubmit="InvalidForm">
+                <DataAnnotationsValidator />
+                <div id="affected-validation" tabindex="-1"><ValidationSummary /></div>
+                <fieldset disabled="@Busy">
+                    @if (_editor == "reschedule")
+                    {
+                        <div class="affected-day-picker">
+                            <div><label for="affected-new-date">Ngày khám mới</label><InputDate id="affected-new-date" class="form-control" @bind-Value="_newDate" @bind-Value:after="DateChanged" min="@Today.ToString("yyyy-MM-dd")" /></div>
+                            <button type="button" class="btn btn-outline-primary" @onclick="DateChanged">Tải lại giờ trống</button>
+                        </div>
+                        @if (State.IsLoadingSlots) { <p role="status">Đang tải giờ khám...</p> }
+                        else if (!string.IsNullOrEmpty(State.SlotsError)) { <p class="alert alert-danger" role="alert">@State.SlotsError</p> }
+                        else if (State.Slots.Count == 0) { <p class="affected-notice">Không có giờ khám trống trong ngày này. Chọn ngày khác hoặc liên hệ quản trị viên để kiểm tra lịch bác sĩ.</p> }
+                        else
+                        {
+                            <div class="affected-slots" role="group" aria-label="Giờ khám còn trống">
+                                @foreach (var slot in State.Slots)
+                                {
+                                    <button type="button" class="affected-slot @(_form.NewStartTime == slot.StartTime ? "selected" : "")" aria-pressed="@(_form.NewStartTime == slot.StartTime ? "true" : "false")" @onclick="() => SelectSlot(slot.StartTime)">@Clock(slot.StartTime) – @Clock(slot.EndTime)</button>
+                                }
+                            </div>
+                        }
+                        <ValidationMessage For="() => _form.NewStartTime" />
+                        @if (_form.NewStartTime.HasValue) { <p class="affected-selected">Giờ đã chọn: <strong>@Moment(_form.NewStartTime.Value)</strong> (giờ phòng khám UTC+7).</p> }
+                    }
+                    <div class="mb-3"><label for="affected-reason">Lý do và kết quả liên hệ <span aria-hidden="true">*</span></label><InputTextArea id="affected-reason" class="form-control" rows="3" maxlength="500" @bind-Value="_form.Reason" /><ValidationMessage For="() => _form.Reason" /><small>Ghi lý do đổi/hủy và nội dung đã thống nhất với bệnh nhân (tối đa 500 ký tự).</small></div>
+                    <div class="form-check mb-3"><InputCheckbox id="affected-contact-confirmed" class="form-check-input" @bind-Value="_form.ContactConfirmed" /><label class="form-check-label" for="affected-contact-confirmed">Tôi đã liên hệ và thống nhất thao tác này với bệnh nhân.</label><ValidationMessage For="() => _form.ContactConfirmed" /></div>
+                    <div class="affected-actions"><button type="submit" class="btn @(_editor == "cancel" ? "btn-danger" : "btn-primary")">@(State.IsSubmitting ? "Đang xử lý..." : _editor == "cancel" ? "Xác nhận hủy lịch" : "Xác nhận đổi lịch")</button><button type="button" class="btn btn-outline-secondary" @onclick="CloseEditor">Đóng</button></div>
+                </fieldset>
+            </EditForm>
+        </section>
+    }
+
+    <section class="affected-panel" aria-labelledby="affected-list-heading">
+        <div class="affected-section-heading"><h2 id="affected-list-heading" tabindex="-1">Danh sách cần xử lý</h2><button class="btn btn-outline-primary" disabled="@Busy" @onclick="Refresh">Làm mới</button></div>
+        <EditForm Model="_filter" OnValidSubmit="Search" OnInvalidSubmit="InvalidFilter">
+            <DataAnnotationsValidator />
+            <div id="affected-filter-validation" tabindex="-1"><ValidationSummary /></div>
+            <fieldset disabled="@Busy" class="affected-filters">
+                <div><label for="affected-from">Từ ngày</label><InputDate id="affected-from" class="form-control" @bind-Value="_filter.From" /></div>
+                <div><label for="affected-to">Đến ngày</label><InputDate id="affected-to" class="form-control" @bind-Value="_filter.To" /></div>
+                <div><label for="affected-doctor">Bác sĩ</label><InputSelect id="affected-doctor" class="form-select" @bind-Value="_filter.DoctorId"><option value="">Tất cả bác sĩ</option>@foreach (var doctor in DoctorOptions) { <option value="@doctor.Id">@doctor.Name</option> }</InputSelect></div>
+                <div class="affected-actions"><button type="submit" class="btn btn-primary">Lọc</button><button type="button" class="btn btn-outline-secondary" @onclick="ResetFilter">Đặt lại</button></div>
+            </fieldset>
+        </EditForm>
+        @if (!string.IsNullOrEmpty(State.DoctorsError)) { <p class="alert alert-warning">Không tải được danh sách bác sĩ: @State.DoctorsError <button class="btn btn-sm btn-outline-secondary" disabled="@Busy" @onclick="State.LoadDoctorsAsync">Thử lại</button></p> }
+        <p class="affected-notice">Lọc tối đa 91 ngày. Danh sách phản ánh lịch đang bị ảnh hưởng; thông báo cũ vẫn được giữ sau khi xử lý. Lịch đã check-in hoặc quá giờ cần phối hợp xử lý riêng.</p>
+        @if (State.IsLoading) { <p role="status">Đang kiểm tra lịch hẹn...</p> }
+        else if (!string.IsNullOrEmpty(State.ListError)) { <div id="affected-list-error" class="alert alert-danger" tabindex="-1" role="alert">@State.ListError</div> }
+        else if (State.Appointments.Items.Count == 0) { <div class="affected-empty"><i class="far fa-calendar-check" aria-hidden="true"></i><h3>Không có lịch hẹn bị ảnh hưởng trong bộ lọc</h3><p>Thử mở rộng khoảng ngày hoặc chọn tất cả bác sĩ.</p></div> }
+        else
+        {
+            <div class="table-responsive"><table class="table affected-table align-middle"><thead><tr><th>Lịch hẹn / bệnh nhân</th><th>Bác sĩ / giờ khám</th><th>Nguyên nhân ảnh hưởng</th><th>Xử lý</th></tr></thead><tbody>
+                @foreach (var item in State.Appointments.Items)
+                {
+                    <tr @key="item.Id"><td><strong>@item.AppointmentCode</strong><span class="d-block">@item.PatientName</span><span class="d-block text-secondary">@(item.PatientPhone ?? "Chưa có số điện thoại")</span></td><td><strong>@item.DoctorName</strong><span class="d-block">@Moment(item.StartTime) – @Clock(item.EndTime)</span><span class="affected-status">@StatusName(item.Status)</span></td><td><ul class="affected-reasons">@foreach (var reason in item.AffectedReasons) { <li>@reason</li> }</ul></td><td>
+                        @if (item.CanProcess)
+                        { <div class="affected-row-actions"><button id="@($"affected-reschedule-{item.Id}")" class="btn btn-sm btn-outline-primary" disabled="@Busy" @onclick="() => OpenEditor(item, false)">Đổi lịch</button><button id="@($"affected-cancel-{item.Id}")" class="btn btn-sm btn-outline-danger" disabled="@Busy" @onclick="() => OpenEditor(item, true)">Hủy lịch</button></div> }
+                        else { <span class="affected-readonly">Cần xử lý riêng</span><p class="mb-0 mt-2">@item.CannotProcessReason</p> }
+                    </td></tr>
+                }
+            </tbody></table></div>
+        }
+        @if (State.Appointments.TotalItems > 0 && string.IsNullOrEmpty(State.ListError))
+        { <div class="affected-pagination"><span>Trang @State.Appointments.Page/@State.Appointments.TotalPages · @State.Appointments.TotalItems lịch hẹn</span><div class="btn-group" aria-label="Phân trang lịch hẹn bị ảnh hưởng"><button class="btn btn-outline-primary" disabled="@(Busy || State.Appointments.Page <= 1)" @onclick="() => ChangePage(-1)">Trước</button><button class="btn btn-outline-primary" disabled="@(Busy || State.Appointments.Page >= State.Appointments.TotalPages)" @onclick="() => ChangePage(1)">Sau</button></div></div> }
+    </section>
+</div>
+
+@code {
+    private ReceptionAffectedQueryDTO _filter = DefaultFilter();
+    private ReceptionAffectedQueryDTO _applied = DefaultFilter();
+    private ProcessingForm _form = new();
+    private EditContext _editContext = null!;
+    private DateOnly _newDate = Today;
+    private string? _editor, _focusId, _returnFocusId;
+    private bool Busy => State.IsBusy;
+    private static DateOnly Today => DateOnly.FromDateTime(DoctorSlotGenerator.ClinicNow());
+    private IEnumerable<(int Id, string Name)> DoctorOptions => State.Doctors.Select(d => (d.Id, Name: d.FullName))
+        .Concat(State.Appointments.Items.Select(a => (a.DoctorId, a.DoctorName))).DistinctBy(d => d.Item1).OrderBy(d => d.Item2);
+    private static ReceptionAffectedQueryDTO DefaultFilter() => new() { From = Today.AddDays(-7), To = Today.AddDays(30), Page = 1, PageSize = 10 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.CloseEditor(); State.ClearActions();
+        await State.LoadDoctorsAsync();
+        await Reload();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusId is not { } id) return;
+        _focusId = null;
+        try { await JS.InvokeVoidAsync("receptionAffected.focus", id); }
+        catch (JSDisconnectedException) { }
+    }
+    private async Task Reload()
+    {
+        await State.LoadAppointmentsAsync(_applied);
+        if (string.IsNullOrEmpty(State.ListError) && State.Appointments.Items.Count == 0 && _applied.Page > 1)
+        { _applied.Page = Math.Max(1, State.Appointments.TotalPages); await State.LoadAppointmentsAsync(_applied); }
+    }
+    private async Task Search()
+    {
+        CloseEditor(); State.ClearActions();
+        _applied = new() { From = _filter.From, To = _filter.To, DoctorId = _filter.DoctorId, Page = 1, PageSize = 10 };
+        await Reload(); _focusId = string.IsNullOrEmpty(State.ListError) ? "affected-list-heading" : "affected-list-error";
+    }
+    private async Task ResetFilter() { _filter = DefaultFilter(); await Search(); }
+    private async Task Refresh() { CloseEditor(); State.ClearActions(); await Reload(); _focusId = string.IsNullOrEmpty(State.ListError) ? "affected-list-heading" : "affected-list-error"; }
+    private async Task ChangePage(int delta) { CloseEditor(); State.ClearActions(); _applied.Page += delta; await Reload(); _focusId = "affected-list-heading"; }
+    private async Task OpenEditor(ReceptionAffectedAppointmentDTO item, bool cancel)
+    {
+        if (!State.OpenEditor(item)) return;
+        _editor = cancel ? "cancel" : "reschedule";
+        _form = new() { IsReschedule = !cancel }; _editContext = new(_form);
+        _returnFocusId = $"affected-{(cancel ? "cancel" : "reschedule")}-{item.Id}";
+        _newDate = DateOnly.FromDateTime(item.StartTime);
+        _focusId = "affected-editor-heading";
+        if (!cancel) await State.LoadSlotsAsync(_newDate);
+    }
+    private void CloseEditor() { State.CloseEditor(); _editor = null; _focusId = _returnFocusId; }
+    private async Task DateChanged() { _form.NewStartTime = null; _editContext.NotifyFieldChanged(new(_form, nameof(ProcessingForm.NewStartTime))); await State.LoadSlotsAsync(_newDate); }
+    private void SelectSlot(DateTime time) { _form.NewStartTime = time; _editContext.NotifyFieldChanged(new(_form, nameof(ProcessingForm.NewStartTime))); }
+    private async Task Submit()
+    {
+        var saved = _editor == "cancel" ? await State.CancelAsync(_form.Reason) : await State.RescheduleAsync(_form.NewStartTime, _form.Reason);
+        if (saved || State.NeedsReload)
+        { CloseEditor(); await Reload(); }
+        _focusId = saved ? "affected-success" : "affected-action-error";
+    }
+    private void InvalidForm() => _focusId = "affected-validation";
+    private void InvalidFilter() => _focusId = "affected-filter-validation";
+    private static string Moment(DateTime value) => value.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+    private static string Clock(DateTime value) => value.ToString("HH:mm", CultureInfo.InvariantCulture);
+    private static string StatusName(byte status) => status switch { 0 => "Chờ xác nhận", 1 => "Đã xác nhận", 2 => "Đã tiếp nhận", 3 => "Hoàn tất", 4 => "Đã hủy", 5 => "Vắng mặt", _ => "—" };
+    private sealed class ProcessingForm : IValidatableObject
+    {
+        [Required(ErrorMessage = "Nhập lý do và kết quả liên hệ."), StringLength(500, ErrorMessage = "Lý do tối đa 500 ký tự.")]
+        public string Reason { get; set; } = string.Empty;
+        public bool IsReschedule { get; set; }
+        public DateTime? NewStartTime { get; set; }
+        public bool ContactConfirmed { get; set; }
+        public IEnumerable<ValidationResult> Validate(ValidationContext context)
+        {
+            if (IsReschedule && !NewStartTime.HasValue) yield return new("Chọn một giờ khám còn trống.", new[] { nameof(NewStartTime) });
+            if (!ContactConfirmed) yield return new("Xác nhận đã liên hệ và thống nhất với bệnh nhân.", new[] { nameof(ContactConfirmed) });
+        }
+    }
+}
