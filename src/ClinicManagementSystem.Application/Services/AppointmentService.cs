@@ -1619,6 +1619,17 @@ public class AppointmentService : IAppointmentService
 
             transactionStarted = true;
 
+            await _unitOfWork.DoctorScheduleRepository.AcquireAdminLockAsync();
+            // Recheck after acquiring the VC20 lock: an admin may have changed the schedule.
+            var lockedSlots = await _doctorService.GetAvailableSlotsAsync(appointment.DoctorId, DateOnly.FromDateTime(appointment.StartTime));
+            if (lockedSlots.StatusCode != 200 || lockedSlots.Content == null ||
+                !lockedSlots.Content.Any(s => s.IsAvailable && s.StartTime == appointment.StartTime && s.EndTime == appointment.EndTime))
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                transactionStarted = false;
+                return Response(409, AppointmentResponseMessageDTO.SlotNotAvailable);
+            }
+
 
 
             // =================================================
@@ -1748,11 +1759,8 @@ public class AppointmentService : IAppointmentService
             );
 
 
-            return Response(
-                500,
-                AppointmentResponseMessageDTO
-                    .CreateFailed
-            );
+            return Response(IsAppointmentConflict(ex) ? 409 : 500,
+                IsAppointmentConflict(ex) ? "Lịch hẹn hoặc slot đã thay đổi. Tải lại danh sách." : AppointmentResponseMessageDTO.CreateFailed);
         }
     }
 
@@ -2824,6 +2832,17 @@ public class AppointmentService : IAppointmentService
 
             transactionStarted = true;
 
+            await _unitOfWork.DoctorScheduleRepository.AcquireAdminLockAsync();
+            // Recheck after acquiring the VC20 lock: an admin may have changed the schedule.
+            var lockedSlots = await _doctorService.GetAvailableSlotsAsync(appointment.DoctorId, DateOnly.FromDateTime(appointment.StartTime));
+            if (lockedSlots.StatusCode != 200 || lockedSlots.Content == null ||
+                !lockedSlots.Content.Any(s => s.IsAvailable && s.StartTime == appointment.StartTime && s.EndTime == appointment.EndTime))
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                transactionStarted = false;
+                return Response(409, AppointmentResponseMessageDTO.SlotNotAvailable);
+            }
+
 
             // =================================================
             // RE-CHECK APPOINTMENT CONFLICT
@@ -2935,11 +2954,8 @@ public class AppointmentService : IAppointmentService
             );
 
 
-            return Response(
-                500,
-                AppointmentResponseMessageDTO
-                    .RescheduleFailed
-            );
+            return Response(IsAppointmentConflict(ex) ? 409 : 500,
+                IsAppointmentConflict(ex) ? "Lịch hẹn hoặc slot đã thay đổi. Tải lại danh sách." : AppointmentResponseMessageDTO.RescheduleFailed);
         }
     }
 
@@ -3125,6 +3141,8 @@ public class AppointmentService : IAppointmentService
 
             transactionStarted = true;
 
+            await _unitOfWork.DoctorScheduleRepository.AcquireAdminLockAsync();
+
             // =================================================
             // ADD STATUS HISTORY
             // =================================================
@@ -3189,11 +3207,8 @@ public class AppointmentService : IAppointmentService
             );
 
 
-            return Response(
-                500,
-                AppointmentResponseMessageDTO
-                    .CancelFailed
-            );
+            return Response(IsAppointmentConflict(ex) ? 409 : 500,
+                IsAppointmentConflict(ex) ? "Lịch hẹn hoặc slot đã thay đổi. Tải lại danh sách." : AppointmentResponseMessageDTO.CancelFailed);
         }
     }
 
@@ -3678,6 +3693,17 @@ public class AppointmentService : IAppointmentService
 
             transactionStarted = true;
 
+            await _unitOfWork.DoctorScheduleRepository.AcquireAdminLockAsync();
+            // Recheck after acquiring the VC20 lock: an admin may have changed the schedule.
+            var lockedSlots = await _doctorService.GetAvailableSlotsAsync(appointment.DoctorId, DateOnly.FromDateTime(appointment.StartTime));
+            if (lockedSlots.StatusCode != 200 || lockedSlots.Content == null ||
+                !lockedSlots.Content.Any(s => s.IsAvailable && s.StartTime == appointment.StartTime && s.EndTime == appointment.EndTime))
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                transactionStarted = false;
+                return Response(409, AppointmentResponseMessageDTO.SlotNotAvailable);
+            }
+
             // =================================================
             // RE-CHECK APPOINTMENT CONFLICT
             // =================================================
@@ -3844,11 +3870,8 @@ public class AppointmentService : IAppointmentService
             );
 
 
-            return Response(
-                500,
-                AppointmentResponseMessageDTO
-                    .CreateFailed
-            );
+            return Response(IsAppointmentConflict(ex) ? 409 : 500,
+                IsAppointmentConflict(ex) ? "Lịch hẹn hoặc slot đã thay đổi. Tải lại danh sách." : AppointmentResponseMessageDTO.CreateFailed);
         }
     }
 
@@ -3929,4 +3952,7 @@ public class AppointmentService : IAppointmentService
             : age;
     }
 
+    private static bool IsAppointmentConflict(Exception exception)
+        => exception is DbUpdateConcurrencyException || exception is DbUpdateException
+            { InnerException: Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 } };
 }

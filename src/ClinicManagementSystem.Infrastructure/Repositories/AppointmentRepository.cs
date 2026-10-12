@@ -8,6 +8,7 @@ public interface IAppointmentRepository : IRepositoryBase<Appointment>
 {
     Task<List<Appointment>> GetUpcomingInRangeAsync(int? doctorId, DateTime start, DateTime end);
     Task<List<Appointment>> GetBlockingInRangeAsync(int doctorId, DateTime start, DateTime end);
+    Task<Appointment?> GetReceptionDetailAsync(int id);
 }
 
 public class AppointmentRepository : RepositoryBase<Appointment>, IAppointmentRepository
@@ -26,4 +27,8 @@ public class AppointmentRepository : RepositoryBase<Appointment>, IAppointmentRe
 
     public Task<List<Appointment>> GetBlockingInRangeAsync(int doctorId, DateTime start, DateTime end)
         => _context.Appointments.AsNoTracking().Where(a => a.DoctorId == doctorId && a.Status < 4 && a.StartTime < end && a.EndTime > start).ToListAsync();
+
+    public Task<Appointment?> GetReceptionDetailAsync(int id)
+        => _context.Appointments.Include(a => a.Doctor).Include(a => a.Patient).Include(a => a.Invoices).Include(a => a.Notifications)
+            .SingleOrDefaultAsync(a => a.Id == id);
 }

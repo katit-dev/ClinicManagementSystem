@@ -39,11 +39,11 @@ public class NotificationController
     // GET:
     // /api/notifications
     //
-    // Chỉ Doctor hiện tại.
+    // Chỉ thông báo thuộc Doctor, Receptionist hoặc Patient đang đăng nhập.
     // =====================================================
 
     [HttpGet]
-    [Authorize(Roles = "Doctor")]
+    [Authorize(Roles = "Doctor,Receptionist,Patient")]
     public async Task<IActionResult>
         GetMyNotifications()
     {
