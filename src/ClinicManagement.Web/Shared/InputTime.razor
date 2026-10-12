@@ -1,0 +1,27 @@
+@inherits InputBase<TimeOnly?>
+@using System.Globalization
+@using System.Diagnostics.CodeAnalysis
+
+<input @attributes="AdditionalAttributes" type="time" class="@CssClass" step="60"
+       value="@CurrentValueAsString" @oninput="e => CurrentValueAsString = e.Value?.ToString()" />
+
+@code {
+    // Native time controls can emit minute, second or fractional-second values.
+    private static readonly string[] Formats = ["HH:mm", "HH:mm:ss", "HH:mm:ss.FFFFFFF"];
+
+    protected override string? FormatValueAsString(TimeOnly? value)
+        => value?.ToString("HH:mm", CultureInfo.InvariantCulture);
+
+    protected override bool TryParseValueFromString(string? value, out TimeOnly? result, [NotNullWhen(false)] out string? validationErrorMessage)
+    {
+        if (TimeOnly.TryParseExact(value, Formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var time))
+        {
+            result = time;
+            validationErrorMessage = null;
+            return true;
+        }
+        result = null;
+        validationErrorMessage = "Giờ không hợp lệ. Vui lòng chọn giờ và phút.";
+        return false;
+    }
+}

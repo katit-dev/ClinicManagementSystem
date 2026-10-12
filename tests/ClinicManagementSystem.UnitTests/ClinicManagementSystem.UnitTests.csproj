@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ClinicManagementSystem.Application\ClinicManagementSystem.Application.csproj" />
     <ProjectReference Include="..\..\src\ClinicManagementSystem.Infrastructure\ClinicManagementSystem.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\ClinicManagement.Web\ClinicManagement.Web.csproj" />
   </ItemGroup>
 
 </Project>
