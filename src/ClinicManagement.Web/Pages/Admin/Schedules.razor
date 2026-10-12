@@ -1,0 +1,413 @@
+@page "/admin/schedules"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Admin")]
+@using System.Globalization
+@using ClinicManagementSystem.Application.DTOs.Scheduling
+@using ClinicManagementSystem.Application.Helpers
+@inject AdminSchedulingStateService ScheduleState
+@inject IJSRuntime JS
+
+<PageTitle>Lịch làm việc &amp; nghỉ phép</PageTitle>
+
+<div class="admin-schedules-page">
+    <header class="schedules-header">
+        <div>
+            <span class="schedules-eyebrow">QUẢN TRỊ PHÒNG KHÁM</span>
+            <h1>Lịch làm việc &amp; nghỉ phép</h1>
+            <p>Quản lý ca làm theo thứ, giai đoạn hiệu lực và thời gian nghỉ của bác sĩ.</p>
+        </div>
+        <div class="schedules-actions">
+            <button id="add-schedule" class="btn btn-primary" disabled="@CannotCreate" @onclick="OpenSchedule"><i class="fas fa-plus me-2" aria-hidden="true"></i>Thêm lịch làm việc</button>
+            <button id="add-timeoff" class="btn btn-outline-primary" disabled="@CannotCreate" @onclick="OpenTimeOff"><i class="fas fa-calendar-minus me-2" aria-hidden="true"></i>Đăng ký nghỉ</button>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrEmpty(ScheduleState.DoctorsError))
+    {
+        <div class="alert alert-danger" role="alert">@ScheduleState.DoctorsError <button class="btn btn-sm btn-outline-danger ms-2" disabled="@Busy" @onclick="ScheduleState.LoadDoctorsAsync">Tải lại bác sĩ</button></div>
+    }
+    @if (!string.IsNullOrEmpty(ScheduleState.ActionMessage))
+    {
+        <div id="schedule-action-message" class="alert alert-success" role="status" tabindex="-1">@ScheduleState.ActionMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(ScheduleState.ActionError))
+    {
+        <div id="schedule-action-error" class="alert alert-danger" role="alert" tabindex="-1">@ScheduleState.ActionError</div>
+    }
+
+    @if (_editor == "schedule")
+    {
+        <section class="schedules-panel schedules-editor" aria-labelledby="schedule-editor-heading">
+            <div class="schedules-panel-heading"><h2 id="schedule-editor-heading" tabindex="-1">@(_scheduleId.HasValue ? "Cập nhật lịch làm việc" : "Thêm lịch làm việc")</h2></div>
+            <EditForm Model="_schedule" OnValidSubmit="SaveSchedule" @key="_schedule">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <fieldset disabled="@FormLocked">
+                    <div class="schedules-form-grid">
+                        <div>
+                            <label for="schedule-doctor">Bác sĩ <span>*</span></label>
+                            <InputSelect id="schedule-doctor" class="form-select" @bind-Value="_schedule.DoctorId" disabled="@(_scheduleId.HasValue)">
+                                <option value="0">Chọn bác sĩ</option>
+                                @foreach (var doctor in ScheduleState.Doctors.Where(d => d.IsActive || d.Id == _schedule.DoctorId))
+                                { <option value="@doctor.Id">@doctor.FullName@(!doctor.IsActive ? " (ngừng hoạt động)" : "")</option> }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _schedule.DoctorId)" />
+                        </div>
+                        <div>
+                            <label for="schedule-day">Thứ trong tuần <span>*</span></label>
+                            <InputSelect id="schedule-day" class="form-select" @bind-Value="_schedule.DayOfWeek" disabled="@(_scheduleId.HasValue)">
+                                @for (byte day = 0; day <= 6; day++) { <option value="@day">@DayName(day)</option> }
+                            </InputSelect>
+                        </div>
+                        <div>
+                            <label for="schedule-start">Giờ bắt đầu <span>*</span></label>
+                            <InputTime id="schedule-start" class="form-control" @bind-Value="_schedule.StartTime" required />
+                            <ValidationMessage For="@(() => _schedule.StartTime)" />
+                        </div>
+                        <div>
+                            <label for="schedule-end">Giờ kết thúc <span>*</span></label>
+                            <InputTime id="schedule-end" class="form-control" @bind-Value="_schedule.EndTime" required />
+                            <ValidationMessage For="@(() => _schedule.EndTime)" />
+                        </div>
+                        <div>
+                            <label for="schedule-break-start">Nghỉ trưa từ</label>
+                            <InputTime id="schedule-break-start" class="form-control" @bind-Value="_schedule.BreakStart" />
+                            <ValidationMessage For="@(() => _schedule.BreakStart)" />
+                        </div>
+                        <div>
+                            <label for="schedule-break-end">Nghỉ trưa đến</label>
+                            <InputTime id="schedule-break-end" class="form-control" @bind-Value="_schedule.BreakEnd" />
+                            <ValidationMessage For="@(() => _schedule.BreakEnd)" />
+                        </div>
+                        <div>
+                            <label for="schedule-slot">Thời lượng mỗi slot (phút) <span>*</span></label>
+                            <InputNumber id="schedule-slot" class="form-control" @bind-Value="_schedule.SlotMinutes" min="5" max="120" />
+                            <ValidationMessage For="@(() => _schedule.SlotMinutes)" />
+                        </div>
+                        <div>
+                            <label for="schedule-from">Hiệu lực từ <span>*</span></label>
+                            <InputDate id="schedule-from" class="form-control" @bind-Value="_schedule.EffectiveFrom" />
+                        </div>
+                        <div>
+                            <label for="schedule-to">Hiệu lực đến</label>
+                            <InputDate id="schedule-to" class="form-control" @bind-Value="_schedule.EffectiveTo" />
+                            <small>Để trống nếu chưa có ngày kết thúc.</small>
+                        </div>
+                    </div>
+                    <p class="schedules-help">Mỗi lịch áp dụng cho một thứ trong tuần. Không nghỉ trưa: bỏ trống cả hai giờ nghỉ.</p>
+                    @if (_scheduleId.HasValue)
+                    {
+                        <p class="schedules-notice">Để giữ lịch cũ, chọn ngày hiệu lực mới từ hôm nay. Hệ thống kết thúc bản cũ vào ngày trước đó và tạo phiên bản mới.</p>
+                    }
+                    <div class="schedules-actions">
+                        <button type="submit" class="btn btn-primary">@(ScheduleState.IsSubmitting ? "Đang lưu..." : "Lưu lịch làm việc")</button>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="CloseEditor">Hủy</button>
+                    </div>
+                </fieldset>
+            </EditForm>
+        </section>
+    }
+
+    @if (_editor == "timeoff")
+    {
+        <section class="schedules-panel schedules-editor" aria-labelledby="timeoff-editor-heading">
+            <div class="schedules-panel-heading"><h2 id="timeoff-editor-heading" tabindex="-1">Đăng ký nghỉ</h2></div>
+            <EditForm Model="_timeOff" OnValidSubmit="SaveTimeOff" @key="_timeOff">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <fieldset disabled="@FormLocked">
+                    <div class="schedules-form-grid">
+                        <div>
+                            <label for="timeoff-doctor">Áp dụng cho</label>
+                            <InputSelect id="timeoff-doctor" class="form-select" @bind-Value="_timeOff.DoctorId">
+                                <option value="">Cả phòng khám</option>
+                                @foreach (var doctor in ScheduleState.Doctors.Where(d => d.IsActive)) { <option value="@doctor.Id">@doctor.FullName</option> }
+                            </InputSelect>
+                        </div>
+                        <div>
+                            <label for="timeoff-type">Loại nghỉ <span>*</span></label>
+                            <InputSelect id="timeoff-type" class="form-select" @bind-Value="_timeOff.Type">
+                                <option value="0">Nghỉ phép</option><option value="1">Nghỉ lễ</option><option value="2">Nghỉ khác</option>
+                            </InputSelect>
+                        </div>
+                        <div class="schedules-full-width form-check">
+                            <InputCheckbox id="timeoff-fullday" class="form-check-input" @bind-Value="_timeOff.IsFullDay" @bind-Value:after="NormalizeFullDay" />
+                            <label class="form-check-label" for="timeoff-fullday">Nghỉ cả ngày</label>
+                        </div>
+                        <div>
+                            <label for="timeoff-start">Từ <span>*</span></label>
+                            <InputDate id="timeoff-start" class="form-control" Type="InputDateType.DateTimeLocal" @bind-Value="_timeOff.StartAt" />
+                        </div>
+                        <div>
+                            <label for="timeoff-end">Đến <span>*</span></label>
+                            <InputDate id="timeoff-end" class="form-control" Type="InputDateType.DateTimeLocal" @bind-Value="_timeOff.EndAt" />
+                        </div>
+                        <div class="schedules-full-width">
+                            <label for="timeoff-reason">Lý do <span>*</span></label>
+                            <InputTextArea id="timeoff-reason" class="form-control" @bind-Value="_timeOff.Reason" rows="2" maxlength="255" />
+                            <ValidationMessage For="@(() => _timeOff.Reason)" />
+                        </div>
+                    </div>
+                    <p class="schedules-help">Giờ phòng khám (UTC+7). Nghỉ cả ngày: từ 00:00 ngày đầu đến 00:00 ngày sau ngày nghỉ cuối cùng.</p>
+                    @if (!_timeOff.DoctorId.HasValue) { <p class="schedules-notice">Cả phòng khám nghỉ: slot đặt lịch của mọi bác sĩ trong khoảng này sẽ bị loại.</p> }
+                    <div class="schedules-actions">
+                        <button type="submit" class="btn btn-primary">@(ScheduleState.IsSubmitting ? "Đang lưu..." : "Lưu đăng ký nghỉ")</button>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="CloseEditor">Hủy</button>
+                    </div>
+                </fieldset>
+            </EditForm>
+        </section>
+    }
+
+    @if (ScheduleState.RequiresConfirmation)
+    {
+        <section class="schedules-panel schedules-confirmation" role="alert" aria-labelledby="affected-heading">
+            <h2 id="affected-heading" tabindex="-1">Có @ScheduleState.AffectedAppointments.Count lịch hẹn bị ảnh hưởng</h2>
+            <p>@(ScheduleState.IsScheduleConfirmation ? "Thay đổi lịch làm việc" : "Đăng ký nghỉ") chưa được lưu. Kiểm tra danh sách trước khi xác nhận.</p>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Mã lịch hẹn</th><th>Bác sĩ</th><th>Bệnh nhân</th><th>Thời gian</th><th>Trạng thái</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in ScheduleState.AffectedAppointments)
+                        {
+                            <tr @key="item.Id"><td>@item.AppointmentCode</td><td>@item.DoctorName</td><td>@item.PatientName</td><td>@Moment(item.StartTime) – @item.EndTime.ToString("HH:mm")</td><td>@AppointmentStatus(item.Status)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="schedules-help">Xác nhận giữ nguyên lịch hẹn đã đặt và tạo thông báo cho bác sĩ, lễ tân để xử lý đổi lịch.</p>
+            <div class="schedules-actions">
+                <button class="btn btn-warning" disabled="@Busy" @onclick="ConfirmAffected">@(ScheduleState.IsSubmitting ? "Đang lưu..." : "Xác nhận và lưu")</button>
+                <button class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelAffected">Quay lại chỉnh sửa</button>
+            </div>
+        </section>
+    }
+
+    @if (_deleteTarget != null)
+    {
+        <section class="schedules-panel schedules-confirmation" role="alert" aria-labelledby="delete-timeoff-heading">
+            <h2 id="delete-timeoff-heading" tabindex="-1">Xóa đăng ký nghỉ?</h2>
+            <p><strong>@_deleteTarget.DoctorName</strong> · @Moment(_deleteTarget.StartAt) → @Moment(_deleteTarget.EndAt)</p>
+            <p>Slot trong khoảng nghỉ có thể được mở lại. Lịch hẹn và thông báo đã tạo được giữ nguyên.</p>
+            <div class="schedules-actions">
+                <button class="btn btn-danger" disabled="@Busy" @onclick="DeleteTimeOff">Xác nhận xóa</button>
+                <button class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelDelete">Hủy</button>
+            </div>
+        </section>
+    }
+
+    <section class="schedules-panel" aria-labelledby="work-schedules-heading">
+        <div class="schedules-panel-heading"><div><h2 id="work-schedules-heading">Lịch làm việc</h2><p>Ca làm theo thứ trong tuần và phiên bản hiệu lực.</p></div><span class="schedules-count">@ScheduleState.Schedules.TotalItems lịch</span></div>
+        <EditForm Model="_scheduleFilter" OnValidSubmit="SearchSchedules">
+            <DataAnnotationsValidator /><ValidationSummary />
+            <fieldset class="schedules-filters" disabled="@Busy">
+                <div><label for="schedule-filter-doctor">Bác sĩ</label><InputSelect id="schedule-filter-doctor" class="form-select" @bind-Value="_scheduleFilter.DoctorId"><option value="">Tất cả bác sĩ</option>@foreach (var d in ScheduleState.Doctors) { <option value="@d.Id">@d.FullName</option> }</InputSelect></div>
+                <div><label for="schedule-filter-date">Có hiệu lực vào ngày</label><InputDate id="schedule-filter-date" class="form-control" @bind-Value="_scheduleFilter.Date" /></div>
+                <div><label for="schedule-filter-active">Trạng thái</label><InputSelect id="schedule-filter-active" class="form-select" @bind-Value="_scheduleFilter.Active"><option value="">Tất cả</option><option value="true">Đang hoạt động</option><option value="false">Ngừng hoạt động</option></InputSelect></div>
+                <div class="schedules-actions"><button type="submit" class="btn btn-primary">Lọc</button><button type="button" class="btn btn-outline-secondary" @onclick="ResetSchedules">Đặt lại</button></div>
+            </fieldset>
+        </EditForm>
+        @if (ScheduleState.IsLoadingSchedules) { <p class="schedules-empty" role="status">Đang tải lịch làm việc...</p> }
+        else if (!string.IsNullOrEmpty(ScheduleState.SchedulesError)) { <div class="alert alert-danger" role="alert">@ScheduleState.SchedulesError <button class="btn btn-sm btn-outline-danger" disabled="@Busy" @onclick="ReloadSchedules">Thử lại</button></div> }
+        else if (ScheduleState.Schedules.Items.Count == 0) { <p class="schedules-empty">Không có lịch làm việc phù hợp với bộ lọc.</p> }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle schedules-table">
+                    <thead><tr><th>Bác sĩ</th><th>Thứ</th><th>Giờ làm</th><th>Nghỉ trưa</th><th>Slot</th><th>Hiệu lực</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in ScheduleState.Schedules.Items)
+                        {
+                            <tr @key="item.Id">
+                                <td class="schedules-doctor">@item.DoctorName</td><td>@DayName(item.DayOfWeek)</td><td class="text-nowrap">@Clock(item.StartTime)–@Clock(item.EndTime)</td>
+                                <td class="text-nowrap">@(item.BreakStart.HasValue && item.BreakEnd.HasValue ? $"{Clock(item.BreakStart.Value)}–{Clock(item.BreakEnd.Value)}" : "—")</td><td class="text-nowrap">@item.SlotMinutes phút</td>
+                                <td class="text-nowrap">@Date(item.EffectiveFrom)<br /><small class="text-secondary">@(item.EffectiveTo.HasValue ? $"đến {Date(item.EffectiveTo.Value)}" : "Chưa có ngày kết thúc")</small></td>
+                                <td><span class="badge @(item.IsActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">@(item.IsActive ? "Hoạt động" : "Đã ngừng")</span></td>
+                                <td><button id="@($"edit-schedule-{item.Id}")" class="btn btn-sm btn-outline-primary" disabled="@(Busy || ScheduleState.RequiresConfirmation || !item.IsActive || (item.EffectiveTo.HasValue && item.EffectiveTo.Value < Today))" @onclick="() => EditSchedule(item)">Sửa</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (ScheduleState.Schedules.TotalItems > 0 && string.IsNullOrEmpty(ScheduleState.SchedulesError))
+        {
+            <div class="schedules-pagination"><span>Trang @ScheduleState.Schedules.Page/@ScheduleState.Schedules.TotalPages · @ScheduleState.Schedules.TotalItems lịch</span><div class="btn-group" aria-label="Phân trang lịch làm việc"><button class="btn btn-outline-primary" disabled="@(Busy || ScheduleState.Schedules.Page <= 1)" @onclick="() => SchedulePage(-1)">Trước</button><button class="btn btn-outline-primary" disabled="@(Busy || ScheduleState.Schedules.Page >= ScheduleState.Schedules.TotalPages)" @onclick="() => SchedulePage(1)">Sau</button></div></div>
+        }
+    </section>
+
+    <section class="schedules-panel" aria-labelledby="timeoffs-heading">
+        <div class="schedules-panel-heading"><div><h2 id="timeoffs-heading">Nghỉ phép &amp; nghỉ lễ</h2><p>Nghỉ riêng bác sĩ hoặc áp dụng cho cả phòng khám.</p></div><span class="schedules-count">@ScheduleState.TimeOffs.TotalItems đăng ký</span></div>
+        <EditForm Model="_timeOffFilter" OnValidSubmit="SearchTimeOffs">
+            <DataAnnotationsValidator /><ValidationSummary />
+            <fieldset class="schedules-filters" disabled="@Busy">
+                <div><label for="timeoff-filter-doctor">Bác sĩ</label><InputSelect id="timeoff-filter-doctor" class="form-select" @bind-Value="_timeOffFilter.DoctorId" disabled="@_timeOffFilter.ClinicWideOnly"><option value="">Tất cả bác sĩ</option>@foreach (var d in ScheduleState.Doctors) { <option value="@d.Id">@d.FullName</option> }</InputSelect></div>
+                <div><label for="timeoff-filter-from">Từ ngày</label><InputDate id="timeoff-filter-from" class="form-control" @bind-Value="_timeOffFilter.From" /></div>
+                <div><label for="timeoff-filter-to">Đến ngày</label><InputDate id="timeoff-filter-to" class="form-control" @bind-Value="_timeOffFilter.To" /></div>
+                <div class="schedules-actions"><button type="submit" class="btn btn-primary">Lọc</button><button type="button" class="btn btn-outline-secondary" @onclick="ResetTimeOffs">Đặt lại</button></div>
+                <div class="schedules-full-width form-check"><InputCheckbox id="timeoff-filter-clinic" class="form-check-input" @bind-Value="_timeOffFilter.ClinicWideOnly" @bind-Value:after="ClinicOnlyChanged" /><label class="form-check-label" for="timeoff-filter-clinic">Chỉ nghỉ toàn phòng khám</label></div>
+            </fieldset>
+        </EditForm>
+        @if (ScheduleState.IsLoadingTimeOffs) { <p class="schedules-empty" role="status">Đang tải đăng ký nghỉ...</p> }
+        else if (!string.IsNullOrEmpty(ScheduleState.TimeOffsError)) { <div class="alert alert-danger" role="alert">@ScheduleState.TimeOffsError <button class="btn btn-sm btn-outline-danger" disabled="@Busy" @onclick="ReloadTimeOffs">Thử lại</button></div> }
+        else if (ScheduleState.TimeOffs.Items.Count == 0) { <p class="schedules-empty">Không có đăng ký nghỉ phù hợp với bộ lọc.</p> }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle schedules-table">
+                    <thead><tr><th>Bác sĩ / phạm vi</th><th>Từ</th><th>Đến</th><th>Loại</th><th>Lý do</th><th>Thao tác</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in ScheduleState.TimeOffs.Items)
+                        {
+                            <tr @key="item.Id"><td class="schedules-doctor">@item.DoctorName@if (!item.DoctorId.HasValue) { <span class="schedules-clinic-badge">Toàn phòng khám</span> }</td><td class="text-nowrap">@Moment(item.StartAt)</td><td class="text-nowrap">@Moment(item.EndAt)</td><td class="text-nowrap">@LeaveType(item.Type)@if (item.IsFullDay) { <small class="d-block text-secondary">Cả ngày</small> }</td><td class="schedules-reason">@(item.Reason ?? "—")</td><td><button id="@($"delete-timeoff-{item.Id}")" class="btn btn-sm btn-outline-danger" disabled="@(Busy || ScheduleState.RequiresConfirmation)" @onclick="() => AskDelete(item)">Xóa</button></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (ScheduleState.TimeOffs.TotalItems > 0 && string.IsNullOrEmpty(ScheduleState.TimeOffsError))
+        {
+            <div class="schedules-pagination"><span>Trang @ScheduleState.TimeOffs.Page/@ScheduleState.TimeOffs.TotalPages · @ScheduleState.TimeOffs.TotalItems đăng ký</span><div class="btn-group" aria-label="Phân trang nghỉ phép"><button class="btn btn-outline-primary" disabled="@(Busy || ScheduleState.TimeOffs.Page <= 1)" @onclick="() => TimeOffPage(-1)">Trước</button><button class="btn btn-outline-primary" disabled="@(Busy || ScheduleState.TimeOffs.Page >= ScheduleState.TimeOffs.TotalPages)" @onclick="() => TimeOffPage(1)">Sau</button></div></div>
+        }
+        <p class="schedules-notice mb-0">Nghỉ toàn phòng khám chặn slot của tất cả bác sĩ. Ngày kết thúc hiệu lực lịch làm được tính cả ngày; thời điểm kết thúc nghỉ không thuộc khoảng nghỉ.</p>
+    </section>
+</div>
+
+@code {
+    private AdminScheduleQueryDTO _scheduleFilter = new() { Active = true };
+    private AdminTimeOffQueryDTO _timeOffFilter = new();
+    private AdminScheduleQueryDTO _appliedScheduleFilter = new() { Active = true };
+    private AdminTimeOffQueryDTO _appliedTimeOffFilter = new();
+    private ScheduleRequestDTO _schedule = new();
+    private TimeOffRequestDTO _timeOff = new();
+    private int? _scheduleId;
+    private string? _editor;
+    private AdminDoctorTimeOffDTO? _deleteTarget;
+    private string? _pendingFocusId;
+    private string? _returnFocusId;
+    private bool Busy => ScheduleState.IsBusy;
+    private bool CannotCreate => Busy || ScheduleState.RequiresConfirmation || !string.IsNullOrEmpty(ScheduleState.DoctorsError);
+    private bool FormLocked => Busy || ScheduleState.RequiresConfirmation;
+    private static DateOnly Today => DateOnly.FromDateTime(DoctorSlotGenerator.ClinicNow());
+
+    protected override async Task OnInitializedAsync()
+    {
+        ScheduleState.ClearActions();
+        await ScheduleState.LoadDoctorsAsync();
+        await ReloadSchedules();
+        await ReloadTimeOffs();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocusId is not { } targetId) return;
+        _pendingFocusId = null;
+        try { await JS.InvokeVoidAsync("adminSchedules.focus", targetId); }
+        catch (JSDisconnectedException) { /* The user has left the page or disconnected. */ }
+    }
+
+    private Task ReloadSchedules() => ScheduleState.LoadSchedulesAsync(_appliedScheduleFilter);
+    private Task ReloadTimeOffs() => ScheduleState.LoadTimeOffsAsync(_appliedTimeOffFilter);
+    private async Task SearchSchedules()
+    {
+        _appliedScheduleFilter = new() { DoctorId = _scheduleFilter.DoctorId, Date = _scheduleFilter.Date, Active = _scheduleFilter.Active, Page = 1 };
+        await ReloadSchedules();
+    }
+    private async Task SearchTimeOffs()
+    {
+        _appliedTimeOffFilter = new() { DoctorId = _timeOffFilter.DoctorId, ClinicWideOnly = _timeOffFilter.ClinicWideOnly, From = _timeOffFilter.From, To = _timeOffFilter.To, Page = 1 };
+        await ReloadTimeOffs();
+    }
+    private async Task ResetSchedules() { _scheduleFilter = new() { Active = true }; await SearchSchedules(); }
+    private async Task ResetTimeOffs() { _timeOffFilter = new(); await SearchTimeOffs(); }
+    private async Task SchedulePage(int delta) { _appliedScheduleFilter.Page += delta; await ReloadSchedules(); }
+    private async Task TimeOffPage(int delta) { _appliedTimeOffFilter.Page += delta; await ReloadTimeOffs(); }
+    private void ClinicOnlyChanged() { if (_timeOffFilter.ClinicWideOnly) _timeOffFilter.DoctorId = null; }
+
+    private void OpenSchedule()
+    {
+        ScheduleState.ClearActions(); _deleteTarget = null; _scheduleId = null; _editor = "schedule";
+        _schedule = new() { DayOfWeek = (byte)Today.DayOfWeek, StartTime = new(8, 0), EndTime = new(17, 0), BreakStart = new(11, 30), BreakEnd = new(13, 30), SlotMinutes = 30, EffectiveFrom = Today };
+        _returnFocusId = "add-schedule";
+        _pendingFocusId = "schedule-editor-heading";
+    }
+    private void EditSchedule(AdminDoctorScheduleDTO item)
+    {
+        ScheduleState.ClearActions(); _deleteTarget = null; _scheduleId = item.Id; _editor = "schedule";
+        _schedule = new() { DoctorId = item.DoctorId, DayOfWeek = item.DayOfWeek, StartTime = item.StartTime, EndTime = item.EndTime, BreakStart = item.BreakStart, BreakEnd = item.BreakEnd, SlotMinutes = item.SlotMinutes, EffectiveFrom = item.EffectiveFrom < Today ? Today : item.EffectiveFrom, EffectiveTo = item.EffectiveTo };
+        _returnFocusId = $"edit-schedule-{item.Id}";
+        _pendingFocusId = "schedule-editor-heading";
+    }
+    private void OpenTimeOff()
+    {
+        ScheduleState.ClearActions(); _deleteTarget = null; _editor = "timeoff";
+        _timeOff = new() { DoctorId = ScheduleState.Doctors.FirstOrDefault(d => d.IsActive)?.Id, Type = 0, StartAt = Today.AddDays(1).ToDateTime(new(8, 0)), EndAt = Today.AddDays(1).ToDateTime(new(17, 0)) };
+        _returnFocusId = "add-timeoff";
+        _pendingFocusId = "timeoff-editor-heading";
+    }
+    private void NormalizeFullDay()
+    {
+        if (!_timeOff.IsFullDay) return;
+        var start = (_timeOff.StartAt ?? Today.ToDateTime(TimeOnly.MinValue)).Date;
+        var end = (_timeOff.EndAt ?? start).Date;
+        _timeOff.StartAt = start;
+        _timeOff.EndAt = end > start ? end : start.AddDays(1);
+    }
+    private void CloseEditor() { _editor = null; ScheduleState.ClearActions(); _pendingFocusId = _returnFocusId; }
+    private async Task SaveSchedule()
+    {
+        if (await ScheduleState.SaveScheduleAsync(_scheduleId, _schedule)) await Saved(true);
+        FocusActionResult();
+    }
+    private async Task SaveTimeOff()
+    {
+        if (await ScheduleState.CreateTimeOffAsync(_timeOff)) await Saved(false);
+        FocusActionResult();
+    }
+    private void FocusActionResult()
+    {
+        _pendingFocusId = !string.IsNullOrEmpty(ScheduleState.ActionError) ? "schedule-action-error"
+            : ScheduleState.RequiresConfirmation ? "affected-heading"
+            : !string.IsNullOrEmpty(ScheduleState.ActionMessage) ? "schedule-action-message" : null;
+    }
+    private void CancelAffected()
+    {
+        ScheduleState.CancelConfirmation();
+        _pendingFocusId = _editor == "schedule" ? "schedule-editor-heading" : "timeoff-editor-heading";
+    }
+    private async Task ConfirmAffected()
+    {
+        var schedule = ScheduleState.IsScheduleConfirmation;
+        if (await ScheduleState.ConfirmAsync()) await Saved(schedule);
+        FocusActionResult();
+    }
+    private async Task Saved(bool schedule)
+    {
+        _editor = null;
+        if (schedule) { _appliedScheduleFilter.Page = 1; await ReloadSchedules(); }
+        else { _appliedTimeOffFilter.Page = 1; await ReloadTimeOffs(); }
+    }
+    private void AskDelete(AdminDoctorTimeOffDTO item)
+    {
+        ScheduleState.ClearActions(); _editor = null; _deleteTarget = item;
+        _returnFocusId = $"delete-timeoff-{item.Id}";
+        _pendingFocusId = "delete-timeoff-heading";
+    }
+    private void CancelDelete() { _deleteTarget = null; _pendingFocusId = _returnFocusId; }
+    private async Task DeleteTimeOff()
+    {
+        if (_deleteTarget == null) return;
+        if (!await ScheduleState.DeleteTimeOffAsync(_deleteTarget.Id)) { FocusActionResult(); return; }
+        _deleteTarget = null;
+        await ReloadTimeOffs();
+        if (ScheduleState.TimeOffs.Items.Count == 0 && _appliedTimeOffFilter.Page > 1 && string.IsNullOrEmpty(ScheduleState.TimeOffsError))
+        { _appliedTimeOffFilter.Page--; await ReloadTimeOffs(); }
+        FocusActionResult();
+    }
+    private static string DayName(byte day) => day == 0 ? "Chủ nhật" : $"Thứ {day + 1}";
+    private static string Clock(TimeOnly time) => time.ToString("HH:mm", CultureInfo.InvariantCulture);
+    private static string Date(DateOnly date) => date.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+    private static string Moment(DateTime time) => time.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+    private static string LeaveType(byte? type) => type switch { 0 => "Nghỉ phép", 1 => "Nghỉ lễ", 2 => "Nghỉ khác", _ => "—" };
+    private static string AppointmentStatus(byte status) => status switch { 0 => "Chờ xác nhận", 1 => "Đã xác nhận", 2 => "Đã tiếp nhận", 3 => "Hoàn tất", 4 => "Đã hủy", 5 => "Vắng mặt", _ => "—" };
+}

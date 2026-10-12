@@ -97,6 +97,7 @@ builder.Services.AddScoped<DoctorQueueStateService>();
 builder.Services.AddScoped<DoctorExamStateService>();
 builder.Services.AddScoped<MedicineReceiptStateService>();
 builder.Services.AddScoped<AdminSpecialtyStateService>();
+builder.Services.AddScoped<AdminSchedulingStateService>();
 
 
 
