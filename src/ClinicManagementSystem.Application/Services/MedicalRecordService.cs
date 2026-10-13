@@ -2696,6 +2696,15 @@ public class MedicalRecordService
             // CREATE MEDICAL RECORD SERVICE
             // =================================================
 
+            if (!service.IsActive)
+            {
+                return new HttpResponseData<MedicalRecordServiceDTO>
+                {
+                    StatusCode = 409,
+                    Message = "Dịch vụ đã ngừng sử dụng. Vui lòng chọn dịch vụ khác."
+                };
+            }
+
             var medicalRecordService =
          new MedicalRecordServiceEntity
          {
