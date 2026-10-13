@@ -1,0 +1,267 @@
+@page "/admin/reports"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Admin")]
+@using System.Globalization
+@using ClinicManagementSystem.Application.DTOs.Report
+@inject AdminReportStateService ReportState
+@inject UserStateService UserState
+@inject IJSRuntime JS
+
+<PageTitle>Báo cáo doanh thu &amp; lượt khám</PageTitle>
+
+<div class="admin-reports-page">
+    <header class="reports-header">
+        <span class="reports-eyebrow">QUẢN TRỊ PHÒNG KHÁM</span>
+        <h1>Báo cáo doanh thu &amp; lượt khám</h1>
+        <p>Theo dõi tiền thực thu, công nợ và lượt khám theo bác sĩ, dịch vụ và thuốc.</p>
+    </header>
+
+    <section class="reports-panel" aria-labelledby="report-filters-heading">
+        <div class="reports-panel-heading">
+            <div><h2 id="report-filters-heading">Bộ lọc báo cáo</h2><p>Chọn khoảng ngày và phạm vi bác sĩ cần thống kê.</p></div>
+            <span class="reports-tag"><i class="fas fa-calendar-alt me-2" aria-hidden="true"></i>Tối đa 366 ngày</span>
+        </div>
+        @if (!string.IsNullOrEmpty(ReportState.DoctorsError))
+        {
+            <div id="report-doctors-error" class="alert alert-warning" role="alert" tabindex="-1">
+                Không tải được danh sách bác sĩ. @ReportState.DoctorsError
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" disabled="@CannotRequest" @onclick="ReloadDoctors">Thử lại</button>
+            </div>
+        }
+        <EditForm Model="_filter" OnValidSubmit="RunReport" OnInvalidSubmit="InvalidSubmit" @key="_filter">
+            <DataAnnotationsValidator />
+            <div id="report-validation" tabindex="-1"><ValidationSummary /></div>
+            <fieldset class="reports-filters" disabled="@CannotRequest">
+                <div>
+                    <label for="report-from">Từ ngày <span>*</span></label>
+                    <InputDate id="report-from" class="form-control" @bind-Value="_filter.From" />
+                    <ValidationMessage For="@(() => _filter.From)" />
+                </div>
+                <div>
+                    <label for="report-to">Đến ngày <span>*</span></label>
+                    <InputDate id="report-to" class="form-control" @bind-Value="_filter.To" />
+                    <ValidationMessage For="@(() => _filter.To)" />
+                </div>
+                <div>
+                    <label for="report-doctor">Bác sĩ</label>
+                    <InputSelect id="report-doctor" class="form-select" @bind-Value="_filter.DoctorId" disabled="@(!string.IsNullOrEmpty(ReportState.DoctorsError))">
+                        <option value="">Tất cả bác sĩ</option>
+                        @foreach (var doctor in ReportState.Doctors)
+                        {
+                            <option value="@doctor.Id">@doctor.FullName@(!doctor.IsActive ? " (đã ngừng hoạt động)" : "")</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _filter.DoctorId)" />
+                </div>
+                <div class="reports-actions">
+                    <button id="run-report" type="submit" class="btn btn-primary" disabled="@CannotRequest">
+                        <i class="fas fa-chart-bar me-2" aria-hidden="true"></i>@(ReportState.IsLoadingReport ? "Đang tải..." : "Chạy báo cáo")
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" disabled="@CannotRequest" @onclick="ResetMonth">Tháng này</button>
+                </div>
+            </fieldset>
+        </EditForm>
+        <p class="reports-help">Tính cả ngày kết thúc. Bỏ chọn bác sĩ để xem toàn phòng khám, gồm dữ liệu của bác sĩ đã ngừng hoạt động.</p>
+        @if (FilterChanged)
+        {
+            <p class="reports-filter-notice" role="status"><i class="fas fa-info-circle me-2" aria-hidden="true"></i>Bộ lọc đã thay đổi. Bấm “Chạy báo cáo” để cập nhật kết quả và xuất Excel.</p>
+        }
+    </section>
+
+    @if (!string.IsNullOrEmpty(ReportState.ReportError))
+    {
+        <div id="report-error" class="alert alert-danger" role="alert" tabindex="-1">@ReportState.ReportError</div>
+    }
+    @if (!string.IsNullOrEmpty(ReportState.ExportError))
+    {
+        <div id="report-export-error" class="alert alert-danger" role="alert" tabindex="-1">@ReportState.ExportError</div>
+    }
+    @if (!string.IsNullOrEmpty(ReportState.ExportMessage))
+    {
+        <div id="report-export-message" class="alert alert-success" role="status" tabindex="-1">@ReportState.ExportMessage</div>
+    }
+    @if (ReportState.IsLoadingDoctors || ReportState.IsLoadingReport)
+    {
+        <p class="reports-loading" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>@(ReportState.IsLoadingDoctors ? "Đang tải danh sách bác sĩ..." : "Đang tổng hợp báo cáo...")</p>
+    }
+
+    @if (ReportState.Report is { } report)
+    {
+        <section aria-labelledby="report-results-heading" aria-busy="@ReportState.IsExporting.ToString().ToLowerInvariant()">
+            <div class="reports-result-heading">
+                <div>
+                    <h2 id="report-results-heading" tabindex="-1">Kết quả báo cáo</h2>
+                    <p><strong>@Date(report.From) – @Date(report.To)</strong> <span>· @DoctorLabel(report.DoctorId)</span></p>
+                    <small>Tạo lúc @GeneratedAt(report.GeneratedAtUtc) (GMT+7)</small>
+                </div>
+                <button id="export-report" type="button" class="btn btn-outline-primary" disabled="@CannotExport" @onclick="Export">
+                    <i class="fas fa-file-excel me-2" aria-hidden="true"></i>@(ReportState.IsExporting ? "Đang xuất..." : "Xuất Excel")
+                </button>
+            </div>
+
+            <div class="reports-metrics">
+                <article class="reports-metric">
+                    <span class="reports-metric-icon reports-icon-blue"><i class="fas fa-user-check" aria-hidden="true"></i></span>
+                    <p>Lượt khám</p><strong>@report.TotalVisits.ToString("N0", Vi)</strong><small>Lịch hẹn đã hoàn thành</small>
+                </article>
+                <article class="reports-metric">
+                    <span class="reports-metric-icon reports-icon-green"><i class="fas fa-wallet" aria-hidden="true"></i></span>
+                    <p>Doanh thu thực thu</p><strong class="@(report.TotalRevenue < 0 ? "reports-negative" : "")">@Money(report.TotalRevenue)</strong>
+                    <small>Thu @Money(report.CollectedAmount)<br />Hoàn @Money(report.RefundedAmount)</small>
+                </article>
+                <article class="reports-metric">
+                    <span class="reports-metric-icon reports-icon-amber"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></span>
+                    <p>Công nợ trong kỳ</p><strong>@Money(report.OutstandingDebt)</strong><small>@report.OutstandingInvoiceCount hóa đơn phát hành trong kỳ còn nợ</small>
+                </article>
+                <article class="reports-metric">
+                    <span class="reports-metric-icon reports-icon-purple"><i class="fas fa-user-times" aria-hidden="true"></i></span>
+                    <p>Tỷ lệ không đến</p><strong>@Percent(report.NoShowRate)</strong><small>@report.NoShowCount không đến / @report.ConcludedAppointments lịch đã hoàn thành hoặc không đến</small>
+                </article>
+            </div>
+
+            <section class="reports-panel" aria-labelledby="report-revenue-heading">
+                <h2 id="report-revenue-heading">Cơ cấu doanh thu thực thu</h2>
+                <div class="reports-breakdown">
+                    <div><span>Khám</span><strong>@Money(report.ConsultationRevenue)</strong></div>
+                    <div><span>Dịch vụ CLS</span><strong>@Money(report.ServiceRevenue)</strong></div>
+                    <div><span>Thuốc</span><strong>@Money(report.MedicineRevenue)</strong></div>
+                    <div><span>Khác</span><strong>@Money(report.OtherRevenue)</strong></div>
+                </div>
+            </section>
+
+            <section class="reports-panel" aria-labelledby="report-doctors-heading">
+                <div class="reports-panel-heading"><h2 id="report-doctors-heading">Theo bác sĩ</h2><span class="reports-tag">@report.Doctors.Count nhóm</span></div>
+                @if (report.Doctors.Count == 0)
+                {
+                    <p class="reports-empty">Không có lượt khám, thanh toán hoặc công nợ phù hợp với bộ lọc đã chạy.</p>
+                }
+                else
+                {
+                    <div class="table-responsive reports-table-region" role="region" aria-label="Bảng báo cáo theo bác sĩ" tabindex="0">
+                        <table class="table align-middle reports-table reports-doctor-table">
+                            <thead><tr><th scope="col">Bác sĩ</th><th scope="col" class="reports-number">Lượt khám</th><th scope="col" class="reports-number">Khám</th><th scope="col" class="reports-number">CLS</th><th scope="col" class="reports-number">Thuốc</th><th scope="col" class="reports-number">Khác</th><th scope="col" class="reports-number">Tổng doanh thu</th><th scope="col" class="reports-number">Công nợ</th><th scope="col" class="reports-number">Không đến</th><th scope="col" class="reports-number">Tỷ lệ</th></tr></thead>
+                            <tbody>
+                                @foreach (var doctor in report.Doctors)
+                                {
+                                    <tr @key="@(doctor.DoctorId ?? 0)">
+                                        <th scope="row" class="reports-doctor-name">@doctor.DoctorName@if (!doctor.DoctorId.HasValue) { <small>Hóa đơn chưa gắn bác sĩ</small> }</th>
+                                        <td class="reports-number">@doctor.TotalVisits.ToString("N0", Vi)</td><td class="reports-number">@Money(doctor.ConsultationRevenue)</td><td class="reports-number">@Money(doctor.ServiceRevenue)</td><td class="reports-number">@Money(doctor.MedicineRevenue)</td><td class="reports-number">@Money(doctor.OtherRevenue)</td>
+                                        <td class="reports-number reports-total">@Money(doctor.TotalRevenue)</td><td class="reports-number">@Money(doctor.OutstandingDebt)</td><td class="reports-number">@doctor.NoShowCount.ToString("N0", Vi)</td><td class="reports-number">@Percent(doctor.NoShowRate)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot><tr><th scope="row">Tổng cộng</th><td class="reports-number">@report.TotalVisits.ToString("N0", Vi)</td><td class="reports-number">@Money(report.ConsultationRevenue)</td><td class="reports-number">@Money(report.ServiceRevenue)</td><td class="reports-number">@Money(report.MedicineRevenue)</td><td class="reports-number">@Money(report.OtherRevenue)</td><td class="reports-number">@Money(report.TotalRevenue)</td><td class="reports-number">@Money(report.OutstandingDebt)</td><td class="reports-number">@report.NoShowCount.ToString("N0", Vi)</td><td class="reports-number">@Percent(report.NoShowRate)</td></tr></tfoot>
+                        </table>
+                    </div>
+                }
+            </section>
+
+            <section class="reports-panel" aria-labelledby="report-items-heading">
+                <div class="reports-panel-heading"><div><h2 id="report-items-heading">Chi tiết dịch vụ &amp; thuốc</h2><p>Tiền thực thu được phân bổ theo giá trị đã lưu trên hóa đơn.</p></div><span class="reports-tag">@report.RevenueItems.Count dòng</span></div>
+                @if (report.RevenueItems.Count == 0)
+                {
+                    <p class="reports-empty">Chưa có doanh thu thực thu để phân bổ trong khoảng ngày đã chọn.</p>
+                }
+                else
+                {
+                    <div class="table-responsive reports-table-region" role="region" aria-label="Bảng doanh thu dịch vụ và thuốc" tabindex="0">
+                        <table class="table align-middle reports-table reports-item-table">
+                            <thead><tr><th scope="col">Nhóm</th><th scope="col">Mã nguồn</th><th scope="col">Mô tả trên hóa đơn</th><th scope="col" class="reports-number">Doanh thu thực thu</th></tr></thead>
+                            <tbody>
+                                @foreach (var item in report.RevenueItems)
+                                {
+                                    <tr><td><span class="reports-category">@Category(item.Category)</span></td><td>@(item.SourceId.HasValue ? $"#{item.SourceId}" : "—")</td><td class="reports-item-description">@item.Description</td><td class="reports-number @(item.Revenue < 0 ? "reports-negative" : "")">@Money(item.Revenue)</td></tr>
+                                }
+                            </tbody>
+                            <tfoot><tr><th scope="row" colspan="3">Tổng doanh thu thực thu</th><td class="reports-number">@Money(report.TotalRevenue)</td></tr></tfoot>
+                        </table>
+                    </div>
+                }
+            </section>
+
+            <details class="reports-rules">
+                <summary>Cách tính báo cáo</summary>
+                <ul>
+                    <li>Lượt khám tính từ lịch đã hoàn thành. Tỷ lệ không đến = số lịch không đến / (lịch đã hoàn thành + lịch không đến); không tính lịch hủy hoặc chưa kết thúc.</li>
+                    <li>Doanh thu theo ngày thu tiền, trừ các khoản hoàn tiền trong kỳ. Thu một phần sẽ phân bổ theo tỷ trọng khám, dịch vụ và thuốc trên hóa đơn.</li>
+                    <li>Công nợ chỉ gồm hóa đơn phát hành trong kỳ, tính đến hết ngày kết thúc; không gồm nợ hóa đơn phát hành trước kỳ.</li>
+                    <li>Đổi giá danh mục không đổi số tiền đã lưu trên hóa đơn cũ. Kỳ chỉ có hoàn tiền có thể có doanh thu âm.</li>
+                </ul>
+            </details>
+        </section>
+    }
+</div>
+
+@code {
+    private static readonly CultureInfo Vi = CultureInfo.GetCultureInfo("vi-VN");
+    private ClinicReportQueryDTO _filter = MonthFilter();
+    private string? _pendingFocus;
+    private bool CannotRequest => ReportState.IsBusy || ReportState.RequiresLogin || ReportState.AccessDenied;
+    private bool FilterChanged => ReportState.Report != null && !ReportState.MatchesAppliedFilter(_filter);
+    private bool CannotExport => CannotRequest || ReportState.Report == null || FilterChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReportState.Reset();
+        await ReportState.LoadDoctorsAsync();
+        if (await HandleSessionFailure()) return;
+        await ReportState.LoadAsync(_filter);
+        await HandleSessionFailure();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocus is not { } target) return;
+        _pendingFocus = null;
+        try { await JS.InvokeVoidAsync("adminReports.focus", target); }
+        catch (JSDisconnectedException) { /* The page has disconnected. */ }
+    }
+
+    private async Task<bool> HandleSessionFailure()
+    {
+        if (ReportState.RequiresLogin) { await UserState.LogoutAsync(); return true; }
+        return ReportState.AccessDenied;
+    }
+
+    private async Task RunReport()
+    {
+        if (CannotRequest) return;
+        await ReportState.LoadAsync(_filter);
+        if (await HandleSessionFailure()) return;
+        _pendingFocus = !string.IsNullOrEmpty(ReportState.ReportError) ? "report-error" : "report-results-heading";
+    }
+    private void InvalidSubmit(EditContext _) => _pendingFocus = "report-validation";
+    private async Task ResetMonth() { if (CannotRequest) return; _filter = MonthFilter(); await RunReport(); }
+    private async Task ReloadDoctors()
+    {
+        if (CannotRequest) return;
+        await ReportState.LoadDoctorsAsync();
+        if (await HandleSessionFailure()) return;
+        _pendingFocus = !string.IsNullOrEmpty(ReportState.DoctorsError) ? "report-doctors-error" : "report-doctor";
+    }
+    private async Task Export()
+    {
+        if (CannotExport) return;
+        await ReportState.ExportAsync(async file =>
+        {
+            using var stream = new MemoryStream(file.Bytes, false);
+            using var reference = new DotNetStreamReference(stream);
+            await JS.InvokeVoidAsync("adminReports.download", file.FileName, reference);
+        });
+        if (await HandleSessionFailure()) return;
+        _pendingFocus = !string.IsNullOrEmpty(ReportState.ExportError) ? "report-export-error" : "report-export-message";
+    }
+
+    private string DoctorLabel(int? id) => !id.HasValue ? "Toàn phòng khám" : ReportState.Doctors.FirstOrDefault(d => d.Id == id)?.FullName
+        ?? ReportState.Report?.Doctors.FirstOrDefault(d => d.DoctorId == id)?.DoctorName ?? $"Bác sĩ #{id}";
+    private static string Date(DateOnly value) => value.ToString("dd/MM/yyyy", Vi);
+    private static string Money(decimal value) => value.ToString(value % 1 == 0 ? "N0" : "N2", Vi) + " ₫";
+    private static string Percent(decimal value) => value.ToString("N2", Vi) + " %";
+    private static string GeneratedAt(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).AddHours(7).ToString("dd/MM/yyyy HH:mm", Vi);
+    private static string Category(string value) => value switch { "Consultation" => "Khám", "Service" => "Dịch vụ CLS", "Medicine" => "Thuốc", _ => "Khác" };
+    private static ClinicReportQueryDTO MonthFilter()
+    {
+        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).DateTime);
+        return new() { From = new(today.Year, today.Month, 1), To = today };
+    }
+}
