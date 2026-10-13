@@ -129,6 +129,8 @@ public class ReceptionAppointmentApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Key", Key); builder.UseSetting("Jwt:Issuer", "ReceptionTests"); builder.UseSetting("Jwt:Audience", "ReceptionTests");
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IAccountAccessValidationService>();
+            services.AddSingleton<IAccountAccessValidationService, ClinicManagementSystem.IntegrationTests.TestAccountAccessValidationService>();
             services.RemoveAll<IReceptionAffectedAppointmentService>();
             services.AddSingleton<IReceptionAffectedAppointmentService, StubReceptionService>();
             services.RemoveAll<INotificationService>(); services.AddSingleton<INotificationService, StubNotificationService>();

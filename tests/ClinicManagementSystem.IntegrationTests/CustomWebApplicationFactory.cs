@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using ClinicManagementSystem.Application.Services;
 
 using Testcontainers.MsSql;
 
@@ -71,6 +75,14 @@ public class CustomWebApplicationFactory
         builder.UseEnvironment(
             "Testing"
         );
+
+        // Legacy invoice fixtures issue synthetic JWTs independently of account data.
+        // VC22's account-validation tests use a separate host with the real validator.
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IAccountAccessValidationService>();
+            services.AddScoped<IAccountAccessValidationService, TestAccountAccessValidationService>();
+        });
 
 
         // =============================================

@@ -87,6 +87,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IJwtAuthService, JwtAuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAdminUserManagementService, AdminUserManagementService>();
+builder.Services.AddScoped<IAccountAccessValidationService, AccountAccessValidationService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<ISpecialtyService, SpecialtyService>();
 builder.Services.AddScoped<IAdminSpecialtyService, AdminSpecialtyService>();
@@ -205,6 +207,15 @@ builder.Services
 
                 NameClaimType = "UserName"
             };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var validator = context.HttpContext.RequestServices.GetRequiredService<IAccountAccessValidationService>();
+                if (context.Principal == null || !await validator.IsValidAsync(context.Principal))
+                    context.Fail("Account session is no longer valid.");
+            }
+        };
     });
 
 

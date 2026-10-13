@@ -139,6 +139,8 @@ public class AdminSchedulingApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Audience", "SchedulingTests");
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IAccountAccessValidationService>();
+            services.AddSingleton<IAccountAccessValidationService, ClinicManagementSystem.IntegrationTests.TestAccountAccessValidationService>();
             services.RemoveAll<IAdminSchedulingService>();
             services.AddSingleton<IAdminSchedulingService, StubSchedulingService>();
         });

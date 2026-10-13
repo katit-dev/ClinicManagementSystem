@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using ClinicManagementSystem.Infrastructure.Models;
+using ClinicManagementSystem.Application.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -74,6 +75,7 @@ public class JwtAuthService : IJwtAuthService
                     .ToString(),
                 ClaimValueTypes.Integer64)
         };
+        claims.Add(new Claim(AccountAccessStamp.ClaimType, AccountAccessStamp.Create(user, roles)));
 
         // Email có thể null
         if (!string.IsNullOrWhiteSpace(user.Email))
