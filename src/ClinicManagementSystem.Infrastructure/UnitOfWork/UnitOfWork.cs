@@ -17,6 +17,7 @@ public interface IUnitOfWork : IAsyncDisposable
     IInsurancePolicyRepository InsurancePolicyRepository { get; }
     IInvoiceRepository InvoiceRepository { get; }
     IInvoiceItemRepository InvoiceItemRepository { get; }
+    IClinicReportRepository ClinicReportRepository { get; }
     ILabResultRepository LabResultRepository { get; }
     IMedicalRecordRepository MedicalRecordRepository { get; }
     IMedicalRecordServiceRepository MedicalRecordServiceRepository { get; }
@@ -62,6 +63,7 @@ public class UnitOfWork : IUnitOfWork
     public IInsurancePolicyRepository InsurancePolicyRepository { get; private set; }
     public IInvoiceRepository InvoiceRepository { get; private set; }
     public IInvoiceItemRepository InvoiceItemRepository { get; private set; }
+    public IClinicReportRepository ClinicReportRepository { get; private set; }
     public ILabResultRepository LabResultRepository { get; private set; }
     public IMedicalRecordRepository MedicalRecordRepository { get; private set; }
     public IMedicalRecordServiceRepository MedicalRecordServiceRepository { get; private set; }
@@ -97,6 +99,7 @@ public class UnitOfWork : IUnitOfWork
         InsurancePolicyRepository = new InsurancePolicyRepository(_context);
         InvoiceRepository = new InvoiceRepository(_context);
         InvoiceItemRepository = new InvoiceItemRepository(_context);
+        ClinicReportRepository = new ClinicReportRepository(_context);
         LabResultRepository = new LabResultRepository(_context);
         MedicalRecordRepository = new MedicalRecordRepository(_context);
         MedicalRecordServiceRepository = new MedicalRecordServiceRepository(_context);
