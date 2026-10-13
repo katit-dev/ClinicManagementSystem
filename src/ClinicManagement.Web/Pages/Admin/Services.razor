@@ -1,0 +1,335 @@
+@page "/admin/services"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Admin")]
+@using System.Globalization
+@using ClinicManagementSystem.Application.DTOs.Service
+@inject AdminServiceStateService ServiceState
+@inject IJSRuntime JS
+
+<PageTitle>Danh mục dịch vụ</PageTitle>
+
+<div class="admin-services-page">
+    <header class="services-header">
+        <div>
+            <span class="services-eyebrow">QUẢN TRỊ PHÒNG KHÁM</span>
+            <h1>Danh mục dịch vụ</h1>
+            <p>Quản lý dịch vụ khám, xét nghiệm và chẩn đoán hình ảnh, giá và thời lượng thực hiện.</p>
+        </div>
+        <button id="add-service" type="button" class="btn btn-primary" disabled="@CannotEdit" @onclick="OpenCreate">
+            <i class="fas fa-plus me-2" aria-hidden="true"></i>Thêm dịch vụ
+        </button>
+    </header>
+
+    @if (!string.IsNullOrEmpty(ServiceState.ActionMessage))
+    {
+        <div id="service-action-message" class="alert alert-success" role="status" tabindex="-1">@ServiceState.ActionMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(ServiceState.ActionError))
+    {
+        <div id="service-action-error" class="alert alert-danger" role="alert" tabindex="-1">@ServiceState.ActionError</div>
+    }
+    @if (!string.IsNullOrEmpty(ServiceState.SpecialtiesError))
+    {
+        <div class="alert alert-warning" role="alert">
+            Không tải được danh mục chuyên khoa. @ServiceState.SpecialtiesError
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" disabled="@Busy" @onclick="ReloadSpecialties">Thử lại</button>
+        </div>
+    }
+    @if (ServiceState.IsLoadingDetail)
+    {
+        <p class="services-loading" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải thông tin dịch vụ...</p>
+    }
+
+    @if (_editing)
+    {
+        <section class="services-panel" aria-labelledby="service-editor-heading">
+            <div class="services-panel-heading">
+                <div>
+                    <h2 id="service-editor-heading" tabindex="-1">@(_editingId.HasValue ? "Cập nhật dịch vụ" : "Thêm dịch vụ")</h2>
+                    <p>@(_editingId.HasValue ? "Cập nhật thông tin và giữ nguyên trạng thái sử dụng hiện tại." : "Dịch vụ mới sẽ được bật sử dụng sau khi lưu.")</p>
+                </div>
+                @if (_editingId.HasValue)
+                {
+                    <span class="badge @(_editingIsActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">@(_editingIsActive ? "Đang sử dụng" : "Đã ngừng sử dụng")</span>
+                }
+            </div>
+            <EditForm Model="_form" OnValidSubmit="Save" OnInvalidSubmit="InvalidSubmit" @key="_form">
+                <DataAnnotationsValidator />
+                <div id="service-validation" tabindex="-1"><ValidationSummary /></div>
+                <fieldset class="services-form-grid" disabled="@CannotEdit">
+                    <div>
+                        <label for="service-code">Mã dịch vụ <span>*</span></label>
+                        <InputText id="service-code" class="form-control" @bind-Value="_form.Code" @bind-Value:after="NormalizeCode" maxlength="30" autocomplete="off" />
+                        <ValidationMessage For="@(() => _form.Code)" />
+                        <small>Chữ không dấu, số, dấu gạch ngang hoặc gạch dưới.</small>
+                    </div>
+                    <div class="services-name-field">
+                        <label for="service-name">Tên dịch vụ <span>*</span></label>
+                        <InputText id="service-name" class="form-control" @bind-Value="_form.Name" maxlength="255" />
+                        <ValidationMessage For="@(() => _form.Name)" />
+                    </div>
+                    <div>
+                        <label for="service-specialty">Chuyên khoa</label>
+                        <InputSelect id="service-specialty" class="form-select" @bind-Value="_form.SpecialtyId">
+                            <option value="">Không thuộc chuyên khoa</option>
+                            @foreach (var specialty in ServiceState.Specialties.Where(s => s.IsActive || s.Id == _form.SpecialtyId))
+                            {
+                                <option value="@specialty.Id">@specialty.Name@(!specialty.IsActive ? " (đã ngừng hoạt động)" : "")</option>
+                            }
+                            @if (_form.SpecialtyId.HasValue && !ServiceState.Specialties.Any(s => s.Id == _form.SpecialtyId))
+                            {
+                                <option value="@_form.SpecialtyId">@(_originalSpecialtyName ?? "Chuyên khoa hiện tại") (không có trong danh mục)</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _form.SpecialtyId)" />
+                        <small>Có thể để trống cho dịch vụ dùng chung.</small>
+                    </div>
+                    <div>
+                        <label for="service-price">Giá dịch vụ (VNĐ) <span>*</span></label>
+                        <InputNumber id="service-price" class="form-control" @bind-Value="_form.Price" min="0" max="9999999999.99" step="0.01" />
+                        <ValidationMessage For="@(() => _form.Price)" />
+                        <small>Giá 0 là miễn phí; tối đa 2 chữ số thập phân.</small>
+                    </div>
+                    <div>
+                        <label for="service-duration">Thời lượng (phút) <span>*</span></label>
+                        <InputNumber id="service-duration" class="form-control" @bind-Value="_form.DurationMinutes" min="1" step="1" />
+                        <ValidationMessage For="@(() => _form.DurationMinutes)" />
+                    </div>
+                    <div class="services-full-width">
+                        <label for="service-description">Mô tả</label>
+                        <InputTextArea id="service-description" class="form-control" @bind-Value="_form.Description" maxlength="500" rows="3" />
+                        <ValidationMessage For="@(() => _form.Description)" />
+                    </div>
+                </fieldset>
+                @if (_editingId.HasValue && !_editingIsActive)
+                {
+                    <p class="services-help">Dịch vụ đã ngừng sử dụng. Sửa thông tin sẽ giữ nguyên trạng thái này.</p>
+                }
+                <div class="services-actions mt-3">
+                    <button type="submit" class="btn btn-primary" disabled="@CannotEdit">@(ServiceState.IsSubmitting ? "Đang lưu..." : "Lưu dịch vụ")</button>
+                    <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="CloseEditor">Hủy</button>
+                </div>
+            </EditForm>
+        </section>
+    }
+
+    @if (_deactivateTarget != null)
+    {
+        <section class="services-panel services-confirmation" aria-labelledby="service-deactivate-heading">
+            <h2 id="service-deactivate-heading" tabindex="-1">Ngừng sử dụng dịch vụ</h2>
+            <p>Dịch vụ: <strong>@_deactivateTarget.Name</strong> · @(_deactivateTarget.Code ?? "Chưa có mã")</p>
+            @if (_deactivateTarget.IsActive)
+            {
+                <p>Bác sĩ sẽ không thể tạo chỉ định mới với dịch vụ này. Chỉ định đã có và hóa đơn cũ vẫn được giữ lại.</p>
+                <div class="services-actions">
+                    <button type="button" class="btn btn-danger" disabled="@Busy" @onclick="ConfirmDeactivate">@(ServiceState.IsSubmitting ? "Đang xử lý..." : "Xác nhận ngừng sử dụng")</button>
+                    <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelDeactivate">Hủy</button>
+                </div>
+            }
+            else
+            {
+                <p>Dịch vụ này đã được ngừng sử dụng.</p>
+                <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelDeactivate">Đóng</button>
+            }
+        </section>
+    }
+
+    <section class="services-panel" aria-labelledby="services-list-heading">
+        <div class="services-panel-heading">
+            <div><h2 id="services-list-heading" tabindex="-1">Dịch vụ phòng khám</h2><p>Tra cứu và quản lý các dịch vụ trong danh mục.</p></div>
+            @if (string.IsNullOrEmpty(ServiceState.ListError)) { <span class="services-count">@ServiceState.Result.TotalItems dịch vụ</span> }
+        </div>
+        <EditForm Model="_filter" OnValidSubmit="Search">
+            <DataAnnotationsValidator /><ValidationSummary />
+            <fieldset class="services-filters" disabled="@Busy">
+                <div>
+                    <label for="service-search">Tìm theo mã hoặc tên</label>
+                    <InputText id="service-search" class="form-control" @bind-Value="_filter.Keyword" maxlength="255" placeholder="Nhập mã hoặc tên dịch vụ" />
+                </div>
+                <div>
+                    <label for="service-filter-specialty">Chuyên khoa</label>
+                    <InputSelect id="service-filter-specialty" class="form-select" @bind-Value="_filter.SpecialtyId" disabled="@(!string.IsNullOrEmpty(ServiceState.SpecialtiesError))">
+                        <option value="">Tất cả chuyên khoa</option>
+                        @foreach (var specialty in ServiceState.Specialties)
+                        {
+                            <option value="@specialty.Id">@specialty.Name@(!specialty.IsActive ? " (đã ngừng hoạt động)" : "")</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div>
+                    <label for="service-filter-active">Trạng thái</label>
+                    <select id="service-filter-active" class="form-select" @bind="_activeFilter">
+                        <option value="">Tất cả</option><option value="true">Đang sử dụng</option><option value="false">Ngừng sử dụng</option>
+                    </select>
+                </div>
+                <div class="services-actions">
+                    <button type="submit" class="btn btn-primary">Lọc</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="ResetSearch">Đặt lại</button>
+                </div>
+            </fieldset>
+        </EditForm>
+        @if (ServiceState.IsLoading)
+        {
+            <p class="services-empty" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải dịch vụ...</p>
+        }
+        else if (!string.IsNullOrEmpty(ServiceState.ListError))
+        {
+            <div id="service-list-error" class="alert alert-danger" role="alert" tabindex="-1">@ServiceState.ListError <button type="button" class="btn btn-sm btn-outline-danger ms-2" disabled="@Busy" @onclick="Reload">Thử lại</button></div>
+        }
+        else if (ServiceState.Result.Items.Count == 0)
+        {
+            <p class="services-empty">Không tìm thấy dịch vụ phù hợp với bộ lọc.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle services-table">
+                    <thead><tr><th>Mã</th><th>Tên dịch vụ</th><th>Chuyên khoa</th><th class="text-end">Giá</th><th>Thời lượng</th><th>Đang dùng</th><th class="text-end">Thao tác</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in ServiceState.Result.Items)
+                        {
+                            <tr @key="item.Id">
+                                <td class="text-nowrap">@(item.Code ?? "Chưa khai báo")</td>
+                                <td class="services-name"><span class="fw-semibold">@item.Name</span>@if (!string.IsNullOrEmpty(item.Description)) { <small>@item.Description</small> }</td>
+                                <td class="services-specialty">@(item.SpecialtyName ?? "—")@if (item.SpecialtyIsActive == false) { <small class="text-secondary">Đã ngừng hoạt động</small> }</td>
+                                <td class="text-end text-nowrap">@Money(item.Price) ₫</td>
+                                <td class="text-nowrap">@(item.DurationMinutes.HasValue ? $"{item.DurationMinutes} phút" : "Chưa khai báo")</td>
+                                <td><span class="badge @(item.IsActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">@(item.IsActive ? "Có" : "Đã ngừng")</span></td>
+                                <td class="text-end text-nowrap">
+                                    <button id="@($"edit-service-{item.Id}")" type="button" class="btn btn-sm btn-outline-primary" disabled="@CannotEdit" aria-label="@($"Sửa dịch vụ {item.Name}")" @onclick="() => OpenEdit(item.Id)">Sửa</button>
+                                    @if (item.IsActive)
+                                    {
+                                        <button id="@($"deactivate-service-{item.Id}")" type="button" class="btn btn-sm btn-outline-danger ms-1" disabled="@Busy" aria-label="@($"Ngừng sử dụng dịch vụ {item.Name}")" @onclick="() => AskDeactivate(item.Id)">Ngừng sử dụng</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (!ServiceState.IsLoading && string.IsNullOrEmpty(ServiceState.ListError) && ServiceState.Result.TotalItems > 0)
+        {
+            <div class="services-pagination">
+                <span>Trang @ServiceState.Result.Page/@ServiceState.Result.TotalPages · @ServiceState.Result.TotalItems dịch vụ</span>
+                <div class="btn-group" aria-label="Phân trang dịch vụ">
+                    <button type="button" class="btn btn-outline-primary" disabled="@(Busy || ServiceState.Result.Page <= 1)" @onclick="() => ChangePage(-1)">Trước</button>
+                    <button type="button" class="btn btn-outline-primary" disabled="@(Busy || ServiceState.Result.Page >= ServiceState.Result.TotalPages)" @onclick="() => ChangePage(1)">Sau</button>
+                </div>
+            </div>
+        }
+        <p class="services-notice mb-0"><i class="fas fa-info-circle me-2" aria-hidden="true"></i>Đổi giá hoặc ngừng sử dụng dịch vụ không thay đổi mô tả và đơn giá trên hóa đơn đã lập.</p>
+    </section>
+</div>
+
+@code {
+    private AdminServiceQueryDTO _filter = new();
+    private string _activeFilter = string.Empty;
+    private AdminServiceQueryDTO _appliedFilter = new();
+    private SaveServiceRequestDTO _form = new();
+    private bool _editing;
+    private bool _editingIsActive;
+    private int? _editingId;
+    private string? _originalSpecialtyName;
+    private AdminServiceDTO? _deactivateTarget;
+    private string? _pendingFocusId;
+    private string? _returnFocusId;
+    private bool Busy => ServiceState.IsBusy;
+    private bool CannotEdit => Busy || !string.IsNullOrEmpty(ServiceState.SpecialtiesError);
+
+    protected override async Task OnInitializedAsync()
+    {
+        ServiceState.ClearActions();
+        await ServiceState.LoadSpecialtiesAsync();
+        await Reload();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocusId is not { } target) return;
+        _pendingFocusId = null;
+        try { await JS.InvokeVoidAsync("adminServices.focus", target); }
+        catch (JSDisconnectedException) { /* User disconnected or left the page. */ }
+    }
+
+    private Task Reload() => ServiceState.LoadAsync(_appliedFilter);
+    private Task ReloadSpecialties() => ServiceState.LoadSpecialtiesAsync();
+    private async Task Search()
+    {
+        if (Busy) return;
+        _appliedFilter = new() { Keyword = _filter.Keyword, Active = bool.TryParse(_activeFilter, out var active) ? active : null, SpecialtyId = _filter.SpecialtyId, Page = 1 };
+        await Reload();
+    }
+    private async Task ResetSearch() { _filter = new(); _activeFilter = string.Empty; await Search(); }
+    private async Task ChangePage(int delta)
+    {
+        if (Busy) return;
+        var page = _appliedFilter.Page + delta;
+        if (page < 1 || page > ServiceState.Result.TotalPages) return;
+        _appliedFilter.Page = page;
+        await Reload();
+        _pendingFocusId = string.IsNullOrEmpty(ServiceState.ListError) ? "services-list-heading" : "service-list-error";
+    }
+    private void OpenCreate()
+    {
+        if (CannotEdit) return;
+        ServiceState.ClearActions(); _deactivateTarget = null;
+        _editingId = null; _editingIsActive = true; _originalSpecialtyName = null;
+        _form = new() { DurationMinutes = 30 }; _editing = true;
+        _returnFocusId = "add-service"; _pendingFocusId = "service-editor-heading";
+    }
+    private async Task OpenEdit(int id)
+    {
+        if (CannotEdit) return;
+        _editing = false; _deactivateTarget = null;
+        var detail = await ServiceState.LoadDetailAsync(id);
+        if (detail == null) { FocusResult(); return; }
+        _editingId = detail.Id; _editingIsActive = detail.IsActive; _originalSpecialtyName = detail.SpecialtyName;
+        _form = new() { Code = detail.Code ?? string.Empty, Name = detail.Name, Description = detail.Description,
+            SpecialtyId = detail.SpecialtyId, Price = detail.Price, DurationMinutes = detail.DurationMinutes };
+        _editing = true; _returnFocusId = $"edit-service-{id}"; _pendingFocusId = "service-editor-heading";
+    }
+    private void NormalizeCode() => _form.Code = (_form.Code ?? string.Empty).Trim().ToUpperInvariant();
+    private void InvalidSubmit(EditContext _) => _pendingFocusId = "service-validation";
+    private void CloseEditor() { _editing = false; ServiceState.ClearActions(); _pendingFocusId = _returnFocusId; }
+    private async Task Save()
+    {
+        if (CannotEdit) return;
+        if (await ServiceState.SaveAsync(_editingId, _form))
+        {
+            _editing = false;
+            _appliedFilter.Page = 1;
+            await Reload();
+        }
+        FocusResult();
+    }
+    private async Task AskDeactivate(int id)
+    {
+        if (Busy) return;
+        _editing = false; _deactivateTarget = null;
+        var detail = await ServiceState.LoadDetailAsync(id);
+        if (detail == null) { FocusResult(); return; }
+        _deactivateTarget = detail; _returnFocusId = $"deactivate-service-{id}";
+        _pendingFocusId = "service-deactivate-heading";
+    }
+    private void CancelDeactivate() { _deactivateTarget = null; ServiceState.ClearActions(); _pendingFocusId = _returnFocusId; }
+    private async Task ConfirmDeactivate()
+    {
+        if (Busy || _deactivateTarget is not { IsActive: true } target) return;
+        if (await ServiceState.DeactivateAsync(target.Id))
+        {
+            _deactivateTarget = null;
+            await Reload();
+            if (string.IsNullOrEmpty(ServiceState.ListError) && ServiceState.Result.TotalItems > 0 && _appliedFilter.Page > ServiceState.Result.TotalPages)
+            {
+                _appliedFilter.Page = ServiceState.Result.TotalPages;
+                await Reload();
+            }
+        }
+        FocusResult();
+    }
+    private void FocusResult() => _pendingFocusId = !string.IsNullOrEmpty(ServiceState.ActionError) ? "service-action-error"
+        : !string.IsNullOrEmpty(ServiceState.ListError) ? "service-list-error"
+        : !string.IsNullOrEmpty(ServiceState.ActionMessage) ? "service-action-message" : null;
+    private static string Money(decimal price) => price.ToString(price == decimal.Truncate(price) ? "N0" : "N2", CultureInfo.GetCultureInfo("vi-VN"));
+}

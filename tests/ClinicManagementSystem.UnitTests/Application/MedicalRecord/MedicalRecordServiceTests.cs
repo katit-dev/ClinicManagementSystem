@@ -2539,7 +2539,8 @@ public async Task AddMedicalRecordServiceAsync_ShouldCreateServiceSuccessfully()
         {
             Id = 1,
             Name = "Xét nghiệm máu",
-            Price = 250
+            Price = 250,
+            IsActive = true
         }
     );
 
@@ -2662,6 +2663,27 @@ public async Task AddMedicalRecordServiceAsync_ShouldCreateServiceSuccessfully()
     );
 }
 
+[Fact]
+public async Task AddMedicalRecordServiceAsync_InactiveServiceRejectsStaleOrDirectRequest()
+{
+    SetupDoctors(new Doctor { Id = 1, UserId = 1, IsActive = true });
+    SetupMedicalRecords(new MedicalRecordEntity
+    {
+        Id = 1, DoctorId = 1, PatientId = 1, Status = (byte)MedicalRecordStatus.Draft
+    });
+    SetupServices(new Service { Id = 1, Name = "Ngừng dùng", Price = 250, IsActive = false });
+    var orders = new Mock<IMedicalRecordServiceRepository>();
+    _unitOfWorkMock.Setup(x => x.MedicalRecordServiceRepository).Returns(orders.Object);
+
+    var result = await _service.AddMedicalRecordServiceAsync(1, 1,
+        new MedicalRecordServiceRequestDTO { ServiceId = 1, Quantity = 1 });
+
+    Assert.Equal(409, result.StatusCode);
+    Assert.Null(result.Content);
+    orders.Verify(x => x.AddAsync(It.IsAny<MedicalRecordServiceEntity>()), Times.Never);
+    _unitOfWorkMock.Verify(x => x.SaveChangesAsync(), Times.Never);
+}
+
 // =====================================================
 // TEST 39
 //
@@ -2701,7 +2723,8 @@ public async Task AddMedicalRecordServiceAsync_ShouldReturn500_WhenAddFails()
         {
             Id = 1,
             Name = "Xét nghiệm máu",
-            Price = 250
+            Price = 250,
+            IsActive = true
         }
     );
 
