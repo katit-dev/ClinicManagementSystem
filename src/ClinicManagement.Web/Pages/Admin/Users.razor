@@ -1,0 +1,442 @@
+@page "/admin/users"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Admin")]
+@implements IDisposable
+@using System.Globalization
+@using ClinicManagementSystem.Application.DTOs.User
+@inject AdminUserStateService UserAdmin
+@inject UserStateService UserState
+@inject IJSRuntime JS
+
+<PageTitle>Người dùng &amp; phân quyền</PageTitle>
+
+<div class="admin-users-page">
+    <header class="users-header">
+        <span class="users-eyebrow">QUẢN TRỊ PHÒNG KHÁM</span>
+        <h1>Người dùng &amp; phân quyền</h1>
+        <p>Quản lý tài khoản, gán nhiều vai trò và kiểm soát trạng thái truy cập.</p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(UserAdmin.ActionMessage))
+    {
+        <div id="user-action-message" class="alert alert-success" role="status" tabindex="-1">@UserAdmin.ActionMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(UserAdmin.ActionError))
+    {
+        <div id="user-action-error" class="alert alert-danger" role="alert" tabindex="-1">@UserAdmin.ActionError</div>
+    }
+    @if (!string.IsNullOrEmpty(UserAdmin.RolesError))
+    {
+        <div id="user-roles-error" class="alert alert-warning" role="alert" tabindex="-1">
+            Không tải được danh mục vai trò. @UserAdmin.RolesError
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" disabled="@Busy" @onclick="ReloadRoles">Thử lại</button>
+        </div>
+    }
+    @if (UserAdmin.IsLoadingDetail)
+    {
+        <p class="users-loading" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải thông tin tài khoản...</p>
+    }
+
+    @if (_target != null && !UserAdmin.AccessDenied)
+    {
+        <section class="users-panel users-editor" aria-labelledby="user-editor-heading">
+            <div class="users-panel-heading">
+                <div>
+                    <h2 id="user-editor-heading" tabindex="-1">@EditorTitle</h2>
+                    <p><strong>@_target.Username</strong> · @(_target.FullName ?? "Chưa có họ tên")</p>
+                </div>
+                <span class="badge @(_target.IsActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">@(_target.IsActive ? "Hoạt động" : "Đã khóa")</span>
+            </div>
+            @if (_mode == EditorMode.Roles)
+            {
+                <EditForm Model="_rolesForm" OnValidSubmit="SaveRoles" OnInvalidSubmit="InvalidSubmit" @key="_rolesForm">
+                    <DataAnnotationsValidator />
+                    <div id="user-validation" tabindex="-1"><ValidationSummary /></div>
+                    <fieldset disabled="@CannotManageRoles">
+                        <legend class="users-legend">Vai trò của tài khoản</legend>
+                        <div class="users-role-options">
+                            @foreach (var role in UserAdmin.Roles)
+                            {
+                                <label class="users-role-option" for="@($"user-role-{role.Id}")" @key="role.Id">
+                                    <input id="@($"user-role-{role.Id}")" type="checkbox" class="form-check-input"
+                                           checked="@SelectedRole(role.Id)" disabled="@(IsSelf && role.Name == "Admin")"
+                                           @onchange="e => ToggleRole(role.Id, e)" />
+                                    <span><strong>@role.Name</strong>@if (!string.IsNullOrWhiteSpace(role.Description)) { <small>@role.Description</small> }</span>
+                                </label>
+                            }
+                        </div>
+                    </fieldset>
+                    @if (MissingRoles)
+                    {
+                        <p class="alert alert-warning" role="alert">Vai trò hiện tại chưa khớp danh mục. Tải lại danh mục và tài khoản trước khi lưu để tránh gỡ quyền ngoài ý muốn.</p>
+                    }
+                    @if (IsSelf)
+                    {
+                        <p class="users-notice">Bạn đang sửa tài khoản của mình. Vai trò Admin được giữ lại; sau khi đổi vai trò, bạn cần đăng nhập lại.</p>
+                    }
+                    else
+                    {
+                        <p class="users-help">Chọn các vai trò muốn giữ. Tài khoản cần đăng nhập lại sau khi thay đổi. Gán Doctor hoặc Patient cần có hồ sơ tương ứng.</p>
+                    }
+                    @if (_rolesForm.RoleIds is { Length: 0 })
+                    {
+                        <div class="users-confirmation">
+                            <p>Không có vai trò nào được chọn. Tài khoản sẽ mất quyền truy cập các chức năng yêu cầu vai trò.</p>
+                            <label class="users-check-label" for="user-confirm-no-roles">
+                                <input id="user-confirm-no-roles" type="checkbox" class="form-check-input" disabled="@CannotManageRoles" @bind="_confirmNoRoles" />
+                                Tôi xác nhận gỡ toàn bộ vai trò của tài khoản này.
+                            </label>
+                        </div>
+                    }
+                    <div class="users-actions">
+                        <button type="submit" class="btn btn-primary" disabled="@CannotSaveRoles">@(UserAdmin.IsSubmitting ? "Đang lưu..." : "Lưu vai trò")</button>
+                        <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelEditor">Hủy</button>
+                        <button type="button" class="btn btn-link" disabled="@Busy" @onclick="ReloadTarget">Tải lại tài khoản</button>
+                    </div>
+                </EditForm>
+            }
+            else if (_mode == EditorMode.Password)
+            {
+                <p class="users-notice">@(IsSelf ? "Bạn đang reset mật khẩu của mình. Sau khi xác nhận, bạn sẽ được chuyển tới trang đăng nhập." : "Mật khẩu mới có hiệu lực ngay. Các phiên đăng nhập của tài khoản này sẽ bị thu hồi.")</p>
+                @if (!_target.IsActive)
+                {
+                    <p class="users-help">Tài khoản đang bị khóa. Reset mật khẩu sẽ giữ nguyên trạng thái khóa.</p>
+                }
+                <EditForm Model="_passwordForm" OnValidSubmit="ResetPassword" OnInvalidSubmit="InvalidSubmit" @key="_passwordForm">
+                    <DataAnnotationsValidator />
+                    <div id="user-validation" tabindex="-1"><ValidationSummary /></div>
+                    <fieldset class="users-password-grid" disabled="@CannotAct">
+                        <div>
+                            <label for="user-new-password">Mật khẩu mới <span>*</span></label>
+                            <InputText id="user-new-password" class="form-control" type="password" autocomplete="new-password" maxlength="128" @bind-Value="_passwordForm.NewPassword" />
+                            <ValidationMessage For="@(() => _passwordForm.NewPassword)" />
+                            <small>Tối thiểu 8 ký tự, tối đa 72 bytes UTF-8.</small>
+                        </div>
+                        <div>
+                            <label for="user-confirm-password">Xác nhận mật khẩu <span>*</span></label>
+                            <InputText id="user-confirm-password" class="form-control" type="password" autocomplete="new-password" maxlength="128" @bind-Value="_passwordForm.ConfirmPassword" />
+                            <ValidationMessage For="@(() => _passwordForm.ConfirmPassword)" />
+                        </div>
+                    </fieldset>
+                    <div class="users-actions">
+                        <button type="submit" class="btn btn-primary" disabled="@CannotAct">@(UserAdmin.IsSubmitting ? "Đang xử lý..." : "Xác nhận reset mật khẩu")</button>
+                        <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelEditor">Hủy</button>
+                    </div>
+                </EditForm>
+            }
+            else if (_mode == EditorMode.Lock)
+            {
+                <p class="users-notice">@(_target.IsActive ? "Khóa tài khoản sẽ ngăn đăng nhập và thu hồi các phiên đang dùng. Dữ liệu tài khoản được giữ lại." : "Mở khóa cho phép tài khoản đăng nhập lại. Các phiên đã thu hồi sẽ không được khôi phục.")</p>
+                <EditForm Model="_lockForm" OnValidSubmit="SetLock" OnInvalidSubmit="InvalidSubmit" @key="_lockForm">
+                    <DataAnnotationsValidator />
+                    <div id="user-validation" tabindex="-1"><ValidationSummary /></div>
+                    <fieldset disabled="@CannotAct">
+                        <label for="user-lock-reason">Lý do @(_target.IsActive ? "khóa" : "mở khóa") <span>*</span></label>
+                        <InputTextArea id="user-lock-reason" class="form-control" rows="3" maxlength="500" @bind-Value="_lockForm.Reason" />
+                        <ValidationMessage For="@(() => _lockForm.Reason)" />
+                    </fieldset>
+                    <div class="users-actions">
+                        <button type="submit" class="btn @(_target.IsActive ? "btn-danger" : "btn-success")" disabled="@(CannotAct || (IsSelf && _target.IsActive))">@(UserAdmin.IsSubmitting ? "Đang xử lý..." : _target.IsActive ? "Xác nhận khóa tài khoản" : "Xác nhận mở khóa")</button>
+                        <button type="button" class="btn btn-outline-secondary" disabled="@Busy" @onclick="CancelEditor">Hủy</button>
+                    </div>
+                </EditForm>
+            }
+        </section>
+    }
+
+    <section class="users-panel" aria-labelledby="users-list-heading">
+        <div class="users-panel-heading">
+            <div><h2 id="users-list-heading" tabindex="-1">Danh sách tài khoản</h2><p>Tra cứu tài khoản và chọn thao tác cần thực hiện.</p></div>
+            @if (string.IsNullOrEmpty(UserAdmin.ListError)) { <span class="users-count">@UserAdmin.Result.TotalItems tài khoản</span> }
+        </div>
+        <EditForm Model="_filter" OnValidSubmit="Search">
+            <DataAnnotationsValidator /><ValidationSummary />
+            <fieldset class="users-filters" disabled="@Busy">
+                <div class="users-search-field">
+                    <label for="user-search">Tìm tài khoản</label>
+                    <InputText id="user-search" class="form-control" @bind-Value="_filter.Keyword" maxlength="255" placeholder="Tài khoản, họ tên, email hoặc số điện thoại" />
+                </div>
+                <div>
+                    <label for="user-filter-role">Vai trò</label>
+                    <InputSelect id="user-filter-role" class="form-select" @bind-Value="_filter.Role">
+                        <option value="">Tất cả vai trò</option>
+                        @foreach (var role in UserAdmin.Roles) { <option value="@role.Name">@role.Name</option> }
+                    </InputSelect>
+                </div>
+                <div>
+                    <label for="user-filter-active">Trạng thái</label>
+                    <InputSelect id="user-filter-active" class="form-select" @bind-Value="_activeFilter">
+                        <option value="">Tất cả trạng thái</option><option value="true">Hoạt động</option><option value="false">Đã khóa</option>
+                    </InputSelect>
+                </div>
+                <div>
+                    <label for="user-page-size">Số dòng</label>
+                    <InputSelect id="user-page-size" class="form-select" @bind-Value="_filter.PageSize"><option value="10">10</option><option value="20">20</option><option value="50">50</option></InputSelect>
+                </div>
+                <div class="users-actions">
+                    <button type="submit" class="btn btn-primary">Lọc</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="ResetSearch">Đặt lại</button>
+                </div>
+            </fieldset>
+        </EditForm>
+        @if (UserAdmin.IsLoading)
+        {
+            <p class="users-loading" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Đang tải tài khoản...</p>
+        }
+        else if (!string.IsNullOrEmpty(UserAdmin.ListError))
+        {
+            <div id="user-list-error" class="alert alert-danger" role="alert" tabindex="-1">
+                @UserAdmin.ListError <button type="button" class="btn btn-sm btn-outline-danger ms-2" disabled="@Busy" @onclick="Reload">Thử lại</button>
+            </div>
+        }
+        else if (UserAdmin.Result.Items.Count == 0)
+        {
+            <p class="users-empty">Không có tài khoản phù hợp với bộ lọc.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle users-table">
+                    <caption class="visually-hidden">Danh sách tài khoản, vai trò, lần đăng nhập cuối và trạng thái</caption>
+                    <thead><tr><th scope="col">Tài khoản</th><th scope="col">Họ tên / liên hệ</th><th scope="col">Vai trò</th><th scope="col">Đăng nhập cuối <small>(GMT+7)</small></th><th scope="col">Trạng thái</th><th scope="col" class="text-end">Thao tác</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in UserAdmin.Result.Items)
+                        {
+                            <tr @key="item.Id">
+                                <td class="users-account"><strong>@item.Username</strong>@if (item.Id == CurrentUserId) { <small class="text-primary">Tài khoản của bạn</small> }</td>
+                                <td class="users-contact">@(item.FullName ?? "Chưa có họ tên")@if (!string.IsNullOrWhiteSpace(item.Email)) { <small>@item.Email</small> }@if (!string.IsNullOrWhiteSpace(item.Phone)) { <small>@item.Phone</small> }</td>
+                                <td class="users-roles-cell">
+                                    <div class="users-role-badges">
+                                        @foreach (var role in item.Roles) { <span class="users-role-badge">@role.Name</span> }
+                                        @if (item.Roles.Count == 0) { <span class="text-secondary">Chưa có vai trò</span> }
+                                    </div>
+                                </td>
+                                <td class="text-nowrap">@LastLogin(item.LastLoginAt)</td>
+                                <td class="text-nowrap"><span class="badge @(item.IsActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">@(item.IsActive ? "Hoạt động" : "Đã khóa")</span></td>
+                                <td>
+                                    <div class="users-row-actions">
+                                        <button id="@($"roles-user-{item.Id}")" type="button" class="btn btn-sm btn-outline-primary" disabled="@CannotManageRoles" aria-label="@($"Sửa vai trò {item.Username}")" @onclick="() => OpenEditor(item.Id, EditorMode.Roles)">Vai trò</button>
+                                        <button id="@($"password-user-{item.Id}")" type="button" class="btn btn-sm btn-outline-secondary" disabled="@CannotAct" aria-label="@($"Reset mật khẩu {item.Username}")" @onclick="() => OpenEditor(item.Id, EditorMode.Password)">Reset mật khẩu</button>
+                                        <button id="@($"lock-user-{item.Id}")" type="button" class="btn btn-sm @(item.IsActive ? "btn-outline-danger" : "btn-outline-success")" disabled="@(CannotAct || (item.Id == CurrentUserId && item.IsActive))" title="@(item.Id == CurrentUserId ? "Không thể tự khóa tài khoản" : null)" aria-label="@($"{(item.IsActive ? "Khóa" : "Mở khóa")} {item.Username}")" @onclick="() => OpenEditor(item.Id, EditorMode.Lock)">@(item.IsActive ? "Khóa" : "Mở khóa")</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (!UserAdmin.IsLoading && string.IsNullOrEmpty(UserAdmin.ListError) && UserAdmin.Result.TotalItems > 0)
+        {
+            <div class="users-pagination">
+                <span>Trang @UserAdmin.Result.Page/@UserAdmin.Result.TotalPages · @UserAdmin.Result.TotalItems tài khoản</span>
+                <div class="btn-group" aria-label="Phân trang tài khoản">
+                    <button type="button" class="btn btn-outline-primary" disabled="@(Busy || UserAdmin.Result.Page <= 1)" @onclick="() => ChangePage(-1)">Trước</button>
+                    <button type="button" class="btn btn-outline-primary" disabled="@(Busy || UserAdmin.Result.Page >= UserAdmin.Result.TotalPages)" @onclick="() => ChangePage(1)">Sau</button>
+                </div>
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private enum EditorMode { Roles, Password, Lock }
+    private AdminUserQueryDTO _filter = new();
+    private AdminUserQueryDTO _appliedFilter = new();
+    private string _activeFilter = string.Empty;
+    private AdminUserDTO? _target;
+    private EditorMode _mode;
+    private SetUserRolesRequestDTO _rolesForm = new() { RoleIds = [] };
+    private AdminResetPasswordRequestDTO _passwordForm = new();
+    private SetUserLockRequestDTO _lockForm = new();
+    private bool _confirmNoRoles;
+    private string? _pendingFocusId;
+    private string? _returnFocusId;
+    private int? CurrentUserId => UserState.CurrentUser?.Id;
+    private bool IsSelf => _target != null && _target.Id == CurrentUserId;
+    private bool Busy => UserAdmin.IsBusy;
+    private bool CannotAct => Busy || UserAdmin.AccessDenied || UserAdmin.RequiresLogin;
+    private bool CannotManageRoles => CannotAct || !string.IsNullOrEmpty(UserAdmin.RolesError) || UserAdmin.Roles.Count == 0;
+    private bool MissingRoles => _target?.Roles.Any(r => !UserAdmin.Roles.Any(lookup => lookup.Id == r.Id)) == true;
+    private bool RolesChanged => _target != null && !(_rolesForm.RoleIds ?? []).Order().SequenceEqual(_target.Roles.Select(r => r.Id).Order());
+    private bool CannotSaveRoles => CannotManageRoles || MissingRoles || !RolesChanged || (_rolesForm.RoleIds is { Length: 0 } && !_confirmNoRoles);
+    private string EditorTitle => _mode switch { EditorMode.Roles => "Sửa vai trò", EditorMode.Password => "Reset mật khẩu", _ => _target?.IsActive == true ? "Khóa tài khoản" : "Mở khóa tài khoản" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserAdmin.ClearActions();
+        await UserAdmin.LoadRolesAsync();
+        if (await HandleSessionFailure()) return;
+        await Reload();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocusId is not { } target) return;
+        _pendingFocusId = null;
+        try { await JS.InvokeVoidAsync("adminUsers.focus", target, "users-list-heading"); }
+        catch (JSDisconnectedException) { /* The user left or disconnected. */ }
+    }
+
+    private async Task<bool> HandleSessionFailure()
+    {
+        if (UserAdmin.RequiresLogin)
+        {
+            ClosePanels();
+            await UserState.LogoutAsync();
+            return true;
+        }
+        if (UserAdmin.AccessDenied) ClosePanels();
+        return UserAdmin.AccessDenied;
+    }
+
+    private async Task Reload()
+    {
+        await UserAdmin.LoadAsync(_appliedFilter);
+        await HandleSessionFailure();
+    }
+
+    private async Task ReloadRoles()
+    {
+        await UserAdmin.LoadRolesAsync();
+        await HandleSessionFailure();
+    }
+
+    private async Task Search()
+    {
+        if (Busy) return;
+        ClosePanels();
+        UserAdmin.ClearActions();
+        _appliedFilter = new() { Keyword = _filter.Keyword, Role = _filter.Role, PageSize = _filter.PageSize, Page = 1,
+            Active = bool.TryParse(_activeFilter, out var active) ? active : null };
+        await Reload();
+        FocusResult();
+    }
+
+    private async Task ResetSearch()
+    {
+        if (Busy) return;
+        _filter = new();
+        _activeFilter = string.Empty;
+        await Search();
+    }
+
+    private async Task ChangePage(int delta)
+    {
+        if (Busy) return;
+        var page = _appliedFilter.Page + delta;
+        if (page < 1 || page > UserAdmin.Result.TotalPages) return;
+        ClosePanels();
+        UserAdmin.ClearActions();
+        _appliedFilter.Page = page;
+        await Reload();
+        FocusResult();
+    }
+
+    private async Task OpenEditor(int id, EditorMode mode)
+    {
+        if (CannotAct || (mode == EditorMode.Roles && CannotManageRoles)) return;
+        ClosePanels();
+        var detail = await UserAdmin.LoadDetailAsync(id);
+        if (await HandleSessionFailure()) return;
+        if (detail == null) { FocusResult(); return; }
+        _target = detail;
+        _mode = mode;
+        _rolesForm = new() { RoleIds = detail.Roles.Select(r => r.Id).ToArray() };
+        _lockForm = new() { IsActive = !detail.IsActive };
+        _returnFocusId = $"{(mode == EditorMode.Roles ? "roles" : mode == EditorMode.Password ? "password" : "lock")}-user-{id}";
+        _pendingFocusId = "user-editor-heading";
+    }
+
+    private Task ReloadTarget() => _target == null ? Task.CompletedTask : OpenEditor(_target.Id, _mode);
+    private bool SelectedRole(int id) => _rolesForm.RoleIds?.Contains(id) == true;
+
+    private void ToggleRole(int id, ChangeEventArgs args)
+    {
+        if (CannotManageRoles || (IsSelf && UserAdmin.Roles.Any(r => r.Id == id && r.Name == "Admin"))) return;
+        var selected = (_rolesForm.RoleIds ?? []).ToHashSet();
+        if (args.Value is true) selected.Add(id); else selected.Remove(id);
+        _rolesForm.RoleIds = selected.Order().ToArray();
+        _confirmNoRoles = false;
+    }
+
+    private void ClosePanels()
+    {
+        _target = null;
+        _passwordForm.NewPassword = string.Empty;
+        _passwordForm.ConfirmPassword = string.Empty;
+        _passwordForm = new();
+        _rolesForm = new() { RoleIds = [] };
+        _lockForm = new();
+        _confirmNoRoles = false;
+    }
+
+    private void CancelEditor()
+    {
+        if (Busy) return;
+        ClosePanels();
+        UserAdmin.ClearActions();
+        _pendingFocusId = _returnFocusId;
+    }
+
+    private void InvalidSubmit(EditContext _) => _pendingFocusId = "user-validation";
+
+    private async Task SaveRoles()
+    {
+        if (CannotSaveRoles || _target == null) return;
+        var isSelf = IsSelf;
+        if (await UserAdmin.SetRolesAsync(_target.Id, _rolesForm)) await MutationSucceeded(isSelf);
+        else if (!await HandleSessionFailure()) FocusResult();
+    }
+
+    private async Task ResetPassword()
+    {
+        if (CannotAct || _target == null) return;
+        var isSelf = IsSelf;
+        var succeeded = await UserAdmin.ResetPasswordAsync(_target.Id, _passwordForm);
+        // Clear both the submitted model and rendered password fields after every HTTP attempt.
+        _passwordForm.NewPassword = string.Empty;
+        _passwordForm.ConfirmPassword = string.Empty;
+        _passwordForm = new();
+        if (succeeded) await MutationSucceeded(isSelf);
+        else if (!await HandleSessionFailure()) FocusResult();
+    }
+
+    private async Task SetLock()
+    {
+        if (CannotAct || _target == null || (IsSelf && _target.IsActive)) return;
+        if (await UserAdmin.SetLockAsync(_target.Id, _lockForm)) await MutationSucceeded(false);
+        else if (!await HandleSessionFailure()) FocusResult();
+    }
+
+    private async Task MutationSucceeded(bool isSelf)
+    {
+        ClosePanels();
+        if (isSelf)
+        {
+            await UserState.LogoutAsync();
+            return;
+        }
+        await Reload();
+        if (string.IsNullOrEmpty(UserAdmin.ListError) && _appliedFilter.Page > Math.Max(1, UserAdmin.Result.TotalPages))
+        {
+            _appliedFilter.Page = Math.Max(1, UserAdmin.Result.TotalPages);
+            await Reload();
+        }
+        FocusResult();
+    }
+
+    private void FocusResult() => _pendingFocusId = !string.IsNullOrEmpty(UserAdmin.ActionError) ? "user-action-error"
+        : !string.IsNullOrEmpty(UserAdmin.ListError) ? "user-list-error"
+        : !string.IsNullOrEmpty(UserAdmin.ActionMessage) ? "user-action-message" : "users-list-heading";
+
+    private static string LastLogin(DateTime? value) => value.HasValue
+        ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc).AddHours(7).ToString("dd/MM/yyyy HH:mm", CultureInfo.GetCultureInfo("vi-VN"))
+        : "Chưa đăng nhập";
+
+    public void Dispose()
+    {
+        _passwordForm.NewPassword = string.Empty;
+        _passwordForm.ConfirmPassword = string.Empty;
+    }
+}

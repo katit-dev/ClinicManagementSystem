@@ -152,6 +152,8 @@ public class AdminSpecialtyApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Audience", "AdminSpecialtyTests");
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IAccountAccessValidationService>();
+            services.AddSingleton<IAccountAccessValidationService, ClinicManagementSystem.IntegrationTests.TestAccountAccessValidationService>();
             services.RemoveAll<IAdminSpecialtyService>();
             services.AddSingleton<IAdminSpecialtyService, StubSpecialtyService>();
             services.RemoveAll<ISpecialtyService>();

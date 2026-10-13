@@ -40,7 +40,10 @@ public class UserService : IUserService
 
     }
 
-    public async Task<HttpResponseData<object?>> ResetPasswordAsync(
+    public Task<HttpResponseData<object?>> ResetPasswordAsync(ResetPasswordRequestDTO request)
+        => WithAccessLock(() => ResetPasswordCoreAsync(request), UserResponseMessageDTO.ResetPasswordFailed);
+
+    private async Task<HttpResponseData<object?>> ResetPasswordCoreAsync(
     ResetPasswordRequestDTO request)
     {
         try
@@ -118,6 +121,9 @@ public class UserService : IUserService
 
             await _unitOfWork.PasswordResetTokenRepository
                 .UpdateAsync(resetToken);
+
+            await _unitOfWork.RefreshTokenRepository.RevokeAllAsync(user.Id, now);
+            await _unitOfWork.PasswordResetTokenRepository.RevokeAllAsync(user.Id, now);
 
             // 9. Lưu User + ResetToken cùng lúc
             await _unitOfWork.SaveChangesAsync();
@@ -215,7 +221,10 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<HttpResponseData<AuthResponseDTO?>> RefreshTokenAsync(
+    public Task<HttpResponseData<AuthResponseDTO?>> RefreshTokenAsync(RefreshTokenRequestDTO request)
+        => WithAccessLock(() => RefreshTokenCoreAsync(request), UserResponseMessageDTO.RefreshTokenFailed);
+
+    private async Task<HttpResponseData<AuthResponseDTO?>> RefreshTokenCoreAsync(
     RefreshTokenRequestDTO request)
     {
         try
@@ -269,7 +278,7 @@ public class UserService : IUserService
             }
 
             // 7. Kiểm tra trạng thái account
-            if (!user.IsActive || user.IsDeleted)
+            if (!user.IsActive || user.IsDeleted || user.LockoutEnd > DateTime.UtcNow)
             {
                 return LoginResponse(
                     403,
@@ -617,7 +626,10 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<HttpResponseData<AuthResponseDTO?>> LoginAsync(
+    public Task<HttpResponseData<AuthResponseDTO?>> LoginAsync(LoginRequestDTO request)
+        => WithAccessLock(() => LoginCoreAsync(request), UserResponseMessageDTO.LoginFailed);
+
+    private async Task<HttpResponseData<AuthResponseDTO?>> LoginCoreAsync(
     LoginRequestDTO request)
     {
         try
@@ -651,7 +663,7 @@ public class UserService : IUserService
             }
 
             // 3. Kiểm tra trạng thái account
-            if (!user.IsActive || user.IsDeleted)
+            if (!user.IsActive || user.IsDeleted || user.LockoutEnd > DateTime.UtcNow)
             {
                 return LoginResponse(
                     403,
@@ -766,6 +778,28 @@ public class UserService : IUserService
             return LoginResponse(
                 500,
                 UserResponseMessageDTO.LoginFailed);
+        }
+    }
+
+    private async Task<HttpResponseData<T>> WithAccessLock<T>(Func<Task<HttpResponseData<T>>> action, string failureMessage)
+    {
+        var started = false;
+        try
+        {
+            await _unitOfWork.BeginTransactionAsync(); started = true;
+            await _unitOfWork.UserRepository.AcquireAccessLockAsync();
+            var result = await action();
+            if (result.StatusCode >= 400) await _unitOfWork.RollbackTransactionAsync();
+            else await _unitOfWork.CommitTransactionAsync();
+            started = false;
+            return result;
+        }
+        catch (Exception ex)
+        {
+            if (started) try { await _unitOfWork.RollbackTransactionAsync(); }
+                catch (Exception rollback) { _logger.LogError(rollback, "Failed to roll back session operation."); }
+            _logger.LogError(ex, "Account session operation failed.");
+            return new() { StatusCode = 500, Message = failureMessage };
         }
     }
 

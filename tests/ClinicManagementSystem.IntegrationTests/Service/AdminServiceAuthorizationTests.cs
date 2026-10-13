@@ -142,6 +142,8 @@ public class AdminServiceApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Key", Key); builder.UseSetting("Jwt:Issuer", "AdminServiceTests"); builder.UseSetting("Jwt:Audience", "AdminServiceTests");
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IAccountAccessValidationService>();
+            services.AddSingleton<IAccountAccessValidationService, ClinicManagementSystem.IntegrationTests.TestAccountAccessValidationService>();
             services.RemoveAll<IAdminServiceCatalogService>(); services.AddSingleton<IAdminServiceCatalogService, StubAdminServices>();
             services.RemoveAll<IServiceCatalogService>(); services.AddSingleton<IServiceCatalogService, StubDoctorServices>();
         });

@@ -1,0 +1,64 @@
+.admin-users-page { color: #183b60; }
+.admin-users-page .users-header { margin-bottom: 24px; }
+.admin-users-page .users-eyebrow { display: block; color: #6684a3; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; margin-bottom: 7px; }
+.admin-users-page h1 { font-size: clamp(24px, 2.5vw, 32px); font-weight: 750; margin: 0 0 8px; }
+.admin-users-page .users-header p, .admin-users-page .users-panel-heading p { color: #66788b; margin: 0; }
+.admin-users-page .btn { border-radius: 8px; font-weight: 600; }
+.admin-users-page .users-panel { background: #fff; padding: 24px; margin-bottom: 24px; border: 1px solid #dbe4ee; border-radius: 14px; box-shadow: 0 4px 16px rgba(23, 54, 93, .035); }
+.admin-users-page .users-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 18px; }
+.admin-users-page h2 { font-size: 19px; font-weight: 750; margin-bottom: 6px; }
+.admin-users-page .users-panel-heading p { font-size: 14px; overflow-wrap: anywhere; }
+.admin-users-page .users-count { padding: 6px 12px; border-radius: 20px; background: #edf5fc; color: #356689; font-size: 13px; white-space: nowrap; }
+.admin-users-page .users-filters { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(140px, 1fr) minmax(150px, 1fr) 90px auto; gap: 16px; align-items: end; margin-bottom: 22px; }
+.admin-users-page label, .admin-users-page .users-legend { display: block; font-size: 13px; font-weight: 650; margin-bottom: 7px; }
+.admin-users-page label > span { color: #c13131; }
+.admin-users-page .users-role-option > span { color: inherit; }
+.admin-users-page .form-control, .admin-users-page .form-select { border-color: #cdd9e6; border-radius: 8px; min-height: 42px; }
+.admin-users-page .form-control:focus, .admin-users-page .form-select:focus { border-color: #2385cd; box-shadow: 0 0 0 3px rgba(35, 133, 205, .12); }
+.admin-users-page .users-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.admin-users-page .users-editor .users-actions { margin-top: 20px; }
+.admin-users-page .users-row-actions { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; min-width: 160px; }
+.admin-users-page .users-row-actions .btn { white-space: nowrap; }
+.admin-users-page .users-table { font-size: 14px; margin-bottom: 0; }
+.admin-users-page .users-table th { background: #f1f5f9; color: #42627f; padding: 14px 12px; font-size: 13px; white-space: nowrap; border-bottom: 1px solid #dbe4ee; }
+.admin-users-page .users-table th small { display: block; font-weight: 400; }
+.admin-users-page .users-table td { padding: 16px 12px; border-color: #e7edf4; }
+.admin-users-page .users-account { min-width: 150px; max-width: 250px; overflow-wrap: anywhere; }
+.admin-users-page .users-contact { min-width: 190px; max-width: 300px; overflow-wrap: anywhere; }
+.admin-users-page .users-account small, .admin-users-page .users-contact small { display: block; color: #66788b; margin-top: 4px; }
+.admin-users-page .users-roles-cell { min-width: 140px; max-width: 260px; }
+.admin-users-page .users-role-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-users-page .users-role-badge { background: #edf5fc; color: #356689; border: 1px solid #d4e5f3; border-radius: 16px; padding: 4px 9px; font-size: 12px; overflow-wrap: anywhere; }
+.admin-users-page .users-role-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.admin-users-page .users-role-option { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #cdd9e6; border-radius: 10px; cursor: pointer; margin: 0; }
+.admin-users-page .users-role-option:has(input:checked) { border-color: #2385cd; background: #edf7ff; }
+.admin-users-page .users-role-option .form-check-input { flex-shrink: 0; margin-top: 3px; }
+.admin-users-page .users-role-option strong { font-size: 14px; color: #183b60; }
+.admin-users-page .users-role-option small { display: block; font-weight: 400; margin-top: 3px; }
+.admin-users-page .users-password-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.admin-users-page small, .admin-users-page .users-help { font-size: 13px; color: #66788b; }
+.admin-users-page .users-help { margin: 16px 0; }
+.admin-users-page .users-notice { background: #edf7ff; border: 1px solid #c7e3f9; color: #346c93; border-radius: 9px; padding: 12px 16px; font-size: 13px; margin: 16px 0; }
+.admin-users-page .users-confirmation { border: 1px solid #edcd75; background: #fffcf3; border-radius: 9px; padding: 16px; margin-top: 16px; font-size: 14px; }
+.admin-users-page .users-confirmation p { margin-bottom: 10px; }
+.admin-users-page .users-check-label { display: flex; gap: 10px; align-items: flex-start; margin: 0; }
+.admin-users-page .users-check-label input { flex-shrink: 0; }
+.admin-users-page .users-empty { text-align: center; color: #66788b; margin: 0; padding: 36px 12px; }
+.admin-users-page .users-loading { padding: 12px; color: #66788b; }
+.admin-users-page .users-pagination { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 18px 0 0; color: #66788b; font-size: 13px; }
+.admin-users-page .validation-message, .admin-users-page .validation-errors { color: #b02a37; font-size: 13px; margin-top: 5px; }
+.admin-users-page fieldset { min-width: 0; }
+.admin-users-page [tabindex="-1"] { scroll-margin-top: 24px; }
+.admin-users-page [tabindex="-1"]:focus-visible { outline: 2px solid #2385cd; outline-offset: 4px; }
+@media (max-width: 1200px) {
+    .admin-users-page .users-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .admin-users-page .users-search-field { grid-column: 1 / -1; }
+    .admin-users-page .users-role-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+    .admin-users-page .users-panel { padding: 16px; }
+    .admin-users-page .users-panel-heading { align-items: flex-start; }
+    .admin-users-page .users-filters, .admin-users-page .users-password-grid, .admin-users-page .users-role-options { grid-template-columns: minmax(0, 1fr); }
+    .admin-users-page .users-search-field { grid-column: auto; }
+    .admin-users-page .users-pagination { flex-direction: column; align-items: flex-start; }
+}

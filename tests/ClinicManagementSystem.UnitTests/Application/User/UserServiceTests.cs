@@ -57,6 +57,8 @@ public class UserServiceTests
     {
         _unitOfWorkMock =
             new Mock<IUnitOfWork>();
+        _unitOfWorkMock.Setup(x => x.UserRepository).Returns(new Mock<IUserRepository>().Object);
+        _unitOfWorkMock.Setup(x => x.RefreshTokenRepository).Returns(new Mock<IRefreshTokenRepository>().Object);
 
         _jwtAuthServiceMock =
             new Mock<IJwtAuthService>();
@@ -756,11 +758,9 @@ public class UserServiceTests
         );
 
 
-        _unitOfWorkMock.Verify(
-            x =>
-                x.UserRepository,
-            Times.Never
-        );
+        // Acquiring the access lock uses UserRepository, but revoked tokens must not load a user.
+        Mock.Get(_unitOfWorkMock.Object.UserRepository)
+            .Verify(x => x.GetByIdAsync(It.IsAny<int>()), Times.Never);
     }
 
 
