@@ -100,6 +100,7 @@ builder.Services.AddScoped<AdminSpecialtyStateService>();
 builder.Services.AddScoped<AdminServiceStateService>();
 builder.Services.AddScoped<AdminUserStateService>();
 builder.Services.AddScoped<AdminReportStateService>();
+builder.Services.AddScoped<AdminAuditLogStateService>();
 builder.Services.AddScoped<AdminSchedulingStateService>();
 builder.Services.AddScoped<ReceptionAffectedAppointmentStateService>();
 

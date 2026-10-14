@@ -141,6 +141,8 @@ public class AdminSchedulingApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<IAccountAccessValidationService>();
             services.AddSingleton<IAccountAccessValidationService, ClinicManagementSystem.IntegrationTests.TestAccountAccessValidationService>();
+            services.RemoveAll<IMedicalAuditWriter>();
+            services.AddSingleton<IMedicalAuditWriter, ClinicManagementSystem.IntegrationTests.Audit.NoopMedicalAuditWriter>();
             services.RemoveAll<IAdminSchedulingService>();
             services.AddSingleton<IAdminSchedulingService, StubSchedulingService>();
         });

@@ -1,0 +1,269 @@
+@page "/admin/audit-logs"
+@layout HomePageMaster
+@attribute [Authorize(Roles = "Admin")]
+@using System.Globalization
+@using ClinicManagementSystem.Application.DTOs.Audit
+@inject AdminAuditLogStateService AuditState
+@inject UserStateService UserState
+@inject IJSRuntime JS
+
+<PageTitle>Nhật ký truy cập bệnh án</PageTitle>
+
+<div class="admin-audit-logs-page">
+    <header class="audit-header">
+        <span class="audit-eyebrow">QUẢN TRỊ PHÒNG KHÁM</span>
+        <h1>Nhật ký truy cập bệnh án</h1>
+        <p>Tra cứu ai đã xem hoặc thay đổi dữ liệu y tế, thời gian và kết quả truy cập.</p>
+        <p class="audit-help">Mỗi dòng là một lượt truy cập. Mở chi tiết để xem đầy đủ đối tượng và các log gốc của lượt đó.</p>
+    </header>
+
+    <section class="audit-panel" aria-labelledby="audit-filter-heading">
+        <div class="audit-panel-heading"><div><h2 id="audit-filter-heading">Tra cứu nhật ký</h2><p>Chọn đối tượng, người dùng và khoảng thời gian cần kiểm tra.</p></div><span class="audit-tag"><i class="fas fa-lock me-2" aria-hidden="true"></i>Chỉ đọc</span></div>
+        <EditForm Model="_filter" OnValidSubmit="SearchLogs" OnInvalidSubmit="InvalidSubmit" @key="_filter">
+            <DataAnnotationsValidator />
+            <div id="audit-validation" tabindex="-1"><ValidationSummary /></div>
+            <fieldset class="audit-filters" disabled="@CannotRequest">
+                <div>
+                    <label for="audit-entity">Đối tượng</label>
+                    <InputSelect id="audit-entity" class="form-select" @bind-Value="_filter.Entity">
+                        <option value="">Tất cả đối tượng</option>
+                        @foreach (var entity in Entities) { <option value="@entity.Value">@entity.Label</option> }
+                    </InputSelect>
+                </div>
+                <div>
+                    <label for="audit-user">Người dùng</label>
+                    <InputSelect id="audit-user" class="form-select" @bind-Value="_filter.UserId" @bind-Value:after="RememberUser">
+                        <option value="">Tất cả người dùng</option>
+                        @foreach (var user in UserOptions) { <option value="@user.Id">@UserOptionLabel(user)</option> }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _filter.UserId)" />
+                </div>
+                <div>
+                    <label for="audit-entity-id">Mã đối tượng</label>
+                    <InputNumber id="audit-entity-id" class="form-control" @bind-Value="_filter.EntityId" min="1" placeholder="Ví dụ: 1204" />
+                    <ValidationMessage For="@(() => _filter.EntityId)" />
+                </div>
+                <div>
+                    <label for="audit-from">Từ ngày</label>
+                    <InputDate id="audit-from" class="form-control" @bind-Value="_filter.From" />
+                    <ValidationMessage For="@(() => _filter.From)" />
+                </div>
+                <div>
+                    <label for="audit-to">Đến ngày</label>
+                    <InputDate id="audit-to" class="form-control" @bind-Value="_filter.To" />
+                    <ValidationMessage For="@(() => _filter.To)" />
+                </div>
+                <div class="audit-actions">
+                    <button id="audit-search" type="submit" class="btn btn-primary" disabled="@CannotRequest"><i class="fas fa-search me-2" aria-hidden="true"></i>@(AuditState.IsLoading ? "Đang tải..." : "Tra cứu")</button>
+                    <button type="button" class="btn btn-outline-secondary" disabled="@CannotRequest" @onclick="ResetFilters">Đặt lại</button>
+                </div>
+            </fieldset>
+        </EditForm>
+        <p class="audit-help">Tính cả ngày kết thúc (GMT+7). Khoảng ngày tối đa 366 ngày; bỏ trống cả hai ngày để tra cứu mọi thời điểm.</p>
+
+        <details class="audit-user-lookup" open="@(!string.IsNullOrEmpty(AuditState.UsersError))">
+            <summary>Tìm người dùng trong nhật ký</summary>
+            <div class="audit-user-search">
+                <div><label for="audit-user-keyword">Tên tài khoản, họ tên hoặc mã người dùng</label><input id="audit-user-keyword" class="form-control" @bind="_userKeyword" @bind:event="oninput" maxlength="100" disabled="@CannotRequest" /></div>
+                <button type="button" class="btn btn-outline-primary" disabled="@CannotRequest" @onclick="SearchUsers">Tìm người dùng</button>
+                <button type="button" class="btn btn-outline-secondary" disabled="@CannotRequest" @onclick="ResetUsers">Xóa tìm kiếm</button>
+            </div>
+            <p class="audit-help">Chỉ gồm người dùng đã xuất hiện trong nhật ký, kể cả tài khoản đã khóa hoặc không còn tồn tại. Lựa chọn đang dùng được giữ khi tìm kiếm.</p>
+            @if (!string.IsNullOrEmpty(AuditState.UsersError))
+            {
+                <div id="audit-users-error" class="alert alert-warning mt-3" role="alert" tabindex="-1">@AuditState.UsersError</div>
+            }
+            else
+            {
+                <div class="audit-user-pagination">
+                    <small>@AuditState.Users.TotalItems người dùng · Trang @UserPage / @Math.Max(1, AuditState.Users.TotalPages)</small>
+                    <div><button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(CannotRequest || AuditState.Users.Page <= 1)" @onclick="() => UserPageChange(AuditState.Users.Page - 1)">Trước</button><button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(CannotRequest || AuditState.Users.Page >= AuditState.Users.TotalPages)" @onclick="() => UserPageChange(AuditState.Users.Page + 1)">Sau</button></div>
+                </div>
+                @if (AuditState.Users.TotalItems == 0) { <p class="audit-help">Không có người dùng phù hợp với từ khóa đã tìm.</p> }
+            }
+        </details>
+        @if (FilterChanged) { <p class="audit-filter-notice" role="status">Bộ lọc đã thay đổi. Bấm “Tra cứu” để cập nhật kết quả; phân trang đang tạm khóa.</p> }
+    </section>
+
+    @if (!string.IsNullOrEmpty(AuditState.ListError)) { <div id="audit-error" class="alert alert-danger" role="alert" tabindex="-1">@AuditState.ListError</div> }
+    @if (AuditState.IsBusy) { <p class="audit-loading" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>@(AuditState.IsLoadingDetail ? "Đang tải chi tiết nhật ký..." : AuditState.IsLoadingUsers ? "Đang tìm người dùng..." : "Đang tải nhật ký...")</p> }
+
+    @if (AuditState.Detail != null || !string.IsNullOrEmpty(AuditState.DetailError))
+    {
+        <section class="audit-panel audit-detail" aria-labelledby="audit-detail-heading">
+            <div class="audit-panel-heading"><h2 id="audit-detail-heading" tabindex="-1">Chi tiết lượt truy cập</h2><button id="audit-close-detail" type="button" class="btn btn-outline-secondary" disabled="@CannotRequest" @onclick="CloseDetail"><i class="fas fa-times me-2" aria-hidden="true"></i>Đóng chi tiết</button></div>
+            @if (!string.IsNullOrEmpty(AuditState.DetailError)) { <div id="audit-detail-error" class="alert alert-danger" role="alert" tabindex="-1">@AuditState.DetailError</div> }
+            @if (AuditState.Detail is { } detail)
+            {
+                <dl class="audit-detail-grid">
+                    <div><dt>Thời gian</dt><dd>@Time(detail)<small>@TimestampNote(detail)</small></dd></div>
+                    <div><dt>Người dùng</dt><dd>@DisplayActor(detail)<small>@Actor(detail)</small><small>@(detail.UserId.HasValue ? $"Mã tài khoản: {detail.UserId}" : "Không có mã tài khoản")</small></dd></div>
+                    <div><dt>Thao tác</dt><dd>@ActionLabel(detail.Action)</dd></div>
+                    <div><dt>Đối tượng được ghi nhận</dt><dd>@EntitySummary(detail)</dd></div>
+                    <div><dt>Kết quả</dt><dd>@(detail.Succeeded ? "Thành công" : "Không thành công")</dd></div>
+                    <div><dt>Địa chỉ IP</dt><dd>@Ip(detail.IpAddress)</dd></div>
+                    @if (detail.Metadata?.Phase == "response_failed") { <div><dt>Ghi nhận bổ sung</dt><dd>Gửi phản hồi thất bại</dd></div> }
+                </dl>
+                <h3>Đối tượng trong lượt truy cập</h3>
+                <p class="audit-help">@detail.EntryCount log gốc được giữ nguyên để truy vết.</p>
+                @if (detail.Entries.Count > 0)
+                {
+                    <ul class="audit-target-list">
+                        @foreach (var entry in detail.Entries.OrderBy(x => x.EntityId).ThenBy(x => x.Id))
+                        {
+                            <li @key="entry.Id"><strong>@EntityLabel(entry.EntityName) @EntityId(entry.EntityId)</strong><span>Mã log #@entry.Id</span></li>
+                        }
+                    </ul>
+                }
+            }
+        </section>
+    }
+
+    @if (AuditState.HasLoaded)
+    {
+        <section class="audit-panel" aria-labelledby="audit-results-heading">
+            <div class="audit-panel-heading"><div><h2 id="audit-results-heading" tabindex="-1">Kết quả tra cứu</h2><p>@AppliedSummary</p></div><span class="audit-tag">@AuditState.Result.TotalItems.ToString("N0", Vi) lượt truy cập</span></div>
+            @if (AuditState.Result.Items.Count == 0) { <p class="audit-empty">Không có nhật ký phù hợp với bộ lọc đã tra cứu.</p> }
+            else
+            {
+                <div class="table-responsive audit-table-region" role="region" aria-label="Bảng nhật ký truy cập" tabindex="0">
+                    <table class="table align-middle audit-table">
+                        <thead><tr><th scope="col">Thời gian</th><th scope="col">Người dùng</th><th scope="col">Hành động</th><th scope="col">Đối tượng</th><th scope="col">IP</th><th scope="col">Kết quả</th><th scope="col"><span class="visually-hidden">Chi tiết</span></th></tr></thead>
+                        <tbody>
+                            @foreach (var log in AuditState.Result.Items)
+                            {
+                                <tr @key="log.Id"><td class="audit-time">@Time(log)<small>@TimestampNote(log)</small></td><td class="audit-actor"><strong>@DisplayActor(log)</strong>@if (!string.IsNullOrWhiteSpace(log.FullName) && log.FullName != log.Username) { <small>@Actor(log)</small> }</td><td><span class="audit-action">@ActionLabel(log.Action)</span></td><td class="audit-entity"><strong>@EntitySummary(log)</strong></td><td class="audit-ip">@Ip(log.IpAddress)</td><td><span class="audit-outcome @(log.Succeeded ? "audit-success" : "audit-failure")">@(log.Succeeded ? "Thành công" : "Không thành công")</span></td><td><button id="audit-detail-@log.Id" type="button" class="btn btn-sm btn-outline-primary" aria-label="Chi tiết nhật ký @log.Id" disabled="@CannotRequest" @onclick="() => OpenDetail(log.Id)">Chi tiết</button></td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <div class="audit-pagination"><p>Trang @Math.Max(1, AuditState.Result.Page) / @Math.Max(1, AuditState.Result.TotalPages) · @AuditState.Result.PageSize lượt/trang</p><div><button id="audit-page-previous" type="button" class="btn btn-outline-primary" disabled="@(CannotRequest || FilterChanged || AuditState.Result.Page <= 1)" @onclick="() => PageChange(AuditState.Result.Page - 1)">Trước</button><button id="audit-page-next" type="button" class="btn btn-outline-primary" disabled="@(CannotRequest || FilterChanged || AuditState.Result.Page >= AuditState.Result.TotalPages)" @onclick="() => PageChange(AuditState.Result.Page + 1)">Sau</button></div></div>
+        </section>
+    }
+    <p class="audit-readonly-note"><i class="fas fa-shield-alt me-2" aria-hidden="true"></i>Nhật ký chỉ được bổ sung khi phát sinh truy cập. Trang này không có chức năng sửa hoặc xóa nhật ký.</p>
+</div>
+
+@code {
+    private static readonly CultureInfo Vi = CultureInfo.GetCultureInfo("vi-VN");
+    private static readonly (string Value, string Label)[] Entities = [
+        ("medical_records", "Bệnh án"), ("patients", "Bệnh nhân"), ("prescriptions", "Đơn thuốc"),
+        ("lab_results", "Kết quả xét nghiệm"), ("attachments", "Tệp đính kèm"), ("patient_allergies", "Dị ứng"),
+        ("medical_record_services", "Dịch vụ chỉ định"), ("notifications", "Thông báo"),
+        ("patient_vitals", "Chỉ số sinh tồn"), ("appointments", "Lịch hẹn"), ("invoices", "Hóa đơn"),
+        ("User", "Tài khoản"), ("Service", "Danh mục dịch vụ"), ("Specialty", "Chuyên khoa")];
+    private AuditLogQueryDTO _filter = DefaultFilter();
+    private string _userKeyword = string.Empty;
+    private AuditUserOptionDTO? _selectedUser;
+    private string? _pendingFocus;
+    private string? _detailTrigger;
+    private bool CannotRequest => AuditState.IsBusy || AuditState.RequiresLogin || AuditState.AccessDenied;
+    private bool FilterChanged => AuditState.HasLoaded && !AuditState.MatchesAppliedFilter(_filter);
+    private int UserPage => Math.Max(1, AuditState.Users.Page);
+    private IEnumerable<AuditUserOptionDTO> UserOptions => _selectedUser != null && !AuditState.Users.Items.Any(u => u.Id == _selectedUser.Id)
+        ? new[] { _selectedUser }.Concat(AuditState.Users.Items) : AuditState.Users.Items;
+    private string AppliedSummary
+    {
+        get
+        {
+            var applied = AuditState.AppliedFilter;
+            if (applied == null) return string.Empty;
+            var range = applied.From.HasValue && applied.To.HasValue ? $"{Date(applied.From.Value)} – {Date(applied.To.Value)}" : "Mọi thời điểm";
+            return $"{EntityLabel(applied.Entity)}{(applied.EntityId.HasValue ? $" #{applied.EntityId}" : "")} · {(applied.UserId.HasValue ? $"Người dùng #{applied.UserId}" : "Tất cả người dùng")} · {range}";
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        AuditState.Reset(); await AuditState.LoadUsersAsync();
+        if (await HandleSessionFailure()) return;
+        await AuditState.LoadAsync(_filter); await HandleSessionFailure();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocus is not { } target) return;
+        _pendingFocus = null;
+        try { await JS.InvokeVoidAsync("adminAuditLogs.focus", target); }
+        catch (JSDisconnectedException) { }
+    }
+    private async Task<bool> HandleSessionFailure()
+    {
+        if (AuditState.RequiresLogin) { _selectedUser = null; await UserState.LogoutAsync(); return true; }
+        if (AuditState.AccessDenied) { _selectedUser = null; return true; }
+        return false;
+    }
+    private async Task SearchLogs()
+    {
+        if (CannotRequest) return;
+        await AuditState.LoadAsync(_filter);
+        if (await HandleSessionFailure()) return;
+        _pendingFocus = string.IsNullOrEmpty(AuditState.ListError) ? "audit-results-heading" : "audit-error";
+    }
+    private void InvalidSubmit(EditContext _) => _pendingFocus = "audit-validation";
+    private async Task ResetFilters() { if (CannotRequest) return; _filter = DefaultFilter(); _selectedUser = null; await SearchLogs(); }
+    private void RememberUser() => _selectedUser = _filter.UserId.HasValue ? UserOptions.FirstOrDefault(u => u.Id == _filter.UserId.Value) : null;
+    private async Task SearchUsers() { if (CannotRequest) return; await LoadUsers(_userKeyword, 1); }
+    private async Task ResetUsers() { if (CannotRequest) return; _userKeyword = string.Empty; await LoadUsers(null, 1); }
+    private Task UserPageChange(int page) => LoadUsers(AuditState.UserKeyword, page);
+    private async Task LoadUsers(string? keyword, int page)
+    {
+        if (CannotRequest) return;
+        await AuditState.LoadUsersAsync(keyword, page);
+        if (await HandleSessionFailure()) return;
+        _pendingFocus = string.IsNullOrEmpty(AuditState.UsersError) ? "audit-user" : "audit-users-error";
+    }
+    private async Task PageChange(int page)
+    {
+        if (CannotRequest || FilterChanged) return;
+        await AuditState.GoToPageAsync(page);
+        if (await HandleSessionFailure()) return;
+        _pendingFocus = string.IsNullOrEmpty(AuditState.ListError) ? "audit-results-heading" : "audit-error";
+    }
+    private async Task OpenDetail(int id)
+    {
+        if (CannotRequest) return;
+        _detailTrigger = "audit-detail-" + id.ToString(CultureInfo.InvariantCulture);
+        await AuditState.LoadDetailAsync(id);
+        if (await HandleSessionFailure()) return;
+        _pendingFocus = string.IsNullOrEmpty(AuditState.DetailError) ? "audit-detail-heading" : "audit-detail-error";
+    }
+    private void CloseDetail() { if (CannotRequest) return; AuditState.CloseDetail(); _pendingFocus = _detailTrigger ?? "audit-results-heading"; }
+    private static string Date(DateOnly date) => date.ToString("dd/MM/yyyy", Vi);
+    private static string Time(AuditLogDTO log) => (log.IsUtcTimestamp ? DateTime.SpecifyKind(log.OccurredAtUtc, DateTimeKind.Utc).AddHours(7) : log.OccurredAtUtc).ToString("dd/MM/yyyy HH:mm:ss", Vi);
+    private static string TimestampNote(AuditLogDTO log) => log.IsUtcTimestamp ? "GMT+7" : "Giờ lưu cũ — chưa xác định múi giờ";
+    private static string EntityLabel(string? entity) => string.IsNullOrEmpty(entity) ? "Tất cả đối tượng" : Entities.FirstOrDefault(item => item.Value == entity).Label ?? entity;
+    private static string EntityId(int? id) => id.HasValue ? $"#{id}" : "(danh sách)";
+    private static string DisplayActor(AuditLogDTO log) => !string.IsNullOrWhiteSpace(log.FullName) ? log.FullName : Actor(log);
+    private static string EntitySummary(AuditAccessDTO log) => log.EntityCount > 1 ? $"{log.EntityCount} {EntityPlural(log.EntityName)}"
+        : log.EntityId.HasValue ? $"{EntityLabel(log.EntityName)} #{log.EntityId}"
+        : !log.Succeeded ? $"{EntityLabel(log.EntityName)} (chưa xác định mã)" : $"Danh sách {EntityPlural(log.EntityName)}";
+    private static string EntityPlural(string entity) => entity switch
+    {
+        "medical_records" or "MedicalRecord" => "bệnh án", "patients" or "Patient" => "bệnh nhân",
+        "attachments" or "Attachment" => "tệp đính kèm", "prescriptions" or "Prescription" => "đơn thuốc",
+        "lab_results" or "LabResult" => "kết quả xét nghiệm", "appointments" or "Appointment" => "lịch hẹn",
+        "invoices" or "Invoice" => "hóa đơn", "patient_allergies" => "dị ứng", "patient_vitals" => "chỉ số sinh tồn",
+        "medical_record_services" => "dịch vụ chỉ định", "notifications" => "thông báo", _ => EntityLabel(entity).ToLower(Vi)
+    };
+    private static string ActionLabel(string action) => action switch
+    {
+        "VIEW_RECORD_HISTORY" or "VIEW_PATIENT_RECORDS" or "VIEW_PATIENT_MEDICAL_RECORDS" => "Xem lịch sử khám",
+        "VIEW_RECORD" => "Xem bệnh án", "UPDATE_RECORD" => "Cập nhật bệnh án", "FINALIZE_RECORD" or "FINALIZE_MEDICAL_RECORD" => "Hoàn tất bệnh án",
+        "START_EXAM" => "Bắt đầu khám", "VIEW_PATIENT" => "Xem bệnh nhân", "CREATE_PATIENT" => "Tạo bệnh nhân", "UPDATE_PATIENT" => "Cập nhật bệnh nhân",
+        "CREATE_RECORD_SERVICE" => "Chỉ định dịch vụ", "CANCEL_RECORD_SERVICE" => "Hủy dịch vụ chỉ định", "UPSERT_LAB_RESULT" => "Ghi kết quả xét nghiệm",
+        "CREATE_ATTACHMENT" => "Thêm tệp đính kèm", "DOWNLOAD_ATTACHMENT" => "Tải tệp đính kèm", "DIRECT_ATTACHMENT_ACCESS_DENIED" => "Tải tệp trực tiếp bị chặn",
+        "UPSERT_PRESCRIPTION" => "Lưu đơn thuốc", "DOWNLOAD_PRESCRIPTION" => "Tải đơn thuốc", "VIEW_PRESCRIPTION" => "Xem đơn thuốc",
+        "DISPENSE_PRESCRIPTION" => "Phát thuốc", "REPORT_SHORTAGE" => "Báo thiếu thuốc", "VIEW_ALLERGY" => "Xem dị ứng", "CREATE_ALLERGY" => "Thêm dị ứng", "DELETE_ALLERGY" => "Xóa dị ứng",
+        "VIEW_APPOINTMENT" => "Xem lịch hẹn", "CREATE_APPOINTMENT" => "Tạo lịch hẹn", "CANCEL_APPOINTMENT" => "Hủy lịch hẹn", "RESCHEDULE_APPOINTMENT" => "Đổi lịch hẹn",
+        "CHECK_IN_APPOINTMENT" => "Check-in lịch hẹn", "MARK_NO_SHOW" => "Ghi nhận không đến", "VIEW_QUEUE" => "Xem hàng đợi", "RECALL_APPOINTMENT" => "Gọi lại bệnh nhân", "DEFER_APPOINTMENT" => "Hoãn lượt khám",
+        "VIEW_AFFECTED_APPOINTMENTS" => "Xem lịch hẹn bị ảnh hưởng", "VIEW_NOTIFICATIONS" => "Xem thông báo", "VIEW_INVOICE" => "Xem hóa đơn", "DOWNLOAD_INVOICE" => "Tải hóa đơn",
+        "PAY_INVOICE" => "Thu tiền", "REFUND_INVOICE" => "Hoàn tiền", "CANCEL_INVOICE" => "Hủy hóa đơn", _ => action
+    };
+    private static string Actor(AuditLogDTO log) => !string.IsNullOrWhiteSpace(log.Username) ? log.Username : !string.IsNullOrWhiteSpace(log.FullName) ? log.FullName : log.UserId.HasValue ? $"Tài khoản #{log.UserId} (không còn tồn tại)" : "Không xác định";
+    private static string UserOptionLabel(AuditUserOptionDTO user) => string.IsNullOrWhiteSpace(user.Username) ? $"Tài khoản #{user.Id} (không còn tồn tại)" : string.IsNullOrWhiteSpace(user.FullName) || user.FullName == user.Username ? $"{user.Username} (#{user.Id})" : $"{user.Username} — {user.FullName} (#{user.Id})";
+    private static string Ip(string? ip) => string.IsNullOrWhiteSpace(ip) ? "Không ghi nhận" : ip;
+    private static AuditLogQueryDTO DefaultFilter()
+    {
+        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).DateTime);
+        return new() { Entity = "medical_records", From = new(today.Year, today.Month, 1), To = today, Page = 1, PageSize = 20 };
+    }
+}
