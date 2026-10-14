@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using ClinicManagementSystem.Infrastructure.Services;
+using ClinicManagementSystem.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +25,7 @@ QuestPDF.Settings.License =
 // CONTROLLERS
 // ============================================================
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => options.Filters.Add<MedicalAuditResultFilter>());
 
 // ============================================================
 // DI DbContext
@@ -89,6 +90,8 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IJwtAuthService, JwtAuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminUserManagementService, AdminUserManagementService>();
+builder.Services.AddScoped<IAdminAuditLogService, AdminAuditLogService>();
+builder.Services.AddScoped<IMedicalAuditWriter, MedicalAuditWriter>();
 builder.Services.AddScoped<IAccountAccessValidationService, AccountAccessValidationService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<ISpecialtyService, SpecialtyService>();
@@ -265,13 +268,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
+app.UseRouting();
 
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 
+app.UseMiddleware<MedicalAuditMiddleware>();
+
 app.UseAuthorization();
+
+// MedicalAuditMiddleware blocks private uploads before static-file serving.
+app.UseStaticFiles();
 
 app.MapControllers();
 // Log khởi động

@@ -1,6 +1,7 @@
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -24,6 +25,7 @@ public class AttachmentService : IAttachmentService
     private readonly IUnitOfWork _unitOfWork;
 
     private readonly ILogger<AttachmentService> _logger;
+    private readonly string _contentRootPath;
 
 
     // =====================================================
@@ -32,10 +34,12 @@ public class AttachmentService : IAttachmentService
 
     public AttachmentService(
         IUnitOfWork unitOfWork,
-        ILogger<AttachmentService> logger)
+        ILogger<AttachmentService> logger,
+        IHostEnvironment? environment = null)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _contentRootPath = environment?.ContentRootPath ?? Directory.GetCurrentDirectory();
     }
 
 
@@ -117,11 +121,21 @@ public class AttachmentService : IAttachmentService
             // =================================================
 
             var filePath = attachment.FileUrl;
-
-            if (!Path.IsPathRooted(filePath))
+            var storedUrl = filePath.Replace('\\', '/');
+            if (storedUrl.TrimStart('/').StartsWith("uploads/medical-records/", StringComparison.OrdinalIgnoreCase))
+            {
+                // LocalFileStorageService stores a URL relative to wwwroot,
+                // not an absolute filesystem path. Downloads must use the
+                // authorized API now that direct static access is blocked.
+                var privateRoot = Path.GetFullPath(Path.Combine(_contentRootPath, "wwwroot", "uploads", "medical-records"));
+                filePath = Path.GetFullPath(Path.Combine(_contentRootPath, "wwwroot", storedUrl.TrimStart('/')));
+                var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+                if (!filePath.StartsWith(privateRoot + Path.DirectorySeparatorChar, comparison)) return null;
+            }
+            else if (!Path.IsPathRooted(filePath))
             {
                 filePath = Path.Combine(
-                    Directory.GetCurrentDirectory(),
+                    _contentRootPath,
                     filePath
                 );
             }

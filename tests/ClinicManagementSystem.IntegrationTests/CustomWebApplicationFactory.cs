@@ -82,6 +82,11 @@ public class CustomWebApplicationFactory
         {
             services.RemoveAll<IAccountAccessValidationService>();
             services.AddScoped<IAccountAccessValidationService, TestAccountAccessValidationService>();
+            // Legacy HTTP fixtures also make denied requests before creating
+            // their schema and use synthetic actors. VC24 has separate real
+            // pipeline tests with a capturing writer and SQL persistence tests.
+            services.RemoveAll<IMedicalAuditWriter>();
+            services.AddSingleton<IMedicalAuditWriter, ClinicManagementSystem.IntegrationTests.Audit.NoopMedicalAuditWriter>();
         });
 
 

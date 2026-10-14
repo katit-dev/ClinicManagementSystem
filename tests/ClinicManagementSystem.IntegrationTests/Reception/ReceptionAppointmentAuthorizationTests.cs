@@ -131,6 +131,8 @@ public class ReceptionAppointmentApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<IAccountAccessValidationService>();
             services.AddSingleton<IAccountAccessValidationService, ClinicManagementSystem.IntegrationTests.TestAccountAccessValidationService>();
+            services.RemoveAll<IMedicalAuditWriter>();
+            services.AddSingleton<IMedicalAuditWriter, ClinicManagementSystem.IntegrationTests.Audit.NoopMedicalAuditWriter>();
             services.RemoveAll<IReceptionAffectedAppointmentService>();
             services.AddSingleton<IReceptionAffectedAppointmentService, StubReceptionService>();
             services.RemoveAll<INotificationService>(); services.AddSingleton<INotificationService, StubNotificationService>();
