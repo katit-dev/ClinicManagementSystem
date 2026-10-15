@@ -373,6 +373,64 @@
     padding-left: 16px;
 }
 
+/* Password visibility controls for Login and Register. */
+.auth-password-group .auth-input {
+    padding-right: 58px;
+}
+
+.auth-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.auth-password-toggle i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    pointer-events: none;
+    transition: background-color 0.2s ease;
+}
+
+.auth-password-toggle:hover:not(:disabled) {
+    color: #0ea5e9;
+}
+
+.auth-password-toggle:hover:not(:disabled) i {
+    background: #e8f7ff;
+}
+
+.auth-password-toggle:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: -2px;
+}
+
+.auth-password-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.auth-password-group .auth-input::-ms-reveal {
+    display: none;
+}
+
 
 /* =====================================================
    DISABLED INPUT

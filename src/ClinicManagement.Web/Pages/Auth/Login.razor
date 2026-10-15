@@ -175,18 +175,26 @@
                         Mật khẩu
                     </label>
 
-                    <div class="auth-input-group">
+                    <div class="auth-input-group auth-password-group">
 
                         <span class="auth-input-icon">
                             <i class="fas fa-lock"></i>
                         </span>
 
                         <InputText id="password"
-                                   type="password"
+                                   type="@(_showPassword ? "text" : "password")"
                                    class="auth-input"
                                    @bind-Value="loginRequest.Password"
                                    placeholder="Nhập mật khẩu"
                                    autocomplete="current-password" />
+
+                        <button type="button" class="auth-password-toggle"
+                                aria-label="@(_showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu")"
+                                title="@(_showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu")"
+                                aria-controls="password" aria-pressed="@(_showPassword ? "true" : "false")"
+                                disabled="@isSubmitting" @onclick="() => _showPassword = !_showPassword">
+                            <i class="fas @(_showPassword ? "fa-eye-slash" : "fa-eye")" aria-hidden="true"></i>
+                        </button>
 
                     </div>
 
@@ -325,6 +333,7 @@
     // =====================================================
 
     private bool isSubmitting;
+    private bool _showPassword;
 
 
     // =====================================================

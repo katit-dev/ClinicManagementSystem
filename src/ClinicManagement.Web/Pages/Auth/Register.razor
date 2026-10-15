@@ -395,21 +395,29 @@
 
                 <div class="auth-field">
 
-                    <label class="auth-label">
+                    <label for="register-password" class="auth-label">
                         Mật khẩu
                     </label>
 
-                    <div class="auth-input-group">
+                    <div class="auth-input-group auth-password-group">
 
                         <span class="auth-input-icon">
                             <i class="fas fa-lock"></i>
                         </span>
 
-                        <InputText class="auth-input"
-                                   type="password"
+                        <InputText id="register-password" class="auth-input"
+                                   type="@(_showPassword ? "text" : "password")"
                                    @bind-Value="registerRequest.Password"
                                    placeholder="Nhập mật khẩu"
                                    autocomplete="new-password" />
+
+                        <button type="button" class="auth-password-toggle"
+                                aria-label="@(_showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu")"
+                                title="@(_showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu")"
+                                aria-controls="register-password" aria-pressed="@(_showPassword ? "true" : "false")"
+                                disabled="@isSubmitting" @onclick="() => _showPassword = !_showPassword">
+                            <i class="fas @(_showPassword ? "fa-eye-slash" : "fa-eye")" aria-hidden="true"></i>
+                        </button>
 
                     </div>
 
@@ -426,21 +434,29 @@
 
                 <div class="auth-field">
 
-                    <label class="auth-label">
+                    <label for="register-confirm-password" class="auth-label">
                         Xác nhận mật khẩu
                     </label>
 
-                    <div class="auth-input-group">
+                    <div class="auth-input-group auth-password-group">
 
                         <span class="auth-input-icon">
                             <i class="fas fa-shield-alt"></i>
                         </span>
 
-                        <InputText class="auth-input"
-                                   type="password"
+                        <InputText id="register-confirm-password" class="auth-input"
+                                   type="@(_showConfirmPassword ? "text" : "password")"
                                    @bind-Value="registerRequest.ConfirmPassword"
                                    placeholder="Nhập lại mật khẩu"
                                    autocomplete="new-password" />
+
+                        <button type="button" class="auth-password-toggle"
+                                aria-label="@(_showConfirmPassword ? "Ẩn xác nhận mật khẩu" : "Hiện xác nhận mật khẩu")"
+                                title="@(_showConfirmPassword ? "Ẩn xác nhận mật khẩu" : "Hiện xác nhận mật khẩu")"
+                                aria-controls="register-confirm-password" aria-pressed="@(_showConfirmPassword ? "true" : "false")"
+                                disabled="@isSubmitting" @onclick="() => _showConfirmPassword = !_showConfirmPassword">
+                            <i class="fas @(_showConfirmPassword ? "fa-eye-slash" : "fa-eye")" aria-hidden="true"></i>
+                        </button>
 
                     </div>
 
@@ -572,6 +588,8 @@
 
     private bool isSubmitting;
     private bool registerAttempted;
+    private bool _showPassword;
+    private bool _showConfirmPassword;
 
 
     // =====================================================
