@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 
 @inject UserStateService _userStateService
+@inject IJSRuntime JS
 
 @implements IDisposable
 
@@ -402,9 +403,9 @@
                        LOGOUT
                        ================================= *@
 
-                    <button type="button" class="header-logout" title="Đăng xuất" @onclick="HandleLogout">
+                    <button type="button" class="header-logout" title="Đăng xuất" aria-label="Đăng xuất" @onclick="HandleLogout">
 
-                        <i class="fas fa-sign-out-alt"></i>
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
 
                     </button>
 
@@ -432,6 +433,29 @@
 
 </div>
 
+@if (_userStateService.CurrentUser != null)
+{
+    <dialog id="logout-confirm-dialog" class="logout-confirm-dialog"
+            aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-description">
+        <div class="logout-confirm-body">
+            <button type="submit" value="cancel" form="logout-confirm-form" class="logout-confirm-close"
+                    aria-label="Đóng xác nhận đăng xuất" title="Đóng">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="logout-confirm-icon"><i class="fas fa-sign-out-alt" aria-hidden="true"></i></div>
+            <h2 id="logout-confirm-title">Bạn muốn đăng xuất?</h2>
+            <p id="logout-confirm-description">Bạn cần đăng nhập lại để tiếp tục sử dụng hệ thống.</p>
+        </div>
+        <form id="logout-confirm-form" method="dialog" class="logout-confirm-actions">
+            <button type="submit" value="cancel" class="logout-confirm-button logout-confirm-cancel" autofocus>Ở lại</button>
+            <button type="submit" value="confirm" class="logout-confirm-button logout-confirm-submit">
+                <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </form>
+    </dialog>
+}
+
 
 @code {
 
@@ -440,6 +464,7 @@
     // =====================================================
 
     private bool _isSidebarOpen;
+    private bool _logoutPending;
 
 
     // =====================================================
@@ -511,7 +536,17 @@
 
     private async Task HandleLogout()
     {
-        await _userStateService.LogoutAsync();
+        if (_logoutPending) return;
+        _logoutPending = true;
+        try
+        {
+            if (await JS.InvokeAsync<bool>("clinicLayout.confirmLogout", CancellationToken.None))
+                await _userStateService.LogoutAsync();
+        }
+        finally
+        {
+            _logoutPending = false;
+        }
     }
 
 
