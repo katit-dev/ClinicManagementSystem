@@ -146,6 +146,9 @@ public static class MedicalRecordResponseMessageDTO
     public const string AttachmentFileTypeNotAllowed =
         "Định dạng file không được hỗ trợ. Chỉ chấp nhận jpg, png, pdf, dicom.";
 
+    public const string AttachmentFileTooLarge =
+        "Dung lượng file không được vượt quá 10 MB.";
+
     public const string AttachmentUploadSuccess =
         "Đính kèm file thành công.";
 

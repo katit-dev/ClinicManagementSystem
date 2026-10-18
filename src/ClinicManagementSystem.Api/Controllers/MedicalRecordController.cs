@@ -441,7 +441,8 @@ public class MedicalRecordController : ControllerBase
 
     [HttpPost("{id:int}/attachments")]
     [Authorize(Roles = "Doctor")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestSizeLimit(AttachmentStoragePath.MaxRequestBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = AttachmentStoragePath.MaxRequestBytes)]
     public async Task<IActionResult> UploadMedicalRecordAttachment(
         int id,
         IFormFile file)

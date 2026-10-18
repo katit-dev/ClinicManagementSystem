@@ -1,157 +1,112 @@
 using ClinicManagementSystem.Application.Services;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ClinicManagementSystem.Infrastructure.Services;
 
-// =====================================================
-// LOCAL FILE STORAGE SERVICE
-// =====================================================
-// =====================================================
-
-public class LocalFileStorageService : IFileStorageService
+public sealed class LocalFileStorageService : IFileStorageService
 {
-    private readonly IHostEnvironment _environment;
+    private readonly string _root;
+    private readonly string _legacyRoot;
+    private readonly ILogger<LocalFileStorageService> _logger;
 
-    public LocalFileStorageService(
-        IHostEnvironment environment)
+    public LocalFileStorageService(IHostEnvironment environment, IOptions<FileStorageOptions> options,
+        ILogger<LocalFileStorageService> logger)
     {
-        _environment = environment;
+        var configuredRoot = options.Value.LocalRootPath;
+        _root = Path.GetFullPath(string.IsNullOrWhiteSpace(configuredRoot)
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ClinicManagementSystem", "medical-records")
+            : configuredRoot);
+        if ((!string.IsNullOrWhiteSpace(configuredRoot) && !Path.IsPathFullyQualified(configuredRoot)) ||
+            AttachmentStoragePath.IsWithin(_root, environment.ContentRootPath))
+            throw new InvalidOperationException("FileStorage:LocalRootPath must be an absolute private directory outside the API source.");
+
+        _legacyRoot = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "wwwroot", "uploads", "medical-records"));
+        _logger = logger;
     }
 
-
-    // =====================================================
-    // UPLOAD FILE
-    // =====================================================
-
-    public async Task<string> UploadAsync(
-        Stream fileStream,
-        string fileName,
-        string contentType,
-        int medicalRecordId)
+    public async Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, int medicalRecordId)
     {
-        // =================================================
-        // VALIDATE
-        // =================================================
-
-        if (fileStream == null)
+        var key = AttachmentStoragePath.Create(medicalRecordId, fileName);
+        var path = Resolve(_root, key);
+        EnsureNoLinks(path, _root);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var created = false;
+        try
         {
-            throw new ArgumentNullException(
-                nameof(fileStream));
+            await using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+                81920, FileOptions.Asynchronous);
+            created = true;
+            await AttachmentStoragePath.CopyUploadAsync(fileStream, output);
+            return key;
         }
-
-        if (string.IsNullOrWhiteSpace(fileName))
+        catch
         {
-            throw new ArgumentException(
-                "File name is required.",
-                nameof(fileName));
+            try { if (created) File.Delete(path); }
+            catch (Exception cleanupError) { _logger.LogError(cleanupError, "Could not remove incomplete attachment {StorageKey}", key); }
+            throw;
         }
+    }
 
-        if (medicalRecordId <= 0)
+    public async Task<byte[]?> DownloadAsync(string fileReference, int medicalRecordId)
+    {
+        var key = NormalizeReference(fileReference, medicalRecordId);
+        if (key == null) return null;
+        // Existing wwwroot files are read-only compatibility data until they are migrated.
+        foreach (var root in new[] { _root, _legacyRoot })
         {
-            throw new ArgumentException(
-                "Medical record ID must be greater than zero.",
-                nameof(medicalRecordId));
+            var path = Resolve(root, key);
+            EnsureNoLinks(path, root);
+            try { return await File.ReadAllBytesAsync(path); }
+            catch (FileNotFoundException) { }
+            catch (DirectoryNotFoundException) { }
         }
+        return null;
+    }
 
+    public Task DeleteAsync(string fileReference, int medicalRecordId)
+    {
+        var key = AttachmentStoragePath.Normalize(fileReference, medicalRecordId)
+            ?? throw new ArgumentException("Invalid attachment key.", nameof(fileReference));
+        var path = Resolve(_root, key);
+        EnsureNoLinks(path, _root);
+        // Compensation only deletes new private files, never legacy files in wwwroot.
+        try { File.Delete(path); }
+        catch (DirectoryNotFoundException) { }
+        return Task.CompletedTask;
+    }
 
-        // =================================================
-        // GET FILE EXTENSION
-        // =================================================
-
-        var extension =
-            Path.GetExtension(fileName);
-
-        if (string.IsNullOrWhiteSpace(extension))
+    private string? NormalizeReference(string reference, int recordId)
+    {
+        var key = AttachmentStoragePath.Normalize(reference, recordId);
+        if (key != null) return key;
+        if (!Path.IsPathFullyQualified(reference)) return null;
+        foreach (var root in new[] { _root, _legacyRoot })
         {
-            extension = ".bin";
+            if (!AttachmentStoragePath.IsWithin(reference, root)) continue;
+            var relative = Path.GetRelativePath(root, Path.GetFullPath(reference)).Replace('\\', '/');
+            return AttachmentStoragePath.Normalize("medical-records/" + relative, recordId);
         }
+        return null;
+    }
 
+    private static string Resolve(string root, string key)
+    {
+        var path = Path.GetFullPath(Path.Combine(root, key["medical-records/".Length..].Replace('/', Path.DirectorySeparatorChar)));
+        if (!AttachmentStoragePath.IsWithin(path, root)) throw new IOException("Invalid attachment path.");
+        return path;
+    }
 
-        // =================================================
-        // GENERATE UNIQUE FILE NAME
-        // =================================================
-
-        var storedFileName =
-            $"{Guid.NewGuid():N}{extension}";
-
-
-        // =================================================
-        // GET WWWROOT
-        // =================================================
-
-        var webRootPath =
-            Path.Combine(
-                _environment.ContentRootPath,
-                "wwwroot"
-            );
-
-
-        // =================================================
-        // GET UPLOAD DIRECTORY
-        //
-        // wwwroot
-        //   └── uploads
-        //       └── medical-records
-        //           └── {medicalRecordId}
-        // =================================================
-
-        var uploadDirectory =
-            Path.Combine(
-                webRootPath,
-                "uploads",
-                "medical-records",
-                medicalRecordId.ToString()
-            );
-
-
-        // =================================================
-        // CREATE DIRECTORY
-        // =================================================
-
-        Directory.CreateDirectory(
-            uploadDirectory
-        );
-
-
-        // =================================================
-        // FULL FILE PATH
-        // =================================================
-
-        var filePath =
-            Path.Combine(
-                uploadDirectory,
-                storedFileName
-            );
-
-
-        // =================================================
-        // SAVE FILE
-        // =================================================
-
-        await using var outputStream =
-            new FileStream(
-                filePath,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None,
-                bufferSize: 81920,
-                useAsync: true
-            );
-
-        await fileStream.CopyToAsync(
-            outputStream
-        );
-
-
-        // =================================================
-        // RETURN URL
-        //
-        // Đây là giá trị sẽ lưu vào:
-        // Attachment.FileUrl
-        // =================================================
-
-        return
-            $"/uploads/medical-records/" +
-            $"{medicalRecordId}/{storedFileName}";
+    private static void EnsureNoLinks(string path, string root)
+    {
+        for (var current = path; AttachmentStoragePath.IsWithin(current, root); current = Path.GetDirectoryName(current)!)
+        {
+            if ((File.Exists(current) || Directory.Exists(current)) &&
+                (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                throw new IOException("Attachment storage must not contain symbolic links or junctions.");
+            if (Path.GetFullPath(current) == root) break;
+        }
     }
 }

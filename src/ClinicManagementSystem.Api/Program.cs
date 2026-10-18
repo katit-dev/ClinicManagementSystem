@@ -1,3 +1,4 @@
+using ClinicManagementSystem.Api.Configuration;
 using Microsoft.OpenApi;
 using ClinicManagementSystem.Application.Services;
 using ClinicManagementSystem.Infrastructure.Data;
@@ -116,7 +117,7 @@ builder.Services.AddScoped<IMedicineInventoryService, MedicineInventoryService>(
 
 
 // file storage
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddAttachmentFileStorage(builder.Configuration, builder.Environment);
 
 
 // ============================================================

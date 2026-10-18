@@ -1375,6 +1375,8 @@ public class MedicalRecordService
             string fileName,
             string contentType)
     {
+        string? uploadedFileReference = null;
+        bool metadataSaved = false;
         try
         {
             // =================================================
@@ -1416,7 +1418,7 @@ public class MedicalRecordService
             // =================================================
 
             if (fileStream == null ||
-                fileStream.Length <= 0 ||
+                (fileStream.CanSeek && fileStream.Length <= 0) ||
                 string.IsNullOrWhiteSpace(fileName))
             {
                 return new HttpResponseData<AttachmentDTO>
@@ -1429,6 +1431,15 @@ public class MedicalRecordService
                 };
             }
 
+
+            if (fileStream.CanSeek && fileStream.Length > AttachmentStoragePath.MaxFileBytes)
+            {
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 413,
+                    Message = MedicalRecordResponseMessageDTO.AttachmentFileTooLarge
+                };
+            }
 
             // =================================================
             // VALIDATE FILE TYPE
@@ -1463,6 +1474,8 @@ public class MedicalRecordService
                 };
             }
 
+
+            contentType = AttachmentStoragePath.ContentTypeFor(fileName);
 
             // =================================================
             // GET CURRENT DOCTOR
@@ -1577,7 +1590,7 @@ public class MedicalRecordService
             // UPLOAD FILE
             // =================================================
 
-            var fileUrl =
+            var fileUrl = uploadedFileReference =
                 await _fileStorageService
                     .UploadAsync(
                         fileStream,
@@ -1626,6 +1639,7 @@ public class MedicalRecordService
 
             await _unitOfWork
                 .SaveChangesAsync();
+            metadataSaved = true;
 
 
             // =================================================
@@ -1673,6 +1687,31 @@ public class MedicalRecordService
         }
         catch (Exception ex)
         {
+            if (uploadedFileReference != null && !metadataSaved)
+            {
+                try
+                {
+                    // A timeout may occur after SQL committed. Confirm absence before deleting bytes.
+                    var persisted = await _unitOfWork.AttachmentRepository
+                        .WhereSql(a => a.MedicalRecordId == medicalRecordId && a.FileUrl == uploadedFileReference)
+                        .AnyAsync();
+                    if (!persisted) await _fileStorageService.DeleteAsync(uploadedFileReference, medicalRecordId);
+                }
+                catch (Exception cleanupError)
+                {
+                    _logger.LogError(cleanupError,
+                        "Attachment cleanup requires reconciliation. StorageKey: {StorageKey}, MedicalRecordId: {MedicalRecordId}",
+                        uploadedFileReference, medicalRecordId);
+                }
+            }
+
+            if (ex is AttachmentTooLargeException)
+                return new HttpResponseData<AttachmentDTO>
+                {
+                    StatusCode = 413,
+                    Message = MedicalRecordResponseMessageDTO.AttachmentFileTooLarge
+                };
+
             _logger.LogError(
                 ex,
                 "Failed to upload medical record attachment. " +
