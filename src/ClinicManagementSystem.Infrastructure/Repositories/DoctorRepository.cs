@@ -7,6 +7,7 @@ namespace ClinicManagementSystem.Infrastructure.Repositories;
 public interface IDoctorRepository : IRepositoryBase<Doctor>
 {
     Task<List<Doctor>> GetAdminOptionsAsync();
+    Task<Doctor?> GetActiveByUserIdAsync(int userId);
 }
 
 public class DoctorRepository : RepositoryBase<Doctor>, IDoctorRepository
@@ -17,6 +18,9 @@ public class DoctorRepository : RepositoryBase<Doctor>, IDoctorRepository
     {
         _context = context;
     }
+
+    public Task<Doctor?> GetActiveByUserIdAsync(int userId)
+        => _context.Doctors.AsNoTracking().FirstOrDefaultAsync(d => d.UserId == userId && d.IsActive);
 
     public Task<List<Doctor>> GetAdminOptionsAsync()
         => _context.Doctors.AsNoTracking().OrderBy(d => d.FullName).ThenBy(d => d.Id).ToListAsync();

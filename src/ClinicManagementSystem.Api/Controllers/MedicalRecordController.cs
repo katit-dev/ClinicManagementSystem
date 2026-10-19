@@ -583,9 +583,12 @@ public class MedicalRecordController : ControllerBase
     public async Task<IActionResult> GetPrescriptionPdf(
         int id)
     {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId) || currentUserId <= 0)
+            return Unauthorized();
+
         var pdf =
             await _medicalRecordService
-                .GetPrescriptionPdfAsync(id);
+                .GetPrescriptionPdfAsync(id, currentUserId);
 
 
         if (pdf == null)

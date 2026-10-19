@@ -24,6 +24,20 @@
 
 <div class="doctor-exam-page">
 
+    @if (DoctorExamStateService.MedicalRecord is { } currentRecord)
+    {
+        <div class="doctor-record-context">
+            <a href="/doctor/medical-records"><i class="fas fa-arrow-left" aria-hidden="true"></i> Bệnh án của tôi</a>
+            <span>@currentRecord.PatientName · @currentRecord.PatientCode</span>
+            @if (currentRecord.AppointmentStartTime.HasValue) { <span>Ngày khám: @currentRecord.AppointmentStartTime.Value.ToString("dd/MM/yyyy HH:mm")</span> }
+        </div>
+        @if (!currentRecord.CanEdit)
+        {
+            <div class="doctor-record-readonly" role="status"><i class="fas fa-lock" aria-hidden="true"></i> @currentRecord.ReadOnlyReason</div>
+        }
+    }
+
+
     <!-- =====================================================
          HEADER
          ===================================================== -->
@@ -195,7 +209,7 @@
 
                             <input id="medicine-search" type="text" class="doctor-exam-input"
                                    placeholder="Nhập tên thuốc..." value="@MedicineKeyword" @oninput="HandleMedicineInput"
-                                   disabled="@IsFinalized" />
+                                   disabled="@IsReadOnly" />
 
                             <div class="prescription-search-hint">
 
@@ -531,7 +545,7 @@
                                             <td>
 
                                                 <button type="button" class="doctor-exam-danger-button"
-                                                        @onclick="() => RemovePrescriptionItem(item)" disabled="@IsFinalized">
+                                                        @onclick="() => RemovePrescriptionItem(item)" disabled="@IsReadOnly">
 
                                                     Xóa
 
@@ -565,7 +579,7 @@
                         </label>
 
                         <textarea id="prescription-note" class="doctor-exam-input doctor-exam-textarea" rows="3"
-                                  placeholder="Ghi chú cho đơn thuốc..." @bind="PrescriptionNote" disabled="@IsFinalized">
+                                  placeholder="Ghi chú cho đơn thuốc..." @bind="PrescriptionNote" disabled="@IsReadOnly">
                         </textarea>
 
                     </div>
@@ -583,7 +597,7 @@
                     <!-- ADD MEDICINE -->
 
                     <button type="button" class="doctor-exam-secondary-button" @onclick="OpenAddMedicineModal"
-                            disabled="@(IsFinalized || SelectedMedicine == null)">
+                            disabled="@(IsReadOnly || SelectedMedicine == null)">
 
                         + Thêm thuốc
 
@@ -593,7 +607,7 @@
                     <!-- SAVE -->
 
                     <button type="button" class="doctor-exam-primary-button" @onclick="SavePrescription" disabled="@(
-                            IsFinalized ||
+                            IsReadOnly ||
                             PrescriptionItems.Count == 0 ||
                             IsSaving ||
                             PrescriptionId != null
@@ -833,7 +847,7 @@
                         </label>
 
                         <input id="medicine-quantity" type="number" min="1" class="doctor-exam-form-control"
-                               @bind="NewMedicineQuantity" disabled="@IsFinalized" />
+                               @bind="NewMedicineQuantity" disabled="@IsReadOnly" />
 
                     </div>
 
@@ -847,7 +861,7 @@
                         </label>
 
                         <input id="medicine-dosage" type="text" class="doctor-exam-form-control"
-                               placeholder="Ví dụ: sáng 1 · chiều 1" @bind="NewMedicineDosage" disabled="@IsFinalized" />
+                               placeholder="Ví dụ: sáng 1 · chiều 1" @bind="NewMedicineDosage" disabled="@IsReadOnly" />
 
                     </div>
 
@@ -861,7 +875,7 @@
                         </label>
 
                         <input id="medicine-instruction" type="text" class="doctor-exam-form-control"
-                               placeholder="Ví dụ: uống sau ăn" @bind="NewMedicineInstruction" disabled="@IsFinalized" />
+                               placeholder="Ví dụ: uống sau ăn" @bind="NewMedicineInstruction" disabled="@IsReadOnly" />
 
                     </div>
 
@@ -875,7 +889,7 @@
                         </label>
 
                         <input id="medicine-duration" type="number" min="1" class="doctor-exam-form-control"
-                               @bind="NewMedicineDurationDays" disabled="@IsFinalized" />
+                               @bind="NewMedicineDurationDays" disabled="@IsReadOnly" />
 
                     </div>
 
@@ -923,7 +937,7 @@
 
 
                     <button type="button" class="doctor-exam-primary-button" @onclick="AddMedicineToPrescription"
-                            disabled="@IsFinalized">
+                            disabled="@IsReadOnly">
 
                         Thêm
 
@@ -1018,15 +1032,24 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        await DoctorExamStateService
-            .LoadMedicalRecordAsync(
-                MedicalRecordId
-            );
+        PrescriptionItems.Clear(); PrescriptionId = null; PrescriptionNote = string.Empty;
+        SelectedMedicine = null; MedicineKeyword = string.Empty; IsAddMedicineModalOpen = false;
+        await DoctorExamStateService.LoadMedicalRecordAsync(MedicalRecordId);
+        var prescription = DoctorExamStateService.MedicalRecord?.Prescription;
+        if (prescription != null)
+        {
+            PrescriptionId = prescription.Id; PrescriptionNote = prescription.Note ?? string.Empty;
+            PrescriptionItems.AddRange(prescription.Items.Select(i => new PrescriptionItemViewModel
+            {
+                MedicineId = i.MedicineId, MedicineName = i.MedicineName, Quantity = i.Quantity,
+                Dosage = i.Dosage, Instruction = i.Instruction ?? string.Empty, DurationDays = i.DurationDays
+            }));
+        }
     }
 
     private void OpenAddMedicineModal()
     {
-        if (IsFinalized ||
+        if (IsReadOnly ||
             SelectedMedicine == null)
         {
             return;
@@ -1064,7 +1087,7 @@
     private void SelectMedicine(
         MedicineSearchDTO medicine)
     {
-        if (medicine.AvailableQuantity <= 0)
+        if (IsReadOnly || medicine.AvailableQuantity <= 0)
         {
             return;
         }
@@ -1107,10 +1130,7 @@
     // FINALIZED
     // =====================================================
 
-    private bool IsFinalized =>
-        DoctorExamStateService.MedicalRecord != null &&
-        DoctorExamStateService.MedicalRecord.Status ==
-            (byte)MedicalRecordStatus.Finalized;
+    private bool IsReadOnly => DoctorExamStateService.MedicalRecord?.CanEdit != true || PrescriptionId.HasValue;
 
 
     // =====================================================
@@ -1137,7 +1157,7 @@
         // CHECK FINALIZED
         // =================================================
 
-        if (IsFinalized)
+        if (IsReadOnly)
         {
             return;
         }
@@ -1310,7 +1330,7 @@
     private void RemovePrescriptionItem(
         PrescriptionItemViewModel item)
     {
-        if (IsFinalized)
+        if (IsReadOnly)
         {
             return;
         }
@@ -1337,7 +1357,7 @@
         // CHECK FINALIZED
         // =================================================
 
-        if (IsFinalized)
+        if (IsReadOnly)
         {
             return;
         }

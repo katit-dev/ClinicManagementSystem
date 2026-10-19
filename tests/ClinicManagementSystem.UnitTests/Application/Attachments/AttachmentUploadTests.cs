@@ -22,13 +22,21 @@ public class AttachmentUploadTests
         var doctors = new Mock<IDoctorRepository>();
         var records = new Mock<IMedicalRecordRepository>();
         var doctorRows = new[] { new Doctor { Id = 7, UserId = 42, IsActive = true } };
-        var recordRows = new[] { new Record { Id = 12, DoctorId = doctorId, Status = status } };
+        var recordRows = new[] { new Record { Id = 12, DoctorId = doctorId, AppointmentId = 3, Status = status } };
         doctors.Setup(x => x.WhereSql(It.IsAny<Expression<Func<Doctor, bool>>>()))
             .Returns((Expression<Func<Doctor, bool>> p) => doctorRows.Where(p.Compile()).ToList().BuildMock());
         records.Setup(x => x.WhereSql(It.IsAny<Expression<Func<Record, bool>>>()))
             .Returns((Expression<Func<Record, bool>> p) => recordRows.Where(p.Compile()).ToList().BuildMock());
         _unit.SetupGet(x => x.DoctorRepository).Returns(doctors.Object);
         _unit.SetupGet(x => x.MedicalRecordRepository).Returns(records.Object);
+        var appointments = new Mock<IAppointmentRepository>();
+        appointments.Setup(x => x.WhereSql(It.IsAny<Expression<Func<Appointment, bool>>>()))
+            .Returns((Expression<Func<Appointment, bool>> predicate) => new[]
+            {
+                new Appointment { Id = 3, DoctorId = doctorId, Status = (byte)AppointmentStatus.CheckedIn }
+            }.Where(predicate.Compile()).ToList().BuildMock());
+        appointments.Setup(x => x.GetMedicalRecordAppointmentStatusAsync(3)).ReturnsAsync((byte?)AppointmentStatus.CheckedIn);
+        _unit.SetupGet(x => x.AppointmentRepository).Returns(appointments.Object);
         _unit.SetupGet(x => x.AttachmentRepository).Returns(_attachments.Object);
         _attachments.Setup(x => x.WhereSql(It.IsAny<Expression<Func<Attachment, bool>>>()))
             .Returns(new List<Attachment>().BuildMock());

@@ -1,3 +1,4 @@
+using ClinicManagementSystem.Application.Helpers;
 using ClinicManagementSystem.Application.DTOs;
 using ClinicManagementSystem.Application.DTOs.MedicalRecord;
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
@@ -46,7 +47,7 @@ public interface IMedicalRecordService
 
     Task<HttpResponseData<PrescriptionResponseDTO>> CreatePrescriptionAsync(int medicalRecordId, int currentUserId, PrescriptionRequestDTO request);
 
-    Task<byte[]?> GetPrescriptionPdfAsync(int prescriptionId);
+    Task<byte[]?> GetPrescriptionPdfAsync(int prescriptionId, int currentUserId);
 
 }
 
@@ -97,7 +98,7 @@ public class MedicalRecordService
     // =====================================================
 
     public async Task<byte[]?> GetPrescriptionPdfAsync(
-        int prescriptionId)
+        int prescriptionId, int currentUserId)
     {
         try
         {
@@ -105,7 +106,7 @@ public class MedicalRecordService
             // VALIDATE ID
             // =================================================
 
-            if (prescriptionId <= 0)
+            if (prescriptionId <= 0 || currentUserId <= 0)
             {
                 return null;
             }
@@ -133,6 +134,12 @@ public class MedicalRecordService
             {
                 return null;
             }
+
+            var doctor = await _unitOfWork.DoctorRepository
+                .WhereSql(d => d.Id == prescription.DoctorId && d.UserId == currentUserId && d.IsActive)
+                .FirstOrDefaultAsync();
+            if (doctor == null) return null;
+
 
 
             // =================================================
@@ -168,7 +175,7 @@ public class MedicalRecordService
                     .FirstOrDefaultAsync();
 
 
-            if (medicalRecord == null)
+            if (medicalRecord == null || medicalRecord.DoctorId != doctor.Id)
             {
                 return null;
             }
@@ -193,15 +200,7 @@ public class MedicalRecordService
             // GET DOCTOR
             // =================================================
 
-            var doctor =
-                await _unitOfWork
-                    .DoctorRepository
-                    .WhereSql(
-                        d =>
-                            d.Id ==
-                            prescription.DoctorId
-                    )
-                    .FirstOrDefaultAsync();
+
 
 
             // =================================================
@@ -831,6 +830,10 @@ public class MedicalRecordService
                             .MedicalRecordNotDraft
                 };
             }
+
+            var editError = await GetAppointmentEditErrorAsync(medicalRecord);
+            if (editError.HasValue)
+                return new HttpResponseData<PrescriptionResponseDTO> { StatusCode = editError.Value.Code, Message = editError.Value.Message };
 
 
             // =================================================
@@ -1585,6 +1588,10 @@ public class MedicalRecordService
                 };
             }
 
+            var editError = await GetAppointmentEditErrorAsync(medicalRecord);
+            if (editError.HasValue)
+                return new HttpResponseData<AttachmentDTO> { StatusCode = editError.Value.Code, Message = editError.Value.Message };
+
 
             // =================================================
             // UPLOAD FILE
@@ -1914,6 +1921,10 @@ public class MedicalRecordService
                             .MedicalRecordNotDraft
                 };
             }
+
+            var editError = await GetAppointmentEditErrorAsync(medicalRecord);
+            if (editError.HasValue)
+                return new HttpResponseData<MedicalRecordServiceDTO> { StatusCode = editError.Value.Code, Message = editError.Value.Message };
 
 
             // =================================================
@@ -2387,6 +2398,10 @@ public class MedicalRecordService
                 };
             }
 
+            var editError = await GetAppointmentEditErrorAsync(medicalRecord);
+            if (editError.HasValue)
+                return new HttpResponseData<MedicalRecordServiceDTO> { StatusCode = editError.Value.Code, Message = editError.Value.Message };
+
 
             // =================================================
             // CHECK SERVICE STATUS
@@ -2700,6 +2715,10 @@ public class MedicalRecordService
                 };
             }
 
+            var editError = await GetAppointmentEditErrorAsync(medicalRecord);
+            if (editError.HasValue)
+                return new HttpResponseData<MedicalRecordServiceDTO> { StatusCode = editError.Value.Code, Message = editError.Value.Message };
+
 
             // =================================================
             // GET SERVICE
@@ -2960,6 +2979,9 @@ public class MedicalRecordService
                 m.Id == medicalRecordId &&
                 m.DoctorId == doctor.Id
         )
+        .Include(m => m.Prescription).ThenInclude(p => p!.PrescriptionItems)
+        .Include(m => m.Appointment)
+        .Include(m => m.Patient)
         .Include(
             m => m.Doctor
         )
@@ -3113,6 +3135,25 @@ public class MedicalRecordService
 
                     PatientId =
             medicalRecord.PatientId,
+
+                    Prescription = medicalRecord.Prescription == null ? null : new PrescriptionResponseDTO
+                    {
+                        Id = medicalRecord.Prescription.Id, MedicalRecordId = medicalRecord.Id,
+                        Note = medicalRecord.Prescription.Note, Status = medicalRecord.Prescription.Status,
+                        CreatedAt = medicalRecord.Prescription.CreatedAt, DispensedAt = medicalRecord.Prescription.DispensedAt,
+                        Items = medicalRecord.Prescription.PrescriptionItems.OrderBy(i => i.Id).Select(i => new PrescriptionItemResponseDTO
+                        {
+                            Id = i.Id, MedicineId = i.MedicineId, MedicineName = i.MedicineNameSnapshot,
+                            Quantity = i.Quantity, Dosage = i.Dosage ?? string.Empty, Instruction = i.Instruction,
+                            DurationDays = i.DurationDays, Frequency = i.Frequency
+                        }).ToList()
+                    },
+                    PatientName = medicalRecord.Patient?.FullName ?? string.Empty,
+                    PatientCode = medicalRecord.Patient?.PatientCode ?? string.Empty,
+                    AppointmentStartTime = medicalRecord.Appointment?.StartTime,
+                    AppointmentStatus = medicalRecord.Appointment?.Status,
+                    CanEdit = MedicalRecordEditPolicy.ReadOnlyReason(medicalRecord.Status, medicalRecord.Appointment?.Status) == null,
+                    ReadOnlyReason = MedicalRecordEditPolicy.ReadOnlyReason(medicalRecord.Status, medicalRecord.Appointment?.Status),
 
                     DoctorName =
                         medicalRecord.Doctor?.FullName
@@ -3353,6 +3394,10 @@ public class MedicalRecordService
                         .AppointmentNotFound
                 );
             }
+
+            var editError = await GetAppointmentEditErrorAsync(medicalRecord);
+            if (editError.HasValue)
+                return new HttpResponseData<InvoiceDTO> { StatusCode = editError.Value.Code, Message = editError.Value.Message };
 
 
             // =================================================
@@ -4075,6 +4120,10 @@ public class MedicalRecordService
                         .MedicalRecordNotDraft
                 );
             }
+
+            var editError = await GetAppointmentEditErrorAsync(medicalRecord);
+            if (editError.HasValue)
+                return new HttpResponseData<MedicalRecordDraftResponseDTO> { StatusCode = editError.Value.Code, Message = editError.Value.Message };
 
 
             // =================================================
@@ -4861,4 +4910,11 @@ public class MedicalRecordService
         };
     }
 
+
+    private async Task<(int Code, string Message)?> GetAppointmentEditErrorAsync(MedicalRecord medicalRecord)
+    {
+        var status = await _unitOfWork.AppointmentRepository.GetMedicalRecordAppointmentStatusAsync(medicalRecord.AppointmentId);
+        var reason = MedicalRecordEditPolicy.ReadOnlyReason(medicalRecord.Status, status);
+        return reason == null ? null : (status.HasValue ? 409 : 404, reason);
+    }
 }

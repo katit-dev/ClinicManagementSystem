@@ -11,6 +11,7 @@ public class PrescriptionItemResponseDTO
     // =================================================
 
     public int Id { get; set; }
+    public int MedicineId { get; set; }
 
 
     // =================================================

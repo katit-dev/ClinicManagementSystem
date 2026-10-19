@@ -18,6 +18,14 @@ public class MedicalRecordExamDTO
 
     public int PatientId { get; set; }
 
+    public string PatientName { get; set; } = string.Empty;
+    public string PatientCode { get; set; } = string.Empty;
+    public DateTime? AppointmentStartTime { get; set; }
+    public byte? AppointmentStatus { get; set; }
+    public ClinicManagementSystem.Application.DTOs.Prescription.PrescriptionResponseDTO? Prescription { get; set; }
+    public bool CanEdit { get; set; }
+    public string? ReadOnlyReason { get; set; }
+
     public string DoctorName { get; set; } = string.Empty;
 
     public string? Symptoms { get; set; }
