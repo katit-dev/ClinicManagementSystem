@@ -1,7 +1,6 @@
 using ClinicManagementSystem.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Hosting;
 
 namespace ClinicManagementSystem.Application.Services;
 
@@ -25,7 +24,7 @@ public class AttachmentService : IAttachmentService
     private readonly IUnitOfWork _unitOfWork;
 
     private readonly ILogger<AttachmentService> _logger;
-    private readonly string _contentRootPath;
+    private readonly IFileStorageService _fileStorage;
 
 
     // =====================================================
@@ -35,11 +34,11 @@ public class AttachmentService : IAttachmentService
     public AttachmentService(
         IUnitOfWork unitOfWork,
         ILogger<AttachmentService> logger,
-        IHostEnvironment? environment = null)
+        IFileStorageService fileStorage)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
-        _contentRootPath = environment?.ContentRootPath ?? Directory.GetCurrentDirectory();
+        _fileStorage = fileStorage;
     }
 
 
@@ -116,49 +115,9 @@ public class AttachmentService : IAttachmentService
             }
 
 
-            // =================================================
-            // RESOLVE FILE PATH
-            // =================================================
-
-            var filePath = attachment.FileUrl;
-            var storedUrl = filePath.Replace('\\', '/');
-            if (storedUrl.TrimStart('/').StartsWith("uploads/medical-records/", StringComparison.OrdinalIgnoreCase))
-            {
-                // LocalFileStorageService stores a URL relative to wwwroot,
-                // not an absolute filesystem path. Downloads must use the
-                // authorized API now that direct static access is blocked.
-                var privateRoot = Path.GetFullPath(Path.Combine(_contentRootPath, "wwwroot", "uploads", "medical-records"));
-                filePath = Path.GetFullPath(Path.Combine(_contentRootPath, "wwwroot", storedUrl.TrimStart('/')));
-                var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-                if (!filePath.StartsWith(privateRoot + Path.DirectorySeparatorChar, comparison)) return null;
-            }
-            else if (!Path.IsPathRooted(filePath))
-            {
-                filePath = Path.Combine(
-                    _contentRootPath,
-                    filePath
-                );
-            }
-
-            filePath = Path.GetFullPath(filePath);
-
-
-            // =================================================
-            // FILE NOT FOUND
-            // =================================================
-
-            if (!File.Exists(filePath))
-            {
-                return null;
-            }
-
-
-            // =================================================
-            // READ FILE
-            // =================================================
-
-            var fileBytes = await File.ReadAllBytesAsync(filePath);
-
+            // Storage access happens only after patient ownership has been verified.
+            var fileBytes = await _fileStorage.DownloadAsync(attachment.FileUrl, medicalRecord.Id);
+            if (fileBytes == null) return null;
 
             // =================================================
             // CONTENT TYPE
@@ -173,7 +132,7 @@ public class AttachmentService : IAttachmentService
             // FILE NAME
             // =================================================
 
-            var fileName = Path.GetFileName(filePath);
+            var fileName = Path.GetFileName(attachment.FileUrl.Replace('\\', '/'));
 
 
             // =================================================

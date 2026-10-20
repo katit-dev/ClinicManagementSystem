@@ -1,80 +1,95 @@
 @page "/doctor/medical-records"
-
 @layout HomePageMaster
-
 @attribute [Authorize(Roles = "Doctor")]
+@inject DoctorMedicalRecordStateService RecordState
+@implements IDisposable
 
+<PageTitle>Bệnh án của tôi</PageTitle>
 
-<PageTitle>Hồ sơ bệnh án</PageTitle>
-
-
-@* =====================================================
-   PAGE HEADER
-   ===================================================== *@
-
-<div class="d-flex justify-content-between
-            align-items-center
-            mb-4">
-
-    <div>
-
-        <h1 class="fw-bold mb-1">
-            Hồ sơ bệnh án
-        </h1>
-
-        <p class="text-secondary mb-0">
-            Tra cứu hồ sơ và lịch sử khám bệnh của bệnh nhân.
-        </p>
-
-    </div>
-
-
-    <a href="/doctor"
-       class="btn btn-outline-secondary">
-
-        <i class="fas fa-arrow-left me-1"></i>
-
-        Quay lại
-
-    </a>
-
-</div>
-
-
-@* =====================================================
-   MEDICAL RECORDS
-   ===================================================== *@
-
-<div class="card shadow-sm border-0">
-
-    <div class="card-body">
-
-        @* =============================================
-           TEMPORARY CONTENT
-           Chưa kết nối API hồ sơ bệnh án
-           ============================================= *@
-
-        <div class="text-center py-5">
-
-            <i class="fas fa-file-medical
-                      fa-3x
-                      text-secondary
-                      mb-3">
-            </i>
-
-            <h5>
-                Chưa có dữ liệu hồ sơ bệnh án
-            </h5>
-
-            <p class="text-secondary mb-0">
-
-                Danh sách hồ sơ và lịch sử khám bệnh
-                sẽ được hiển thị tại đây.
-
-            </p>
-
+<div class="doctor-records-page">
+    <header class="doctor-records-header">
+        <div><p class="doctor-records-eyebrow">HỒ SƠ KHÁM BỆNH</p><h1>Bệnh án của tôi</h1><p>Tra cứu bệnh án phụ trách, tiếp tục bản nháp và xem các bệnh án đã chốt.</p></div>
+        <a class="doctor-records-button secondary" href="/doctor/doctor-queue"><i class="fas fa-user-md" aria-hidden="true"></i> Hàng chờ khám</a>
+    </header>
+    <section class="doctor-records-card" aria-label="Tra cứu bệnh án">
+        <form class="doctor-records-filters" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+            <div class="doctor-records-keyword"><label for="doctor-record-keyword">Tìm bệnh án hoặc bệnh nhân</label>
+                <div class="doctor-records-search"><i class="fas fa-search" aria-hidden="true"></i>
+                    <input id="doctor-record-keyword" type="search" maxlength="100" placeholder="Mã bệnh án, mã hoặc tên bệnh nhân" @bind="RecordState.Keyword" @bind:event="oninput" disabled="@RecordState.IsLoading" />
+                </div>
+            </div>
+            <div><label for="doctor-record-from">Ngày khám từ</label><InputDate id="doctor-record-from" TValue="DateOnly?" @bind-Value="RecordState.From" disabled="@RecordState.IsLoading" /></div>
+            <div><label for="doctor-record-to">Đến ngày</label><InputDate id="doctor-record-to" TValue="DateOnly?" @bind-Value="RecordState.To" disabled="@RecordState.IsLoading" /></div>
+            <button type="submit" class="doctor-records-button primary" disabled="@RecordState.IsLoading"><i class="fas fa-search" aria-hidden="true"></i> Tra cứu</button>
+            <button type="button" class="doctor-records-button secondary" disabled="@RecordState.IsLoading" @onclick="ClearAsync">Xóa bộ lọc</button>
+        </form>
+        <div class="doctor-records-tabs" role="group" aria-label="Trạng thái bệnh án">
+            <button type="button" class="@(RecordState.Status == null ? "active" : null)" aria-pressed="@(RecordState.Status == null ? "true" : "false")" disabled="@RecordState.IsLoading" @onclick="() => ChangeStatusAsync(null)">Tất cả</button>
+            <button type="button" class="@(RecordState.Status == 0 ? "active" : null)" aria-pressed="@(RecordState.Status == 0 ? "true" : "false")" disabled="@RecordState.IsLoading" @onclick="() => ChangeStatusAsync(0)">Bản nháp</button>
+            <button type="button" class="@(RecordState.Status == 1 ? "active" : null)" aria-pressed="@(RecordState.Status == 1 ? "true" : "false")" disabled="@RecordState.IsLoading" @onclick="() => ChangeStatusAsync(1)">Đã chốt</button>
         </div>
-
-    </div>
-
+    </section>
+    @if (!string.IsNullOrEmpty(RecordState.ErrorMessage))
+    {
+        <div class="doctor-records-error" role="alert"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> @RecordState.ErrorMessage
+            <button type="button" class="doctor-records-button secondary" @onclick="SearchAsync" disabled="@RecordState.IsLoading">Thử lại</button>
+        </div>
+    }
+    @if (RecordState.HasUnappliedFilters) { <p class="doctor-records-filter-note" role="status">Bộ lọc đã thay đổi. Bấm Tra cứu để cập nhật kết quả.</p> }
+    <section class="doctor-records-card doctor-records-results" aria-busy="@RecordState.IsLoading.ToString().ToLowerInvariant()" aria-label="Danh sách bệnh án">
+        <div class="doctor-records-results-heading"><h2>Danh sách bệnh án</h2><span>@RecordState.Records.TotalItems bệnh án</span></div>
+        @if (RecordState.IsLoading)
+        {
+            <div class="doctor-records-empty" role="status"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><h3>Đang tải bệnh án</h3><p>Vui lòng chờ trong giây lát.</p></div>
+        }
+        else if (RecordState.Records.Items.Count == 0)
+        {
+            <div class="doctor-records-empty"><i class="fas fa-file-medical" aria-hidden="true"></i><h3>Không có bệnh án phù hợp</h3><p>Thử thay đổi từ khóa, trạng thái hoặc khoảng ngày khám.</p></div>
+        }
+        else
+        {
+            <div class="doctor-records-table-wrap" tabindex="0" aria-label="Bảng bệnh án có thể cuộn ngang">
+                <table class="doctor-records-table">
+                    <thead><tr><th scope="col">Bệnh án</th><th scope="col">Bệnh nhân</th><th scope="col">Ngày khám</th><th scope="col">Trạng thái</th><th scope="col">Lịch hẹn</th><th scope="col">Thao tác</th></tr></thead>
+                    <tbody>
+                        @foreach (var record in RecordState.Records.Items)
+                        {
+                            <tr @key="record.Id">
+                                <td><strong>#@record.Id</strong><small>Lịch hẹn #@record.AppointmentId</small></td>
+                                <td><strong>@record.PatientName</strong><small>@record.PatientCode</small></td>
+                                <td>@record.AppointmentStartTime.ToString("dd/MM/yyyy")<small>@record.AppointmentStartTime.ToString("HH:mm")</small></td>
+                                <td><span class="doctor-records-badge @(record.Status == 1 ? "finalized" : "draft")">@(record.Status == 1 ? "Đã chốt" : "Bản nháp")</span></td>
+                                <td><span class="doctor-records-badge @(record.AppointmentStatus is 4 or 5 ? "closed" : "appointment")">@AppointmentLabel(record.AppointmentStatus)</span></td>
+                                <td>
+                                    <a class="doctor-records-button @(record.CanContinue ? "primary" : "secondary")" href="@($"/doctor/exam/{record.Id}")" aria-label="@($"{(record.CanContinue ? "Tiếp tục khám" : "Xem chi tiết")} bệnh án {record.Id}")">@(record.CanContinue ? "Tiếp tục khám" : "Xem chi tiết") <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                                    @if (record.Status == 0 && !record.CanContinue) { <small class="doctor-records-readonly-hint">@record.ReadOnlyReason</small> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        <div class="doctor-records-pagination">
+            <label for="doctor-record-size">Số dòng <select id="doctor-record-size" @bind="RecordState.PageSize" @bind:after="SearchAsync" disabled="@RecordState.IsLoading"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select></label>
+            <span>Trang @RecordState.Records.Page / @Math.Max(1, RecordState.Records.TotalPages)</span>
+            <div>
+                <button type="button" class="doctor-records-button secondary" disabled="@(RecordState.IsLoading || RecordState.HasUnappliedFilters || RecordState.Records.Page <= 1)" @onclick="() => RecordState.LoadAsync(RecordState.Records.Page - 1)">Trước</button>
+                <button type="button" class="doctor-records-button secondary" disabled="@(RecordState.IsLoading || RecordState.HasUnappliedFilters || RecordState.Records.Page >= RecordState.Records.TotalPages)" @onclick="() => RecordState.LoadAsync(RecordState.Records.Page + 1)">Sau</button>
+            </div>
+        </div>
+    </section>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync() { RecordState.OnChange += HandleChange; await RecordState.LoadAsync(); }
+    private void HandleChange() => _ = InvokeAsync(StateHasChanged);
+    private Task SearchAsync() => RecordState.LoadAsync();
+    private Task ChangeStatusAsync(byte? status) { RecordState.Status = status; return SearchAsync(); }
+    private Task ClearAsync() { RecordState.Reset(); return SearchAsync(); }
+    private static string AppointmentLabel(byte status) => status switch
+    {
+        0 => "Chờ xác nhận", 1 => "Đã xác nhận", 2 => "Đã check-in", 3 => "Đã khám", 4 => "Đã hủy", 5 => "Không đến", _ => "Không xác định"
+    };
+    public void Dispose() { RecordState.OnChange -= HandleChange; RecordState.Reset(); }
+}

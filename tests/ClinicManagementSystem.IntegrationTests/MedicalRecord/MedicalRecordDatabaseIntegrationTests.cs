@@ -2316,7 +2316,7 @@ public class MedicalRecordDatabaseIntegrationTests
                     startTime.AddMinutes(30),
 
                 Status =
-                    0,
+                    (byte)AppointmentStatus.CheckedIn,
 
                 Reason =
                     "Integration test medical record",
@@ -2402,6 +2402,66 @@ public class MedicalRecordDatabaseIntegrationTests
     // =====================================================
     // TEST SCENARIO
     // =====================================================
+
+    [Fact]
+    public async Task OwnRecordList_UsesSqlScopeFiltersAndStablePaging()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ClinicManagementDbContext>();
+        await db.Database.EnsureCreatedAsync();
+        var own = await SeedMedicalRecordScenarioAsync(db);
+        var other = await SeedMedicalRecordScenarioAsync(db);
+        var day = own.Appointment.StartTime.Date;
+        own.Appointment.StartTime = day.AddHours(8);
+        own.Appointment.EndTime = day.AddHours(8.5);
+        var closed = new MedicalRecordEntity
+        {
+            DoctorId = own.Doctor.Id, PatientId = own.Patient.Id, Status = (byte)MedicalRecordStatus.Finalized,
+            CreatedAt = DateTime.UtcNow, FinalizedAt = DateTime.UtcNow, Diagnosis = "Closed fixture",
+            Appointment = new Appointment
+            {
+                DoctorId = own.Doctor.Id, PatientId = own.Patient.Id,
+                StartTime = day.AddHours(10), EndTime = day.AddHours(10.5), Status = (byte)AppointmentStatus.Completed,
+                AppointmentCode = "MYREC" + Guid.NewGuid().ToString("N")[..15],
+                CreatedAt = DateTime.UtcNow, FeeSnapshot = 100
+            }
+        };
+        db.MedicalRecords.Add(closed); await db.SaveChangesAsync();
+        var service = scope.ServiceProvider.GetRequiredService<IDoctorMedicalRecordService>();
+        var first = await service.GetMyRecordsAsync(new() { PageSize = 1 }, own.User.Id);
+        Assert.Equal(200, first.StatusCode); Assert.Equal(2, first.Content!.TotalItems);
+        Assert.Equal(closed.Id, Assert.Single(first.Content.Items).Id);
+        Assert.False(first.Content.Items[0].CanContinue);
+        var second = await service.GetMyRecordsAsync(new() { Page = 2, PageSize = 1 }, own.User.Id);
+        Assert.Equal(own.MedicalRecord.Id, Assert.Single(second.Content!.Items).Id);
+        Assert.True(second.Content.Items[0].CanContinue);
+        Assert.DoesNotContain(first.Content.Items.Concat(second.Content.Items), r => r.Id == other.MedicalRecord.Id);
+        var filtered = await service.GetMyRecordsAsync(new() { Keyword = "#" + closed.Id, Status = 1,
+            From = DateOnly.FromDateTime(day), To = DateOnly.FromDateTime(day) }, own.User.Id);
+        Assert.Equal(closed.Id, Assert.Single(filtered.Content!.Items).Id);
+        var previousDay = DateOnly.FromDateTime(day.AddDays(-1));
+        var noVisits = await service.GetMyRecordsAsync(new() { From = previousDay, To = previousDay }, own.User.Id);
+        Assert.Empty(noVisits.Content!.Items);
+    }
+
+    [Theory]
+    [InlineData((byte)AppointmentStatus.Cancelled)]
+    [InlineData((byte)AppointmentStatus.NoShow)]
+    public async Task ClosedAppointment_CannotFinalizeOrCreateInvoice(byte appointmentStatus)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ClinicManagementDbContext>();
+        await db.Database.EnsureCreatedAsync();
+        var scenario = await SeedMedicalRecordScenarioAsync(db);
+        scenario.Appointment.Status = appointmentStatus;
+        await db.SaveChangesAsync();
+        var service = scope.ServiceProvider.GetRequiredService<IMedicalRecordService>();
+        var result = await service.FinalizeMedicalRecordAsync(scenario.MedicalRecord.Id, scenario.User.Id);
+        Assert.Equal(409, result.StatusCode);
+        Assert.False(await db.Invoices.AnyAsync(i => i.MedicalRecordId == scenario.MedicalRecord.Id));
+        Assert.Equal((byte)MedicalRecordStatus.Draft, (await db.MedicalRecords.AsNoTracking().SingleAsync(r => r.Id == scenario.MedicalRecord.Id)).Status);
+        Assert.Equal(appointmentStatus, (await db.Appointments.AsNoTracking().SingleAsync(a => a.Id == scenario.Appointment.Id)).Status);
+    }
 
     private sealed record MedicalRecordScenario(
         User User,

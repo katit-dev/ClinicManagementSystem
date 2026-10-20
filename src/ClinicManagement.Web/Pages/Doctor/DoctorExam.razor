@@ -19,6 +19,20 @@
 
 <div class="doctor-exam-page">
 
+    @if (DoctorExamStateService.MedicalRecord is { } currentRecord)
+    {
+        <div class="doctor-record-context">
+            <a href="/doctor/medical-records"><i class="fas fa-arrow-left" aria-hidden="true"></i> Bệnh án của tôi</a>
+            <span>@currentRecord.PatientName · @currentRecord.PatientCode</span>
+            @if (currentRecord.AppointmentStartTime.HasValue) { <span>Ngày khám: @currentRecord.AppointmentStartTime.Value.ToString("dd/MM/yyyy HH:mm")</span> }
+        </div>
+        @if (!currentRecord.CanEdit)
+        {
+            <div class="doctor-record-readonly" role="status"><i class="fas fa-lock" aria-hidden="true"></i> @currentRecord.ReadOnlyReason</div>
+        }
+    }
+
+
     @* =====================================================
        HEADER
        ===================================================== *@
@@ -32,7 +46,7 @@
             </div>
 
             <h1>
-                Màn hình khám bệnh
+                @(IsReadOnly ? "Chi tiết bệnh án" : "Khám bệnh")
             </h1>
 
             <p>
@@ -223,7 +237,7 @@
                             </label>
 
                             <textarea class="doctor-exam-input doctor-exam-textarea" rows="4" @bind="Form.Symptoms"
-                                      disabled="@IsFinalized">
+                                      disabled="@IsReadOnly">
                             </textarea>
 
                         </div>
@@ -246,7 +260,7 @@
                             </label>
 
                             <textarea class="doctor-exam-input doctor-exam-textarea" rows="4" @bind="Form.Diagnosis"
-                                      disabled="@IsFinalized">
+                                      disabled="@IsReadOnly">
                             </textarea>
 
                         </div>
@@ -262,7 +276,7 @@
                                 Mã ICD-10
                             </label>
 
-                            <input type="text" class="doctor-exam-input" @bind="Form.Icd10Code" disabled="@IsFinalized" />
+                            <input type="text" class="doctor-exam-input" @bind="Form.Icd10Code" disabled="@IsReadOnly" />
 
                         </div>
 
@@ -278,7 +292,7 @@
                             </label>
 
                             <input type="date" class="doctor-exam-input" @bind="Form.FollowUpDate"
-                                   disabled="@IsFinalized" />
+                                   disabled="@IsReadOnly" />
 
                         </div>
 
@@ -294,7 +308,7 @@
                             </label>
 
                             <textarea class="doctor-exam-input doctor-exam-textarea" rows="4" @bind="Form.TreatmentPlan"
-                                      disabled="@IsFinalized">
+                                      disabled="@IsReadOnly">
                             </textarea>
 
                         </div>
@@ -311,7 +325,7 @@
                             </label>
 
                             <textarea class="doctor-exam-input doctor-exam-textarea" rows="3" @bind="Form.Note"
-                                      disabled="@IsFinalized">
+                                      disabled="@IsReadOnly">
                             </textarea>
 
                         </div>
@@ -348,7 +362,7 @@
                             <div class="doctor-exam-input-unit">
 
                                 <input type="number" step="0.1" class="doctor-exam-input" @bind="Form.Temperature"
-                                       disabled="@IsFinalized" />
+                                       disabled="@IsReadOnly" />
 
                                 <span>
                                     °C
@@ -371,7 +385,7 @@
 
                             <div class="doctor-exam-input-unit">
 
-                                <input type="number" class="doctor-exam-input" @bind="Form.Pulse" disabled="@IsFinalized" />
+                                <input type="number" class="doctor-exam-input" @bind="Form.Pulse" disabled="@IsReadOnly" />
 
                                 <span>
                                     bpm
@@ -393,7 +407,7 @@
                             </label>
 
                             <input type="text" class="doctor-exam-input" placeholder="120/80" @bind="Form.BloodPressure"
-                                   disabled="@IsFinalized" />
+                                   disabled="@IsReadOnly" />
 
                         </div>
 
@@ -411,7 +425,7 @@
                             <div class="doctor-exam-input-unit">
 
                                 <input type="number" step="0.1" class="doctor-exam-input" @bind="Form.Weight"
-                                       disabled="@IsFinalized" />
+                                       disabled="@IsReadOnly" />
 
                                 <span>
                                     kg
@@ -435,7 +449,7 @@
                             <div class="doctor-exam-input-unit">
 
                                 <input type="number" step="0.1" class="doctor-exam-input" @bind="Form.Height"
-                                       disabled="@IsFinalized" />
+                                       disabled="@IsReadOnly" />
 
                                 <span>
                                     cm
@@ -461,10 +475,9 @@
                        CLS
                        ================================================= *@
 
-                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized"
-                            @onclick="OpenServices">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="OpenServices">
 
-                        Chỉ định cận lâm sàng
+                        @(IsReadOnly ? "Xem cận lâm sàng" : "Chỉ định cận lâm sàng")
 
                     </button>
 
@@ -473,10 +486,9 @@
                        PRESCRIPTION
                        ================================================= *@
 
-                    <button type="button" class="doctor-exam-secondary-button" disabled="@IsFinalized"
-                            @onclick="OpenPrescription">
+                    <button type="button" class="doctor-exam-secondary-button" @onclick="OpenPrescription">
 
-                        Kê đơn thuốc
+                        @(IsReadOnly ? "Xem đơn thuốc" : "Kê đơn thuốc")
 
                     </button>
 
@@ -486,7 +498,7 @@
                        ================================================= *@
 
                     <button type="button" class="doctor-exam-primary-button"
-                            disabled="@(IsFinalized || DoctorExamStateService.IsSubmitting)" @onclick="SaveDraftAsync">
+                            disabled="@(IsReadOnly || DoctorExamStateService.IsSubmitting)" @onclick="SaveDraftAsync">
 
                         @(DoctorExamStateService.IsSubmitting
                             ? "Đang lưu..."
@@ -499,7 +511,7 @@
                        FINALIZE
                        ================================================= *@
 
-                    <button type="button" class="doctor-exam-finalize-button" disabled="@(IsFinalized || IsFinalizingExam)"
+                    <button type="button" class="doctor-exam-finalize-button" disabled="@(IsReadOnly || IsFinalizingExam)"
                             @onclick="FinalizeMedicalRecordAsync">
 
                         @(IsFinalizingExam
@@ -540,6 +552,8 @@
     // =====================================================
     // FINALIZED
     // =====================================================
+
+    private bool IsReadOnly => DoctorExamStateService.MedicalRecord?.CanEdit != true;
 
     private bool IsFinalized =>
         DoctorExamStateService.MedicalRecord != null &&
@@ -608,7 +622,7 @@ private void OpenPrescription()
 
     private async Task FinalizeMedicalRecordAsync()
     {
-        if (IsFinalized ||
+        if (IsReadOnly ||
             IsFinalizingExam)
         {
             return;
@@ -648,7 +662,7 @@ private void OpenPrescription()
         // DO NOT SAVE FINALIZED RECORD
         // =================================================
 
-        if (IsFinalized)
+        if (IsReadOnly)
         {
             return false;
         }

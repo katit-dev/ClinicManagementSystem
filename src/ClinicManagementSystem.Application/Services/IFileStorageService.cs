@@ -1,35 +1,9 @@
-using System.IO;
-
 namespace ClinicManagementSystem.Application.Services;
-
-// =====================================================
-// FILE STORAGE SERVICE CONTRACT
-// =====================================================
-//
-// Dùng để tách business logic khỏi nơi lưu file.
-//
-// Hiện tại:
-// IFileStorageService
-//        ↓
-// LocalFileStorageService
-//
-// deploy Azure:
-// IFileStorageService
-//        ↓
-// AzureBlobStorageService
-// =====================================================
 
 public interface IFileStorageService
 {
-    // =================================================
-    // UPLOAD FILE
-    //
-    // Trả về FileUrl để lưu vào Attachment.FileUrl.
-    // =================================================
-
-    Task<string> UploadAsync(
-        Stream fileStream,
-        string fileName,
-        string contentType,
-        int medicalRecordId);
+    // Store an opaque relative key in Attachment.FileUrl, never a public URL or SAS token.
+    Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, int medicalRecordId);
+    Task<byte[]?> DownloadAsync(string fileReference, int medicalRecordId);
+    Task DeleteAsync(string fileReference, int medicalRecordId);
 }

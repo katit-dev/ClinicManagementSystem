@@ -136,6 +136,21 @@ public class MedicalRecordServiceTests
     private void SetupMedicalRecords(
         params MedicalRecordEntity[] medicalRecords)
     {
+        foreach (var record in medicalRecords)
+            if (record.AppointmentId <= 0) record.AppointmentId = 100 + record.Id;
+        // A draft examination is editable only while its appointment is checked in.
+        var appointmentRows = medicalRecords.Select((r, index) => new Appointment
+        {
+            Id = r.AppointmentId, DoctorId = r.DoctorId, PatientId = r.PatientId,
+            Status = (byte)AppointmentStatus.CheckedIn
+        }).ToList();
+        var appointments = new Mock<IAppointmentRepository>();
+        appointments.Setup(x => x.WhereSql(It.IsAny<Expression<Func<Appointment, bool>>>()))
+            .Returns((Expression<Func<Appointment, bool>> predicate) => appointmentRows.Where(predicate.Compile()).ToList().BuildMock());
+        appointments.Setup(x => x.GetMedicalRecordAppointmentStatusAsync(It.IsAny<int>()))
+            .ReturnsAsync((int id) => appointmentRows.Where(a => a.Id == id).Select(a => (byte?)a.Status).FirstOrDefault());
+        _unitOfWorkMock.SetupGet(x => x.AppointmentRepository).Returns(appointments.Object);
+
         var repositoryMock =
             new Mock<IMedicalRecordRepository>();
 

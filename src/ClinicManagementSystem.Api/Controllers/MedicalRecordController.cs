@@ -441,7 +441,8 @@ public class MedicalRecordController : ControllerBase
 
     [HttpPost("{id:int}/attachments")]
     [Authorize(Roles = "Doctor")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestSizeLimit(AttachmentStoragePath.MaxRequestBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = AttachmentStoragePath.MaxRequestBytes)]
     public async Task<IActionResult> UploadMedicalRecordAttachment(
         int id,
         IFormFile file)
@@ -582,9 +583,12 @@ public class MedicalRecordController : ControllerBase
     public async Task<IActionResult> GetPrescriptionPdf(
         int id)
     {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId) || currentUserId <= 0)
+            return Unauthorized();
+
         var pdf =
             await _medicalRecordService
-                .GetPrescriptionPdfAsync(id);
+                .GetPrescriptionPdfAsync(id, currentUserId);
 
 
         if (pdf == null)

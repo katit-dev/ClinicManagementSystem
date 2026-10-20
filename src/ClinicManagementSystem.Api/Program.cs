@@ -1,3 +1,4 @@
+using ClinicManagementSystem.Api.Configuration;
 using Microsoft.OpenApi;
 using ClinicManagementSystem.Application.Services;
 using ClinicManagementSystem.Infrastructure.Data;
@@ -101,6 +102,8 @@ builder.Services.AddScoped<IAdminReportService, AdminReportService>();
 builder.Services.AddScoped<IAdminSchedulingService, AdminSchedulingService>();
 builder.Services.AddScoped<IReceptionAffectedAppointmentService, ReceptionAffectedAppointmentService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
+builder.Services.AddScoped<IDoctorMedicalRecordService, DoctorMedicalRecordService>();
+builder.Services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
 builder.Services.AddScoped<IPatientRecordService, PatientRecordService>();
@@ -116,7 +119,7 @@ builder.Services.AddScoped<IMedicineInventoryService, MedicineInventoryService>(
 
 
 // file storage
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddAttachmentFileStorage(builder.Configuration, builder.Environment);
 
 
 // ============================================================

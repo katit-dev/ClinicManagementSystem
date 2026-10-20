@@ -20,6 +20,20 @@
 
 <div class="doctor-exam-page">
 
+    @if (DoctorExamStateService.MedicalRecord is { } currentRecord)
+    {
+        <div class="doctor-record-context">
+            <a href="/doctor/medical-records"><i class="fas fa-arrow-left" aria-hidden="true"></i> Bệnh án của tôi</a>
+            <span>@currentRecord.PatientName · @currentRecord.PatientCode</span>
+            @if (currentRecord.AppointmentStartTime.HasValue) { <span>Ngày khám: @currentRecord.AppointmentStartTime.Value.ToString("dd/MM/yyyy HH:mm")</span> }
+        </div>
+        @if (!currentRecord.CanEdit)
+        {
+            <div class="doctor-record-readonly" role="status"><i class="fas fa-lock" aria-hidden="true"></i> @currentRecord.ReadOnlyReason</div>
+        }
+    }
+
+
     <!-- =====================================================
          HEADER
          ===================================================== -->
@@ -127,7 +141,7 @@
                             Dịch vụ cận lâm sàng
                         </div>
 
-                        <button type="button" class="doctor-exam-primary-button" @onclick="OpenAddServiceModal">
+                        <button type="button" class="doctor-exam-primary-button" @onclick="OpenAddServiceModal" disabled="@IsReadOnly">
 
                             + Thêm chỉ định
 
@@ -289,7 +303,7 @@
                                                         (byte)MedicalRecordServiceStatus.InProgress)
                                                 {
                                                     <button type="button" class="doctor-exam-result-button"
-                                                            @onclick="() => OpenResultModal(service)">
+                                                            @onclick="() => OpenResultModal(service)" disabled="@IsReadOnly">
 
                                                         Nhập kết quả
 
@@ -319,7 +333,7 @@
                                                         (byte)MedicalRecordServiceStatus.Ordered)
                                                     {
                                                         <button type="button" class="doctor-exam-danger-button"
-                                                                @onclick="() => OpenCancelServiceModal(service)">
+                                                                @onclick="() => OpenCancelServiceModal(service)" disabled="@IsReadOnly">
 
                                                             Hủy
 
@@ -440,7 +454,7 @@
 
                             <InputFile @key="AttachmentInputKey" OnChange="OnAttachmentSelected"
                                        accept=".jpg,.jpeg,.png,.pdf,.dcm,.dicom" id="attachment-file-input"
-                                       class="doctor-exam-file-input" />
+                                       class="doctor-exam-file-input" disabled="@IsReadOnly" />
 
                             <label for="attachment-file-input" class="doctor-exam-file-picker-button">
 
@@ -494,10 +508,8 @@
 
                     <div class="doctor-exam-attachment-actions">
 
-                        <button type="button" class="doctor-exam-primary-button" @onclick="UploadAttachment" disabled="@(
-                                SelectedAttachmentFile == null ||
-                                DoctorExamStateService.IsSubmitting
-                            )">
+                        <button type="button" class="doctor-exam-primary-button" @onclick="UploadAttachment" disabled="@(IsReadOnly || (SelectedAttachmentFile == null ||
+                                DoctorExamStateService.IsSubmitting))">
 
                             @(DoctorExamStateService.IsSubmitting
                                 ? "Đang tải lên..."
@@ -637,7 +649,7 @@
 
 
                     <button type="button" class="doctor-exam-primary-button" @onclick="AddService"
-                            disabled="@DoctorExamStateService.IsSubmitting">
+                            disabled="@(IsReadOnly || (DoctorExamStateService.IsSubmitting))">
 
                         @(DoctorExamStateService.IsSubmitting
                             ? "Đang thêm..."
@@ -747,7 +759,7 @@
 
 
                     <button type="button" class="doctor-exam-danger-button" @onclick="CancelService"
-                            disabled="@DoctorExamStateService.IsSubmitting">
+                            disabled="@(IsReadOnly || (DoctorExamStateService.IsSubmitting))">
 
                         @(DoctorExamStateService.IsSubmitting
                             ? "Đang hủy..."
@@ -902,7 +914,7 @@
                     </button>
 
                     <button type="button" class="doctor-exam-primary-button" @onclick="SaveResult"
-                            disabled="@DoctorExamStateService.IsSubmitting">
+                            disabled="@(IsReadOnly || (DoctorExamStateService.IsSubmitting))">
 
                         @(DoctorExamStateService.IsSubmitting
                             ? "Đang lưu..."
@@ -1098,6 +1110,8 @@
     // ADD SERVICE MODAL
     // =====================================================
 
+    private bool IsReadOnly => DoctorExamStateService.MedicalRecord?.CanEdit != true;
+
     private bool IsAddServiceModalOpen;
 
     private int SelectedServiceId;
@@ -1262,6 +1276,7 @@
 
     private async Task UploadAttachment()
     {
+        if (IsReadOnly) return;
         AttachmentErrorMessage =
             string.Empty;
 
@@ -1410,6 +1425,7 @@
 
     private async Task SaveResult()
     {
+        if (IsReadOnly) return;
         ResultErrorMessage =
             string.Empty;
 
@@ -1458,6 +1474,7 @@
     private void OpenResultModal(
         MedicalRecordServiceDTO service)
     {
+        if (IsReadOnly) return;
         SelectedServiceForResult =
             service;
 
@@ -1515,6 +1532,7 @@
 
     private async Task CancelService()
     {
+        if (IsReadOnly) return;
         CancelServiceErrorMessage =
             string.Empty;
 
@@ -1551,6 +1569,7 @@
 
     private async Task AddService()
     {
+        if (IsReadOnly) return;
         AddServiceErrorMessage =
             string.Empty;
 
@@ -1588,6 +1607,7 @@
 
     private void OpenAddServiceModal()
     {
+        if (IsReadOnly) return;
         SelectedServiceId = 0;
 
         ServiceQuantity = 1;
@@ -1622,6 +1642,7 @@
     private void OpenCancelServiceModal(
         MedicalRecordServiceDTO service)
     {
+        if (IsReadOnly) return;
         SelectedServiceToCancel =
             service;
 
