@@ -103,6 +103,7 @@ builder.Services.AddScoped<IAdminSchedulingService, AdminSchedulingService>();
 builder.Services.AddScoped<IReceptionAffectedAppointmentService, ReceptionAffectedAppointmentService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IDoctorMedicalRecordService, DoctorMedicalRecordService>();
+builder.Services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
 builder.Services.AddScoped<IPatientRecordService, PatientRecordService>();

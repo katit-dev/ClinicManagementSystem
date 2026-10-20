@@ -96,6 +96,7 @@ builder.Services.AddScoped<ReceptionInvoiceStateService>();
 builder.Services.AddScoped<DoctorQueueStateService>();
 builder.Services.AddScoped<DoctorExamStateService>();
 builder.Services.AddScoped<DoctorMedicalRecordStateService>();
+builder.Services.AddScoped<DoctorScheduleStateService>();
 builder.Services.AddScoped<MedicineReceiptStateService>();
 builder.Services.AddScoped<AdminSpecialtyStateService>();
 builder.Services.AddScoped<AdminServiceStateService>();

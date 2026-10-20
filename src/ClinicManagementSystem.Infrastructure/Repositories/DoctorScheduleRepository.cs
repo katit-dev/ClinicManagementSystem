@@ -9,6 +9,7 @@ public interface IDoctorScheduleRepository : IRepositoryBase<DoctorSchedule>
     Task<(List<DoctorSchedule> Items, int Total)> GetAdminPageAsync(int? doctorId, DateOnly? date, bool? active, int page, int pageSize);
     Task<List<DoctorSchedule>> GetForDoctorDayAsync(int doctorId, byte dayOfWeek);
     Task<List<DoctorSchedule>> GetEffectiveAsync(int doctorId, DateOnly date);
+    Task<List<DoctorSchedule>> GetInRangeAsync(int doctorId, DateOnly from, DateOnly to);
     Task AcquireAdminLockAsync();
 }
 
@@ -42,6 +43,11 @@ public class DoctorScheduleRepository : RepositoryBase<DoctorSchedule>, IDoctorS
         => _context.DoctorSchedules.AsNoTracking().Where(s => s.DoctorId == doctorId && s.DayOfWeek == (byte)date.DayOfWeek
             && s.IsActive && s.EffectiveFrom <= date && (s.EffectiveTo == null || s.EffectiveTo >= date))
             .OrderBy(s => s.StartTime).ToListAsync();
+
+    public Task<List<DoctorSchedule>> GetInRangeAsync(int doctorId, DateOnly from, DateOnly to)
+        => _context.DoctorSchedules.AsNoTracking().Where(s => s.DoctorId == doctorId && s.IsActive
+            && s.EffectiveFrom <= to && (s.EffectiveTo == null || s.EffectiveTo >= from))
+            .OrderBy(s => s.DayOfWeek).ThenBy(s => s.StartTime).ThenByDescending(s => s.EffectiveFrom).ThenBy(s => s.Id).ToListAsync();
 
     public async Task AcquireAdminLockAsync()
     {

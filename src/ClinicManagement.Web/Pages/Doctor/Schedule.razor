@@ -1,80 +1,166 @@
 @page "/doctor/schedule"
-
 @layout HomePageMaster
-
 @attribute [Authorize(Roles = "Doctor")]
+@using ClinicManagementSystem.Application.DTOs.Doctor
+@using Display = ClinicManagementSystem.Web.Services.DoctorScheduleDisplay
+@inject DoctorScheduleStateService ScheduleState
+@implements IDisposable
 
+<PageTitle>Lịch làm việc &amp; nghỉ phép của tôi</PageTitle>
 
-<PageTitle>Lịch làm việc</PageTitle>
+<div class="doctor-schedule-page">
+    <header class="doctor-schedule-header">
+        <div><p class="doctor-schedule-eyebrow">LỊCH CÁ NHÂN</p><h1>Lịch làm việc &amp; nghỉ phép</h1><p>Theo dõi ca làm và lịch nghỉ đã được Admin đăng ký cho bạn.</p></div>
+        <span class="doctor-schedule-zone"><i class="fas fa-clock" aria-hidden="true"></i> Giờ phòng khám · GMT+7</span>
+    </header>
 
-
-@* =====================================================
-   PAGE HEADER
-   ===================================================== *@
-
-<div class="d-flex justify-content-between
-            align-items-center
-            mb-4">
-
-    <div>
-
-        <h1 class="fw-bold mb-1">
-            Lịch làm việc
-        </h1>
-
-        <p class="text-secondary mb-0">
-            Xem lịch làm việc và lịch khám của bác sĩ.
-        </p>
-
+    <div class="doctor-schedule-tabs" role="group" aria-label="Chế độ xem lịch">
+        <button type="button" class="@(!_showTimeOff ? "active" : null)" aria-pressed="@(!_showTimeOff ? "true" : "false")" @onclick="ShowWeek"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Lịch tuần</button>
+        <button type="button" class="@(_showTimeOff ? "active" : null)" aria-pressed="@(_showTimeOff ? "true" : "false")" @onclick="ShowTimeOffAsync"><i class="fas fa-calendar-minus" aria-hidden="true"></i> Nghỉ đã đăng ký</button>
     </div>
 
+    @if (!_showTimeOff)
+    {
+        <section aria-label="Lịch làm việc theo tuần" aria-busy="@ScheduleState.IsLoadingWeek.ToString().ToLowerInvariant()">
+            <div class="doctor-schedule-toolbar">
+                <div class="doctor-schedule-week-nav">
+                    <button type="button" class="doctor-schedule-button icon" aria-label="Tuần trước" disabled="@(ScheduleState.IsLoadingWeek || !CanMove(-7))" @onclick="() => MoveWeekAsync(-7)"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                    <strong>@WeekTitle</strong>
+                    <button type="button" class="doctor-schedule-button icon" aria-label="Tuần sau" disabled="@(ScheduleState.IsLoadingWeek || !CanMove(7))" @onclick="() => MoveWeekAsync(7)"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+                </div>
+                <div class="doctor-schedule-date-tools">
+                    <label for="doctor-schedule-date">Chọn ngày</label>
+                    <InputDate id="doctor-schedule-date" TValue="DateOnly?" @bind-Value="_weekDate" @bind-Value:after="GoToDateAsync" disabled="@ScheduleState.IsLoadingWeek" />
+                    <button type="button" class="doctor-schedule-button" disabled="@ScheduleState.IsLoadingWeek" @onclick="TodayAsync">Hôm nay</button>
+                    <button type="button" class="doctor-schedule-button icon" aria-label="Tải lại lịch tuần" disabled="@ScheduleState.IsLoadingWeek" @onclick="RefreshWeekAsync"><i class="fas fa-sync-alt" aria-hidden="true"></i></button>
+                </div>
+            </div>
 
-    <a href="/doctor"
-       class="btn btn-outline-secondary">
+            @if (!string.IsNullOrWhiteSpace(ScheduleState.WeekError))
+            {
+                <div class="doctor-schedule-error" role="alert"><span>@ScheduleState.WeekError</span><button type="button" class="doctor-schedule-button" @onclick="RefreshWeekAsync">Thử lại</button></div>
+            }
+            @if (ScheduleState.IsLoadingWeek)
+            {
+                <div class="doctor-schedule-empty doctor-schedule-panel" role="status"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><h2>Đang tải lịch làm việc</h2><p>Vui lòng chờ trong giây lát.</p></div>
+            }
+            else if (ScheduleState.Schedule is { } schedule)
+            {
+                @if (schedule.Days.All(d => d.Shifts.Count == 0 && d.TimeOffs.Count == 0))
+                {
+                    <p class="doctor-schedule-notice" role="status">Bạn chưa được phân công ca làm trong tuần này.</p>
+                }
+                <div class="doctor-schedule-week doctor-schedule-panel" role="group" aria-label="Chọn ngày để xem chi tiết">
+                    @foreach (var day in schedule.Days)
+                    {
+                        <button type="button" class="doctor-schedule-day @(day.IsToday ? "today" : null)" @key="day.Date" aria-pressed="@(SelectedDay?.Date == day.Date ? "true" : "false")" aria-label="@($"{Display.DayName(day.Date)}, {Display.Date(day.Date)}, {day.Shifts.Count} ca làm, {day.TimeOffs.Count} lịch nghỉ")" @onclick="() => SelectDate(day.Date)">
+                            <span class="doctor-schedule-day-heading"><span>@Display.DayName(day.Date)</span><strong>@day.Date.Day</strong><small>@day.Date.ToString("MM/yyyy")</small></span>
+                            <span class="doctor-schedule-day-blocks">
+                                @foreach (var block in day.Blocks.Where(b => b.Kind != "break"))
+                                {
+                                    <span class="doctor-schedule-block @block.Kind"><b>@Display.BlockLabel(block.Kind)</b><span>@BlockTime(day, block)</span></span>
+                                }
+                                @if (day.Blocks.All(b => b.Kind == "break")) { <span class="doctor-schedule-no-shift">@(day.Shifts.Count == 0 ? "Không có ca" : "Không có giờ làm còn lại")</span> }
+                            </span>
+                        </button>
+                    }
+                </div>
+                <div class="doctor-schedule-legend" aria-label="Chú thích"><span><b class="work"></b>Ca làm việc</span><span><b class="leave"></b>Nghỉ cá nhân</span><span><b class="closure"></b>Phòng khám nghỉ</span></div>
 
-        <i class="fas fa-arrow-left me-1"></i>
-
-        Quay lại
-
-    </a>
-
+                @if (SelectedDay is { } selected)
+                {
+                    <section class="doctor-schedule-detail doctor-schedule-panel" aria-live="polite" aria-label="Chi tiết ngày đã chọn">
+                        <div class="doctor-schedule-detail-heading"><h2>@Display.DayName(selected.Date), @Display.Date(selected.Date)</h2>@if (selected.IsToday) { <span class="doctor-schedule-badge work">Hôm nay</span> }</div>
+                        <div class="doctor-schedule-detail-grid">
+                            <div><h3>Ca được phân công</h3>
+                                @if (selected.Shifts.Count == 0) { <p>Chưa có ca được phân công cho ngày này.</p> }
+                                @foreach (var shift in selected.Shifts)
+                                {
+                                    <div class="doctor-schedule-shift" @key="shift.Id">
+                                        <strong>@Display.Time(shift.StartTime) – @Display.Time(shift.EndTime)</strong>
+                                        <p>Nghỉ giữa ca: @(shift.BreakStart.HasValue && shift.BreakEnd.HasValue ? $"{Display.Time(shift.BreakStart.Value)} – {Display.Time(shift.BreakEnd.Value)}" : "Không có")</p>
+                                        <p>Mỗi lượt khám: @shift.SlotMinutes phút</p>
+                                        <small>Hiệu lực: @Display.Date(shift.EffectiveFrom) – @(shift.EffectiveTo.HasValue ? Display.Date(shift.EffectiveTo.Value) : "Chưa có ngày kết thúc")</small>
+                                    </div>
+                                }
+                            </div>
+                            <div><h3>Thời gian làm việc trong ngày</h3>
+                                @if (!selected.Blocks.Any(b => b.Kind == "work")) { <p>Không có giờ làm việc sau khi áp dụng lịch nghỉ.</p> }
+                                @foreach (var block in selected.Blocks.Where(b => b.Kind == "work")) { <p class="doctor-schedule-working-time"><i class="far fa-clock" aria-hidden="true"></i> @Display.TimeRange(block.StartAt, block.EndAt)</p> }
+                                <small>Đã loại giờ nghỉ giữa ca và lịch nghỉ áp dụng. Giờ đã có bệnh nhân đặt vẫn thuộc ca làm việc.</small>
+                            </div>
+                        </div>
+                        @if (selected.TimeOffs.Count > 0)
+                        {
+                            <div class="doctor-schedule-daily-leave"><h3>Lịch nghỉ áp dụng</h3>
+                                @foreach (var leave in selected.TimeOffs)
+                                {
+                                    <article class="doctor-schedule-leave-summary @(leave.IsClinicWide ? "closure" : "leave")" @key="leave.Id"><div><strong>@(leave.IsClinicWide ? "Toàn phòng khám" : "Nghỉ cá nhân") · @Display.TypeLabel(leave.Type)</strong><p>@Display.Period(leave)</p><p>@(string.IsNullOrWhiteSpace(leave.Reason) ? "Chưa ghi nhận lý do" : leave.Reason)</p></div><span class="doctor-schedule-badge neutral">@Display.StatusLabel(leave.PeriodStatus)</span></article>
+                                }
+                            </div>
+                        }
+                        <p class="doctor-schedule-footer-note"><i class="fas fa-info-circle" aria-hidden="true"></i> Lịch do Admin quản lý. Khi cần đổi ca hoặc điều chỉnh lịch nghỉ, vui lòng liên hệ Admin.</p>
+                    </section>
+                }
+            }
+        </section>
+    }
+    else
+    {
+        <section aria-label="Danh sách nghỉ đã đăng ký" aria-busy="@ScheduleState.IsLoadingTimeOff.ToString().ToLowerInvariant()">
+            <form class="doctor-schedule-filters doctor-schedule-panel" @onsubmit="SearchTimeOffAsync" @onsubmit:preventDefault>
+                <div><label for="doctor-leave-from">Từ ngày</label><InputDate id="doctor-leave-from" TValue="DateOnly?" @bind-Value="ScheduleState.From" disabled="@ScheduleState.IsLoadingTimeOff" /></div>
+                <div><label for="doctor-leave-to">Đến ngày</label><InputDate id="doctor-leave-to" TValue="DateOnly?" @bind-Value="ScheduleState.To" disabled="@ScheduleState.IsLoadingTimeOff" /></div>
+                <div><label for="doctor-leave-scope">Phạm vi</label><select id="doctor-leave-scope" @bind="ScheduleState.Scope" disabled="@ScheduleState.IsLoadingTimeOff"><option value="">Tất cả</option><option value="0">Cá nhân</option><option value="1">Toàn phòng khám</option></select></div>
+                <div><label for="doctor-leave-type">Loại nghỉ</label><select id="doctor-leave-type" @bind="ScheduleState.Type" disabled="@ScheduleState.IsLoadingTimeOff"><option value="">Tất cả</option><option value="0">Nghỉ phép</option><option value="1">Nghỉ lễ</option><option value="2">Nghỉ khác</option></select></div>
+                <button type="submit" class="doctor-schedule-button primary" disabled="@ScheduleState.IsLoadingTimeOff"><i class="fas fa-search" aria-hidden="true"></i> Tra cứu</button>
+                <button type="button" class="doctor-schedule-button" disabled="@ScheduleState.IsLoadingTimeOff" @onclick="ClearTimeOffAsync">Xóa bộ lọc</button>
+            </form>
+            @if (ScheduleState.HasUnappliedFilters) { <p class="doctor-schedule-notice" role="status">Bộ lọc đã thay đổi. Bấm Tra cứu để cập nhật kết quả.</p> }
+            @if (!string.IsNullOrWhiteSpace(ScheduleState.TimeOffError)) { <div class="doctor-schedule-error" role="alert">@ScheduleState.TimeOffError <button type="button" class="doctor-schedule-button" @onclick="SearchTimeOffAsync">Thử lại</button></div> }
+            <div class="doctor-schedule-panel doctor-schedule-leave-list">
+                <div class="doctor-schedule-detail-heading"><h2>Nghỉ đã đăng ký</h2><span class="doctor-schedule-badge work">@ScheduleState.TimeOff.TotalItems lịch nghỉ</span></div>
+                @if (ScheduleState.IsLoadingTimeOff) { <div class="doctor-schedule-empty" role="status"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><h3>Đang tải lịch nghỉ</h3></div> }
+                else if (ScheduleState.TimeOff.Items.Count == 0 && string.IsNullOrWhiteSpace(ScheduleState.TimeOffError)) { <div class="doctor-schedule-empty"><i class="far fa-calendar-check" aria-hidden="true"></i><h3>Không có lịch nghỉ phù hợp</h3><p>Lịch nghỉ cá nhân và nghỉ toàn phòng khám sẽ xuất hiện tại đây.</p></div> }
+                else
+                {
+                    @foreach (var leave in ScheduleState.TimeOff.Items)
+                    {
+                        <article class="doctor-schedule-leave-row" @key="leave.Id"><span class="doctor-schedule-leave-icon @(leave.IsClinicWide ? "closure" : "leave")"><i class="fas @(leave.IsClinicWide ? "fa-clinic-medical" : "fa-calendar-minus")" aria-hidden="true"></i></span><div class="doctor-schedule-leave-content"><div class="doctor-schedule-leave-title"><h3>@Display.TypeLabel(leave.Type)</h3><span class="doctor-schedule-badge @(leave.IsClinicWide ? "closure" : "leave")">@(leave.IsClinicWide ? "Toàn phòng khám" : "Cá nhân")</span></div><strong>@Display.Period(leave)</strong><p>@(string.IsNullOrWhiteSpace(leave.Reason) ? "Chưa ghi nhận lý do" : leave.Reason)</p><small>Lịch đã được Admin đăng ký</small></div><span class="doctor-schedule-badge @leave.PeriodStatus">@Display.StatusLabel(leave.PeriodStatus)</span></article>
+                    }
+                }
+                <div class="doctor-schedule-pagination"><label for="doctor-leave-size">Mỗi trang <select id="doctor-leave-size" @bind="ScheduleState.PageSize" @bind:after="SearchTimeOffAsync" disabled="@ScheduleState.IsLoadingTimeOff"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select></label><span>Trang @ScheduleState.TimeOff.Page / @Math.Max(1, ScheduleState.TimeOff.TotalPages)</span><div><button type="button" class="doctor-schedule-button" disabled="@(ScheduleState.IsLoadingTimeOff || ScheduleState.HasUnappliedFilters || ScheduleState.TimeOff.Page <= 1)" @onclick="() => ScheduleState.LoadTimeOffAsync(ScheduleState.TimeOff.Page - 1)">Trước</button><button type="button" class="doctor-schedule-button" disabled="@(ScheduleState.IsLoadingTimeOff || ScheduleState.HasUnappliedFilters || ScheduleState.TimeOff.Page >= ScheduleState.TimeOff.TotalPages)" @onclick="() => ScheduleState.LoadTimeOffAsync(ScheduleState.TimeOff.Page + 1)">Sau</button></div></div>
+            </div>
+        </section>
+    }
 </div>
 
-
-@* =====================================================
-   WORKING SCHEDULE
-   ===================================================== *@
-
-<div class="card shadow-sm border-0">
-
-    <div class="card-body">
-
-        @* =============================================
-           TEMPORARY CONTENT
-           Chưa kết nối API lịch làm việc
-           ============================================= *@
-
-        <div class="text-center py-5">
-
-            <i class="fas fa-calendar-alt
-                      fa-3x
-                      text-secondary
-                      mb-3">
-            </i>
-
-            <h5>
-                Chưa có dữ liệu lịch làm việc
-            </h5>
-
-            <p class="text-secondary mb-0">
-
-                Lịch làm việc và lịch khám
-                của bác sĩ sẽ được hiển thị tại đây.
-
-            </p>
-
-        </div>
-
-    </div>
-
-</div>
+@code {
+    private bool _showTimeOff;
+    private DateOnly? _weekDate;
+    private DateOnly? _selectedDate;
+    private DoctorScheduleDayDTO? SelectedDay => ScheduleState.Schedule?.Days.FirstOrDefault(d => d.Date == _selectedDate)
+        ?? ScheduleState.Schedule?.Days.FirstOrDefault(d => d.IsToday) ?? ScheduleState.Schedule?.Days.FirstOrDefault();
+    private string WeekTitle => ScheduleState.Schedule is { } s ? $"{Display.Date(s.From)} – {Display.Date(s.To)}" : "Lịch làm việc theo tuần";
+    private static string BlockTime(DoctorScheduleDayDTO day, DoctorScheduleBlockDTO block)
+        => block.StartAt.TimeOfDay == TimeSpan.Zero && block.EndAt == block.StartAt.AddDays(1)
+            && day.TimeOffs.Any(t => t.Id == block.TimeOffId && t.IsFullDay) ? "Cả ngày" : Display.TimeRange(block.StartAt, block.EndAt);
+    protected override async Task OnInitializedAsync() { ScheduleState.Reset(); ScheduleState.OnChange += OnChange; await LoadWeekAsync(null); }
+    private void OnChange() => _ = InvokeAsync(StateHasChanged);
+    private async Task LoadWeekAsync(DateOnly? date)
+    {
+        await ScheduleState.LoadWeekAsync(date);
+        if (ScheduleState.Schedule is { } s) { _weekDate = date ?? DateOnly.FromDateTime(s.ClinicNow); _selectedDate = s.Days.FirstOrDefault(d => d.Date == _weekDate)?.Date ?? s.From; }
+    }
+    private bool CanMove(int days) => _weekDate.HasValue && _weekDate.Value.DayNumber + days >= 0 && _weekDate.Value.DayNumber + days <= DateOnly.MaxValue.DayNumber - 7;
+    private Task MoveWeekAsync(int days) => CanMove(days) ? LoadWeekAsync(_weekDate!.Value.AddDays(days)) : Task.CompletedTask;
+    private Task GoToDateAsync() => LoadWeekAsync(_weekDate);
+    private Task TodayAsync() => LoadWeekAsync(null);
+    private Task RefreshWeekAsync() => LoadWeekAsync(_weekDate);
+    private void SelectDate(DateOnly date) => _selectedDate = date;
+    private void ShowWeek() => _showTimeOff = false;
+    private async Task ShowTimeOffAsync() { _showTimeOff = true; if (!ScheduleState.HasLoadedTimeOff && !ScheduleState.IsLoadingTimeOff) await SearchTimeOffAsync(); }
+    private Task SearchTimeOffAsync() => ScheduleState.LoadTimeOffAsync();
+    private Task ClearTimeOffAsync() { ScheduleState.From = ScheduleState.To = null; ScheduleState.Scope = ScheduleState.Type = null; return SearchTimeOffAsync(); }
+    public void Dispose() { ScheduleState.OnChange -= OnChange; ScheduleState.Reset(); }
+}
