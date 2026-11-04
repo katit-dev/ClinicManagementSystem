@@ -1916,3 +1916,98 @@ END CATCH;
 
 
 
+
+
+----------------- them 1 le tan 2
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+
+-- Thông tin lễ tân mới
+DECLARE @Username VARCHAR(100) = 'letan2';
+DECLARE @Email VARCHAR(255) = 'letan2@clinic.local';
+DECLARE @FullName NVARCHAR(255) = N'Lễ tân 2';
+
+-- NULL: tự chọn lễ tân hiện có.
+-- Ví dụ muốn lấy mật khẩu của user_id = 1 thì đổi thành 1.
+DECLARE @SourceUserId INT = NULL;
+
+DECLARE @RoleId INT;
+DECLARE @NewUserId INT;
+DECLARE @PasswordHash VARCHAR(255);
+DECLARE @SourceUsername VARCHAR(100);
+
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    SELECT @RoleId = id
+    FROM auth.roles
+    WHERE name = 'Receptionist';
+
+    IF @RoleId IS NULL
+        THROW 50001, N'Không tìm thấy vai trò Receptionist.', 1;
+
+    -- Lấy hash từ tài khoản lễ tân đang hoạt động
+    SELECT TOP (1)
+        @PasswordHash = u.password_hash,
+        @SourceUsername = u.username
+    FROM auth.users u
+    JOIN auth.user_roles ur ON ur.user_id = u.id
+    WHERE ur.role_id = @RoleId
+      AND u.is_active = 1
+      AND u.is_deleted = 0
+      AND (@SourceUserId IS NULL OR u.id = @SourceUserId)
+    ORDER BY u.id;
+
+    IF NULLIF(@PasswordHash, '') IS NULL
+        THROW 50002, N'Không tìm thấy lễ tân nguồn hợp lệ.', 1;
+
+    IF EXISTS (
+        SELECT 1
+        FROM auth.users WITH (UPDLOCK, HOLDLOCK)
+        WHERE username = @Username OR email = @Email
+    )
+        THROW 50003, N'Username hoặc email đã tồn tại. Hãy đổi thông tin tài khoản mới.', 1;
+
+    -- Tạo tài khoản
+    INSERT INTO auth.users (
+        username, password_hash, email, full_name,
+        is_active, is_deleted, email_confirmed,
+        failed_login_count, created_at
+    )
+    VALUES (
+        @Username, @PasswordHash, @Email, @FullName,
+        1, 0, 0,
+        0, SYSUTCDATETIME()
+    );
+
+    SET @NewUserId = CONVERT(INT, SCOPE_IDENTITY());
+
+    -- Gán vai trò lễ tân
+    INSERT INTO auth.user_roles (
+        user_id, role_id, assigned_at
+    )
+    VALUES (
+        @NewUserId, @RoleId, SYSUTCDATETIME()
+    );
+
+    COMMIT TRANSACTION;
+
+    -- Kiểm tra kết quả, không hiển thị password_hash
+    SELECT
+        u.id,
+        u.username,
+        u.full_name,
+        u.email,
+        r.name AS role_name,
+        @SourceUsername AS copied_password_from
+    FROM auth.users u
+    JOIN auth.user_roles ur ON ur.user_id = u.id
+    JOIN auth.roles r ON r.id = ur.role_id
+    WHERE u.id = @NewUserId;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;
+
+    THROW;
+END CATCH;

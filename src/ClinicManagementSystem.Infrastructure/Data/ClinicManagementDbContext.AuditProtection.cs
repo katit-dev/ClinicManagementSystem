@@ -27,6 +27,10 @@ public partial class ClinicManagementDbContext
         // Detect property changes even when a caller disabled EF automatic detection.
         // Reject the entire save before EF starts issuing database commands.
         ChangeTracker.DetectChanges();
+        if (ChangeTracker.Entries<SupportMessage>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted)
+            || ChangeTracker.Entries<SupportConversationEvent>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted)
+            || ChangeTracker.Entries<SupportConversation>().Any(entry => entry.State == EntityState.Deleted))
+            throw new InvalidOperationException("Support history is append-only; conversations must be closed, not deleted.");
         if (ChangeTracker.Entries<AuditLog>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Audit logs are append-only and cannot be modified or deleted.");
     }

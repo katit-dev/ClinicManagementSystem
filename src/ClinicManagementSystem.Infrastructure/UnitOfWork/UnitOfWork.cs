@@ -38,6 +38,8 @@ public interface IUnitOfWork : IAsyncDisposable
     IUserRoleRepository UserRoleRepository { get; }
     IPasswordResetTokenRepository PasswordResetTokenRepository { get; }
 
+    ISupportChatRepository SupportChatRepository { get; }
+
     Task BeginTransactionAsync();
 
     Task CommitTransactionAsync();
@@ -49,6 +51,7 @@ public interface IUnitOfWork : IAsyncDisposable
 
 public class UnitOfWork : IUnitOfWork
 {
+    public ISupportChatRepository SupportChatRepository { get; private set; }
     private readonly ClinicManagementDbContext _context;
     private IDbContextTransaction? _transaction;
 
@@ -119,6 +122,7 @@ public class UnitOfWork : IUnitOfWork
         SpecialtyRepository = new SpecialtyRepository(_context);
         UserRoleRepository = new UserRoleRepository(_context);
         PasswordResetTokenRepository = new PasswordResetTokenRepository(_context);
+        SupportChatRepository = new SupportChatRepository(_context);
     }
 
     public async Task BeginTransactionAsync()

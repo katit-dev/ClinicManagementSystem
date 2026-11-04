@@ -81,6 +81,7 @@ builder.Services.AddScoped<
 // DI STATE SERVICE
 // =====================================================
 builder.Services.AddScoped<UserStateService>();
+builder.Services.AddScoped<SupportChatStateService>();
 builder.Services.AddScoped<PatientStateService>();
 builder.Services.AddScoped<AuthorizedApiService>();
 builder.Services.AddScoped<IPatientDashboardService, PatientDashboardService>();
