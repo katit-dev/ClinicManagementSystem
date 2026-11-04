@@ -1,0 +1,188 @@
+@using ClinicManagementSystem.Application.DTOs.Support
+@inject SupportChatStateService Chat
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@if(_ready && Chat.Settings is {Enabled:true} settings)
+{
+    @if(!_open)
+    {
+        <div class="support-floating">
+            <button class="support-fab" aria-label="Mở tin nhắn hỗ trợ" aria-expanded="false" @onclick="ToggleAsync"><i class="fas fa-comment-dots" aria-hidden="true"></i>@if(Chat.UnreadCount>0){<span class="support-badge">@Chat.UnreadCount</span>}</button>
+            <a class="support-fab phone" href="@("tel:"+settings.Hotline)" aria-label="@("Gọi phòng khám "+settings.Hotline)"><i class="fas fa-phone-alt" aria-hidden="true"></i></a>
+        </div>
+    }
+    else
+    {
+        <button class="support-chat-backdrop" tabindex="-1" aria-label="Thu nhỏ khung chat" @onclick="Hide"></button>
+        <section class="support-widget" @ref="_widget" role="dialog" aria-labelledby="support-widget-title" data-support-view="@View" @onkeydown="KeyDown">
+            <div class="support-widget-top">
+                <header class="support-widget-header">
+                    <span class="support-header-icon"><i class="fas fa-headset" aria-hidden="true"></i></span>
+                    <div><strong id="support-widget-title">Hỗ trợ phòng khám</strong><small><span class="support-live-dot"></span>@Chat.ConnectionStatus</small></div>
+                    <button class="support-info-toggle" aria-label="Thông tin hỗ trợ" aria-expanded="@(_showInfo?"true":"false")" aria-controls="support-widget-info" title="Thông tin hỗ trợ" @onclick="()=>_showInfo=!_showInfo"><i class="fas fa-info" aria-hidden="true"></i></button>
+                    <button class="support-minimize" aria-label="Thu nhỏ khung chat" title="Thu nhỏ" @onclick="Hide"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                </header>
+                <div id="support-widget-info" class="support-hours @(_showInfo?"is-open":"")" title="@settings.SupportHours"><span class="support-hours-short">Giờ hành chính · T2–CN</span><span class="support-hours-full">@settings.SupportHours</span><a href="@("tel:"+settings.Hotline)"><i class="fas fa-phone-alt" aria-hidden="true"></i> @settings.Hotline</a></div>
+                <nav class="support-tabs" aria-label="Chế độ hỗ trợ">
+                    <button class="@(!_history?"active":"")" aria-current="@(!_history?"page":null)" disabled="@(_busy || _loading)" @onclick="CurrentAsync">Trò chuyện</button>
+                    <button class="@(_history?"active":"")" aria-current="@(_history?"page":null)" disabled="@(_busy || _loading)" @onclick="HistoryAsync">Lịch sử</button>
+                </nav>
+                @if(Chat.UnreadCount>0){<button class="support-unread-notice" disabled="@(_busy || _loading)" @onclick="OpenUnreadAsync"><span>@Chat.UnreadCount tin chưa đọc</span><strong>Xem tin mới <i class="fas fa-arrow-right" aria-hidden="true"></i></strong></button>}
+                @if(_loading){<div class="support-loading" role="status">Đang tải hội thoại…</div>}
+
+            </div>
+            <div class="support-widget-content">
+            @if(!string.IsNullOrEmpty(Chat.Error)){<div class="support-error" role="alert">@Chat.Error <button class="support-link" @onclick="RefreshAsync">Tải lại</button></div>}
+            @if(_editingSubject && Chat.Selected is {Status:<2})
+            {
+                <div class="support-subject-editor">
+                    <h3>Đổi chủ đề</h3><p>Chọn nội dung bạn cần hỗ trợ. Tin nhắn hiện tại vẫn được giữ.</p>
+                    <SupportTopicPicker @bind-Value="_editTopic" @bind-CustomSubject="_editCustom" Disabled="_busy" />
+                    <small>Để trống sẽ dùng “Hỗ trợ chung”.</small>
+                </div>
+            }
+            else if(_history && Chat.Selected==null)
+            {
+                <div class="support-history">
+                    @foreach(var c in Chat.Inbox.Items) {
+                        <button class="support-conversation" disabled="@(_busy || _loading)" @onclick="()=>SelectAsync(c)"><strong>@c.Subject</strong><span>@SupportChatStateService.StatusLabel(c.Status) · @SupportChatStateService.ClinicTime(c.CreatedAt)</span>@if(c.UnreadCount>0){<b>@c.UnreadCount tin mới</b>}<span class="support-history-action">@(c.UnreadCount>0?"Đọc tin mới":"Xem hội thoại") <i class="fas fa-chevron-right" aria-hidden="true"></i></span></button>
+                    }
+                    @if(Chat.Inbox.Items.Count==0){<div class="support-empty"><i class="far fa-comments" aria-hidden="true"></i><p>Bạn chưa có lịch sử hỗ trợ.</p></div>}
+                    @if(Chat.Inbox.TotalItems>Chat.Inbox.PageSize){<div class="support-pager"><button disabled="@(Chat.Inbox.Page<=1)" @onclick="()=>PageAsync(-1)">Trước</button><span>Trang @Chat.Inbox.Page</span><button disabled="@(Chat.Inbox.Page*Chat.Inbox.PageSize>=Chat.Inbox.TotalItems)" @onclick="()=>PageAsync(1)">Sau</button></div>}
+                </div>
+            }
+            else
+            {
+                @if(Chat.Selected is {} selected)
+                {
+                    <div class="support-thread-heading">
+                        <div class="support-subject-summary"><strong title="@selected.Subject">@selected.Subject</strong><span class="support-status status-@selected.Status">@SupportChatStateService.StatusLabel(selected.Status)</span></div>
+                        @if(selected.Status<2){<button class="support-link support-edit-subject" aria-label="Đổi chủ đề" title="Đổi chủ đề" disabled="@_busy" @onclick="EditSubject"><i class="fas fa-pen" aria-hidden="true"></i> Đổi</button>}
+                        @if(_history){<button class="support-link" disabled="@(_busy || _loading)" @onclick="HistoryAsync">Quay lại</button>}
+                    </div>
+                    <SupportThread @key="selected.Id" OnRead="ReadChanged" ScrollToken="_scrollToken" />
+                }
+                else
+                {
+                    <div class="support-welcome">
+                        <span class="support-welcome-kicker">LUÔN SẴN SÀNG LẮNG NGHE</span>
+                        <h3><span class="support-desktop-only">Chúng tôi có thể giúp gì?</span><span class="support-mobile-only">Bạn cần hỗ trợ gì?</span></h3><p><span class="support-desktop-only">Hỏi về lịch khám, dịch vụ hoặc thủ tục tại phòng khám.</span><span class="support-mobile-only">Lịch khám, dịch vụ và thủ tục phòng khám.</span></p>
+                        <SupportTopicPicker @bind-Value="_topic" @bind-CustomSubject="_customSubject" Disabled="_busy" />
+                        <small>Không chọn chủ đề? Bạn cứ gửi câu hỏi nhé.</small>
+                    </div>
+                }
+            }
+            </div>
+            @if(_editingSubject && Chat.Selected is {Status:<2})
+            {
+                <footer class="support-editor-actions"><button disabled="@_busy" @onclick="()=>_editingSubject=false">Hủy</button><button class="support-primary" disabled="@_busy" @onclick="SaveSubjectAsync">@(_busy?"Đang lưu…":"Lưu chủ đề")</button></footer>
+            }
+            else if(!_history || Chat.Selected!=null)
+            {
+                @if(Chat.Selected is not {Status:2})
+                {
+                    <footer class="support-compose-footer">
+                        <div class="support-composer"><textarea rows="1" aria-label="Nội dung hỗ trợ" maxlength="@settings.MaxMessageLength" placeholder="Nhập câu hỏi của bạn…" @bind="_draft" @bind:event="oninput" disabled="@_busy"></textarea><button class="support-primary support-send" aria-label="@(_busy?"Đang gửi":"Gửi tin nhắn")" title="Gửi tin nhắn" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))" @onclick="SendAsync"><i class="fas @(_busy?"fa-spinner fa-spin":"fa-paper-plane")" aria-hidden="true"></i></button></div>
+                        @if(Chat.Selected!=null){<button class="support-link support-end" disabled="@_busy" @onclick="()=>_confirmClose=true">Kết thúc yêu cầu</button>}
+                    </footer>
+                }
+                else {<div class="support-closed">Yêu cầu đã kết thúc. Lịch sử vẫn được lưu.<button class="support-primary" @onclick="CurrentAsync">Gửi yêu cầu mới</button></div>}
+            }
+            @if(_confirmClose){<div class="support-confirm-backdrop"><div class="support-confirm" role="alertdialog" aria-modal="true" aria-labelledby="support-confirm-title"><p id="support-confirm-title">Kết thúc yêu cầu hỗ trợ?</p><small>Lịch sử vẫn được giữ để bạn xem lại.</small><div><button disabled="@_busy" @onclick="()=>_confirmClose=false">Tiếp tục chat</button><button class="support-danger" disabled="@_busy" @onclick="CloseAsync">Kết thúc</button></div></div></div>}
+        </section>
+    }
+}
+
+@code {
+    private bool _ready,_open,_history,_busy,_confirmClose,_refreshing,_disposed,_editingSubject,_bound,_showInfo,_loading,_refreshPending;
+    private string _draft="",_topic="",_customSubject="",_pendingText="",_editTopic="",_editCustom="",_expectedSubject="";
+    private Guid _pendingId=Guid.NewGuid();
+    private int _scrollToken;
+    private ElementReference _widget,_boundWidget;
+    private IJSObjectReference? _module;
+    private string View=>_editingSubject && Chat.Selected is {Status:<2}?"editor":_history && Chat.Selected==null?"history":Chat.Selected==null?"welcome":"conversation";
+    private static string Subject(string topic,string custom)=>topic==SupportTopics.Other?custom:topic;
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if(firstRender) {
+            Chat.Invalidated+=OnInvalidated;Chat.SessionCleared+=SessionCleared;
+            _ready=await Chat.StartAsync("me");if(_ready)await Chat.LoadUnreadAsync();StateHasChanged();
+        }
+        if(_disposed)return;
+        try {
+            if(_open && !_bound) {
+                _module??=await JS.InvokeAsync<IJSObjectReference>("import","/js/support-chat.js?v=5");
+                _boundWidget=_widget;await _module.InvokeVoidAsync("mountChat",_widget);_bound=true;
+            } else if(!_open && _bound) await UnbindAsync();
+        } catch(JSDisconnectedException) { }
+    }
+    private async Task UnbindAsync(){if(_module!=null && _bound){_bound=false;await _module.InvokeVoidAsync("unmountChat",_boundWidget);}}
+    private void OnInvalidated(){if(!_disposed)_=InvokeAsync(RefreshAsync);}
+    private void SessionCleared(){_open=false;ClearDraft();_topic=_customSubject="";_ready=false;if(!_disposed)_=InvokeAsync(StateHasChanged);}
+    private void Hide(){_open=false;_editingSubject=_confirmClose=_showInfo=false;}
+    private void KeyDown(KeyboardEventArgs e){if(e.Key!="Escape" || _busy)return;if(_confirmClose)_confirmClose=false;else if(_editingSubject)_editingSubject=false;else if(_showInfo)_showInfo=false;else Hide();}
+    private async Task ToggleAsync(){_open=true;await CurrentAsync();if(Chat.UnreadCount>0 && Chat.Selected is not {UnreadCount:>0})await OpenUnreadAsync();}
+    private void ClearDraft(){_draft=_pendingText="";_pendingId=Guid.NewGuid();_editingSubject=_confirmClose=_showInfo=false;}
+    private async Task CurrentAsync(){
+        _loading=true;_history=false;_editingSubject=false;
+        try {
+            Chat.Query=new(){Scope="open",PageSize=20};if(!await Chat.LoadInboxAsync())return;
+            var c=Chat.Inbox.Items.FirstOrDefault(c=>c.Status<2);
+            if(c==null){if(Chat.Selected!=null)ClearDraft();Chat.NewConversation();}else await SelectAsync(c);
+        } finally {_loading=false;if(_refreshPending)await RefreshAsync();}
+    }
+    private async Task HistoryAsync(){
+        _loading=true;_history=true;ClearDraft();Chat.NewConversation();Chat.Query=new(){Scope="all"};
+        try{await Chat.LoadInboxAsync();}finally{_loading=false;if(_refreshPending)await RefreshAsync();}
+    }
+    private async Task OpenUnreadAsync(){
+        _loading=true;_history=true;_editingSubject=false;Chat.Query=new(){Scope="all",PageSize=20};
+        try {
+            while(await Chat.LoadInboxAsync()) {
+                var unread=Chat.Inbox.Items.FirstOrDefault(c=>c.UnreadCount>0);
+                if(unread!=null){_history=unread.Status==2;await SelectAsync(unread);return;}
+                if(Chat.Inbox.Page*Chat.Inbox.PageSize>=Chat.Inbox.TotalItems)break;
+                Chat.Query.Page++;
+            }
+        } finally {_loading=false;if(_refreshPending)await RefreshAsync();}
+    }
+    private async Task PageAsync(int delta){Chat.Query.Page+=delta;await Chat.LoadInboxAsync();}
+    private async Task SelectAsync(SupportChatStateService.Conversation c){
+        if(Chat.Selected?.Id!=c.Id)ClearDraft();Chat.Select(c);
+        await Chat.LoadMessagesAsync(reset:true);_scrollToken++;
+    }
+    private async Task RefreshAsync(){
+        if(_disposed || !_ready)return;_refreshPending=true;if(_refreshing || _loading)return;_refreshing=true;
+        try {
+            do {
+                _refreshPending=false;await Chat.LoadUnreadAsync();
+                if(_open && !_loading){
+                    await Chat.LoadInboxAsync();
+                    if(Chat.Selected is {} selected && Chat.Query.Scope=="open" && !Chat.Inbox.Items.Any(c=>c.Id==selected.Id)){
+                        Chat.Query=new(){Scope="all",PageSize=20};await Chat.LoadInboxAsync();
+                    }
+                    if(Chat.Selected!=null)await Chat.LoadMessagesAsync();
+                    if(Chat.Selected is not {Status:<2})_editingSubject=false;
+                }
+                if(!_disposed)StateHasChanged();
+            } while(_refreshPending && !_disposed && _ready && !_loading);
+        }finally{_refreshing=false;if(!_disposed)StateHasChanged();}
+    }
+    private void EditSubject(){
+        if(Chat.Selected is not {Status:<2} c)return;
+        _expectedSubject=c.Subject;_editTopic=SupportTopics.Presets.Contains(c.Subject)?c.Subject:SupportTopics.Other;
+        _editCustom=_editTopic==SupportTopics.Other?c.Subject:"";_editingSubject=true;
+    }
+    private async Task SaveSubjectAsync(){if(_busy)return;_busy=true;try{if(await Chat.UpdateSubjectAsync(Subject(_editTopic,_editCustom),_expectedSubject))_editingSubject=false;}finally{_busy=false;}}
+    private async Task SendAsync(){if(_busy || string.IsNullOrWhiteSpace(_draft))return;_busy=true;try{
+        if(_pendingText!=_draft){_pendingId=Guid.NewGuid();_pendingText=_draft;}
+        if(await Chat.SendAsync(_draft,_pendingId,Subject(_topic,_customSubject))){ClearDraft();_scrollToken++;await Chat.LoadInboxAsync();}
+    }finally{_busy=false;}}
+    private async Task CloseAsync(){_busy=true;try{if(await Chat.ActAsync("close"))_confirmClose=false;}finally{_busy=false;}}
+    private void ReadChanged()=>StateHasChanged();
+    public async ValueTask DisposeAsync(){
+        _disposed=true;Chat.Invalidated-=OnInvalidated;Chat.SessionCleared-=SessionCleared;
+        try{await UnbindAsync();if(_module!=null)await _module.DisposeAsync();}catch(JSDisconnectedException){}
+        await Chat.StopAsync();
+    }
+}

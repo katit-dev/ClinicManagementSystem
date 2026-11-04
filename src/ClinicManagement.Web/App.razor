@@ -35,6 +35,13 @@
                 <FocusOnNavigate RouteData="@routeData"
                                  Selector="h1" />
 
+                @if (!IsStaffPage(routeData.PageType))
+                {
+                    <AuthorizeView Roles="Patient">
+                        <Authorized><PatientSupportWidget @key="UserStateService.CurrentUser?.Id" /></Authorized>
+                    </AuthorizeView>
+                }
+
             </Found>
 
 
@@ -55,6 +62,8 @@
 
 
 @code {
+    private static bool IsStaffPage(Type page) => new[] { ".Admin", ".Reception", ".Doctor", ".Pharmacy" }
+        .Any(segment => page.Namespace?.Contains(segment, StringComparison.Ordinal) == true);
 
     // =====================================================
     // AUTHENTICATION STATE

@@ -573,3 +573,12 @@ Kiểm tra kết nối database và việc lưu `auth.audit_logs`. VC24 không c
 
 Dự án phục vụ mục đích học tập và triển khai nội bộ. Bổ sung thông tin license nếu repository được phát hành công khai.
 
+
+
+## Hỗ trợ trực tuyến
+
+Module chat văn bản dùng ASP.NET Core SignalR, lịch sử SQL và ba actor Patient/Receptionist/Admin. Bệnh nhân dùng khung chat nổi và hotline 0389479884; lễ tân dùng `/reception/support`; Admin dùng `/admin/support` để điều phối, không đọc nội dung tin. Giờ hỗ trợ là giờ hành chính hằng ngày, gồm Thứ Bảy và Chủ Nhật.
+
+Trước khi bật module, chạy riêng `database/007_AddSupportChat.sql` trên đúng database. Cấu hình chung mặc định `SupportChat:Enabled=false`; bật sau khi schema, API và Web sẵn sàng. Production bản đầu giữ một API instance, không bắt buộc Azure SignalR Service.
+
+Chi tiết cấu hình, quyền dữ liệu, kiểm thử và deploy: [SUPPORT_CHAT_SETUP.md](docs/SUPPORT_CHAT_SETUP.md).

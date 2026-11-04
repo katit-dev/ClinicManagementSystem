@@ -1,0 +1,26 @@
+@using ClinicManagementSystem.Application.DTOs.Support
+
+<div class="support-topic-picker">
+    <label for="@(_id+"-select")">Chủ đề <span>(không bắt buộc)</span></label>
+    <select id="@(_id+"-select")" value="@Value" @onchange="ChangedAsync" disabled="@Disabled">
+        <option value="">Chọn chủ đề</option>
+        @foreach(var topic in SupportTopics.Presets) { <option value="@topic">@topic</option> }
+        <option value="@SupportTopics.Other">@SupportTopics.Other</option>
+    </select>
+    @if(Value==SupportTopics.Other)
+    {
+        <label class="support-custom-label" for="@(_id+"-custom")">Chủ đề của bạn</label>
+        <input id="@(_id+"-custom")" type="text" maxlength="150" value="@CustomSubject" @oninput="CustomChangedAsync" placeholder="Nhập chủ đề ngắn gọn…" disabled="@Disabled" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Value { get;set; }="";
+    [Parameter] public EventCallback<string> ValueChanged { get;set; }
+    [Parameter] public string CustomSubject { get;set; }="";
+    [Parameter] public EventCallback<string> CustomSubjectChanged { get;set; }
+    [Parameter] public bool Disabled { get;set; }
+    private readonly string _id="support-topic-"+Guid.NewGuid().ToString("N");
+    private Task ChangedAsync(ChangeEventArgs e)=>ValueChanged.InvokeAsync(e.Value?.ToString()??"");
+    private Task CustomChangedAsync(ChangeEventArgs e)=>CustomSubjectChanged.InvokeAsync(e.Value?.ToString()??"");
+}

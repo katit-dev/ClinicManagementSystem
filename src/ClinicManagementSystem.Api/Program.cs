@@ -1,3 +1,6 @@
+using ClinicManagementSystem.Api.Hubs;
+using ClinicManagementSystem.Application.DTOs.Support;
+using System.Threading.RateLimiting;
 using ClinicManagementSystem.Api.Configuration;
 using Microsoft.OpenApi;
 using ClinicManagementSystem.Application.Services;
@@ -136,6 +139,19 @@ builder.Services.AddSerilog((services, loggerConfiguration) =>
 // ============================================================
 
 builder.Services.AddAuthorization();
+builder.Services.Configure<SupportChatOptions>(builder.Configuration.GetSection("SupportChat"));
+builder.Services.AddScoped<ISupportChatService, SupportChatService>();
+builder.Services.AddScoped<ISupportChatNotifier, SupportChatNotifier>();
+builder.Services.AddSignalR(options => options.EnableDetailedErrors = false);
+builder.Services.AddRateLimiter(options => {
+    options.RejectionStatusCode = 429;
+    options.AddPolicy("SupportSend", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit=Math.Clamp(builder.Configuration.GetValue("SupportChat:MessagesPerMinute",30),1,300), Window=TimeSpan.FromMinutes(1), QueueLimit=0 }));
+    options.AddPolicy("SupportCreate", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit=Math.Clamp(builder.Configuration.GetValue("SupportChat:CreatesPerHour",10),1,100), Window=TimeSpan.FromHours(1), QueueLimit=0 }));
+});
 
 // ============================================================
 // Swagger
@@ -280,11 +296,13 @@ app.UseAuthentication();
 app.UseMiddleware<MedicalAuditMiddleware>();
 
 app.UseAuthorization();
+app.UseRateLimiter();
 
 // MedicalAuditMiddleware blocks private uploads before static-file serving.
 app.UseStaticFiles();
 
 app.MapControllers();
+app.MapHub<SupportChatHub>("/hubs/support-chat", options => options.CloseOnAuthenticationExpiration = true);
 // Log khởi động
 app.Logger.LogInformation("Clinic API started.");
 

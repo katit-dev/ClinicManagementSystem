@@ -1,0 +1,69 @@
+@using ClinicManagementSystem.Application.DTOs.Support
+@inject SupportChatStateService Chat
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="support-thread-wrap">
+<div class="support-thread" @ref="_thread" @onscroll="ScrolledAsync" tabindex="0" aria-label="Lịch sử tin nhắn" aria-busy="@(Chat.LoadingMessages?"true":"false")">
+    @if(Chat.MoreMessages) { <button class="support-link" disabled="@Chat.LoadingMessages" @onclick="OlderAsync">Xem tin cũ hơn</button> }
+    @if(Chat.Messages.Count==0 && Chat.LoadingMessages){<div class="support-loading" role="status">Đang tải tin nhắn…</div>}
+    @if(!Chat.LoadingMessages && !Chat.MessagesLoaded && Chat.MessageError.Length==0 && Chat.Messages.Count==0){<div class="support-empty"><p>Chưa tải được tin nhắn.</p><button class="support-link" @onclick="ReloadAsync">Tải tin nhắn</button></div>}
+    @if(Chat.MessageError.Length>0){<div class="support-error" role="alert">@Chat.MessageError <button class="support-link" disabled="@Chat.LoadingMessages" @onclick="ReloadAsync">Tải lại tin nhắn</button></div>}
+    @foreach(var message in Chat.Messages)
+    {
+        var mine=message.SenderSide==(Chat.Side=="me"?0:1);
+        <article class="support-message @(message.SenderSide==2?"system":mine?"mine":"theirs")" data-message-sequence="@message.Sequence" @key="message.Id">
+            @if(message.SenderSide!=2) { <strong>@message.SenderLabel</strong> }
+            <p>@message.Content</p>
+            <time>@SupportChatStateService.ClinicTime(message.SentAt)</time>
+        </article>
+    }
+    @if(Chat.MessagesLoaded && !Chat.LoadingMessages && Chat.MessageError.Length==0 && Chat.Messages.Count==0) { <div class="support-empty"><i class="fas fa-comments" aria-hidden="true"></i><p>Nội dung trao đổi sẽ hiển thị tại đây.</p></div> }
+</div>
+@if(_hasNew){<button class="support-new-messages" @onclick="JumpAsync"><i class="fas fa-arrow-down" aria-hidden="true"></i> Tin nhắn mới</button>}
+</div>
+
+@code {
+    [Parameter] public EventCallback OnRead { get;set; }
+    [Parameter] public int ScrollToken { get;set; }
+    private int _lastScrollToken=-1;
+    private bool _hasNew,_positioned,_reading,_forceLatest,_disposed;
+    private ElementReference _thread;
+    private IJSObjectReference? _module;
+    protected override void OnInitialized()=>Chat.MessagesChanged+=MessagesChanged;
+    private void MessagesChanged(){if(!_disposed)_=InvokeAsync(StateHasChanged);}
+    protected override async Task OnParametersSetAsync(){
+        if(Chat.Side!="admin" && Chat.Selected!=null && !Chat.LoadingMessages && !Chat.MessagesLoaded && Chat.Messages.Count==0 && Chat.MessageError.Length==0)
+            await Chat.LoadMessagesAsync(reset:true);
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if(firstRender) {
+            _module=await JS.InvokeAsync<IJSObjectReference>("import","/js/support-chat.js?v=5");
+        }
+        if(_module!=null && Chat.Messages.Count>0) {
+            var force=_forceLatest || !_positioned || ScrollToken!=_lastScrollToken;
+            _lastScrollToken=ScrollToken;
+            _positioned=true;_forceLatest=false;
+            await PositionAsync(force);
+        }
+        await ReadVisibleAsync();
+    }
+    private async Task ReadVisibleAsync() {
+        if(_disposed || _reading || _module==null || Chat.Selected==null || Chat.Messages.Count==0 || Chat.Messages[^1].Sequence<=Chat.Selected.LastReadSequence) return;
+        var id=Chat.Selected.Id;var visibleSequence=Chat.Messages[^1].Sequence;
+        _reading=true;
+        try {
+            if(await _module.InvokeAsync<bool>("isReadingLatest",_thread) && !_disposed) {await Chat.MarkReadAsync(visibleSequence,id);if(!_disposed)await OnRead.InvokeAsync();}
+        } catch(JSDisconnectedException) { } finally {_reading=false;}
+    }
+    private async Task PositionAsync(bool force=false){
+        if(_disposed || _module==null)return;
+        var hasNew=await _module.InvokeAsync<bool>("updateThread",_thread,force);
+        if(hasNew!=_hasNew){_hasNew=hasNew;StateHasChanged();}
+    }
+    private async Task ScrolledAsync(){await PositionAsync();await ReadVisibleAsync();}
+    private async Task JumpAsync(){await PositionAsync(true);await ReadVisibleAsync();}
+    private async Task ReloadAsync(){_forceLatest=true;await Chat.LoadMessagesAsync(reset:true);}
+    private async Task OlderAsync()=>await Chat.LoadMessagesAsync(older:true);
+    public async ValueTask DisposeAsync() {_disposed=true;Chat.MessagesChanged-=MessagesChanged;if(_module!=null) try {await _module.InvokeVoidAsync("disposeThread",_thread);await _module.DisposeAsync();} catch(JSDisconnectedException) {}}
+}

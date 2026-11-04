@@ -1,0 +1,121 @@
+@using ClinicManagementSystem.Application.DTOs.Support
+@inject SupportChatStateService Chat
+@inject UserStateService UserState
+@implements IAsyncDisposable
+
+<PageTitle>@(IsAdmin?"Điều phối hỗ trợ":"Tin nhắn hỗ trợ")</PageTitle>
+<div class="support-page">
+    <header class="support-page-header"><div><p class="support-eyebrow">HỖ TRỢ TRỰC TUYẾN</p><h1>@(IsAdmin?"Điều phối hỗ trợ":"Tin nhắn hỗ trợ")</h1><p>@(IsAdmin?"Phân công lễ tân và theo dõi quá trình xử lý yêu cầu.":"Tiếp nhận câu hỏi và đồng hành cùng bệnh nhân.")</p></div><span class="support-connection"><i class="fas fa-circle" aria-hidden="true"></i> @Chat.ConnectionStatus</span></header>
+    @if(!_ready) { <div class="support-panel support-empty"><i class="fas fa-headset" aria-hidden="true"></i><h2>Hỗ trợ trực tuyến</h2><p>@(Chat.Error.Length>0?Chat.Error:Chat.ConnectionStatus)</p><button class="support-primary" @onclick="StartAsync">Thử lại</button></div> }
+    else
+    {
+        @if(!IsAdmin) {<nav class="support-tabs staff" aria-label="Hàng chờ hỗ trợ">@foreach(var tab in _tabs){<button class="@(Chat.Query.Scope==tab.Key?"active":"")" @onclick="()=>SwitchAsync(tab.Key)">@tab.Value</button>}</nav>}
+        <div class="support-filters support-panel">
+            <label>Tìm yêu cầu<input @bind="_search" placeholder="Mã yêu cầu, tên hoặc mã bệnh nhân" /></label>
+            <label>Từ ngày<InputDate TValue="DateOnly?" @bind-Value="_from" /></label><label>Đến ngày<InputDate TValue="DateOnly?" @bind-Value="_to" /></label>
+            @if(IsAdmin){<label>Trạng thái<select @bind="_status"><option value="">Tất cả</option><option value="0">Chờ tiếp nhận</option><option value="1">Đang hỗ trợ</option><option value="2">Đã kết thúc</option></select></label><label>Người phụ trách<select @bind="_assignee"><option value="">Tất cả lễ tân</option>@foreach(var r in Chat.Receptionists){<option value="@r.Id">@r.Name</option>}</select></label>}
+            <button class="support-primary" disabled="@_busy" @onclick="ApplyAsync"><i class="fas fa-search" aria-hidden="true"></i> Tìm kiếm</button>
+        </div>
+        @if(Chat.Error.Length>0){<div class="support-error" role="alert">@Chat.Error <button class="support-link" @onclick="RefreshAsync">Tải lại</button></div>}
+        <div class="support-workspace @(Chat.Selected!=null?"has-selection":"")">
+            <aside class="support-inbox support-panel" aria-label="Danh sách yêu cầu">
+                <div class="support-list-heading"><strong>@Chat.Inbox.TotalItems yêu cầu</strong><button class="support-link" @onclick="RefreshAsync" aria-label="Tải lại danh sách"><i class="fas fa-sync-alt" aria-hidden="true"></i></button></div>
+                @foreach(var row in Chat.Inbox.Items) {
+                    <button class="support-conversation @(Chat.Selected?.Id==row.Id?"selected":"")" @onclick="()=>SelectAsync(row)">
+                        <span class="support-conversation-top"><strong>@row.PatientName</strong><small>#@row.Id</small></span>
+                        <span>@row.Subject</span><small>@row.PatientCode · @SupportChatStateService.ClinicTime(row.CreatedAt)</small>
+                        <span class="support-conversation-bottom"><span class="support-status status-@row.Status">@SupportChatStateService.StatusLabel(row.Status)</span>@if(row.UnreadCount>0 && !IsAdmin && row.Status!=0){<b>@row.UnreadCount tin mới</b>}</span>
+                        @if(IsAdmin && row.AssignedName!=null){<small><i class="fas fa-user" aria-hidden="true"></i> @row.AssignedName</small>}
+                    </button>
+                }
+                @if(Chat.Inbox.Items.Count==0){<div class="support-empty"><i class="fas fa-inbox" aria-hidden="true"></i><p>Chưa có yêu cầu trong danh sách này.</p></div>}
+                <div class="support-pager"><button disabled="@(Chat.Inbox.Page<=1 || _busy)" @onclick="()=>PageAsync(-1)">Trước</button><span>Trang @Chat.Inbox.Page</span><button disabled="@(Chat.Inbox.Page*Chat.Inbox.PageSize>=Chat.Inbox.TotalItems || _busy)" @onclick="()=>PageAsync(1)">Sau</button></div>
+            </aside>
+            <section class="support-detail support-panel" aria-label="Chi tiết yêu cầu">
+            @if(Chat.Selected is {} c) {
+                <header class="support-detail-header"><button class="support-mobile-back support-link" @onclick="Back">← Danh sách</button><div><h2>@c.Subject</h2><p>@c.PatientName · @c.PatientCode · #@c.Id</p></div><span class="support-status status-@c.Status">@SupportChatStateService.StatusLabel(c.Status)</span></header>
+                @if(c.Status==0 && !IsAdmin) {
+                    <div class="support-empty support-claim"><i class="fas fa-hand-holding-heart" aria-hidden="true"></i><h3>Yêu cầu đang chờ tiếp nhận</h3><p>Tiếp nhận để xem nội dung và hỗ trợ bệnh nhân.</p><button class="support-primary" disabled="@_busy" @onclick="ClaimAsync">Tiếp nhận yêu cầu</button></div>
+                } else {
+                    <div class="support-actions">
+                    @if(c.Status<2){
+                        @if(IsAdmin){<button class="support-primary" @onclick='()=>OpenAction(c.Status==0?"assign":"transfer")'>@(c.Status==0?"Giao lễ tân":"Chuyển người phụ trách")</button>}
+                        @if(c.Status==1){<button @onclick='()=>OpenAction("release")'>Trả về hàng chờ</button>}
+                        <button class="support-danger-outline" @onclick='()=>OpenAction("close")'>Kết thúc yêu cầu</button>
+                    }
+                    @if(!IsAdmin){<button class="support-link" @onclick="()=>_showEvents=!_showEvents">@(_showEvents?"Xem hội thoại":"Nhật ký xử lý")</button>}
+                    </div>
+                    @if(IsAdmin || _showEvents){
+                        <div class="support-timeline">
+                            @if(IsAdmin){<div class="support-notice"><i class="fas fa-shield-alt" aria-hidden="true"></i> Trang điều phối chỉ hiển thị thông tin yêu cầu và nhật ký xử lý.</div>}
+                            @if(Chat.MoreEvents){<button class="support-link" @onclick="()=>Chat.LoadEventsAsync(true)">Xem nhật ký cũ hơn</button>}
+                            @foreach(var item in Chat.Events){<article class="support-event"><span class="support-event-dot"></span><strong>@EventLabel(item.EventType)</strong><time>@SupportChatStateService.ClinicTime(item.OccurredAt)</time><p>@item.ActorName @if(item.FromAssignee!=null){<span> · Từ @item.FromAssignee</span>} @if(item.ToAssignee!=null){<span> · Đến @item.ToAssignee</span>}</p>@if(item.Reason!=null){<p class="support-event-reason">@item.Reason</p>}<small>Sau tin #@item.MessageSequenceAtEvent</small></article>}
+                        </div>
+                    } else {
+                        <SupportThread @key="c.Id" OnRead="ReadChanged" ScrollToken="_scrollToken" />
+                        @if(c.Status==1){<div class="support-composer"><textarea aria-label="Trả lời bệnh nhân" maxlength="@(Chat.Settings?.MaxMessageLength??2000)" placeholder="Nhập nội dung trả lời…" @bind="_draft" @bind:event="oninput" disabled="@_busy"></textarea><button class="support-primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))" @onclick="SendAsync">@(_busy?"Đang gửi…":"Gửi trả lời") <i class="fas fa-paper-plane" aria-hidden="true"></i></button></div>}
+                        else{<div class="support-closed">Yêu cầu đã kết thúc. Lịch sử được giữ ở chế độ chỉ đọc.</div>}
+                    }
+                }
+            } else {<div class="support-empty support-detail-empty"><i class="fas fa-comments" aria-hidden="true"></i><h2>Chọn một yêu cầu hỗ trợ</h2><p>@(IsAdmin?"Theo dõi phân công và các mốc xử lý của từng yêu cầu.":"Các câu hỏi của bệnh nhân sẽ được cập nhật tại đây.")</p></div>}
+            </section>
+        </div>
+    }
+</div>
+@if(_action!=null && Chat.Selected!=null){
+    <div class="support-modal-backdrop"><section class="support-modal" role="dialog" aria-modal="true" aria-label="Xác nhận thao tác hỗ trợ"><header><h2>@ActionLabel</h2><button class="support-close" aria-label="Đóng" @onclick="()=>_action=null">×</button></header><p>Yêu cầu #@Chat.Selected.Id · @Chat.Selected.PatientName</p>
+    @if(_action is "assign" or "transfer"){<label>Lễ tân nhận xử lý<select @bind="_target"><option value="">Chọn lễ tân</option>@foreach(var person in Chat.Receptionists){<option value="@person.Id">@person.Name · đang xử lý @person.AssignedCount yêu cầu</option>}</select></label>}
+    <label>@(_action is "transfer" or "release" || IsAdmin && _action=="close"?"Lý do (bắt buộc)":"Ghi chú xử lý (không bắt buộc)")<textarea maxlength="500" @bind="_reason" placeholder="Nhập lý do hoặc ghi chú nội bộ…"></textarea></label>
+    @if(Chat.Error.Length>0){<p class="support-error" role="alert">@Chat.Error</p>}
+    <footer><button @onclick="()=>_action=null">Hủy</button><button class="@(_action=="close"?"support-danger":"support-primary")" disabled="@_busy" @onclick="ConfirmAsync">@(_busy?"Đang xử lý…":"Xác nhận")</button></footer></section></div>
+}
+
+@code {
+    [Parameter] public bool IsAdmin {get;set;}
+    private readonly Dictionary<string,string> _tabs=new(){{"waiting","Chờ tiếp nhận"},{"mine","Tôi đang xử lý"},{"closed","Tôi đã xử lý"}};
+    private bool _ready,_busy,_refreshing,_disposed,_showEvents,_selecting,_refreshPending;
+    private string _search="",_draft="",_pendingText="",_reason="";
+    private string? _action;
+    private DateOnly? _from,_to;
+    private byte? _status;
+    private int? _assignee,_target;
+    private Guid _pendingId=Guid.NewGuid();
+    private int _scrollToken;
+    private string ActionLabel=>_action switch{"assign"=>"Giao lễ tân","transfer"=>"Chuyển người phụ trách","release"=>"Trả về hàng chờ",_=>"Kết thúc yêu cầu"};
+    private static string EventLabel(byte type)=>type switch{0=>"Tạo yêu cầu",1=>"Tiếp nhận",2=>"Trả về hàng chờ",3=>"Bàn giao",_=>"Kết thúc"};
+    protected override async Task OnAfterRenderAsync(bool firstRender){if(firstRender){Chat.Invalidated+=Invalidated;Chat.SessionCleared+=Cleared;await StartAsync();StateHasChanged();}}
+    private async Task StartAsync(){_ready=await Chat.StartAsync(IsAdmin?"admin":"reception");if(_ready){Chat.Query=new();if(IsAdmin)await Chat.LoadReceptionistsAsync();await Chat.LoadInboxAsync();}}
+    private void Invalidated(){if(!_disposed)_=InvokeAsync(RefreshAsync);}
+    private void Cleared(){_draft=_pendingText="";_pendingId=Guid.NewGuid();_ready=false;if(!_disposed)_=InvokeAsync(StateHasChanged);}
+    private async Task RefreshAsync(){
+        if(_disposed || !_ready)return;_refreshPending=true;if(_refreshing || _busy || _selecting)return;_refreshing=true;
+        try {
+            do {
+                _refreshPending=false;var old=Chat.Selected?.Id;await Chat.LoadInboxAsync();
+                if(old!=Chat.Selected?.Id){_draft=_pendingText="";_pendingId=Guid.NewGuid();}
+                if(Chat.Selected is {} c && (IsAdmin || c.Status!=0)){
+                    if(!IsAdmin)await Chat.LoadMessagesAsync();
+                    if(!_disposed)StateHasChanged();
+                    await Chat.LoadEventsAsync();
+                }
+                if(IsAdmin)await Chat.LoadReceptionistsAsync();
+                if(!_disposed)StateHasChanged();
+            }while(_refreshPending && !_disposed && !_busy && !_selecting);
+        }finally{_refreshing=false;if(!_disposed)StateHasChanged();}
+    }
+    private async Task SwitchAsync(string scope){Chat.Query.Scope=scope;Chat.Query.Page=1;Back();await Chat.LoadInboxAsync();}
+    private async Task ApplyAsync(){Chat.Query.Search=_search;Chat.Query.From=_from;Chat.Query.To=_to;Chat.Query.Status=_status;Chat.Query.AssignedUserId=_assignee;Chat.Query.Page=1;await Chat.LoadInboxAsync();}
+    private async Task PageAsync(int delta){Chat.Query.Page+=delta;await Chat.LoadInboxAsync();}
+    private async Task SelectAsync(SupportChatStateService.Conversation c){
+        _selecting=true;
+        try{Back();Chat.Select(c);if(IsAdmin || c.Status!=0){if(!IsAdmin)await Chat.LoadMessagesAsync(reset:true);if(!_disposed)StateHasChanged();await Chat.LoadEventsAsync();}}
+        finally{_selecting=false;if(_refreshPending)await RefreshAsync();}
+    }
+    private void Back(){Chat.NewConversation();_draft=_pendingText="";_pendingId=Guid.NewGuid();_showEvents=false;}
+    private async Task ClaimAsync(){if(_busy)return;_busy=true;try{Chat.Query.Scope="mine";await Chat.ActAsync("claim");await Chat.LoadInboxAsync();}finally{_busy=false;if(_refreshPending)await RefreshAsync();}}
+    private async Task SendAsync(){if(_busy)return;_busy=true;try{if(_draft!=_pendingText){_pendingId=Guid.NewGuid();_pendingText=_draft;}if(await Chat.SendAsync(_draft,_pendingId)){_draft=_pendingText="";_pendingId=Guid.NewGuid();_scrollToken++;await Chat.LoadInboxAsync();}}finally{_busy=false;if(_refreshPending)await RefreshAsync();}}
+    private void OpenAction(string action){_action=action;_reason="";_target=null;}
+    private async Task ConfirmAsync(){if(_busy || _action==null)return;_busy=true;try{if(await Chat.ActAsync(_action,_reason,_target))_action=null;}finally{_busy=false;if(_refreshPending)await RefreshAsync();}}
+    private void ReadChanged()=>StateHasChanged();
+    public async ValueTask DisposeAsync(){_disposed=true;Chat.Invalidated-=Invalidated;Chat.SessionCleared-=Cleared;await Chat.StopAsync();}
+}
