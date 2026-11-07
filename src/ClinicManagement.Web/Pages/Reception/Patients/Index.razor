@@ -993,20 +993,21 @@
 
 @if (_showMedicalHistory)
 {
-    <div class="medical-history-overlay">
+    <div class="medical-history-overlay" @onclick="CloseMedicalHistory">
 
 
-        <div class="medical-history-modal">
+        <div class="medical-history-modal" role="dialog" aria-modal="true"
+             aria-labelledby="medical-history-title" @onclick:stopPropagation="true">
 
 
             <div class="medical-history-header">
 
-                <h2>
+                <h2 id="medical-history-title">
                     Lịch sử khám
                 </h2>
 
 
-                <button class="close-button" @onclick="CloseMedicalHistory">
+                <button type="button" class="close-button" aria-label="Đóng lịch sử khám" @onclick="CloseMedicalHistory">
 
                     ×
 
@@ -1016,7 +1017,7 @@
 
 
 
-            <div class="medical-history-body">
+            <div class="medical-history-body" tabindex="0" aria-label="Danh sách lịch sử khám">
 
 
                 @if (PatientState.MedicalRecords.Count == 0)

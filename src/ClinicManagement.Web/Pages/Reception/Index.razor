@@ -658,6 +658,16 @@
 
             <div class="reception-modal-footer">
 
+                @if (SelectedAppointment.InvoiceId is int invoiceId && invoiceId > 0)
+                {
+                    <a class="reception-invoice-button" href="@($"/reception/invoices/{invoiceId}")">
+                        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
+                        @(SelectedAppointment.InvoiceStatus != 3 && SelectedAppointment.InvoiceRemainingAmount > 0
+                            ? "Hóa đơn / Thu tiền"
+                            : "Xem hóa đơn")
+                    </a>
+                }
+
                 <button type="button" class="reception-modal-close-button" @onclick="CloseAppointmentDetails">
                     Đóng
                 </button>

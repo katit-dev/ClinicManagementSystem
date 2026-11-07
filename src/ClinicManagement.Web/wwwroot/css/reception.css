@@ -965,8 +965,36 @@
 .reception-modal-footer {
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
 
     margin-top: 20px;
+}
+
+.reception-invoice-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 18px;
+    border: 1px solid #0ea5e9;
+    border-radius: 9px;
+    background: #0ea5e9;
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.reception-invoice-button:hover {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+}
+
+.reception-invoice-button:focus-visible {
+    outline: 3px solid #7dd3fc;
+    outline-offset: 3px;
 }
 
 .reception-modal-close-button {
@@ -1006,5 +1034,10 @@
 
     .reception-detail-grid {
         grid-template-columns: 1fr;
+    }
+
+    .reception-modal-footer > .reception-invoice-button,
+    .reception-modal-footer > .reception-modal-close-button {
+        flex: 1 1 auto;
     }
 }
