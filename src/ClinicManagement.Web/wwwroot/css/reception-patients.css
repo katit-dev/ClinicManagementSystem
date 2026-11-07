@@ -749,22 +749,40 @@
 
     align-items: center;
 
-    z-index: 999;
+    padding: 24px;
+
+    overflow: hidden;
+
+    z-index: 2000;
 }
 
 
 
 .medical-history-modal {
 
-    width: 700px;
+    box-sizing: border-box;
 
-    max-height: 80vh;
+    width: 100%;
+
+    max-width: 760px;
+
+    max-height: calc(100vh - 48px);
+
+    max-height: calc(100dvh - 48px);
+
+    display: flex;
+
+    flex-direction: column;
+
+    min-height: 0;
+
+    overflow: hidden;
 
     background: white;
 
     border-radius: 16px;
 
-    padding: 30px;
+    padding: 24px;
 
     box-shadow: 0 20px 50px rgba(0,0,0,.2);
 
@@ -780,9 +798,15 @@
 
     align-items: center;
 
+    flex-shrink: 0;
+
+    gap: 12px;
+
     border-bottom: 1px solid #e5e7eb;
 
     padding-bottom: 15px;
+
+    margin-bottom: 16px;
 
 }
 
@@ -798,7 +822,7 @@
 
 
 
-.close-button {
+.medical-history-header .close-button {
 
     border: none;
 
@@ -810,15 +834,50 @@
 
     color: #64748b;
 
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 40px;
+
+    height: 40px;
+
+    border-radius: 8px;
+
+    line-height: 1;
+
 }
 
+.medical-history-header .close-button:hover {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.medical-history-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-right: 4px;
+}
+
+.medical-history-body:focus-visible,
+.medical-history-header .close-button:focus-visible {
+    outline: 2px solid #0ea5e9;
+    outline-offset: 2px;
+}
 
 
 .medical-record-card {
 
     padding: 20px;
 
-    margin-top: 15px;
+    margin: 0 0 14px;
 
     border-radius: 12px;
 
@@ -826,8 +885,13 @@
 
     line-height: 1.8;
 
+    overflow-wrap: anywhere;
+
 }
 
+.medical-record-card:last-child {
+    margin-bottom: 0;
+}
 
 
 .empty-text {
@@ -838,4 +902,25 @@
 
     font-size: 18px;
 
+}
+
+@media (max-width: 600px) {
+    .medical-history-overlay {
+        padding: 12px;
+    }
+
+    .medical-history-modal {
+        max-height: calc(100vh - 24px);
+        max-height: calc(100dvh - 24px);
+        padding: 18px;
+    }
+
+    .medical-history-header h2 {
+        font-size: 22px;
+    }
+
+    .medical-record-card {
+        padding: 16px;
+        font-size: 14px;
+    }
 }
