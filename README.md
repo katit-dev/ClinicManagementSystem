@@ -1,8 +1,10 @@
 # Clinic Management System
 
-Hệ thống quản lý phòng khám gồm cổng giao diện cho quản trị viên, nhân viên và bệnh nhân, REST API, cơ sở dữ liệu SQL Server và quy trình CI/CD trên Azure App Service. Nhóm Admin đã có quản lý chuyên khoa, lịch làm việc/nghỉ phép, dịch vụ, tài khoản/phân quyền, báo cáo và nhật ký truy cập bệnh án.
+Hệ thống quản lý phòng khám dịch vụ, từ đặt lịch, tiếp nhận và khám đến thanh toán và cấp thuốc. Bệnh nhân có thể xem lại bệnh án đã chốt, hóa đơn, tải tệp của mình và trao đổi với lễ tân. Quản trị viên quản lý lịch làm việc, danh mục, phân quyền, báo cáo và nhật ký truy cập bệnh án.
 
-**Nội dung:** [Chức năng Admin](#11-các-trang-admin) · [Kiến trúc](#3-kiến-trúc-và-flow) · [Setup local](#6-cài-đặt-local) · [Database và tài khoản Admin](#7-database) · [API](#9-api-chính) · [Kiểm thử](#10-kiểm-thử) · [CI/CD](#12-azure-và-cicd)
+![Trang giới thiệu hệ thống quản lý phòng khám](docs/screenshots/Screenshot%202026-11-08%20154246.png)
+
+**Nội dung** · [Chức năng](#1-chức-năng) · [Demo](#15-kịch-bản-demo) · [Kiến trúc](#3-kiến-trúc-và-flow) · [Cài đặt local](#6-cài-đặt-local) · [Database](#7-database) · [API](#9-api-chính) · [Kiểm thử](#10-kiểm-thử) · [Azure và CI/CD](#12-azure-và-cicd)
 
 | Môi trường | Địa chỉ |
 |---|---|
@@ -15,14 +17,13 @@ Hệ thống quản lý phòng khám gồm cổng giao diện cho quản trị v
 
 ## 1. Chức năng
 
-| Nhóm | Chức năng chính |
-|---|---|
-| Quản trị viên | Quản lý chuyên khoa, lịch làm việc/nghỉ phép, danh mục dịch vụ, người dùng/vai trò, báo cáo doanh thu và nhật ký truy cập bệnh án |
-| Bệnh nhân | Đăng ký, đăng nhập, đặt lịch, xem lịch sử khám, hồ sơ bệnh án, đơn thuốc, hóa đơn và thông báo |
-| Bác sĩ | Xem lịch làm việc, hàng đợi, khám bệnh, cập nhật hồ sơ, kê đơn và theo dõi lịch hẹn |
-| Lễ tân | Tiếp nhận bệnh nhân, quản lý lịch hẹn, hàng đợi và thanh toán |
-| Dược sĩ | Quản lý thuốc, xử lý đơn và cập nhật trạng thái cấp phát |
-| Hệ thống | JWT authentication, phân quyền theo role, refresh token, email reset password, file đính kèm, log và báo cáo PDF |
+| Vai trò | Trang Web tiêu biểu | Chức năng chính |
+|---|---|---|
+| Bệnh nhân (`Patient`) | `/patient/booking`, `/patient/appointments`, `/patient/records`, `/patient/invoices` | Đăng ký, đặt/đổi/hủy lịch, nhận thông báo, xem bệnh án đã chốt và đơn thuốc, tải tệp đính kèm, xem hóa đơn, chat hỗ trợ |
+| Lễ tân (`Receptionist`) | `/reception`, `/reception/queue`, `/reception/patients`, `/reception/support` | Tra cứu/tạo hồ sơ, đặt lịch tại quầy, check-in, xử lý lịch bị ảnh hưởng, thu/hoàn tiền, in hóa đơn PDF và trả lời chat |
+| Bác sĩ (`Doctor`) | `/doctor/queue`, `/doctor/medical-records`, `/doctor/schedule` | Khám theo hàng chờ, lưu nháp/chốt bệnh án, chỉ định và ghi kết quả dịch vụ, đính kèm tệp, kê đơn, xem ca làm và lịch nghỉ |
+| Dược sĩ (`Pharmacist`) | `/pharmacy`, `/pharmacy/inventory`, `/pharmacy/receipt` | Xử lý đơn, cấp theo lô, báo thiếu thuốc, nhập/điều chỉnh kho, xem lịch sử và cảnh báo tồn thấp/gần hết hạn |
+| Quản trị viên (`Admin`) | `/admin`, `/admin/support` | Quản lý chuyên khoa, lịch làm/nghỉ, dịch vụ, tài khoản/vai trò, báo cáo, audit và điều phối yêu cầu hỗ trợ |
 
 ### 1.1. Các trang Admin
 
@@ -37,6 +38,7 @@ Tất cả trang dưới đây yêu cầu đăng nhập bằng tài khoản có 
 | VC22 — Người dùng & phân quyền | `/admin/users` | Tìm/lọc tài khoản, xem chi tiết, gán nhiều vai trò, reset mật khẩu, khóa/mở khóa |
 | VC23 — Báo cáo doanh thu & lượt khám | `/admin/reports` | Lọc khoảng ngày/bác sĩ; tổng hợp lượt khám, doanh thu, công nợ, không đến; xuất Excel `.xlsx` |
 | VC24 — Nhật ký truy cập bệnh án | `/admin/audit-logs` | Lọc đối tượng, mã đối tượng, người dùng, ngày; phân trang theo lượt truy cập; xem đầy đủ các log gốc trong một lượt |
+| Hỗ trợ trực tuyến | `/admin/support` | Xem thông tin yêu cầu và nhật ký xử lý, giao/chuyển lễ tân, trả về hàng chờ hoặc đóng yêu cầu |
 
 ### 1.2. Quy tắc nghiệp vụ Admin
 
@@ -83,6 +85,54 @@ Tất cả trang dưới đây yêu cầu đăng nhập bằng tài khoản có 
 - Nhật ký chỉ có API đọc. `SaveChanges` từ chối sửa/xóa `AuditLog` được EF theo dõi; cơ chế này không chặn DBA hoặc truy vấn raw SQL/bulk update.
 - Tệp bệnh án tải qua API được kiểm tra quyền. Đường trực tiếp `/uploads/medical-records/...` bị chặn `404` và ghi log; không dùng URL tệp tĩnh để bỏ qua API.
 
+### 1.3. Luồng khám và thanh toán
+
+~~~text
+Bệnh nhân đặt lịch online hoặc lễ tân đặt tại quầy
+  → Lễ tân check-in, cấp số thứ tự
+  → Bác sĩ mở bệnh án nháp, khám, ghi kết quả và kê thuốc nếu cần
+  → Bác sĩ chốt bệnh án, hệ thống hoàn tất lượt khám và lập hóa đơn
+  → Lễ tân ghi nhận thanh toán, dược sĩ xử lý đơn có thuốc
+  → Bệnh nhân xem lại bệnh án, tệp đính kèm và hóa đơn
+~~~
+
+- **Bệnh án:** Bác sĩ xem bệnh án mình phụ trách trong **Bệnh án của tôi**. Bệnh án đã chốt chỉ xem. Dịch vụ chưa hoàn tất và chưa hủy sẽ chặn thao tác chốt.
+- **Hóa đơn:** Tại `/reception`, mở chi tiết lượt khám có hóa đơn để dùng **Hóa đơn / Thu tiền** hoặc **Xem hóa đơn**. Nút mở `/reception/invoices/{invoiceId}`. Mã hóa đơn lấy từ lịch hẹn, tách biệt với mã lịch hẹn và mã bệnh nhân. Thu tiền cập nhật trạng thái chưa thu, thu một phần hoặc đã thu đủ. Hệ thống ghi nhận giao dịch do lễ tân nhập.
+- **Kho thuốc:** Khi cấp thuốc, hệ thống ưu tiên lô còn hạn có ngày hết hạn gần nhất (FEFO). Dược sĩ có thể báo thiếu nếu không đủ hàng và kiểm tra giao dịch nhập/xuất trong lịch sử kho.
+- **Tệp bệnh án:** Bác sĩ phụ trách tải lên khi bệnh án còn nháp. Bệnh nhân có quyền tải tệp qua API. SQL lưu khóa tệp, còn nội dung nằm trong thư mục riêng ở local hoặc Azure Blob container private. Xem [cấu hình và kiểm thử tệp đính kèm](docs/attachment-storage.md).
+
+### 1.4. Hỗ trợ trực tuyến
+
+Bệnh nhân gửi yêu cầu trong khung chat, nhận một tin xác nhận tự động cho mỗi yêu cầu mới và xem lại lịch sử. Lễ tân tiếp nhận, trả lời và kết thúc yêu cầu tại `/reception/support`. Admin điều phối tại `/admin/support`, với quyền xem thông tin yêu cầu và nhật ký xử lý. Nội dung tin nhắn chỉ dành cho các bên có quyền truy cập hội thoại. Cấu hình mặc định hiển thị hotline `0389479884` và giờ hành chính hằng ngày, gồm Thứ Bảy và Chủ Nhật.
+
+Tin nhắn lưu vào SQL qua REST API. SignalR Hub `/hubs/support-chat` báo cho các phiên liên quan tải dữ liệu mới sau khi lưu. Module có cấu hình bật/tắt riêng và dùng trực tiếp Hub trên API trong mô hình triển khai một API instance. Xem [cài đặt và kiểm thử chat](docs/SUPPORT_CHAT_SETUP.md).
+
+### 1.5. Kịch bản demo
+
+1. Chuẩn bị tài khoản thử cho từng vai trò, ca làm có slot trống, dịch vụ và thuốc còn tồn. Dùng dữ liệu giả và phiên trình duyệt riêng khi cần mở nhiều tài khoản cùng lúc.
+2. Dùng Patient đặt lịch trong ngày. Lễ tân check-in; bác sĩ mở lượt khám từ hàng chờ, nhập bệnh án, hoàn tất dịch vụ nếu đã chỉ định và chốt.
+3. Lễ tân mở hóa đơn từ lượt khám, ghi nhận thanh toán. Dược sĩ mở đơn và cấp thuốc; bệnh nhân xem lại hồ sơ và hóa đơn.
+4. Nếu đã bật chat, mở hai phiên Patient và Receptionist để thử gửi yêu cầu, tiếp nhận và trả lời. Dùng Admin kiểm tra báo cáo hoặc nhật ký của lượt vừa thao tác.
+
+![Bệnh nhân chọn ngày và khung giờ khám](docs/screenshots/Screenshot%202026-11-08%20154722.png)
+
+![Bàn tiếp đón và check-in lịch hẹn](docs/screenshots/Screenshot%202026-11-08%20155041.png)
+
+<details>
+<summary>Xem thêm giao diện</summary>
+
+![Lịch làm việc và nghỉ phép của bác sĩ](docs/screenshots/Screenshot%202026-11-09%20001041.png)
+
+![Kho thuốc và cảnh báo theo lô](docs/screenshots/Screenshot%202026-11-08%20154955.png)
+
+![Báo cáo doanh thu và lượt khám](docs/screenshots/Screenshot%202026-11-08%20154805.png)
+
+![Khung chat hỗ trợ trên cổng bệnh nhân](docs/screenshots/Screenshot%202026-11-08%20154649.png)
+
+![Màn hình đăng nhập](docs/screenshots/Screenshot%202026-11-08%20154408.png)
+
+</details>
+
 ## 2. Công nghệ
 
 | Thành phần | Công nghệ |
@@ -91,6 +141,7 @@ Tất cả trang dưới đây yêu cầu đăng nhập bằng tài khoản có 
 | Frontend | Blazor Server, Razor Components, Server-side SignalR |
 | Data access | Entity Framework Core 10, SQL Server |
 | Authentication | JWT Bearer, refresh token, role-based authorization, BCrypt, account access stamp |
+| Chat và tệp đính kèm | ASP.NET Core SignalR Hub, Azure Blob Storage hoặc thư mục private local |
 | API documentation | Swashbuckle / OpenAPI |
 | Logging | Serilog, Application Insights trên Azure |
 | PDF và email | QuestPDF, MailKit |
@@ -141,7 +192,7 @@ Razor page/component → State service → HttpClient service
                      → API → State update → Blazor re-render
 ~~~
 
-AuthorizedApiService tự gắn Bearer token. Khi API trả về 401, service thử refresh token rồi gửi lại request một lần.
+Web lưu access token và refresh token trong `localStorage`. Cấu hình mặc định của API cấp access token 60 phút và refresh token 7 ngày kể từ khi cấp. `AuthorizedApiService` gắn access token vào header `Authorization: Bearer`. Khi API trả `401`, service thử refresh; nếu thành công, Web lưu cặp token mới và gửi lại request một lần. Refresh token cũ bị thu hồi và cơ sở dữ liệu lưu hash của refresh token. Quên mật khẩu dùng OTP riêng, mặc định 5 phút, gửi qua SMTP.
 
 Web là **Blazor Server**: `HttpClient` chạy ở server Web để gọi API; trình duyệt kết nối với Web qua SignalR. `ApiSettings:BaseUrl` quyết định API được gọi, không phụ thuộc máy người dùng có đang chạy API local hay không.
 
@@ -187,6 +238,7 @@ ClinicManagementSystem/
 
 - .NET SDK 10.0
 - SQL Server 2019 trở lên hoặc SQL Server Developer/Express
+- SSMS hoặc công cụ tương đương để chạy script SQL
 - IDE hỗ trợ SDK .NET 10 hoặc VS Code và .NET CLI
 - Git
 - Docker Desktop nếu chạy integration test dùng Testcontainers
@@ -219,14 +271,20 @@ Gộp các cấu hình sau vào `src/ClinicManagementSystem.Api/appsettings.Deve
     "Audience": "ClinicManagementSystem.Web"
   },
   "Email": {
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": 587,
     "Username": "your-smtp-user",
     "SenderEmail": "your-sender@example.com",
     "Password": "your-smtp-password"
+  },
+  "FileStorage": {
+    "Provider": "Local",
+    "LocalRootPath": ""
   }
 }
 ~~~
 
-Không commit giá trị thật. Có thể dùng biến môi trường ConnectionStrings__ClinicDb và Jwt__Key.
+Dùng giá trị riêng cho môi trường local và giữ secret ngoài Git. Có thể cấp qua `ConnectionStrings__ClinicDb`, `Jwt__Key` và `Email__Password`. Nếu `LocalRootPath` để trống, trên Windows tệp được lưu dưới `%LOCALAPPDATA%\ClinicManagementSystem\medical-records` của tài khoản chạy API. Xem [cấu hình thư mục riêng](docs/attachment-storage.md#local-trước-khi-cấu-hình-azure).
 
 ### Cấu hình Web
 
@@ -259,12 +317,13 @@ CORS hiện cho phép origin `http://localhost:5050`. Các lời gọi `HttpClie
 
 Database dùng cách tiếp cận **Database First**. Với database local mới, đọc các điều kiện đầu script và chạy phần schema theo thứ tự:
 
-1. database/001_InitDatabase.sql
-2. database/002_CreateTables.sql
-3. database/003_UpdateDatabaseV1_29Tables.sql
-4. database/005_CreatePasswordResetTokens.sql
+1. [`001_InitDatabase.sql`](database/001_InitDatabase.sql)
+2. [`002_CreateTables.sql`](database/002_CreateTables.sql)
+3. [`003_UpdateDatabaseV1_29Tables.sql`](database/003_UpdateDatabaseV1_29Tables.sql)
+4. [`005_CreatePasswordResetTokens.sql`](database/005_CreatePasswordResetTokens.sql)
+5. Nếu dùng chat, chạy [`007_AddSupportChat.sql`](database/007_AddSupportChat.sql) trên đúng database rồi đặt `SupportChat__Enabled=true` cho API. Cấu hình chung mặc định tắt. Bước này tạo schema `support` cho hội thoại, tin nhắn và nhật ký xử lý. Xem [quyền và thứ tự bật chat](docs/SUPPORT_CHAT_SETUP.md#2-bật-trên-local).
 
-Sau khi có schema, dùng `database/004_SeedInitialData.sql` để tạo dữ liệu thử phù hợp. File seed có nhiều phần và có đoạn yêu cầu một tài khoản bác sĩ đã tồn tại để sao chép password hash; không coi đây là script bootstrap một lần chạy cho mọi database rỗng.
+Sau khi có schema, chọn từng phần phù hợp trong [`004_SeedInitialData.sql`](database/004_SeedInitialData.sql) để tạo role, danh mục và dữ liệu thử. Đọc điều kiện đầu mỗi phần. Một số đoạn cần tài khoản bác sĩ đã có để lấy password hash; với database mới, hãy chuẩn bị các tài khoản thử và liên kết hồ sơ Doctor/Patient tương ứng trước khi chạy phần seed phụ thuộc.
 
 database/003_UpdateDatabaseV1.sql là bản cập nhật cũ; không chạy đồng thời hai file 003 trên cùng database.
 
@@ -308,24 +367,31 @@ Sau khi đăng nhập Admin, mở [trang Admin local](http://localhost:5050/admi
 | Method | Route | Mục đích / quyền |
 |---|---|---|
 | POST | `/api/auth/login`, `/api/auth/register`, `/api/auth/refresh-token` | Đăng nhập, đăng ký, refresh token |
+| POST | `/api/auth/forgot-password`, `/api/auth/reset-password` | Yêu cầu OTP và đặt lại mật khẩu |
 | GET | `/api/specialties`, `/api/doctors`, `/api/doctors/{id}/available-slots` | Danh mục và slot công khai dùng cho đặt khám |
 | POST | `/api/appointments` | Patient đặt lịch |
 | GET | `/api/appointments/my` | Patient xem lịch của mình |
 | PATCH | `/api/appointments/{id}/cancel`, `/api/appointments/{id}/reschedule` | Patient hủy/đổi lịch |
 | GET/POST | `/api/patients` | Receptionist tra cứu/tạo hồ sơ bệnh nhân |
 | GET | `/api/doctors/me/queue` | Doctor xem hàng đợi |
+| GET | `/api/doctors/me/medical-records`, `/api/doctors/me/schedule`, `/api/doctors/me/time-off` | Doctor xem bệnh án phụ trách, ca làm và lịch nghỉ |
 | GET | `/api/patients/me/records` | Patient xem lịch sử khám của mình |
 | GET/PUT | `/api/medical-records/{id}` | Đọc/cập nhật theo role và quyền của từng action |
 | POST | `/api/medical-records/{id}/finalize` | Doctor hoàn tất bệnh án |
 | PUT | `/api/medical-records/{id}/prescription` | Doctor lưu đơn thuốc |
+| POST | `/api/medical-records/{id}/attachments` | Doctor phụ trách tải tệp lên bệnh án nháp |
 | GET | `/api/attachments/{id}/download` | Patient sở hữu dữ liệu tải tệp |
 | GET | `/api/invoices/{id}` | Receptionist xem hóa đơn |
 | POST | `/api/invoices/{id}/payments`, `/api/invoices/{id}/refunds` | Receptionist ghi thanh toán/hoàn tiền |
+| GET | `/api/invoices/{id}/pdf`, `/api/patients/me/invoices` | Receptionist xuất PDF; Patient xem hóa đơn của mình |
 | GET | `/api/queue` | Receptionist xem hàng đợi |
 | GET | `/api/medicines/inventory` | Pharmacist xem tồn kho |
+| GET | `/api/pharmacy/prescriptions` | Pharmacist xem danh sách đơn cần xử lý |
+| POST | `/api/prescriptions/{id}/dispense`, `/api/prescriptions/{id}/report-shortage` | Pharmacist cấp thuốc hoặc báo thiếu |
+| GET | `/api/support/settings` | Đọc trạng thái bật/tắt và thông tin hỗ trợ |
 | GET | `/api/notifications` | Doctor/Receptionist/Patient xem thông báo của mình |
 
-Đây là các route tiêu biểu, không phải toàn bộ API. Swagger local và các controller là nguồn đối chiếu cho request, response và quyền của từng action.
+Swagger local và các controller mô tả request, response và quyền của từng action. Các endpoint chat theo vai trò và luồng realtime có trong [hướng dẫn chat](docs/SUPPORT_CHAT_SETUP.md#3-api).
 
 ### API Admin
 
@@ -442,6 +508,10 @@ dotnet test .\tests\ClinicManagementSystem.IntegrationTests\ClinicManagementSyst
 | VC22 — Tài khoản | [VC22_BACKEND_TEST](docs/VC22_BACKEND_TEST.md) | [VC22_FRONTEND_TEST](docs/VC22_FRONTEND_TEST.md) |
 | VC23 — Báo cáo | [VC23_BACKEND_TEST](docs/VC23_BACKEND_TEST.md) | [VC23_FRONTEND_TEST](docs/VC23_FRONTEND_TEST.md) |
 | VC24 — Audit | [Hướng dẫn API và ghi log](docs/VC24_TEST_GUIDE.md) | [Hướng dẫn Web và giới hạn](docs/VC24_TEST_GUIDE.md) |
+| Bệnh án bác sĩ | [Kiểm tra API](docs/DOCTOR_MEDICAL_RECORDS_TEST.md#kiểm-tra-api) | [Kiểm thử Bệnh án của tôi](docs/DOCTOR_MEDICAL_RECORDS_TEST.md) |
+| Lịch của bác sĩ | [Kiểm tra API](docs/DOCTOR_SCHEDULE_TEST.md#api) | [Kiểm tra thủ công](docs/DOCTOR_SCHEDULE_TEST.md#kiểm-tra-thủ-công-ở-local) |
+| Tệp bệnh án | [Upload, download và quyền truy cập](docs/attachment-storage.md#test-backend-local) | [Cấu hình Blob trên Azure](docs/attachment-storage.md#azure-trước-khi-deploy-production) |
+| Hỗ trợ trực tuyến | [Kiểm thử tự động](docs/SUPPORT_CHAT_SETUP.md#5-kiểm-thử-tự-động) | [Kịch bản nhiều vai trò và thiết bị](docs/SUPPORT_CHAT_SETUP.md#4-kịch-bản-kiểm-tra-thủ-công) |
 
 ### Kiểm tra nhanh Admin local
 
@@ -467,12 +537,13 @@ Container cần được cung cấp connection string, JWT key và biến môi t
 
 ## 12. Azure và CI/CD
 
-Production gồm hai Azure App Service dùng cùng App Service Plan B1:
+Kiến trúc triển khai production của project gồm hai Azure App Service dùng cùng App Service Plan B1, Azure SQL Database và Azure Blob Storage:
 
-- clinicmanagement-api-2026 chạy ASP.NET Core API.
-- clinicmanagement-web-2026 chạy Blazor Server.
-- Web đặt ApiSettings__BaseUrl trỏ tới API production.
-- API đặt ConnectionStrings__ClinicDb, Jwt__Key, Jwt__Issuer, Jwt__Audience và thông tin email trong Configuration > Environment variables.
+- `clinicmanagement-api-2026` chạy ASP.NET Core API.
+- `clinicmanagement-web-2026` chạy Blazor Server. Đặt `ApiSettings__BaseUrl` trỏ tới API production.
+- Trên API, đặt `ConnectionStrings__ClinicDb`, `Jwt__Key`, `Jwt__Issuer`, `Jwt__Audience` và `Email__...` trong **Settings → Environment variables**.
+- Với tệp bệnh án, đặt `FileStorage__Provider=AzureBlob`, `FileStorage__AzureBlob__ServiceUri` và `FileStorage__AzureBlob__ContainerName`. Managed Identity của API cần quyền dữ liệu trên container private. Xem [thiết lập Blob production](docs/attachment-storage.md#azure-trước-khi-deploy-production).
+- Với chat, chạy script `007` trên database đích và deploy API/Web tương thích trước khi đặt `SupportChat__Enabled=true` trên API. Xem [deploy và kiểm thử SignalR](docs/SUPPORT_CHAT_SETUP.md#6-deploy-azure-một-instance).
 
 Các workflow hiện có:
 
@@ -484,6 +555,8 @@ Các workflow hiện có:
 
 CI và hai workflow CD **chạy độc lập**; cấu hình hiện tại không chờ CI thành công rồi mới deploy. Thay đổi thư viện Application/Infrastructure có thể kích hoạt cả API lẫn Web. Chỉ sửa README/docs thì CI vẫn chạy khi push, còn hai CD không tự chạy theo bộ lọc path hiện tại. Merge vào `main` kích hoạt CI nhưng không tự kích hoạt hai CD này.
 
+Khi phát hành từ `main`, kiểm tra CI rồi vào **GitHub Actions → CD - API / CD - Web → Run workflow**, chọn `main` cho bản cần triển khai. Đối chiếu commit và kiểm tra chức năng trên website sau khi deploy.
+
 Publish profile phải lưu trong GitHub Actions Secrets:
 
 ~~~text
@@ -493,7 +566,13 @@ AZURE_WEB_PUBLISH_PROFILE
 
 Không đưa publish profile, JWT key, SMTP password hoặc SQL password vào commit, README, issue hay log.
 
-Kiểm tra production sau khi cả hai App Service đã cập nhật: đăng nhập Admin, mở các trang quản trị, kiểm tra tài khoản/role trong database production và `ApiSettings__BaseUrl` của Web. Workflow không tự tạo Admin, không cập nhật schema và không chạy seed SQL.
+Kiểm tra production sau khi cả hai App Service đã cập nhật: đăng nhập, kiểm tra quyền theo vai trò và thử luồng chính với dữ liệu test. Nếu dùng chat hoặc Blob, thử thêm gửi/nhận tin giữa hai phiên và tải tệp đúng quyền. Chuẩn bị schema và tài khoản production riêng trước deploy vì workflow chỉ build và phát hành ứng dụng.
+
+### Sao lưu production về local và dừng hosting
+
+1. Chọn thời điểm chốt dữ liệu. Dừng Web/API, tác vụ ghi dữ liệu và deploy trong lúc xuất bản sao. Dùng SSMS **Tasks → Export Data-tier Application** để lưu Azure SQL thành `.bacpac`. Tải cả container tệp và giữ cấu trúc theo khóa blob. Kiểm tra thêm tệp cũ lưu riêng trên App Service nếu còn dùng. [Export Azure SQL](https://learn.microsoft.com/en-us/azure/azure-sql/database/database-export?view=azuresql) · [Tải Blob bằng AzCopy](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-blobs-download)
+2. Import `.bacpac` vào một database local mới. Trỏ `ConnectionStrings:ClinicDb` vào bản import và đặt `FileStorage:Provider=Local`. Với blob `medical-records/{recordId}/{name}`, đặt tệp tại `{LocalRootPath}/{recordId}/{name}`. Đối chiếu số dòng các bảng chính, chạy `DBCC CHECKDB` trên bản local, so khớp `clinical.attachments.file_url` với tệp đã tải và thử mở bệnh án/tải tệp qua API local. Giữ bản lưu trữ riêng trên ổ mã hóa, ngoài Git. [Import SQL Server](https://learn.microsoft.com/en-us/sql/relational-databases/data-tier-applications/import-a-bacpac-file-to-create-a-new-user-database)
+3. Sau khi xác nhận phục hồi thành công, xóa App Service Plan B1 hoặc hạ về Free F1 nếu khả dụng. Plan B1 vẫn tính phí khi app đã Stop hoặc plan trống. SQL và Blob tính phí riêng. Nếu ngừng toàn bộ project trên Azure, rà tài nguyên dùng chung trước khi xóa và kiểm tra chi phí theo từng tài nguyên trong **Cost Management → Cost analysis**. [Cách App Service tính phí](https://learn.microsoft.com/azure/app-service/overview-manage-costs)
 
 ## 13. Quy trình phát triển chức năng
 
@@ -557,6 +636,14 @@ Mỗi bệnh án được trả về có một log gốc. Trang Admin gộp các
 
 Kiểm tra kết nối database và việc lưu `auth.audit_logs`. VC24 không cung cấp JSON/tệp y tế khi chưa lưu được audit. Với thao tác ghi, dữ liệu nghiệp vụ có thể đã commit trước lỗi audit; kiểm tra trạng thái trước khi gửi lại để tránh lặp thao tác.
 
+### Gửi mã OTP báo lỗi
+
+Xem log API tại dòng `Forgot password request failed.` để phân biệt lỗi ghi `auth.password_reset_tokens` với lỗi gửi SMTP. Trên Azure, xem **Monitoring → Log stream** của API. Nếu Gmail báo lỗi xác thực `534`/`535`, kiểm tra tài khoản gửi và App Password trong cấu hình `Email__...` của API.
+
+### SSMS báo IP không có quyền truy cập Azure SQL
+
+Nếu gặp lỗi `40615` khi kết nối SSMS, mở logical SQL server trong Azure Portal, vào **Networking** và thêm đúng IP client hiện trong lỗi vào firewall. Kết nối từ API có thể đi qua địa chỉ khác. [Cấu hình firewall Azure SQL](https://learn.microsoft.com/en-us/azure/azure-sql/database/firewall-create-server-level-portal-quickstart?view=azuresql)
+
 ## 15. Bảo mật
 
 - Không commit appsettings.Development.json chứa secret thật.
@@ -572,13 +659,3 @@ Kiểm tra kết nối database và việc lưu `auth.audit_logs`. VC24 không c
 ## 16. Giấy phép
 
 Dự án phục vụ mục đích học tập và triển khai nội bộ. Bổ sung thông tin license nếu repository được phát hành công khai.
-
-
-
-## Hỗ trợ trực tuyến
-
-Module chat văn bản dùng ASP.NET Core SignalR, lịch sử SQL và ba actor Patient/Receptionist/Admin. Bệnh nhân dùng khung chat nổi và hotline 0389479884; lễ tân dùng `/reception/support`; Admin dùng `/admin/support` để điều phối, không đọc nội dung tin. Giờ hỗ trợ là giờ hành chính hằng ngày, gồm Thứ Bảy và Chủ Nhật.
-
-Trước khi bật module, chạy riêng `database/007_AddSupportChat.sql` trên đúng database. Cấu hình chung mặc định `SupportChat:Enabled=false`; bật sau khi schema, API và Web sẵn sàng. Production bản đầu giữ một API instance, không bắt buộc Azure SignalR Service.
-
-Chi tiết cấu hình, quyền dữ liệu, kiểm thử và deploy: [SUPPORT_CHAT_SETUP.md](docs/SUPPORT_CHAT_SETUP.md).
